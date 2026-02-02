@@ -18,7 +18,7 @@ export function menus(context: AppContext) {
   menus.push({
     id: 'dashboard',
     label: context.dictionary.shared.dashboard,
-    href: `/`,
+    href: `/dashboard`,
     Icon: FaChartPie,
     isExact: true,
   });
@@ -51,8 +51,8 @@ export function menus(context: AppContext) {
       href: `/account`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.accountCreate, context)
-          ? `/account/new`
-          : undefined,
+        ? `/account/new`
+        : undefined,
     });
   }
   if (hasPermission(permissions.walletRead, context)) {
@@ -62,8 +62,8 @@ export function menus(context: AppContext) {
       href: `/wallet`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.walletCreate, context)
-          ? `/wallet/new`
-          : undefined,
+        ? `/wallet/new`
+        : undefined,
     });
   }
   if (hasPermission(permissions.depositRead, context)) {
@@ -73,8 +73,8 @@ export function menus(context: AppContext) {
       href: `/deposit`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.depositCreate, context)
-          ? `/deposit/new`
-          : undefined,
+        ? `/deposit/new`
+        : undefined,
     });
   }
   if (hasPermission(permissions.withdrawalRead, context)) {
@@ -84,8 +84,8 @@ export function menus(context: AppContext) {
       href: `/withdrawal`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.withdrawalCreate, context)
-          ? `/withdrawal/new`
-          : undefined,
+        ? `/withdrawal/new`
+        : undefined,
     });
   }
   if (hasPermission(permissions.orderRead, context)) {
@@ -95,8 +95,8 @@ export function menus(context: AppContext) {
       href: `/order`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.orderCreate, context)
-          ? `/order/new`
-          : undefined,
+        ? `/order/new`
+        : undefined,
     });
   }
   if (hasPermission(permissions.assetRead, context)) {
@@ -106,8 +106,8 @@ export function menus(context: AppContext) {
       href: `/asset`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.assetCreate, context)
-          ? `/asset/new`
-          : undefined,
+        ? `/asset/new`
+        : undefined,
     });
   }
   if (hasPermission(permissions.instrumentRead, context)) {
@@ -117,8 +117,8 @@ export function menus(context: AppContext) {
       href: `/instrument`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.instrumentCreate, context)
-          ? `/instrument/new`
-          : undefined,
+        ? `/instrument/new`
+        : undefined,
     });
   }
   if (hasPermission(permissions.ledgerEventRead, context)) {
@@ -128,8 +128,8 @@ export function menus(context: AppContext) {
       href: `/ledger-event`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.ledgerEventCreate, context)
-          ? `/ledger-event/new`
-          : undefined,
+        ? `/ledger-event/new`
+        : undefined,
     });
   }
   if (hasPermission(permissions.ledgerEntryRead, context)) {
@@ -139,8 +139,8 @@ export function menus(context: AppContext) {
       href: `/ledger-entry`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.ledgerEntryCreate, context)
-          ? `/ledger-entry/new`
-          : undefined,
+        ? `/ledger-entry/new`
+        : undefined,
     });
   }
   if (hasPermission(permissions.tradeRead, context)) {
@@ -150,8 +150,8 @@ export function menus(context: AppContext) {
       href: `/trade`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.tradeCreate, context)
-          ? `/trade/new`
-          : undefined,
+        ? `/trade/new`
+        : undefined,
     });
   }
   if (hasPermission(permissions.fillRead, context)) {
@@ -161,8 +161,8 @@ export function menus(context: AppContext) {
       href: `/fill`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.fillCreate, context)
-          ? `/fill/new`
-          : undefined,
+        ? `/fill/new`
+        : undefined,
     });
   }
   if (hasPermission(permissions.postRead, context)) {
@@ -172,8 +172,8 @@ export function menus(context: AppContext) {
       href: `/post`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.postCreate, context)
-          ? `/post/new`
-          : undefined,
+        ? `/post/new`
+        : undefined,
     });
   }
   if (hasPermission(permissions.commentRead, context)) {
@@ -183,8 +183,8 @@ export function menus(context: AppContext) {
       href: `/comment`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.commentCreate, context)
-          ? `/comment/new`
-          : undefined,
+        ? `/comment/new`
+        : undefined,
     });
   }
   if (hasPermission(permissions.articleRead, context)) {
@@ -194,8 +194,8 @@ export function menus(context: AppContext) {
       href: `/article`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.articleCreate, context)
-          ? `/article/new`
-          : undefined,
+        ? `/article/new`
+        : undefined,
     });
   }
   if (hasPermission(permissions.chatRead, context)) {
@@ -205,8 +205,8 @@ export function menus(context: AppContext) {
       href: `/chat`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.chatCreate, context)
-          ? `/chat/new`
-          : undefined,
+        ? `/chat/new`
+        : undefined,
     });
   }
   if (hasPermission(permissions.chateeRead, context)) {
@@ -216,8 +216,8 @@ export function menus(context: AppContext) {
       href: `/chatee`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.chateeCreate, context)
-          ? `/chatee/new`
-          : undefined,
+        ? `/chatee/new`
+        : undefined,
     });
   }
   if (hasPermission(permissions.messageRead, context)) {
@@ -227,8 +227,8 @@ export function menus(context: AppContext) {
       href: `/message`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.messageCreate, context)
-          ? `/message/new`
-          : undefined,
+        ? `/message/new`
+        : undefined,
     });
   }
   if (hasPermission(permissions.feeScheduleRead, context)) {
@@ -238,8 +238,8 @@ export function menus(context: AppContext) {
       href: `/fee-schedule`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.feeScheduleCreate, context)
-          ? `/fee-schedule/new`
-          : undefined,
+        ? `/fee-schedule/new`
+        : undefined,
     });
   }
   if (hasPermission(permissions.balanceSnapshotRead, context)) {
@@ -249,8 +249,8 @@ export function menus(context: AppContext) {
       href: `/balance-snapshot`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.balanceSnapshotCreate, context)
-          ? `/balance-snapshot/new`
-          : undefined,
+        ? `/balance-snapshot/new`
+        : undefined,
     });
   }
   if (hasPermission(permissions.systemAccountRead, context)) {
@@ -260,8 +260,8 @@ export function menus(context: AppContext) {
       href: `/system-account`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.systemAccountCreate, context)
-          ? `/system-account/new`
-          : undefined,
+        ? `/system-account/new`
+        : undefined,
     });
   }
   if (hasPermission(permissions.feedbackRead, context)) {
@@ -271,8 +271,8 @@ export function menus(context: AppContext) {
       href: `/feedback`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.feedbackCreate, context)
-          ? `/feedback/new`
-          : undefined,
+        ? `/feedback/new`
+        : undefined,
     });
   }
 
