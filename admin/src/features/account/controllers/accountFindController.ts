@@ -40,7 +40,12 @@ export async function accountFindController(
       },
     },
     include: {
+      user: true,
       orders: true,
+      wallets: true,
+      deposits: true,
+      withdrawals: true,
+      snapshots: true,
       createdByMembership: true,
       updatedByMembership: true,
       archivedByMembership: true,

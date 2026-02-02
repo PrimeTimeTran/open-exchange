@@ -57,7 +57,11 @@ export async function ledgerEventUpdateController(
     },
     data: {
       type: data.type,
+      referenceId: data.referenceId,
       referenceType: data.referenceType,
+      status: data.status,
+      description: data.description,
+      meta: data.meta,
     },
   });
 

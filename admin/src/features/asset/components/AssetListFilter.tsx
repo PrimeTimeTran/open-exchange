@@ -32,6 +32,7 @@ const emptyValues = {
   type: null,
   precisionRange: [],
   isFractional: '',
+  decimalsRange: [],
   archived: false,
 };
 
@@ -66,6 +67,10 @@ function AssetListFilter({
     isFractional: {
       label: dictionary.asset.fields.isFractional,
       render: dataTableFilterRenders(context).boolean(),
+    },
+    decimalsRange: {
+      label: dictionary.asset.fields.decimals,
+      render: dataTableFilterRenders(context).range(),
     },
     archived: {
       label: dictionary.shared.showArchived,
@@ -206,6 +211,24 @@ function AssetListFilter({
                       ]}
                       dictionary={dictionary}
                       isClearable={true}
+                      disabled={isLoading}
+                      onChange={field.onChange}
+                      value={field.value}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="decimalsRange"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{dictionary.asset.fields.decimals}</FormLabel>
+                    <RangeInput
+                      type="number"
+                      dictionary={dictionary}
                       disabled={isLoading}
                       onChange={field.onChange}
                       value={field.value}

@@ -7,6 +7,10 @@ import { accountEnumerators } from 'src/features/account/accountEnumerators';
 import { jsonSchema } from 'src/shared/schemas/jsonSchema';
 import { objectToUuidSchema, objectToUuidSchemaOptional } from 'src/shared/schemas/objectToUuidSchema';
 import { Order } from '@prisma/client';
+import { Wallet } from '@prisma/client';
+import { Deposit } from '@prisma/client';
+import { Withdrawal } from '@prisma/client';
+import { BalanceSnapshot } from '@prisma/client';
 
 extendZodWithOpenApi(z);
 
@@ -72,6 +76,7 @@ export const accountCreateInputSchema = z.object({
   type: z.nativeEnum(accountEnumerators.type).nullable().optional(),
   status: z.nativeEnum(accountEnumerators.status).nullable().optional(),
   meta: jsonSchema.optional(),
+  user: objectToUuidSchemaOptional,
   importHash: z.string().optional(),
 });
 
@@ -83,6 +88,7 @@ export const accountImportFileSchema = z
     type: z.string(),
     status: z.string(),
     meta: z.string(),
+    user: z.string(),
   })
   .partial();
 
@@ -94,7 +100,12 @@ export const accountUpdateBodyInputSchema =
   accountCreateInputSchema.partial();
 
 export interface AccountWithRelationships extends Account {
+  user?: Membership;
   orders?: Order[];
+  wallets?: Wallet[];
+  deposits?: Deposit[];
+  withdrawals?: Withdrawal[];
+  snapshots?: BalanceSnapshot[];
   createdByMembership?: Membership;
   updatedByMembership?: Membership;
   archivedByMembership?: Membership;

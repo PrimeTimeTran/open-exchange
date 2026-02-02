@@ -61,6 +61,7 @@ export async function assetUpdateController(
       precision: data.precision,
       isFractional: data.isFractional,
       meta: data.meta,
+      decimals: data.decimals,
     },
   });
 
@@ -74,6 +75,10 @@ export async function assetUpdateController(
     include: {
       baseInstruments: true,
       quoteInstruments: true,
+      wallets: true,
+      deposits: true,
+      withdrawals: true,
+      snapshots: true,
       createdByMembership: true,
       updatedByMembership: true,
       archivedByMembership: true,

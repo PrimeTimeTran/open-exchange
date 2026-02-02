@@ -51,9 +51,27 @@ export async function ledgerEventFindManyController(
     });
   }
 
+  if (filter?.referenceId != null) {
+    whereAnd.push({
+      referenceId: { contains: filter?.referenceId, mode: 'insensitive' },
+    });
+  }
+
   if (filter?.referenceType != null) {
     whereAnd.push({
       referenceType: filter?.referenceType,
+    });
+  }
+
+  if (filter?.status != null) {
+    whereAnd.push({
+      status: filter?.status,
+    });
+  }
+
+  if (filter?.description != null) {
+    whereAnd.push({
+      description: { contains: filter?.description, mode: 'insensitive' },
     });
   }
 

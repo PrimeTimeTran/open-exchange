@@ -44,7 +44,11 @@ export async function ledgerEventCreate(body: unknown, context: AppContext) {
   let ledgerEvent = await prisma.ledgerEvent.create({
     data: {
       type: data.type,
+      referenceId: data.referenceId,
       referenceType: data.referenceType,
+      status: data.status,
+      description: data.description,
+      meta: data.meta,
       importHash: data.importHash,
     },
     include: {

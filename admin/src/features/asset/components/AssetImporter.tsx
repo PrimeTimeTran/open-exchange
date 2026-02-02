@@ -17,6 +17,7 @@ export function AssetImporter({ context }: { context: AppContext }) {
         'precision',
         'isFractional',
         'meta',
+        'decimals',
       ]}
       labels={context.dictionary.asset.fields}
       context={context}

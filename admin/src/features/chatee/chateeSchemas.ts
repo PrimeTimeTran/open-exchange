@@ -4,6 +4,7 @@ import { importerInputSchema } from 'src/shared/schemas/importerSchemas';
 import { orderBySchema } from 'src/shared/schemas/orderBySchema';
 import { z } from 'zod';
 import { chateeEnumerators } from 'src/features/chatee/chateeEnumerators';
+import { jsonSchema } from 'src/shared/schemas/jsonSchema';
 import { objectToUuidSchema, objectToUuidSchemaOptional } from 'src/shared/schemas/objectToUuidSchema';
 import { Chat } from '@prisma/client';
 import { Message } from '@prisma/client';
@@ -73,6 +74,7 @@ export const chateeCreateInputSchema = z.object({
   nickname: z.string().trim().nullable().optional(),
   status: z.nativeEnum(chateeEnumerators.status).nullable().optional(),
   role: z.array(z.string()).optional(),
+  meta: jsonSchema.optional(),
   user: objectToUuidSchemaOptional,
   chat: objectToUuidSchemaOptional,
   importHash: z.string().optional(),
@@ -86,6 +88,7 @@ export const chateeImportFileSchema = z
     nickname: z.string(),
     status: z.string(),
     role: z.string().transform((val) => val?.split(' ')?.filter(Boolean) || []),
+    meta: z.string(),
     user: z.string(),
     chat: z.string(),
   })

@@ -58,6 +58,7 @@ export function AssetForm({
     precision: asset?.precision || '',
     isFractional: asset?.isFractional || false,
     meta: asset?.meta?.toString() || '',
+    decimals: asset?.decimals || '',
   });
 
   const form = useForm({
@@ -269,6 +270,33 @@ export function AssetForm({
               )}
             />
           </div>
+          <div className="grid max-w-lg gap-1">
+              <FormField
+                control={form.control}
+                name="decimals"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {dictionary.asset.fields.decimals}
+                    </FormLabel>
+
+                    <Input
+                      type="number"
+                      disabled={mutation.isPending || mutation.isSuccess}
+                      {...field}
+                    />
+
+                    {dictionary.asset.hints.decimals ? (
+                      <FormDescription>
+                        {dictionary.asset.hints.decimals}
+                      </FormDescription>
+                    ) : null}
+
+                    <FormMessage data-testid="decimals-error" />
+                  </FormItem>
+                )}
+              />
+            </div>
 
           <div className="flex gap-2">
             <Button

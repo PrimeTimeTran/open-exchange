@@ -40,7 +40,6 @@ export async function orderFindController(
       },
     },
     include: {
-      user: true,
       account: true,
       instrument: true,
       buys: true,

@@ -28,6 +28,8 @@ import { useSetUnsavedChanges } from 'src/shared/components/unsavedChanges/Unsav
 import { ledgerEventEnumerators } from 'src/features/ledgerEvent/ledgerEventEnumerators';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
 import SelectInput from 'src/shared/components/form/SelectInput';
+import { Input } from 'src/shared/components/ui/input';
+import { Textarea } from 'src/shared/components/ui/textarea';
 
 export function LedgerEventForm({
   ledgerEvent,
@@ -51,7 +53,11 @@ export function LedgerEventForm({
 
   const [initialValues] = React.useState({
     type: ledgerEvent?.type || null,
+    referenceId: ledgerEvent?.referenceId || '',
     referenceType: ledgerEvent?.referenceType || null,
+    status: ledgerEvent?.status || null,
+    description: ledgerEvent?.description || '',
+    meta: ledgerEvent?.meta?.toString() || '',
   });
 
   const form = useForm({
@@ -154,6 +160,32 @@ export function LedgerEventForm({
           />
           </div>
           <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="referenceId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {dictionary.ledgerEvent.fields.referenceId}
+                  </FormLabel>
+
+                  <Input
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    {...field}
+                  />
+
+                  {dictionary.ledgerEvent.hints.referenceId ? (
+                    <FormDescription>
+                      {dictionary.ledgerEvent.hints.referenceId}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="referenceId-error" />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid max-w-lg gap-1">
           <FormField
             control={form.control}
             name="referenceType"
@@ -188,6 +220,94 @@ export function LedgerEventForm({
               </FormItem>
             )}
           />
+          </div>
+          <div className="grid max-w-lg gap-1">
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{dictionary.ledgerEvent.fields.status}</FormLabel>
+
+                <SelectInput
+                  options={Object.keys(ledgerEventEnumerators.status).map(
+                    (value) => ({
+                      value,
+                      label: enumeratorLabel(
+                        dictionary.ledgerEvent.enumerators.status,
+                        value,
+                      ),
+                    }),
+                  )}
+                  dictionary={dictionary}
+                  isClearable={true}
+                  disabled={mutation.isPending || mutation.isSuccess}
+                  onChange={field.onChange}
+                  value={field.value}
+                />
+
+                {dictionary.ledgerEvent.hints.status ? (
+                  <FormDescription>
+                    {dictionary.ledgerEvent.hints.status}
+                  </FormDescription>
+                ) : null}
+
+                <FormMessage data-testid="status-error" />
+              </FormItem>
+            )}
+          />
+          </div>
+          <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {dictionary.ledgerEvent.fields.description}
+                  </FormLabel>
+
+                  <Input
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    {...field}
+                  />
+
+                  {dictionary.ledgerEvent.hints.description ? (
+                    <FormDescription>
+                      {dictionary.ledgerEvent.hints.description}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="description-error" />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="meta"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {dictionary.ledgerEvent.fields.meta}
+                  </FormLabel>
+
+                  <Textarea
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    {...field}
+                  />
+
+                  {dictionary.ledgerEvent.hints.meta ? (
+                    <FormDescription>
+                      {dictionary.ledgerEvent.hints.meta}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="meta-error" />
+                </FormItem>
+              )}
+            />
           </div>
 
           <div className="flex gap-2">

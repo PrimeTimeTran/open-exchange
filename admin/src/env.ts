@@ -74,9 +74,9 @@ export const zodEnv = z
   .refine((data) => {
     if (data.NEXT_PUBLIC_SUBSCRIPTION_MODE !== 'disabled') {
       return (
-        // data.STRIPE_SECRET_KEY &&
-        // data.STRIPE_WEBHOOK_SECRET &&
-        // data.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY &&
+        data.STRIPE_SECRET_KEY &&
+        data.STRIPE_WEBHOOK_SECRET &&
+        data.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY &&
         data.NEXT_PUBLIC_SUBSCRIPTION_PRICES_BASIC &&
         data.NEXT_PUBLIC_SUBSCRIPTION_PRICES_ENTERPRISE
       );

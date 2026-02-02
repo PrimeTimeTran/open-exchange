@@ -13,6 +13,8 @@ export function LedgerEntryImporter({ context }: { context: AppContext }) {
     <Importer
       keys={[
         'amount',
+        'accountId',
+        'meta',
         'event',
       ]}
       labels={context.dictionary.ledgerEntry.fields}

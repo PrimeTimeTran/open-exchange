@@ -59,6 +59,7 @@ export async function chateeUpdateController(
       nickname: data.nickname,
       status: data.status,
       role: data.role,
+      meta: data.meta,
       user: prismaRelationship.connectOrDisconnectOne(data.user),
       chat: prismaRelationship.connectOrDisconnectOne(data.chat),
     },

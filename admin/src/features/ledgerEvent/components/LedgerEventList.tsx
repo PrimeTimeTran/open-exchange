@@ -89,6 +89,12 @@ export default function LedgerEventList({ context }: { context: AppContext }) {
       },
     },
     {
+      accessorKey: 'referenceId',
+      meta: {
+        title: dictionary.ledgerEvent.fields.referenceId,
+      },
+    },
+    {
       accessorKey: 'referenceType',
       meta: {
         title: dictionary.ledgerEvent.fields.referenceType,
@@ -98,6 +104,24 @@ export default function LedgerEventList({ context }: { context: AppContext }) {
           dictionary.ledgerEvent.enumerators.referenceType,
           row.getValue('referenceType'),
         );
+      },
+    },
+    {
+      accessorKey: 'status',
+      meta: {
+        title: dictionary.ledgerEvent.fields.status,
+      },
+      cell: ({ row }) => {
+        return enumeratorLabel(
+          dictionary.ledgerEvent.enumerators.status,
+          row.getValue('status'),
+        );
+      },
+    },
+    {
+      accessorKey: 'description',
+      meta: {
+        title: dictionary.ledgerEvent.fields.description,
       },
     },
     {

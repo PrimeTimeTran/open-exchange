@@ -13,8 +13,6 @@ import { AppContext } from 'src/shared/controller/appContext';
 import { formatDatetime } from 'src/shared/lib/formatDateTime';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
 import { formatDecimal } from 'src/shared/lib/formatDecimal';
-import { membershipLabel } from 'src/features/membership/membershipLabel';
-import { MembershipLink } from 'src/features/membership/components/MembershipLink';
 import { accountLabel } from 'src/features/account/accountLabel';
 import { AccountLink } from 'src/features/account/components/AccountLink';
 import { instrumentLabel } from 'src/features/instrument/instrumentLabel';
@@ -22,6 +20,8 @@ import { InstrumentLink } from 'src/features/instrument/components/InstrumentLin
 import { tradeLabel } from 'src/features/trade/tradeLabel';
 import { TradeLink } from 'src/features/trade/components/TradeLink';
 import { orderLabel } from 'src/features/order/orderLabel';
+import { MembershipLink } from 'src/features/membership/components/MembershipLink';
+import { membershipLabel } from 'src/features/membership/membershipLabel';
 
 export function OrderView({
   id,
@@ -83,20 +83,6 @@ export function OrderView({
       </div>
 
       <div className="my-6 divide-y border-t">
-        {order.user != null && (
-          <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
-            <div className="font-semibold">
-              {dictionary.order.fields.user}
-            </div>
-            <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
-              <MembershipLink membership={order.user} context={context} />
-              <CopyToClipboardButton
-                text={membershipLabel(order.user, context.dictionary)}
-                dictionary={context.dictionary}
-              />
-            </div>
-          </div>
-        )}
         {order.account != null && (
           <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
             <div className="font-semibold">

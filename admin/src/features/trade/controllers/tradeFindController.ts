@@ -43,7 +43,7 @@ export async function tradeFindController(
       buyOrderId: true,
       sellOrderId: true,
       instrument: true,
-      tradeFills: true,
+      fills: true,
       createdByMembership: true,
       updatedByMembership: true,
       archivedByMembership: true,

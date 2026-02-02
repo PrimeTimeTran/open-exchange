@@ -26,6 +26,7 @@ import { z } from 'zod';
 import { ledgerEntryCreateInputSchema } from 'src/features/ledgerEntry/ledgerEntrySchemas';
 import { useSetUnsavedChanges } from 'src/shared/components/unsavedChanges/UnsavedChangesProvider';
 import { Input } from 'src/shared/components/ui/input';
+import { Textarea } from 'src/shared/components/ui/textarea';
 import { LedgerEventAutocompleteInput } from 'src/features/ledgerEvent/components/LedgerEventAutocompleteInput';
 
 export function LedgerEntryForm({
@@ -50,6 +51,8 @@ export function LedgerEntryForm({
 
   const [initialValues] = React.useState({
     amount: ledgerEntry?.amount ? Number(ledgerEntry?.amount) : '',
+    accountId: ledgerEntry?.accountId || '',
+    meta: ledgerEntry?.meta?.toString() || '',
     event: ledgerEntry?.event || null,
   });
 
@@ -143,6 +146,58 @@ export function LedgerEntryForm({
                 )}
               />
             </div>
+          <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="accountId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {dictionary.ledgerEntry.fields.accountId}
+                  </FormLabel>
+
+                  <Input
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    {...field}
+                  />
+
+                  {dictionary.ledgerEntry.hints.accountId ? (
+                    <FormDescription>
+                      {dictionary.ledgerEntry.hints.accountId}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="accountId-error" />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="meta"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {dictionary.ledgerEntry.fields.meta}
+                  </FormLabel>
+
+                  <Textarea
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    {...field}
+                  />
+
+                  {dictionary.ledgerEntry.hints.meta ? (
+                    <FormDescription>
+                      {dictionary.ledgerEntry.hints.meta}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="meta-error" />
+                </FormItem>
+              )}
+            />
+          </div>
           <div className="grid max-w-lg gap-1">
             <FormField
               control={form.control}

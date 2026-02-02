@@ -10,7 +10,7 @@ docker-compose*
 .git
 .gitignore
 .env
-# .env.local
+.env.local
 */bin
 */obj
 README.md

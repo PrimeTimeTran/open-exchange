@@ -62,6 +62,12 @@ export async function ledgerEntryFindManyController(
     }
   }
 
+  if (filter?.accountId != null) {
+    whereAnd.push({
+      accountId: { contains: filter?.accountId, mode: 'insensitive' },
+    });
+  }
+
   const prisma = prismaAuth(context);
 
   let ledgerEntries = await prisma.ledgerEntry.findMany({

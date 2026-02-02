@@ -44,26 +44,48 @@ export function menus(context: AppContext) {
     });
   }
 
-  if (hasPermission(permissions.postRead, context)) {
+  if (hasPermission(permissions.accountRead, context)) {
     menus.push({
-      id: 'post',
-      label: context.dictionary.post.list.menu,
-      href: `/post`,
+      id: 'account',
+      label: context.dictionary.account.list.menu,
+      href: `/account`,
       Icon: LuLayoutGrid,
-      createHref: hasPermission(permissions.postCreate, context)
-        ? `/post/new`
-        : undefined,
+      createHref: hasPermission(permissions.accountCreate, context)
+          ? `/account/new`
+          : undefined,
     });
   }
-  if (hasPermission(permissions.commentRead, context)) {
+  if (hasPermission(permissions.walletRead, context)) {
     menus.push({
-      id: 'comment',
-      label: context.dictionary.comment.list.menu,
-      href: `/comment`,
+      id: 'wallet',
+      label: context.dictionary.wallet.list.menu,
+      href: `/wallet`,
       Icon: LuLayoutGrid,
-      createHref: hasPermission(permissions.commentCreate, context)
-        ? `/comment/new`
-        : undefined,
+      createHref: hasPermission(permissions.walletCreate, context)
+          ? `/wallet/new`
+          : undefined,
+    });
+  }
+  if (hasPermission(permissions.depositRead, context)) {
+    menus.push({
+      id: 'deposit',
+      label: context.dictionary.deposit.list.menu,
+      href: `/deposit`,
+      Icon: LuLayoutGrid,
+      createHref: hasPermission(permissions.depositCreate, context)
+          ? `/deposit/new`
+          : undefined,
+    });
+  }
+  if (hasPermission(permissions.withdrawalRead, context)) {
+    menus.push({
+      id: 'withdrawal',
+      label: context.dictionary.withdrawal.list.menu,
+      href: `/withdrawal`,
+      Icon: LuLayoutGrid,
+      createHref: hasPermission(permissions.withdrawalCreate, context)
+          ? `/withdrawal/new`
+          : undefined,
     });
   }
   if (hasPermission(permissions.orderRead, context)) {
@@ -73,63 +95,8 @@ export function menus(context: AppContext) {
       href: `/order`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.orderCreate, context)
-        ? `/order/new`
-        : undefined,
-    });
-  }
-  if (hasPermission(permissions.articleRead, context)) {
-    menus.push({
-      id: 'article',
-      label: context.dictionary.article.list.menu,
-      href: `/article`,
-      Icon: LuLayoutGrid,
-      createHref: hasPermission(permissions.articleCreate, context)
-        ? `/article/new`
-        : undefined,
-    });
-  }
-  if (hasPermission(permissions.itemRead, context)) {
-    menus.push({
-      id: 'item',
-      label: context.dictionary.item.list.menu,
-      href: `/item`,
-      Icon: LuLayoutGrid,
-      createHref: hasPermission(permissions.itemCreate, context)
-        ? `/item/new`
-        : undefined,
-    });
-  }
-  if (hasPermission(permissions.chatRead, context)) {
-    menus.push({
-      id: 'chat',
-      label: context.dictionary.chat.list.menu,
-      href: `/chat`,
-      Icon: LuLayoutGrid,
-      createHref: hasPermission(permissions.chatCreate, context)
-        ? `/chat/new`
-        : undefined,
-    });
-  }
-  if (hasPermission(permissions.chateeRead, context)) {
-    menus.push({
-      id: 'chatee',
-      label: context.dictionary.chatee.list.menu,
-      href: `/chatee`,
-      Icon: LuLayoutGrid,
-      createHref: hasPermission(permissions.chateeCreate, context)
-        ? `/chatee/new`
-        : undefined,
-    });
-  }
-  if (hasPermission(permissions.messageRead, context)) {
-    menus.push({
-      id: 'message',
-      label: context.dictionary.message.list.menu,
-      href: `/message`,
-      Icon: LuLayoutGrid,
-      createHref: hasPermission(permissions.messageCreate, context)
-        ? `/message/new`
-        : undefined,
+          ? `/order/new`
+          : undefined,
     });
   }
   if (hasPermission(permissions.assetRead, context)) {
@@ -139,19 +106,8 @@ export function menus(context: AppContext) {
       href: `/asset`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.assetCreate, context)
-        ? `/asset/new`
-        : undefined,
-    });
-  }
-  if (hasPermission(permissions.accountRead, context)) {
-    menus.push({
-      id: 'account',
-      label: context.dictionary.account.list.menu,
-      href: `/account`,
-      Icon: LuLayoutGrid,
-      createHref: hasPermission(permissions.accountCreate, context)
-        ? `/account/new`
-        : undefined,
+          ? `/asset/new`
+          : undefined,
     });
   }
   if (hasPermission(permissions.instrumentRead, context)) {
@@ -161,8 +117,8 @@ export function menus(context: AppContext) {
       href: `/instrument`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.instrumentCreate, context)
-        ? `/instrument/new`
-        : undefined,
+          ? `/instrument/new`
+          : undefined,
     });
   }
   if (hasPermission(permissions.ledgerEventRead, context)) {
@@ -172,8 +128,8 @@ export function menus(context: AppContext) {
       href: `/ledger-event`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.ledgerEventCreate, context)
-        ? `/ledger-event/new`
-        : undefined,
+          ? `/ledger-event/new`
+          : undefined,
     });
   }
   if (hasPermission(permissions.ledgerEntryRead, context)) {
@@ -183,8 +139,8 @@ export function menus(context: AppContext) {
       href: `/ledger-entry`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.ledgerEntryCreate, context)
-        ? `/ledger-entry/new`
-        : undefined,
+          ? `/ledger-entry/new`
+          : undefined,
     });
   }
   if (hasPermission(permissions.tradeRead, context)) {
@@ -194,19 +150,129 @@ export function menus(context: AppContext) {
       href: `/trade`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.tradeCreate, context)
-        ? `/trade/new`
-        : undefined,
+          ? `/trade/new`
+          : undefined,
     });
   }
-  if (hasPermission(permissions.tradeFillRead, context)) {
+  if (hasPermission(permissions.fillRead, context)) {
     menus.push({
-      id: 'tradeFill',
-      label: context.dictionary.tradeFill.list.menu,
-      href: `/trade-fill`,
+      id: 'fill',
+      label: context.dictionary.fill.list.menu,
+      href: `/fill`,
       Icon: LuLayoutGrid,
-      createHref: hasPermission(permissions.tradeFillCreate, context)
-        ? `/trade-fill/new`
-        : undefined,
+      createHref: hasPermission(permissions.fillCreate, context)
+          ? `/fill/new`
+          : undefined,
+    });
+  }
+  if (hasPermission(permissions.postRead, context)) {
+    menus.push({
+      id: 'post',
+      label: context.dictionary.post.list.menu,
+      href: `/post`,
+      Icon: LuLayoutGrid,
+      createHref: hasPermission(permissions.postCreate, context)
+          ? `/post/new`
+          : undefined,
+    });
+  }
+  if (hasPermission(permissions.commentRead, context)) {
+    menus.push({
+      id: 'comment',
+      label: context.dictionary.comment.list.menu,
+      href: `/comment`,
+      Icon: LuLayoutGrid,
+      createHref: hasPermission(permissions.commentCreate, context)
+          ? `/comment/new`
+          : undefined,
+    });
+  }
+  if (hasPermission(permissions.articleRead, context)) {
+    menus.push({
+      id: 'article',
+      label: context.dictionary.article.list.menu,
+      href: `/article`,
+      Icon: LuLayoutGrid,
+      createHref: hasPermission(permissions.articleCreate, context)
+          ? `/article/new`
+          : undefined,
+    });
+  }
+  if (hasPermission(permissions.chatRead, context)) {
+    menus.push({
+      id: 'chat',
+      label: context.dictionary.chat.list.menu,
+      href: `/chat`,
+      Icon: LuLayoutGrid,
+      createHref: hasPermission(permissions.chatCreate, context)
+          ? `/chat/new`
+          : undefined,
+    });
+  }
+  if (hasPermission(permissions.chateeRead, context)) {
+    menus.push({
+      id: 'chatee',
+      label: context.dictionary.chatee.list.menu,
+      href: `/chatee`,
+      Icon: LuLayoutGrid,
+      createHref: hasPermission(permissions.chateeCreate, context)
+          ? `/chatee/new`
+          : undefined,
+    });
+  }
+  if (hasPermission(permissions.messageRead, context)) {
+    menus.push({
+      id: 'message',
+      label: context.dictionary.message.list.menu,
+      href: `/message`,
+      Icon: LuLayoutGrid,
+      createHref: hasPermission(permissions.messageCreate, context)
+          ? `/message/new`
+          : undefined,
+    });
+  }
+  if (hasPermission(permissions.feeScheduleRead, context)) {
+    menus.push({
+      id: 'feeSchedule',
+      label: context.dictionary.feeSchedule.list.menu,
+      href: `/fee-schedule`,
+      Icon: LuLayoutGrid,
+      createHref: hasPermission(permissions.feeScheduleCreate, context)
+          ? `/fee-schedule/new`
+          : undefined,
+    });
+  }
+  if (hasPermission(permissions.balanceSnapshotRead, context)) {
+    menus.push({
+      id: 'balanceSnapshot',
+      label: context.dictionary.balanceSnapshot.list.menu,
+      href: `/balance-snapshot`,
+      Icon: LuLayoutGrid,
+      createHref: hasPermission(permissions.balanceSnapshotCreate, context)
+          ? `/balance-snapshot/new`
+          : undefined,
+    });
+  }
+  if (hasPermission(permissions.systemAccountRead, context)) {
+    menus.push({
+      id: 'systemAccount',
+      label: context.dictionary.systemAccount.list.menu,
+      href: `/system-account`,
+      Icon: LuLayoutGrid,
+      createHref: hasPermission(permissions.systemAccountCreate, context)
+          ? `/system-account/new`
+          : undefined,
+    });
+  }
+  if (hasPermission(permissions.feedbackRead, context)) {
+    menus.push({
+      id: 'feedback',
+      label: context.dictionary.feedback.list.menu,
+      href: `/feedback`,
+      Icon: LuLayoutGrid,
+      createHref: hasPermission(permissions.feedbackCreate, context)
+          ? `/feedback/new`
+          : undefined,
     });
   }
 

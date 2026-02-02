@@ -58,6 +58,7 @@ export async function tradeUpdateController(
     data: {
       price: data.price,
       quantity: data.quantity,
+      meta: data.meta,
       buyOrderId: prismaRelationship.setMany(data.buyOrderId),
       sellOrderId: prismaRelationship.setMany(data.sellOrderId),
       instrument: prismaRelationship.connectOrDisconnectOne(data.instrument),
@@ -75,7 +76,7 @@ export async function tradeUpdateController(
       buyOrderId: true,
       sellOrderId: true,
       instrument: true,
-      tradeFills: true,
+      fills: true,
       createdByMembership: true,
       updatedByMembership: true,
       archivedByMembership: true,

@@ -32,7 +32,7 @@ export const authSignUpApiDoc: RouteConfig = {
   },
   responses: {
     200: {
-      description: 'OK',
+      description: 'JWT Token',
     },
   },
 };

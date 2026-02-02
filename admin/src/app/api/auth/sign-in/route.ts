@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     context = await appContext(request);
     const payload = await authSignInController(body, context);
-    const response = await NextResponseSuccess(request, context, true);
+    const response = await NextResponseSuccess(request, context, payload);
     cookieSet(request.cookies, response.cookies, {
       invitationToken: '',
       token: payload.token,

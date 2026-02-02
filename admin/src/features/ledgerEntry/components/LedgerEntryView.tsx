@@ -97,6 +97,20 @@ export function LedgerEntryView({
             </div>
           </div>
         )}
+        {Boolean(ledgerEntry.accountId) && (
+          <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
+            <div className="font-semibold">
+              {dictionary.ledgerEntry.fields.accountId}
+            </div>
+            <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
+              <span>{ledgerEntry.accountId}</span>
+              <CopyToClipboardButton
+                text={ledgerEntry.accountId}
+                dictionary={context.dictionary}
+              />
+            </div>
+          </div>
+        )}
         {ledgerEntry.event != null && (
           <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
             <div className="font-semibold">

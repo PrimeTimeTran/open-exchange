@@ -30,6 +30,7 @@ import { chateeEnumerators } from 'src/features/chatee/chateeEnumerators';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
 import SelectInput from 'src/shared/components/form/SelectInput';
 import TagsInput from 'src/shared/components/form/TagsInput';
+import { Textarea } from 'src/shared/components/ui/textarea';
 import { MembershipAutocompleteInput } from 'src/features/membership/components/MembershipAutocompleteInput';
 import { ChatAutocompleteInput } from 'src/features/chat/components/ChatAutocompleteInput';
 
@@ -57,6 +58,7 @@ export function ChateeForm({
     nickname: chatee?.nickname || '',
     status: chatee?.status || null,
     role: chatee?.role || [],
+    meta: chatee?.meta?.toString() || '',
     user: chatee?.user || null,
     chat: chatee?.chat || null,
   });
@@ -210,6 +212,32 @@ export function ChateeForm({
                   ) : null}
 
                   <FormMessage data-testid="role-error" />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="meta"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {dictionary.chatee.fields.meta}
+                  </FormLabel>
+
+                  <Textarea
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    {...field}
+                  />
+
+                  {dictionary.chatee.hints.meta ? (
+                    <FormDescription>
+                      {dictionary.chatee.hints.meta}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="meta-error" />
                 </FormItem>
               )}
             />

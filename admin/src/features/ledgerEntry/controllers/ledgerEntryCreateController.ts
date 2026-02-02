@@ -44,6 +44,8 @@ export async function ledgerEntryCreate(body: unknown, context: AppContext) {
   let ledgerEntry = await prisma.ledgerEntry.create({
     data: {
       amount: data.amount,
+      accountId: data.accountId,
+      meta: data.meta,
       event: prismaRelationship.connectOne(data.event),
       importHash: data.importHash,
     },

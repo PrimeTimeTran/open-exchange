@@ -14,6 +14,14 @@ import { formatDatetime } from 'src/shared/lib/formatDateTime';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
 import { instrumentLabel } from 'src/features/instrument/instrumentLabel';
 import { InstrumentLink } from 'src/features/instrument/components/InstrumentLink';
+import { walletLabel } from 'src/features/wallet/walletLabel';
+import { WalletLink } from 'src/features/wallet/components/WalletLink';
+import { depositLabel } from 'src/features/deposit/depositLabel';
+import { DepositLink } from 'src/features/deposit/components/DepositLink';
+import { withdrawalLabel } from 'src/features/withdrawal/withdrawalLabel';
+import { WithdrawalLink } from 'src/features/withdrawal/components/WithdrawalLink';
+import { balanceSnapshotLabel } from 'src/features/balanceSnapshot/balanceSnapshotLabel';
+import { BalanceSnapshotLink } from 'src/features/balanceSnapshot/components/BalanceSnapshotLink';
 import { assetLabel } from 'src/features/asset/assetLabel';
 import { MembershipLink } from 'src/features/membership/components/MembershipLink';
 import { membershipLabel } from 'src/features/membership/membershipLabel';
@@ -150,6 +158,20 @@ export function AssetView({
             </div>
           </div>
         )}
+        {asset.decimals != null && (
+          <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
+            <div className="font-semibold">
+              {dictionary.asset.fields.decimals}
+            </div>
+            <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
+              <span>{asset.decimals}</span>
+              <CopyToClipboardButton
+                text={asset.decimals.toString()}
+                dictionary={context.dictionary}
+              />
+            </div>
+          </div>
+        )}
         {asset.baseInstruments?.length ? (<div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
           <div className="font-semibold">
             {dictionary.asset.fields.baseInstruments}
@@ -187,6 +209,94 @@ export function AssetView({
                   />
                   <CopyToClipboardButton
                     text={instrumentLabel(item, context.dictionary)}
+                    dictionary={context.dictionary}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>): null}
+        {asset.wallets?.length ? (<div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
+          <div className="font-semibold">
+            {dictionary.asset.fields.wallets}
+          </div>
+          <div className="col-span-2 flex flex-col gap-1">
+            {asset.wallets?.map((item) => {
+              return (
+                <div key={item?.id} className="flex items-center gap-4">
+                  <WalletLink
+                    wallet={item}
+                    context={context}
+                    className="whitespace-nowrap"
+                  />
+                  <CopyToClipboardButton
+                    text={walletLabel(item, context.dictionary)}
+                    dictionary={context.dictionary}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>): null}
+        {asset.deposits?.length ? (<div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
+          <div className="font-semibold">
+            {dictionary.asset.fields.deposits}
+          </div>
+          <div className="col-span-2 flex flex-col gap-1">
+            {asset.deposits?.map((item) => {
+              return (
+                <div key={item?.id} className="flex items-center gap-4">
+                  <DepositLink
+                    deposit={item}
+                    context={context}
+                    className="whitespace-nowrap"
+                  />
+                  <CopyToClipboardButton
+                    text={depositLabel(item, context.dictionary)}
+                    dictionary={context.dictionary}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>): null}
+        {asset.withdrawals?.length ? (<div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
+          <div className="font-semibold">
+            {dictionary.asset.fields.withdrawals}
+          </div>
+          <div className="col-span-2 flex flex-col gap-1">
+            {asset.withdrawals?.map((item) => {
+              return (
+                <div key={item?.id} className="flex items-center gap-4">
+                  <WithdrawalLink
+                    withdrawal={item}
+                    context={context}
+                    className="whitespace-nowrap"
+                  />
+                  <CopyToClipboardButton
+                    text={withdrawalLabel(item, context.dictionary)}
+                    dictionary={context.dictionary}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>): null}
+        {asset.snapshots?.length ? (<div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
+          <div className="font-semibold">
+            {dictionary.asset.fields.snapshots}
+          </div>
+          <div className="col-span-2 flex flex-col gap-1">
+            {asset.snapshots?.map((item) => {
+              return (
+                <div key={item?.id} className="flex items-center gap-4">
+                  <BalanceSnapshotLink
+                    balanceSnapshot={item}
+                    context={context}
+                    className="whitespace-nowrap"
+                  />
+                  <CopyToClipboardButton
+                    text={balanceSnapshotLabel(item, context.dictionary)}
                     dictionary={context.dictionary}
                   />
                 </div>

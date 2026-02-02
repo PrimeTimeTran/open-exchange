@@ -25,12 +25,11 @@ import { getZodErrorMap } from 'src/translation/getZodErrorMap';
 import { z } from 'zod';
 import { orderCreateInputSchema } from 'src/features/order/orderSchemas';
 import { useSetUnsavedChanges } from 'src/shared/components/unsavedChanges/UnsavedChangesProvider';
-import { Textarea } from 'src/shared/components/ui/textarea';
 import { orderEnumerators } from 'src/features/order/orderEnumerators';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
 import SelectInput from 'src/shared/components/form/SelectInput';
 import { Input } from 'src/shared/components/ui/input';
-import { MembershipAutocompleteInput } from 'src/features/membership/components/MembershipAutocompleteInput';
+import { Textarea } from 'src/shared/components/ui/textarea';
 import { AccountAutocompleteInput } from 'src/features/account/components/AccountAutocompleteInput';
 import { InstrumentAutocompleteInput } from 'src/features/instrument/components/InstrumentAutocompleteInput';
 
@@ -55,7 +54,6 @@ export function OrderForm({
   const isEditing = Boolean(order?.id);
 
   const [initialValues] = React.useState({
-    user: order?.user || null,
     account: order?.account || null,
     instrument: order?.instrument || null,
     side: order?.side || null,
@@ -131,34 +129,6 @@ export function OrderForm({
         }}
       >
         <div className="grid w-full gap-8">
-          <div className="grid max-w-lg gap-1">
-            <FormField
-              control={form.control}
-              name="user"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{dictionary.order.fields.user}</FormLabel>
-
-                  <MembershipAutocompleteInput
-                    context={context}
-                    onChange={field.onChange}
-                    value={field.value}
-                    isClearable={true}
-                    disabled={mutation.isPending || mutation.isSuccess}
-                    mode="memory"
-                  />
-
-                  {dictionary.order.hints.user ? (
-                    <FormDescription>
-                      {dictionary.order.hints.user}
-                    </FormDescription>
-                  ) : null}
-
-                  <FormMessage data-testid="user-error" />
-                </FormItem>
-              )}
-            />
-          </div>
           <div className="grid max-w-lg gap-1">
             <FormField
               control={form.control}

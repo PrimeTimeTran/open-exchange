@@ -1,4 +1,6 @@
 const dictionary = {
+  
+
   projectName: 'Project',
 
   shared: {
@@ -508,89 +510,91 @@ const dictionary = {
     },
   },
 
-  post: {
-    label: 'Post',
+  account: {
+    label: 'Account',
 
     dashboardCard: {
-      title: 'Posts',
+      title: 'Accounts',
     },
 
     list: {
-      menu: 'Posts',
-      title: 'Posts',
-      noResults: 'No posts found.',
+      menu: 'Accounts',
+      title: 'Accounts',
+      noResults: 'No accounts found.',
     },
 
     export: {
-      success: 'Posts successfully exported',
+      success: 'Accounts successfully exported',
     },
 
     new: {
-      menu: 'New Post',
-      title: 'New Post',
-      success: 'Post successfully created',
+      menu: 'New Account',
+      title: 'New Account',
+      success: 'Account successfully created',
     },
 
     view: {
-      title: 'View Post',
+      title: 'View Account',
     },
 
     edit: {
-      menu: 'Edit Post',
-      title: 'Edit Post',
-      success: 'Post successfully updated',
+      menu: 'Edit Account',
+      title: 'Edit Account',
+      success: 'Account successfully updated',
     },
 
     restore: {
-      success: 'Post successfully restored',
-      noSelection: 'You must select at least one post to restore.',
-      confirmTitle: 'Restore Post?',
+      success: 'Account successfully restored',
+      noSelection: 'You must select at least one account to restore.',
+      confirmTitle: 'Restore Account?',
     },
 
     restoreMany: {
-      success: 'Post(s) successfully restored',
-      noSelection: 'You must select at least one post to restore.',
-      confirmTitle: 'Restore Post(s)?',
+      success: 'Account(s) successfully restored',
+      noSelection: 'You must select at least one account to restore.',
+      confirmTitle: 'Restore Account(s)?',
       confirmDescription:
-        'Are you sure you want to restore the {0} selected post(s)?',
+        'Are you sure you want to restore the {0} selected account(s)?',
     },
 
     archiveMany: {
-      success: 'Post(s) successfully archived',
-      noSelection: 'You must select at least one post to archive.',
-      confirmTitle: 'Archive Post(s)?',
+      success: 'Account(s) successfully archived',
+      noSelection: 'You must select at least one account to archive.',
+      confirmTitle: 'Archive Account(s)?',
       confirmDescription:
-        'Are you sure you want to archive the {0} selected post(s)?',
+        'Are you sure you want to archive the {0} selected account(s)?',
     },
 
     archive: {
-      success: 'Post successfully archived',
-      noSelection: 'You must select at least one post to archive.',
-      confirmTitle: 'Archive Post?',
+      success: 'Account successfully archived',
+      noSelection: 'You must select at least one account to archive.',
+      confirmTitle: 'Archive Account?',
     },
 
     destroyMany: {
-      success: 'Post(s) successfully deleted',
-      noSelection: 'You must select at least one post to delete.',
-      confirmTitle: 'Delete Post(s)?',
+      success: 'Account(s) successfully deleted',
+      noSelection: 'You must select at least one account to delete.',
+      confirmTitle: 'Delete Account(s)?',
       confirmDescription:
-        'Are you sure you want to delete the {0} selected post(s)?',
+        'Are you sure you want to delete the {0} selected account(s)?',
     },
 
     destroy: {
-      success: 'Post successfully deleted',
-      noSelection: 'You must select at least one post to delete.',
-      confirmTitle: 'Delete Post?',
+      success: 'Account successfully deleted',
+      noSelection: 'You must select at least one account to delete.',
+      confirmTitle: 'Delete Account?',
     },
 
     fields: {
-      title: 'Title',
-      body: 'Body',
-      meta: 'Meta',
-      files: 'Files',
-      images: 'Images',
       type: 'Type',
+      status: 'Status',
+      meta: 'Meta',
       user: 'User',
+      orders: 'Orders',
+      wallets: 'Wallets',
+      deposits: 'Deposits',
+      withdrawals: 'Withdrawals',
+      snapshots: 'Snapshots',
       createdByMembership: 'Created By',
       updatedByMembership: 'Updated By',
       archivedByMembership: 'Archived By',
@@ -600,99 +604,119 @@ const dictionary = {
     },
 
     hints: {
-      title: '',
-      body: '',
-      meta: '',
-      files: '',
-      images: '',
       type: '',
+      status: '',
+      meta: '',
       user: '',
+      orders: '',
+      wallets: '',
+      deposits: '',
+      withdrawals: '',
+      snapshots: '',
     },
 
-    enumerators: {},
+    enumerators: {
+      type: {
+        cash: 'Cash',
+        custody: 'Custody',
+        margin: 'Margin',
+        clearing: 'Clearing',
+        fees: 'Fees',
+      },
+
+      status: {
+        active: 'Active',
+        frozen: 'Frozen',
+        closed: 'Closed',
+      },
+    },
   },
 
-  comment: {
-    label: 'Comment',
+  wallet: {
+    label: 'Wallet',
 
     dashboardCard: {
-      title: 'Comments',
+      title: 'Wallets',
     },
 
     list: {
-      menu: 'Comments',
-      title: 'Comments',
-      noResults: 'No comments found.',
+      menu: 'Wallets',
+      title: 'Wallets',
+      noResults: 'No wallets found.',
     },
 
     export: {
-      success: 'Comments successfully exported',
+      success: 'Wallets successfully exported',
     },
 
     new: {
-      menu: 'New Comment',
-      title: 'New Comment',
-      success: 'Comment successfully created',
+      menu: 'New Wallet',
+      title: 'New Wallet',
+      success: 'Wallet successfully created',
     },
 
     view: {
-      title: 'View Comment',
+      title: 'View Wallet',
     },
 
     edit: {
-      menu: 'Edit Comment',
-      title: 'Edit Comment',
-      success: 'Comment successfully updated',
+      menu: 'Edit Wallet',
+      title: 'Edit Wallet',
+      success: 'Wallet successfully updated',
     },
 
     restore: {
-      success: 'Comment successfully restored',
-      noSelection: 'You must select at least one comment to restore.',
-      confirmTitle: 'Restore Comment?',
+      success: 'Wallet successfully restored',
+      noSelection: 'You must select at least one wallet to restore.',
+      confirmTitle: 'Restore Wallet?',
     },
 
     restoreMany: {
-      success: 'Comment(s) successfully restored',
-      noSelection: 'You must select at least one comment to restore.',
-      confirmTitle: 'Restore Comment(s)?',
+      success: 'Wallet(s) successfully restored',
+      noSelection: 'You must select at least one wallet to restore.',
+      confirmTitle: 'Restore Wallet(s)?',
       confirmDescription:
-        'Are you sure you want to restore the {0} selected comment(s)?',
+        'Are you sure you want to restore the {0} selected wallet(s)?',
     },
 
     archiveMany: {
-      success: 'Comment(s) successfully archived',
-      noSelection: 'You must select at least one comment to archive.',
-      confirmTitle: 'Archive Comment(s)?',
+      success: 'Wallet(s) successfully archived',
+      noSelection: 'You must select at least one wallet to archive.',
+      confirmTitle: 'Archive Wallet(s)?',
       confirmDescription:
-        'Are you sure you want to archive the {0} selected comment(s)?',
+        'Are you sure you want to archive the {0} selected wallet(s)?',
     },
 
     archive: {
-      success: 'Comment successfully archived',
-      noSelection: 'You must select at least one comment to archive.',
-      confirmTitle: 'Archive Comment?',
+      success: 'Wallet successfully archived',
+      noSelection: 'You must select at least one wallet to archive.',
+      confirmTitle: 'Archive Wallet?',
     },
 
     destroyMany: {
-      success: 'Comment(s) successfully deleted',
-      noSelection: 'You must select at least one comment to delete.',
-      confirmTitle: 'Delete Comment(s)?',
+      success: 'Wallet(s) successfully deleted',
+      noSelection: 'You must select at least one wallet to delete.',
+      confirmTitle: 'Delete Wallet(s)?',
       confirmDescription:
-        'Are you sure you want to delete the {0} selected comment(s)?',
+        'Are you sure you want to delete the {0} selected wallet(s)?',
     },
 
     destroy: {
-      success: 'Comment successfully deleted',
-      noSelection: 'You must select at least one comment to delete.',
-      confirmTitle: 'Delete Comment?',
+      success: 'Wallet successfully deleted',
+      noSelection: 'You must select at least one wallet to delete.',
+      confirmTitle: 'Delete Wallet?',
     },
 
     fields: {
-      body: 'Body',
+      available: 'Available',
+      locked: 'Locked',
+      total: 'Total',
+      version: 'Version',
       meta: 'Meta',
-      type: 'Type',
-      images: 'Images',
       user: 'User',
+      asset: 'Asset',
+      account: 'Account',
+      snapshots: 'Snapshots',
       createdByMembership: 'Created By',
       updatedByMembership: 'Updated By',
       archivedByMembership: 'Archived By',
@@ -702,14 +726,281 @@ const dictionary = {
     },
 
     hints: {
-      body: '',
+      available: '',
+      locked: '',
+      total: '',
+      version: '',
       meta: '',
-      type: '',
-      images: '',
       user: '',
+      asset: '',
+      account: '',
+      snapshots: '',
     },
 
-    enumerators: {},
+    enumerators: {
+
+    },
+  },
+
+  deposit: {
+    label: 'Deposit',
+
+    dashboardCard: {
+      title: 'Deposits',
+    },
+
+    list: {
+      menu: 'Deposits',
+      title: 'Deposits',
+      noResults: 'No deposits found.',
+    },
+
+    export: {
+      success: 'Deposits successfully exported',
+    },
+
+    new: {
+      menu: 'New Deposit',
+      title: 'New Deposit',
+      success: 'Deposit successfully created',
+    },
+
+    view: {
+      title: 'View Deposit',
+    },
+
+    edit: {
+      menu: 'Edit Deposit',
+      title: 'Edit Deposit',
+      success: 'Deposit successfully updated',
+    },
+
+    restore: {
+      success: 'Deposit successfully restored',
+      noSelection: 'You must select at least one deposit to restore.',
+      confirmTitle: 'Restore Deposit?',
+    },
+
+    restoreMany: {
+      success: 'Deposit(s) successfully restored',
+      noSelection: 'You must select at least one deposit to restore.',
+      confirmTitle: 'Restore Deposit(s)?',
+      confirmDescription:
+        'Are you sure you want to restore the {0} selected deposit(s)?',
+    },
+
+    archiveMany: {
+      success: 'Deposit(s) successfully archived',
+      noSelection: 'You must select at least one deposit to archive.',
+      confirmTitle: 'Archive Deposit(s)?',
+      confirmDescription:
+        'Are you sure you want to archive the {0} selected deposit(s)?',
+    },
+
+    archive: {
+      success: 'Deposit successfully archived',
+      noSelection: 'You must select at least one deposit to archive.',
+      confirmTitle: 'Archive Deposit?',
+    },
+
+    destroyMany: {
+      success: 'Deposit(s) successfully deleted',
+      noSelection: 'You must select at least one deposit to delete.',
+      confirmTitle: 'Delete Deposit(s)?',
+      confirmDescription:
+        'Are you sure you want to delete the {0} selected deposit(s)?',
+    },
+
+    destroy: {
+      success: 'Deposit successfully deleted',
+      noSelection: 'You must select at least one deposit to delete.',
+      confirmTitle: 'Delete Deposit?',
+    },
+
+    fields: {
+      amount: 'Amount',
+      status: 'Status',
+      chain: 'Chain',
+      txHash: 'TxHash',
+      fromAddress: 'FromAddress',
+      confirmations: 'Confirmations',
+      requiredConfirmations: 'RequiredConfirmations',
+      detectedAt: 'DetectedAt',
+      confirmedAt: 'ConfirmedAt',
+      creditedAt: 'CreditedAt',
+      meta: 'Meta',
+      account: 'Account',
+      asset: 'Asset',
+      createdByMembership: 'Created By',
+      updatedByMembership: 'Updated By',
+      archivedByMembership: 'Archived By',
+      createdAt: 'Created at',
+      updatedAt: 'Updated at',
+      archivedAt: 'Archived at',
+    },
+
+    hints: {
+      amount: '',
+      status: '',
+      chain: '',
+      txHash: '',
+      fromAddress: '',
+      confirmations: '',
+      requiredConfirmations: '',
+      detectedAt: '',
+      confirmedAt: '',
+      creditedAt: '',
+      meta: '',
+      account: '',
+      asset: '',
+    },
+
+    enumerators: {
+      status: {
+        detected: 'Detected',
+        confirming: 'Confirming',
+        confirmed: 'Confirmed',
+        credited: 'Credited',
+        rejected: 'Rejected',
+      },
+    },
+  },
+
+  withdrawal: {
+    label: 'Withdrawal',
+
+    dashboardCard: {
+      title: 'Withdrawals',
+    },
+
+    list: {
+      menu: 'Withdrawals',
+      title: 'Withdrawals',
+      noResults: 'No withdrawals found.',
+    },
+
+    export: {
+      success: 'Withdrawals successfully exported',
+    },
+
+    new: {
+      menu: 'New Withdrawal',
+      title: 'New Withdrawal',
+      success: 'Withdrawal successfully created',
+    },
+
+    view: {
+      title: 'View Withdrawal',
+    },
+
+    edit: {
+      menu: 'Edit Withdrawal',
+      title: 'Edit Withdrawal',
+      success: 'Withdrawal successfully updated',
+    },
+
+    restore: {
+      success: 'Withdrawal successfully restored',
+      noSelection: 'You must select at least one withdrawal to restore.',
+      confirmTitle: 'Restore Withdrawal?',
+    },
+
+    restoreMany: {
+      success: 'Withdrawal(s) successfully restored',
+      noSelection: 'You must select at least one withdrawal to restore.',
+      confirmTitle: 'Restore Withdrawal(s)?',
+      confirmDescription:
+        'Are you sure you want to restore the {0} selected withdrawal(s)?',
+    },
+
+    archiveMany: {
+      success: 'Withdrawal(s) successfully archived',
+      noSelection: 'You must select at least one withdrawal to archive.',
+      confirmTitle: 'Archive Withdrawal(s)?',
+      confirmDescription:
+        'Are you sure you want to archive the {0} selected withdrawal(s)?',
+    },
+
+    archive: {
+      success: 'Withdrawal successfully archived',
+      noSelection: 'You must select at least one withdrawal to archive.',
+      confirmTitle: 'Archive Withdrawal?',
+    },
+
+    destroyMany: {
+      success: 'Withdrawal(s) successfully deleted',
+      noSelection: 'You must select at least one withdrawal to delete.',
+      confirmTitle: 'Delete Withdrawal(s)?',
+      confirmDescription:
+        'Are you sure you want to delete the {0} selected withdrawal(s)?',
+    },
+
+    destroy: {
+      success: 'Withdrawal successfully deleted',
+      noSelection: 'You must select at least one withdrawal to delete.',
+      confirmTitle: 'Delete Withdrawal?',
+    },
+
+    fields: {
+      amount: 'Amount',
+      fee: 'Fee',
+      status: 'Status',
+      destinationAddress: 'DestinationAddress',
+      destinationTag: 'DestinationTag',
+      chain: 'Chain',
+      txHash: 'TxHash',
+      failureReason: 'FailureReason',
+      requestedBy: 'RequestedBy',
+      approvedBy: 'ApprovedBy',
+      approvedAt: 'ApprovedAt',
+      requestedAt: 'RequestedAt',
+      broadcastAt: 'BroadcastAt',
+      confirmedAt: 'ConfirmedAt',
+      confirmations: 'Confirmations',
+      meta: 'Meta',
+      account: 'Account',
+      asset: 'Asset',
+      createdByMembership: 'Created By',
+      updatedByMembership: 'Updated By',
+      archivedByMembership: 'Archived By',
+      createdAt: 'Created at',
+      updatedAt: 'Updated at',
+      archivedAt: 'Archived at',
+    },
+
+    hints: {
+      amount: '',
+      fee: '',
+      status: '',
+      destinationAddress: '',
+      destinationTag: '',
+      chain: '',
+      txHash: '',
+      failureReason: '',
+      requestedBy: '',
+      approvedBy: '',
+      approvedAt: '',
+      requestedAt: '',
+      broadcastAt: '',
+      confirmedAt: '',
+      confirmations: '',
+      meta: '',
+      account: '',
+      asset: '',
+    },
+
+    enumerators: {
+      status: {
+        requested: 'Requested',
+        approved: 'Approved',
+        rejected: 'Rejected',
+        queued: 'Queued',
+        broadcast: 'Broadcast',
+        confirmed: 'Confirmed',
+        failed: 'Failed',
+        cancelled: 'Cancelled',
+      },
+    },
   },
 
   order: {
@@ -788,15 +1079,14 @@ const dictionary = {
     },
 
     fields: {
-      meta: 'Meta',
       side: 'Side',
       type: 'Type',
       price: 'Price',
       quantity: 'Quantity',
+      quantityFilled: 'QuantityFilled',
       status: 'Status',
       timeInFore: 'TimeInFore',
-      quantityFilled: 'QuantityFilled',
-      user: 'User',
+      meta: 'Meta',
       account: 'Account',
       instrument: 'Instrument',
       buys: 'Buys',
@@ -810,15 +1100,14 @@ const dictionary = {
     },
 
     hints: {
-      meta: '',
       side: '',
       type: '',
       price: '',
       quantity: '',
+      quantityFilled: '',
       status: '',
       timeInFore: '',
-      quantityFilled: '',
-      user: '',
+      meta: '',
       account: '',
       instrument: '',
       buys: '',
@@ -854,534 +1143,6 @@ const dictionary = {
         day: 'Day',
       },
     },
-  },
-
-  article: {
-    label: 'Article',
-
-    dashboardCard: {
-      title: 'Articles',
-    },
-
-    list: {
-      menu: 'Articles',
-      title: 'Articles',
-      noResults: 'No articles found.',
-    },
-
-    export: {
-      success: 'Articles successfully exported',
-    },
-
-    new: {
-      menu: 'New Article',
-      title: 'New Article',
-      success: 'Article successfully created',
-    },
-
-    view: {
-      title: 'View Article',
-    },
-
-    edit: {
-      menu: 'Edit Article',
-      title: 'Edit Article',
-      success: 'Article successfully updated',
-    },
-
-    restore: {
-      success: 'Article successfully restored',
-      noSelection: 'You must select at least one article to restore.',
-      confirmTitle: 'Restore Article?',
-    },
-
-    restoreMany: {
-      success: 'Article(s) successfully restored',
-      noSelection: 'You must select at least one article to restore.',
-      confirmTitle: 'Restore Article(s)?',
-      confirmDescription:
-        'Are you sure you want to restore the {0} selected article(s)?',
-    },
-
-    archiveMany: {
-      success: 'Article(s) successfully archived',
-      noSelection: 'You must select at least one article to archive.',
-      confirmTitle: 'Archive Article(s)?',
-      confirmDescription:
-        'Are you sure you want to archive the {0} selected article(s)?',
-    },
-
-    archive: {
-      success: 'Article successfully archived',
-      noSelection: 'You must select at least one article to archive.',
-      confirmTitle: 'Archive Article?',
-    },
-
-    destroyMany: {
-      success: 'Article(s) successfully deleted',
-      noSelection: 'You must select at least one article to delete.',
-      confirmTitle: 'Delete Article(s)?',
-      confirmDescription:
-        'Are you sure you want to delete the {0} selected article(s)?',
-    },
-
-    destroy: {
-      success: 'Article successfully deleted',
-      noSelection: 'You must select at least one article to delete.',
-      confirmTitle: 'Delete Article?',
-    },
-
-    fields: {
-      title: 'Title',
-      body: 'Body',
-      meta: 'Meta',
-      type: 'Type',
-      images: 'Images',
-      files: 'Files',
-      user: 'User',
-      createdByMembership: 'Created By',
-      updatedByMembership: 'Updated By',
-      archivedByMembership: 'Archived By',
-      createdAt: 'Created at',
-      updatedAt: 'Updated at',
-      archivedAt: 'Archived at',
-    },
-
-    hints: {
-      title: '',
-      body: '',
-      meta: '',
-      type: '',
-      images: '',
-      files: '',
-      user: '',
-    },
-
-    enumerators: {},
-  },
-
-  item: {
-    label: 'Item',
-
-    dashboardCard: {
-      title: 'Items',
-    },
-
-    list: {
-      menu: 'Items',
-      title: 'Items',
-      noResults: 'No items found.',
-    },
-
-    export: {
-      success: 'Items successfully exported',
-    },
-
-    new: {
-      menu: 'New Item',
-      title: 'New Item',
-      success: 'Item successfully created',
-    },
-
-    view: {
-      title: 'View Item',
-    },
-
-    edit: {
-      menu: 'Edit Item',
-      title: 'Edit Item',
-      success: 'Item successfully updated',
-    },
-
-    restore: {
-      success: 'Item successfully restored',
-      noSelection: 'You must select at least one item to restore.',
-      confirmTitle: 'Restore Item?',
-    },
-
-    restoreMany: {
-      success: 'Item(s) successfully restored',
-      noSelection: 'You must select at least one item to restore.',
-      confirmTitle: 'Restore Item(s)?',
-      confirmDescription:
-        'Are you sure you want to restore the {0} selected item(s)?',
-    },
-
-    archiveMany: {
-      success: 'Item(s) successfully archived',
-      noSelection: 'You must select at least one item to archive.',
-      confirmTitle: 'Archive Item(s)?',
-      confirmDescription:
-        'Are you sure you want to archive the {0} selected item(s)?',
-    },
-
-    archive: {
-      success: 'Item successfully archived',
-      noSelection: 'You must select at least one item to archive.',
-      confirmTitle: 'Archive Item?',
-    },
-
-    destroyMany: {
-      success: 'Item(s) successfully deleted',
-      noSelection: 'You must select at least one item to delete.',
-      confirmTitle: 'Delete Item(s)?',
-      confirmDescription:
-        'Are you sure you want to delete the {0} selected item(s)?',
-    },
-
-    destroy: {
-      success: 'Item successfully deleted',
-      noSelection: 'You must select at least one item to delete.',
-      confirmTitle: 'Delete Item?',
-    },
-
-    fields: {
-      name: 'Name',
-      caption: 'Caption',
-      description: 'Description',
-      price: 'Price',
-      photos: 'Photos',
-      category: 'Category',
-      meta: 'Meta',
-      files: 'Files',
-
-      createdByMembership: 'Created By',
-      updatedByMembership: 'Updated By',
-      archivedByMembership: 'Archived By',
-      createdAt: 'Created at',
-      updatedAt: 'Updated at',
-      archivedAt: 'Archived at',
-    },
-
-    hints: {
-      name: '',
-      caption: '',
-      description: '',
-      price: '',
-      photos: '',
-      category: '',
-      meta: '',
-      files: '',
-    },
-
-    enumerators: {},
-  },
-
-  chat: {
-    label: 'Chat',
-
-    dashboardCard: {
-      title: 'Chats',
-    },
-
-    list: {
-      menu: 'Chats',
-      title: 'Chats',
-      noResults: 'No chats found.',
-    },
-
-    export: {
-      success: 'Chats successfully exported',
-    },
-
-    new: {
-      menu: 'New Chat',
-      title: 'New Chat',
-      success: 'Chat successfully created',
-    },
-
-    view: {
-      title: 'View Chat',
-    },
-
-    edit: {
-      menu: 'Edit Chat',
-      title: 'Edit Chat',
-      success: 'Chat successfully updated',
-    },
-
-    restore: {
-      success: 'Chat successfully restored',
-      noSelection: 'You must select at least one chat to restore.',
-      confirmTitle: 'Restore Chat?',
-    },
-
-    restoreMany: {
-      success: 'Chat(s) successfully restored',
-      noSelection: 'You must select at least one chat to restore.',
-      confirmTitle: 'Restore Chat(s)?',
-      confirmDescription:
-        'Are you sure you want to restore the {0} selected chat(s)?',
-    },
-
-    archiveMany: {
-      success: 'Chat(s) successfully archived',
-      noSelection: 'You must select at least one chat to archive.',
-      confirmTitle: 'Archive Chat(s)?',
-      confirmDescription:
-        'Are you sure you want to archive the {0} selected chat(s)?',
-    },
-
-    archive: {
-      success: 'Chat successfully archived',
-      noSelection: 'You must select at least one chat to archive.',
-      confirmTitle: 'Archive Chat?',
-    },
-
-    destroyMany: {
-      success: 'Chat(s) successfully deleted',
-      noSelection: 'You must select at least one chat to delete.',
-      confirmTitle: 'Delete Chat(s)?',
-      confirmDescription:
-        'Are you sure you want to delete the {0} selected chat(s)?',
-    },
-
-    destroy: {
-      success: 'Chat successfully deleted',
-      noSelection: 'You must select at least one chat to delete.',
-      confirmTitle: 'Delete Chat?',
-    },
-
-    fields: {
-      name: 'Name',
-      media: 'Media',
-      meta: 'Meta',
-      active: 'Active',
-      messages: 'Messages',
-      chatees: 'Chatees',
-      createdByMembership: 'Created By',
-      updatedByMembership: 'Updated By',
-      archivedByMembership: 'Archived By',
-      createdAt: 'Created at',
-      updatedAt: 'Updated at',
-      archivedAt: 'Archived at',
-    },
-
-    hints: {
-      name: '',
-      media: '',
-      meta: '',
-      active: '',
-      messages: '',
-      chatees: '',
-    },
-
-    enumerators: {},
-  },
-
-  chatee: {
-    label: 'Chatee',
-
-    dashboardCard: {
-      title: 'Chatees',
-    },
-
-    list: {
-      menu: 'Chatees',
-      title: 'Chatees',
-      noResults: 'No chatees found.',
-    },
-
-    export: {
-      success: 'Chatees successfully exported',
-    },
-
-    new: {
-      menu: 'New Chatee',
-      title: 'New Chatee',
-      success: 'Chatee successfully created',
-    },
-
-    view: {
-      title: 'View Chatee',
-    },
-
-    edit: {
-      menu: 'Edit Chatee',
-      title: 'Edit Chatee',
-      success: 'Chatee successfully updated',
-    },
-
-    restore: {
-      success: 'Chatee successfully restored',
-      noSelection: 'You must select at least one chatee to restore.',
-      confirmTitle: 'Restore Chatee?',
-    },
-
-    restoreMany: {
-      success: 'Chatee(s) successfully restored',
-      noSelection: 'You must select at least one chatee to restore.',
-      confirmTitle: 'Restore Chatee(s)?',
-      confirmDescription:
-        'Are you sure you want to restore the {0} selected chatee(s)?',
-    },
-
-    archiveMany: {
-      success: 'Chatee(s) successfully archived',
-      noSelection: 'You must select at least one chatee to archive.',
-      confirmTitle: 'Archive Chatee(s)?',
-      confirmDescription:
-        'Are you sure you want to archive the {0} selected chatee(s)?',
-    },
-
-    archive: {
-      success: 'Chatee successfully archived',
-      noSelection: 'You must select at least one chatee to archive.',
-      confirmTitle: 'Archive Chatee?',
-    },
-
-    destroyMany: {
-      success: 'Chatee(s) successfully deleted',
-      noSelection: 'You must select at least one chatee to delete.',
-      confirmTitle: 'Delete Chatee(s)?',
-      confirmDescription:
-        'Are you sure you want to delete the {0} selected chatee(s)?',
-    },
-
-    destroy: {
-      success: 'Chatee successfully deleted',
-      noSelection: 'You must select at least one chatee to delete.',
-      confirmTitle: 'Delete Chatee?',
-    },
-
-    fields: {
-      nickname: 'Nickname',
-      status: 'Status',
-      role: 'Role',
-      user: 'User',
-      chat: 'Chat',
-      messages: 'Messages',
-      createdByMembership: 'Created By',
-      updatedByMembership: 'Updated By',
-      archivedByMembership: 'Archived By',
-      createdAt: 'Created at',
-      updatedAt: 'Updated at',
-      archivedAt: 'Archived at',
-    },
-
-    hints: {
-      nickname: '',
-      status: 'Status of the user in the chat.',
-      role: '',
-      user: '',
-      chat: '',
-      messages: '',
-    },
-
-    enumerators: {
-      status: {
-        pending: 'Pending',
-        current: 'Current',
-        block: 'Block',
-        refuse: 'Refuse',
-      },
-    },
-  },
-
-  message: {
-    label: 'Message',
-
-    dashboardCard: {
-      title: 'Messages',
-    },
-
-    list: {
-      menu: 'Messages',
-      title: 'Messages',
-      noResults: 'No messages found.',
-    },
-
-    export: {
-      success: 'Messages successfully exported',
-    },
-
-    new: {
-      menu: 'New Message',
-      title: 'New Message',
-      success: 'Message successfully created',
-    },
-
-    view: {
-      title: 'View Message',
-    },
-
-    edit: {
-      menu: 'Edit Message',
-      title: 'Edit Message',
-      success: 'Message successfully updated',
-    },
-
-    restore: {
-      success: 'Message successfully restored',
-      noSelection: 'You must select at least one message to restore.',
-      confirmTitle: 'Restore Message?',
-    },
-
-    restoreMany: {
-      success: 'Message(s) successfully restored',
-      noSelection: 'You must select at least one message to restore.',
-      confirmTitle: 'Restore Message(s)?',
-      confirmDescription:
-        'Are you sure you want to restore the {0} selected message(s)?',
-    },
-
-    archiveMany: {
-      success: 'Message(s) successfully archived',
-      noSelection: 'You must select at least one message to archive.',
-      confirmTitle: 'Archive Message(s)?',
-      confirmDescription:
-        'Are you sure you want to archive the {0} selected message(s)?',
-    },
-
-    archive: {
-      success: 'Message successfully archived',
-      noSelection: 'You must select at least one message to archive.',
-      confirmTitle: 'Archive Message?',
-    },
-
-    destroyMany: {
-      success: 'Message(s) successfully deleted',
-      noSelection: 'You must select at least one message to delete.',
-      confirmTitle: 'Delete Message(s)?',
-      confirmDescription:
-        'Are you sure you want to delete the {0} selected message(s)?',
-    },
-
-    destroy: {
-      success: 'Message successfully deleted',
-      noSelection: 'You must select at least one message to delete.',
-      confirmTitle: 'Delete Message?',
-    },
-
-    fields: {
-      body: 'Body',
-      attachment: 'Attachment',
-      images: 'Images',
-      type: 'Type',
-      meta: 'Meta',
-      chat: 'Chat',
-      chatee: 'Chatee',
-      sender: 'Sender',
-      createdByMembership: 'Created By',
-      updatedByMembership: 'Updated By',
-      archivedByMembership: 'Archived By',
-      createdAt: 'Created at',
-      updatedAt: 'Updated at',
-      archivedAt: 'Archived at',
-    },
-
-    hints: {
-      body: '',
-      attachment: '',
-      images: '',
-      type: '',
-      meta: '',
-      chat: '',
-      chatee: '',
-      sender: '',
-    },
-
-    enumerators: {},
   },
 
   asset: {
@@ -1465,8 +1226,13 @@ const dictionary = {
       precision: 'Precision',
       isFractional: 'IsFractional',
       meta: 'Meta',
+      decimals: 'Decimals',
       baseInstruments: 'BaseInstruments',
       quoteInstruments: 'QuoteInstruments',
+      wallets: 'Wallets',
+      deposits: 'Deposits',
+      withdrawals: 'Withdrawals',
+      snapshots: 'Snapshots',
       createdByMembership: 'Created By',
       updatedByMembership: 'Updated By',
       archivedByMembership: 'Archived By',
@@ -1481,8 +1247,13 @@ const dictionary = {
       precision: '',
       isFractional: '',
       meta: '',
+      decimals: '',
       baseInstruments: '',
       quoteInstruments: '',
+      wallets: '',
+      deposits: '',
+      withdrawals: '',
+      snapshots: '',
     },
 
     enumerators: {
@@ -1492,118 +1263,6 @@ const dictionary = {
         equity: 'Equity',
         option: 'Option',
         future: 'Future',
-      },
-    },
-  },
-
-  account: {
-    label: 'Account',
-
-    dashboardCard: {
-      title: 'Accounts',
-    },
-
-    list: {
-      menu: 'Accounts',
-      title: 'Accounts',
-      noResults: 'No accounts found.',
-    },
-
-    export: {
-      success: 'Accounts successfully exported',
-    },
-
-    new: {
-      menu: 'New Account',
-      title: 'New Account',
-      success: 'Account successfully created',
-    },
-
-    view: {
-      title: 'View Account',
-    },
-
-    edit: {
-      menu: 'Edit Account',
-      title: 'Edit Account',
-      success: 'Account successfully updated',
-    },
-
-    restore: {
-      success: 'Account successfully restored',
-      noSelection: 'You must select at least one account to restore.',
-      confirmTitle: 'Restore Account?',
-    },
-
-    restoreMany: {
-      success: 'Account(s) successfully restored',
-      noSelection: 'You must select at least one account to restore.',
-      confirmTitle: 'Restore Account(s)?',
-      confirmDescription:
-        'Are you sure you want to restore the {0} selected account(s)?',
-    },
-
-    archiveMany: {
-      success: 'Account(s) successfully archived',
-      noSelection: 'You must select at least one account to archive.',
-      confirmTitle: 'Archive Account(s)?',
-      confirmDescription:
-        'Are you sure you want to archive the {0} selected account(s)?',
-    },
-
-    archive: {
-      success: 'Account successfully archived',
-      noSelection: 'You must select at least one account to archive.',
-      confirmTitle: 'Archive Account?',
-    },
-
-    destroyMany: {
-      success: 'Account(s) successfully deleted',
-      noSelection: 'You must select at least one account to delete.',
-      confirmTitle: 'Delete Account(s)?',
-      confirmDescription:
-        'Are you sure you want to delete the {0} selected account(s)?',
-    },
-
-    destroy: {
-      success: 'Account successfully deleted',
-      noSelection: 'You must select at least one account to delete.',
-      confirmTitle: 'Delete Account?',
-    },
-
-    fields: {
-      type: 'Type',
-      status: 'Status',
-      meta: 'Meta',
-      orders: 'Orders',
-      createdByMembership: 'Created By',
-      updatedByMembership: 'Updated By',
-      archivedByMembership: 'Archived By',
-      createdAt: 'Created at',
-      updatedAt: 'Updated at',
-      archivedAt: 'Archived at',
-    },
-
-    hints: {
-      type: '',
-      status: '',
-      meta: '',
-      orders: '',
-    },
-
-    enumerators: {
-      type: {
-        cash: 'Cash',
-        custody: 'Custody',
-        margin: 'Margin',
-        clearing: 'Clearing',
-        fees: 'Fees',
-      },
-
-      status: {
-        active: 'Active',
-        frozen: 'Frozen',
-        closed: 'Closed',
       },
     },
   },
@@ -1802,7 +1461,11 @@ const dictionary = {
 
     fields: {
       type: 'Type',
+      referenceId: 'ReferenceId',
       referenceType: 'ReferenceType',
+      status: 'Status',
+      description: 'Description',
+      meta: 'Meta',
       entries: 'Entries',
       createdByMembership: 'Created By',
       updatedByMembership: 'Updated By',
@@ -1814,7 +1477,11 @@ const dictionary = {
 
     hints: {
       type: '',
+      referenceId: '',
       referenceType: '',
+      status: '',
+      description: '',
+      meta: '',
       entries: '',
     },
 
@@ -1826,13 +1493,22 @@ const dictionary = {
         fee: 'Fee',
         settlement: 'Settlement',
         adjustment: 'Adjustment',
+        transfer: 'Transfer',
+        reversal: 'Reversal',
       },
 
       referenceType: {
+        deposit: 'Deposit',
+        withdrawal: 'Withdrawal',
         order: 'Order',
         trade: 'Trade',
-        blockchain_tx: 'Blockchain_tx',
-        admin_action: 'Admin_action',
+        manual_adjustment: 'Manual_adjustment',
+      },
+
+      status: {
+        pending: 'Pending',
+        posted: 'Posted',
+        reversed: 'Reversed',
       },
     },
   },
@@ -1914,6 +1590,8 @@ const dictionary = {
 
     fields: {
       amount: 'Amount',
+      accountId: 'AccountId',
+      meta: 'Meta',
       event: 'Event',
       createdByMembership: 'Created By',
       updatedByMembership: 'Updated By',
@@ -1925,10 +1603,14 @@ const dictionary = {
 
     hints: {
       amount: '',
+      accountId: '',
+      meta: '',
       event: '',
     },
 
-    enumerators: {},
+    enumerators: {
+
+    },
   },
 
   trade: {
@@ -2009,10 +1691,11 @@ const dictionary = {
     fields: {
       price: 'Price',
       quantity: 'Quantity',
+      meta: 'Meta',
       buyOrderId: 'BuyOrderId',
       sellOrderId: 'SellOrderId',
       instrument: 'Instrument',
-      tradeFills: 'TradeFills',
+      fills: 'Fills',
       createdByMembership: 'Created By',
       updatedByMembership: 'Updated By',
       archivedByMembership: 'Archived By',
@@ -2024,88 +1707,91 @@ const dictionary = {
     hints: {
       price: '',
       quantity: '',
+      meta: '',
       buyOrderId: '',
       sellOrderId: '',
       instrument: '',
-      tradeFills: '',
+      fills: '',
     },
 
-    enumerators: {},
+    enumerators: {
+
+    },
   },
 
-  tradeFill: {
-    label: 'TradeFill',
+  fill: {
+    label: 'Fill',
 
     dashboardCard: {
-      title: 'TradeFills',
+      title: 'Fills',
     },
 
     list: {
-      menu: 'TradeFills',
-      title: 'TradeFills',
-      noResults: 'No tradefills found.',
+      menu: 'Fills',
+      title: 'Fills',
+      noResults: 'No fills found.',
     },
 
     export: {
-      success: 'TradeFills successfully exported',
+      success: 'Fills successfully exported',
     },
 
     new: {
-      menu: 'New TradeFill',
-      title: 'New TradeFill',
-      success: 'TradeFill successfully created',
+      menu: 'New Fill',
+      title: 'New Fill',
+      success: 'Fill successfully created',
     },
 
     view: {
-      title: 'View TradeFill',
+      title: 'View Fill',
     },
 
     edit: {
-      menu: 'Edit TradeFill',
-      title: 'Edit TradeFill',
-      success: 'TradeFill successfully updated',
+      menu: 'Edit Fill',
+      title: 'Edit Fill',
+      success: 'Fill successfully updated',
     },
 
     restore: {
-      success: 'TradeFill successfully restored',
-      noSelection: 'You must select at least one tradefill to restore.',
-      confirmTitle: 'Restore TradeFill?',
+      success: 'Fill successfully restored',
+      noSelection: 'You must select at least one fill to restore.',
+      confirmTitle: 'Restore Fill?',
     },
 
     restoreMany: {
-      success: 'TradeFill(s) successfully restored',
-      noSelection: 'You must select at least one tradefill to restore.',
-      confirmTitle: 'Restore TradeFill(s)?',
+      success: 'Fill(s) successfully restored',
+      noSelection: 'You must select at least one fill to restore.',
+      confirmTitle: 'Restore Fill(s)?',
       confirmDescription:
-        'Are you sure you want to restore the {0} selected tradefill(s)?',
+        'Are you sure you want to restore the {0} selected fill(s)?',
     },
 
     archiveMany: {
-      success: 'TradeFill(s) successfully archived',
-      noSelection: 'You must select at least one tradefill to archive.',
-      confirmTitle: 'Archive TradeFill(s)?',
+      success: 'Fill(s) successfully archived',
+      noSelection: 'You must select at least one fill to archive.',
+      confirmTitle: 'Archive Fill(s)?',
       confirmDescription:
-        'Are you sure you want to archive the {0} selected tradefill(s)?',
+        'Are you sure you want to archive the {0} selected fill(s)?',
     },
 
     archive: {
-      success: 'TradeFill successfully archived',
-      noSelection: 'You must select at least one tradefill to archive.',
-      confirmTitle: 'Archive TradeFill?',
+      success: 'Fill successfully archived',
+      noSelection: 'You must select at least one fill to archive.',
+      confirmTitle: 'Archive Fill?',
     },
 
     destroyMany: {
-      success: 'TradeFill(s) successfully deleted',
-      noSelection: 'You must select at least one tradefill to delete.',
-      confirmTitle: 'Delete TradeFill(s)?',
+      success: 'Fill(s) successfully deleted',
+      noSelection: 'You must select at least one fill to delete.',
+      confirmTitle: 'Delete Fill(s)?',
       confirmDescription:
-        'Are you sure you want to delete the {0} selected tradefill(s)?',
+        'Are you sure you want to delete the {0} selected fill(s)?',
     },
 
     destroy: {
-      success: 'TradeFill successfully deleted',
-      noSelection: 'You must select at least one tradefill to delete.',
-      confirmTitle: 'Delete TradeFill?',
+      success: 'Fill successfully deleted',
+      noSelection: 'You must select at least one fill to delete.',
+      confirmTitle: 'Delete Fill?',
     },
 
     fields: {
@@ -2113,6 +1799,7 @@ const dictionary = {
       price: 'Price',
       quantity: 'Quantity',
       fee: 'Fee',
+      meta: 'Meta',
       trade: 'Trade',
       createdByMembership: 'Created By',
       updatedByMembership: 'Updated By',
@@ -2127,6 +1814,7 @@ const dictionary = {
       price: '',
       quantity: '',
       fee: '',
+      meta: '',
       trade: '',
     },
 
@@ -2134,6 +1822,1095 @@ const dictionary = {
       side: {
         buy: 'Buy',
         sell: 'Sell',
+      },
+    },
+  },
+
+  post: {
+    label: 'Post',
+
+    dashboardCard: {
+      title: 'Posts',
+    },
+
+    list: {
+      menu: 'Posts',
+      title: 'Posts',
+      noResults: 'No posts found.',
+    },
+
+    export: {
+      success: 'Posts successfully exported',
+    },
+
+    new: {
+      menu: 'New Post',
+      title: 'New Post',
+      success: 'Post successfully created',
+    },
+
+    view: {
+      title: 'View Post',
+    },
+
+    edit: {
+      menu: 'Edit Post',
+      title: 'Edit Post',
+      success: 'Post successfully updated',
+    },
+
+    restore: {
+      success: 'Post successfully restored',
+      noSelection: 'You must select at least one post to restore.',
+      confirmTitle: 'Restore Post?',
+    },
+
+    restoreMany: {
+      success: 'Post(s) successfully restored',
+      noSelection: 'You must select at least one post to restore.',
+      confirmTitle: 'Restore Post(s)?',
+      confirmDescription:
+        'Are you sure you want to restore the {0} selected post(s)?',
+    },
+
+    archiveMany: {
+      success: 'Post(s) successfully archived',
+      noSelection: 'You must select at least one post to archive.',
+      confirmTitle: 'Archive Post(s)?',
+      confirmDescription:
+        'Are you sure you want to archive the {0} selected post(s)?',
+    },
+
+    archive: {
+      success: 'Post successfully archived',
+      noSelection: 'You must select at least one post to archive.',
+      confirmTitle: 'Archive Post?',
+    },
+
+    destroyMany: {
+      success: 'Post(s) successfully deleted',
+      noSelection: 'You must select at least one post to delete.',
+      confirmTitle: 'Delete Post(s)?',
+      confirmDescription:
+        'Are you sure you want to delete the {0} selected post(s)?',
+    },
+
+    destroy: {
+      success: 'Post successfully deleted',
+      noSelection: 'You must select at least one post to delete.',
+      confirmTitle: 'Delete Post?',
+    },
+
+    fields: {
+      title: 'Title',
+      body: 'Body',
+      meta: 'Meta',
+      files: 'Files',
+      images: 'Images',
+      type: 'Type',
+      user: 'User',
+      createdByMembership: 'Created By',
+      updatedByMembership: 'Updated By',
+      archivedByMembership: 'Archived By',
+      createdAt: 'Created at',
+      updatedAt: 'Updated at',
+      archivedAt: 'Archived at',
+    },
+
+    hints: {
+      title: '',
+      body: '',
+      meta: '',
+      files: '',
+      images: '',
+      type: '',
+      user: '',
+    },
+
+    enumerators: {
+
+    },
+  },
+
+  comment: {
+    label: 'Comment',
+
+    dashboardCard: {
+      title: 'Comments',
+    },
+
+    list: {
+      menu: 'Comments',
+      title: 'Comments',
+      noResults: 'No comments found.',
+    },
+
+    export: {
+      success: 'Comments successfully exported',
+    },
+
+    new: {
+      menu: 'New Comment',
+      title: 'New Comment',
+      success: 'Comment successfully created',
+    },
+
+    view: {
+      title: 'View Comment',
+    },
+
+    edit: {
+      menu: 'Edit Comment',
+      title: 'Edit Comment',
+      success: 'Comment successfully updated',
+    },
+
+    restore: {
+      success: 'Comment successfully restored',
+      noSelection: 'You must select at least one comment to restore.',
+      confirmTitle: 'Restore Comment?',
+    },
+
+    restoreMany: {
+      success: 'Comment(s) successfully restored',
+      noSelection: 'You must select at least one comment to restore.',
+      confirmTitle: 'Restore Comment(s)?',
+      confirmDescription:
+        'Are you sure you want to restore the {0} selected comment(s)?',
+    },
+
+    archiveMany: {
+      success: 'Comment(s) successfully archived',
+      noSelection: 'You must select at least one comment to archive.',
+      confirmTitle: 'Archive Comment(s)?',
+      confirmDescription:
+        'Are you sure you want to archive the {0} selected comment(s)?',
+    },
+
+    archive: {
+      success: 'Comment successfully archived',
+      noSelection: 'You must select at least one comment to archive.',
+      confirmTitle: 'Archive Comment?',
+    },
+
+    destroyMany: {
+      success: 'Comment(s) successfully deleted',
+      noSelection: 'You must select at least one comment to delete.',
+      confirmTitle: 'Delete Comment(s)?',
+      confirmDescription:
+        'Are you sure you want to delete the {0} selected comment(s)?',
+    },
+
+    destroy: {
+      success: 'Comment successfully deleted',
+      noSelection: 'You must select at least one comment to delete.',
+      confirmTitle: 'Delete Comment?',
+    },
+
+    fields: {
+      body: 'Body',
+      meta: 'Meta',
+      type: 'Type',
+      images: 'Images',
+      user: 'User',
+      createdByMembership: 'Created By',
+      updatedByMembership: 'Updated By',
+      archivedByMembership: 'Archived By',
+      createdAt: 'Created at',
+      updatedAt: 'Updated at',
+      archivedAt: 'Archived at',
+    },
+
+    hints: {
+      body: '',
+      meta: '',
+      type: '',
+      images: '',
+      user: '',
+    },
+
+    enumerators: {
+
+    },
+  },
+
+  article: {
+    label: 'Article',
+
+    dashboardCard: {
+      title: 'Articles',
+    },
+
+    list: {
+      menu: 'Articles',
+      title: 'Articles',
+      noResults: 'No articles found.',
+    },
+
+    export: {
+      success: 'Articles successfully exported',
+    },
+
+    new: {
+      menu: 'New Article',
+      title: 'New Article',
+      success: 'Article successfully created',
+    },
+
+    view: {
+      title: 'View Article',
+    },
+
+    edit: {
+      menu: 'Edit Article',
+      title: 'Edit Article',
+      success: 'Article successfully updated',
+    },
+
+    restore: {
+      success: 'Article successfully restored',
+      noSelection: 'You must select at least one article to restore.',
+      confirmTitle: 'Restore Article?',
+    },
+
+    restoreMany: {
+      success: 'Article(s) successfully restored',
+      noSelection: 'You must select at least one article to restore.',
+      confirmTitle: 'Restore Article(s)?',
+      confirmDescription:
+        'Are you sure you want to restore the {0} selected article(s)?',
+    },
+
+    archiveMany: {
+      success: 'Article(s) successfully archived',
+      noSelection: 'You must select at least one article to archive.',
+      confirmTitle: 'Archive Article(s)?',
+      confirmDescription:
+        'Are you sure you want to archive the {0} selected article(s)?',
+    },
+
+    archive: {
+      success: 'Article successfully archived',
+      noSelection: 'You must select at least one article to archive.',
+      confirmTitle: 'Archive Article?',
+    },
+
+    destroyMany: {
+      success: 'Article(s) successfully deleted',
+      noSelection: 'You must select at least one article to delete.',
+      confirmTitle: 'Delete Article(s)?',
+      confirmDescription:
+        'Are you sure you want to delete the {0} selected article(s)?',
+    },
+
+    destroy: {
+      success: 'Article successfully deleted',
+      noSelection: 'You must select at least one article to delete.',
+      confirmTitle: 'Delete Article?',
+    },
+
+    fields: {
+      title: 'Title',
+      body: 'Body',
+      meta: 'Meta',
+      type: 'Type',
+      images: 'Images',
+      files: 'Files',
+      user: 'User',
+      createdByMembership: 'Created By',
+      updatedByMembership: 'Updated By',
+      archivedByMembership: 'Archived By',
+      createdAt: 'Created at',
+      updatedAt: 'Updated at',
+      archivedAt: 'Archived at',
+    },
+
+    hints: {
+      title: '',
+      body: '',
+      meta: '',
+      type: '',
+      images: '',
+      files: '',
+      user: '',
+    },
+
+    enumerators: {
+
+    },
+  },
+
+  chat: {
+    label: 'Chat',
+
+    dashboardCard: {
+      title: 'Chats',
+    },
+
+    list: {
+      menu: 'Chats',
+      title: 'Chats',
+      noResults: 'No chats found.',
+    },
+
+    export: {
+      success: 'Chats successfully exported',
+    },
+
+    new: {
+      menu: 'New Chat',
+      title: 'New Chat',
+      success: 'Chat successfully created',
+    },
+
+    view: {
+      title: 'View Chat',
+    },
+
+    edit: {
+      menu: 'Edit Chat',
+      title: 'Edit Chat',
+      success: 'Chat successfully updated',
+    },
+
+    restore: {
+      success: 'Chat successfully restored',
+      noSelection: 'You must select at least one chat to restore.',
+      confirmTitle: 'Restore Chat?',
+    },
+
+    restoreMany: {
+      success: 'Chat(s) successfully restored',
+      noSelection: 'You must select at least one chat to restore.',
+      confirmTitle: 'Restore Chat(s)?',
+      confirmDescription:
+        'Are you sure you want to restore the {0} selected chat(s)?',
+    },
+
+    archiveMany: {
+      success: 'Chat(s) successfully archived',
+      noSelection: 'You must select at least one chat to archive.',
+      confirmTitle: 'Archive Chat(s)?',
+      confirmDescription:
+        'Are you sure you want to archive the {0} selected chat(s)?',
+    },
+
+    archive: {
+      success: 'Chat successfully archived',
+      noSelection: 'You must select at least one chat to archive.',
+      confirmTitle: 'Archive Chat?',
+    },
+
+    destroyMany: {
+      success: 'Chat(s) successfully deleted',
+      noSelection: 'You must select at least one chat to delete.',
+      confirmTitle: 'Delete Chat(s)?',
+      confirmDescription:
+        'Are you sure you want to delete the {0} selected chat(s)?',
+    },
+
+    destroy: {
+      success: 'Chat successfully deleted',
+      noSelection: 'You must select at least one chat to delete.',
+      confirmTitle: 'Delete Chat?',
+    },
+
+    fields: {
+      name: 'Name',
+      media: 'Media',
+      meta: 'Meta',
+      active: 'Active',
+      messages: 'Messages',
+      chatees: 'Chatees',
+      createdByMembership: 'Created By',
+      updatedByMembership: 'Updated By',
+      archivedByMembership: 'Archived By',
+      createdAt: 'Created at',
+      updatedAt: 'Updated at',
+      archivedAt: 'Archived at',
+    },
+
+    hints: {
+      name: '',
+      media: '',
+      meta: '',
+      active: '',
+      messages: '',
+      chatees: '',
+    },
+
+    enumerators: {
+
+    },
+  },
+
+  chatee: {
+    label: 'Chatee',
+
+    dashboardCard: {
+      title: 'Chatees',
+    },
+
+    list: {
+      menu: 'Chatees',
+      title: 'Chatees',
+      noResults: 'No chatees found.',
+    },
+
+    export: {
+      success: 'Chatees successfully exported',
+    },
+
+    new: {
+      menu: 'New Chatee',
+      title: 'New Chatee',
+      success: 'Chatee successfully created',
+    },
+
+    view: {
+      title: 'View Chatee',
+    },
+
+    edit: {
+      menu: 'Edit Chatee',
+      title: 'Edit Chatee',
+      success: 'Chatee successfully updated',
+    },
+
+    restore: {
+      success: 'Chatee successfully restored',
+      noSelection: 'You must select at least one chatee to restore.',
+      confirmTitle: 'Restore Chatee?',
+    },
+
+    restoreMany: {
+      success: 'Chatee(s) successfully restored',
+      noSelection: 'You must select at least one chatee to restore.',
+      confirmTitle: 'Restore Chatee(s)?',
+      confirmDescription:
+        'Are you sure you want to restore the {0} selected chatee(s)?',
+    },
+
+    archiveMany: {
+      success: 'Chatee(s) successfully archived',
+      noSelection: 'You must select at least one chatee to archive.',
+      confirmTitle: 'Archive Chatee(s)?',
+      confirmDescription:
+        'Are you sure you want to archive the {0} selected chatee(s)?',
+    },
+
+    archive: {
+      success: 'Chatee successfully archived',
+      noSelection: 'You must select at least one chatee to archive.',
+      confirmTitle: 'Archive Chatee?',
+    },
+
+    destroyMany: {
+      success: 'Chatee(s) successfully deleted',
+      noSelection: 'You must select at least one chatee to delete.',
+      confirmTitle: 'Delete Chatee(s)?',
+      confirmDescription:
+        'Are you sure you want to delete the {0} selected chatee(s)?',
+    },
+
+    destroy: {
+      success: 'Chatee successfully deleted',
+      noSelection: 'You must select at least one chatee to delete.',
+      confirmTitle: 'Delete Chatee?',
+    },
+
+    fields: {
+      nickname: 'Nickname',
+      status: 'Status',
+      role: 'Role',
+      meta: 'Meta',
+      user: 'User',
+      chat: 'Chat',
+      messages: 'Messages',
+      createdByMembership: 'Created By',
+      updatedByMembership: 'Updated By',
+      archivedByMembership: 'Archived By',
+      createdAt: 'Created at',
+      updatedAt: 'Updated at',
+      archivedAt: 'Archived at',
+    },
+
+    hints: {
+      nickname: '',
+      status: 'Status of the user in the chat.',
+      role: '',
+      meta: '',
+      user: '',
+      chat: '',
+      messages: '',
+    },
+
+    enumerators: {
+      status: {
+        pending: 'Pending',
+        current: 'Current',
+        block: 'Block',
+        refuse: 'Refuse',
+      },
+    },
+  },
+
+  message: {
+    label: 'Message',
+
+    dashboardCard: {
+      title: 'Messages',
+    },
+
+    list: {
+      menu: 'Messages',
+      title: 'Messages',
+      noResults: 'No messages found.',
+    },
+
+    export: {
+      success: 'Messages successfully exported',
+    },
+
+    new: {
+      menu: 'New Message',
+      title: 'New Message',
+      success: 'Message successfully created',
+    },
+
+    view: {
+      title: 'View Message',
+    },
+
+    edit: {
+      menu: 'Edit Message',
+      title: 'Edit Message',
+      success: 'Message successfully updated',
+    },
+
+    restore: {
+      success: 'Message successfully restored',
+      noSelection: 'You must select at least one message to restore.',
+      confirmTitle: 'Restore Message?',
+    },
+
+    restoreMany: {
+      success: 'Message(s) successfully restored',
+      noSelection: 'You must select at least one message to restore.',
+      confirmTitle: 'Restore Message(s)?',
+      confirmDescription:
+        'Are you sure you want to restore the {0} selected message(s)?',
+    },
+
+    archiveMany: {
+      success: 'Message(s) successfully archived',
+      noSelection: 'You must select at least one message to archive.',
+      confirmTitle: 'Archive Message(s)?',
+      confirmDescription:
+        'Are you sure you want to archive the {0} selected message(s)?',
+    },
+
+    archive: {
+      success: 'Message successfully archived',
+      noSelection: 'You must select at least one message to archive.',
+      confirmTitle: 'Archive Message?',
+    },
+
+    destroyMany: {
+      success: 'Message(s) successfully deleted',
+      noSelection: 'You must select at least one message to delete.',
+      confirmTitle: 'Delete Message(s)?',
+      confirmDescription:
+        'Are you sure you want to delete the {0} selected message(s)?',
+    },
+
+    destroy: {
+      success: 'Message successfully deleted',
+      noSelection: 'You must select at least one message to delete.',
+      confirmTitle: 'Delete Message?',
+    },
+
+    fields: {
+      body: 'Body',
+      attachment: 'Attachment',
+      images: 'Images',
+      type: 'Type',
+      meta: 'Meta',
+      chat: 'Chat',
+      chatee: 'Chatee',
+      sender: 'Sender',
+      createdByMembership: 'Created By',
+      updatedByMembership: 'Updated By',
+      archivedByMembership: 'Archived By',
+      createdAt: 'Created at',
+      updatedAt: 'Updated at',
+      archivedAt: 'Archived at',
+    },
+
+    hints: {
+      body: '',
+      attachment: '',
+      images: '',
+      type: '',
+      meta: '',
+      chat: '',
+      chatee: '',
+      sender: '',
+    },
+
+    enumerators: {
+
+    },
+  },
+
+  feeSchedule: {
+    label: 'FeeSchedule',
+
+    dashboardCard: {
+      title: 'FeeSchedules',
+    },
+
+    list: {
+      menu: 'FeeSchedules',
+      title: 'FeeSchedules',
+      noResults: 'No feeschedules found.',
+    },
+
+    export: {
+      success: 'FeeSchedules successfully exported',
+    },
+
+    new: {
+      menu: 'New FeeSchedule',
+      title: 'New FeeSchedule',
+      success: 'FeeSchedule successfully created',
+    },
+
+    view: {
+      title: 'View FeeSchedule',
+    },
+
+    edit: {
+      menu: 'Edit FeeSchedule',
+      title: 'Edit FeeSchedule',
+      success: 'FeeSchedule successfully updated',
+    },
+
+    restore: {
+      success: 'FeeSchedule successfully restored',
+      noSelection: 'You must select at least one feeschedule to restore.',
+      confirmTitle: 'Restore FeeSchedule?',
+    },
+
+    restoreMany: {
+      success: 'FeeSchedule(s) successfully restored',
+      noSelection: 'You must select at least one feeschedule to restore.',
+      confirmTitle: 'Restore FeeSchedule(s)?',
+      confirmDescription:
+        'Are you sure you want to restore the {0} selected feeschedule(s)?',
+    },
+
+    archiveMany: {
+      success: 'FeeSchedule(s) successfully archived',
+      noSelection: 'You must select at least one feeschedule to archive.',
+      confirmTitle: 'Archive FeeSchedule(s)?',
+      confirmDescription:
+        'Are you sure you want to archive the {0} selected feeschedule(s)?',
+    },
+
+    archive: {
+      success: 'FeeSchedule successfully archived',
+      noSelection: 'You must select at least one feeschedule to archive.',
+      confirmTitle: 'Archive FeeSchedule?',
+    },
+
+    destroyMany: {
+      success: 'FeeSchedule(s) successfully deleted',
+      noSelection: 'You must select at least one feeschedule to delete.',
+      confirmTitle: 'Delete FeeSchedule(s)?',
+      confirmDescription:
+        'Are you sure you want to delete the {0} selected feeschedule(s)?',
+    },
+
+    destroy: {
+      success: 'FeeSchedule successfully deleted',
+      noSelection: 'You must select at least one feeschedule to delete.',
+      confirmTitle: 'Delete FeeSchedule?',
+    },
+
+    fields: {
+      scope: 'Scope',
+      makerFeeBps: 'MakerFeeBps',
+      takerFeeBps: 'TakerFeeBps',
+      minFeeAmount: 'MinFeeAmount',
+      effectiveFrom: 'EffectiveFrom',
+      effectiveTo: 'EffectiveTo',
+      tier: 'Tier',
+      accountId: 'AccountId',
+      instrumentId: 'InstrumentId',
+      meta: 'Meta',
+
+      createdByMembership: 'Created By',
+      updatedByMembership: 'Updated By',
+      archivedByMembership: 'Archived By',
+      createdAt: 'Created at',
+      updatedAt: 'Updated at',
+      archivedAt: 'Archived at',
+    },
+
+    hints: {
+      scope: '',
+      makerFeeBps: '',
+      takerFeeBps: '',
+      minFeeAmount: '',
+      effectiveFrom: '',
+      effectiveTo: '',
+      tier: '',
+      accountId: '',
+      instrumentId: '',
+      meta: '',
+
+    },
+
+    enumerators: {
+      scope: {
+        global: 'Global',
+        tier: 'Tier',
+        account: 'Account',
+        instrument: 'Instrument',
+        account_instrument: 'Account_instrument',
+      },
+    },
+  },
+
+  balanceSnapshot: {
+    label: 'BalanceSnapshot',
+
+    dashboardCard: {
+      title: 'BalanceSnapshots',
+    },
+
+    list: {
+      menu: 'BalanceSnapshots',
+      title: 'BalanceSnapshots',
+      noResults: 'No balancesnapshots found.',
+    },
+
+    export: {
+      success: 'BalanceSnapshots successfully exported',
+    },
+
+    new: {
+      menu: 'New BalanceSnapshot',
+      title: 'New BalanceSnapshot',
+      success: 'BalanceSnapshot successfully created',
+    },
+
+    view: {
+      title: 'View BalanceSnapshot',
+    },
+
+    edit: {
+      menu: 'Edit BalanceSnapshot',
+      title: 'Edit BalanceSnapshot',
+      success: 'BalanceSnapshot successfully updated',
+    },
+
+    restore: {
+      success: 'BalanceSnapshot successfully restored',
+      noSelection: 'You must select at least one balancesnapshot to restore.',
+      confirmTitle: 'Restore BalanceSnapshot?',
+    },
+
+    restoreMany: {
+      success: 'BalanceSnapshot(s) successfully restored',
+      noSelection: 'You must select at least one balancesnapshot to restore.',
+      confirmTitle: 'Restore BalanceSnapshot(s)?',
+      confirmDescription:
+        'Are you sure you want to restore the {0} selected balancesnapshot(s)?',
+    },
+
+    archiveMany: {
+      success: 'BalanceSnapshot(s) successfully archived',
+      noSelection: 'You must select at least one balancesnapshot to archive.',
+      confirmTitle: 'Archive BalanceSnapshot(s)?',
+      confirmDescription:
+        'Are you sure you want to archive the {0} selected balancesnapshot(s)?',
+    },
+
+    archive: {
+      success: 'BalanceSnapshot successfully archived',
+      noSelection: 'You must select at least one balancesnapshot to archive.',
+      confirmTitle: 'Archive BalanceSnapshot?',
+    },
+
+    destroyMany: {
+      success: 'BalanceSnapshot(s) successfully deleted',
+      noSelection: 'You must select at least one balancesnapshot to delete.',
+      confirmTitle: 'Delete BalanceSnapshot(s)?',
+      confirmDescription:
+        'Are you sure you want to delete the {0} selected balancesnapshot(s)?',
+    },
+
+    destroy: {
+      success: 'BalanceSnapshot successfully deleted',
+      noSelection: 'You must select at least one balancesnapshot to delete.',
+      confirmTitle: 'Delete BalanceSnapshot?',
+    },
+
+    fields: {
+      available: 'Available',
+      locked: 'Locked',
+      total: 'Total',
+      snapshotAt: 'SnapshotAt',
+      meta: 'Meta',
+      account: 'Account',
+      wallet: 'Wallet',
+      asset: 'Asset',
+      createdByMembership: 'Created By',
+      updatedByMembership: 'Updated By',
+      archivedByMembership: 'Archived By',
+      createdAt: 'Created at',
+      updatedAt: 'Updated at',
+      archivedAt: 'Archived at',
+    },
+
+    hints: {
+      available: '',
+      locked: '',
+      total: '',
+      snapshotAt: '',
+      meta: '',
+      account: '',
+      wallet: '',
+      asset: '',
+    },
+
+    enumerators: {
+
+    },
+  },
+
+  systemAccount: {
+    label: 'SystemAccount',
+
+    dashboardCard: {
+      title: 'SystemAccounts',
+    },
+
+    list: {
+      menu: 'SystemAccounts',
+      title: 'SystemAccounts',
+      noResults: 'No systemaccounts found.',
+    },
+
+    export: {
+      success: 'SystemAccounts successfully exported',
+    },
+
+    new: {
+      menu: 'New SystemAccount',
+      title: 'New SystemAccount',
+      success: 'SystemAccount successfully created',
+    },
+
+    view: {
+      title: 'View SystemAccount',
+    },
+
+    edit: {
+      menu: 'Edit SystemAccount',
+      title: 'Edit SystemAccount',
+      success: 'SystemAccount successfully updated',
+    },
+
+    restore: {
+      success: 'SystemAccount successfully restored',
+      noSelection: 'You must select at least one systemaccount to restore.',
+      confirmTitle: 'Restore SystemAccount?',
+    },
+
+    restoreMany: {
+      success: 'SystemAccount(s) successfully restored',
+      noSelection: 'You must select at least one systemaccount to restore.',
+      confirmTitle: 'Restore SystemAccount(s)?',
+      confirmDescription:
+        'Are you sure you want to restore the {0} selected systemaccount(s)?',
+    },
+
+    archiveMany: {
+      success: 'SystemAccount(s) successfully archived',
+      noSelection: 'You must select at least one systemaccount to archive.',
+      confirmTitle: 'Archive SystemAccount(s)?',
+      confirmDescription:
+        'Are you sure you want to archive the {0} selected systemaccount(s)?',
+    },
+
+    archive: {
+      success: 'SystemAccount successfully archived',
+      noSelection: 'You must select at least one systemaccount to archive.',
+      confirmTitle: 'Archive SystemAccount?',
+    },
+
+    destroyMany: {
+      success: 'SystemAccount(s) successfully deleted',
+      noSelection: 'You must select at least one systemaccount to delete.',
+      confirmTitle: 'Delete SystemAccount(s)?',
+      confirmDescription:
+        'Are you sure you want to delete the {0} selected systemaccount(s)?',
+    },
+
+    destroy: {
+      success: 'SystemAccount successfully deleted',
+      noSelection: 'You must select at least one systemaccount to delete.',
+      confirmTitle: 'Delete SystemAccount?',
+    },
+
+    fields: {
+      type: 'Type',
+      name: 'Name',
+      description: 'Description',
+      isActive: 'IsActive',
+      meta: 'Meta',
+
+      createdByMembership: 'Created By',
+      updatedByMembership: 'Updated By',
+      archivedByMembership: 'Archived By',
+      createdAt: 'Created at',
+      updatedAt: 'Updated at',
+      archivedAt: 'Archived at',
+    },
+
+    hints: {
+      type: '',
+      name: '',
+      description: '',
+      isActive: '',
+      meta: '',
+
+    },
+
+    enumerators: {
+      type: {
+        fee: 'Fee',
+        treasury: 'Treasury',
+        insurance: 'Insurance',
+        liquidity: 'Liquidity',
+      },
+    },
+  },
+
+  feedback: {
+    label: 'Feedback',
+
+    dashboardCard: {
+      title: 'Feedbacks',
+    },
+
+    list: {
+      menu: 'Feedbacks',
+      title: 'Feedbacks',
+      noResults: 'No feedbacks found.',
+    },
+
+    export: {
+      success: 'Feedbacks successfully exported',
+    },
+
+    new: {
+      menu: 'New Feedback',
+      title: 'New Feedback',
+      success: 'Feedback successfully created',
+    },
+
+    view: {
+      title: 'View Feedback',
+    },
+
+    edit: {
+      menu: 'Edit Feedback',
+      title: 'Edit Feedback',
+      success: 'Feedback successfully updated',
+    },
+
+    restore: {
+      success: 'Feedback successfully restored',
+      noSelection: 'You must select at least one feedback to restore.',
+      confirmTitle: 'Restore Feedback?',
+    },
+
+    restoreMany: {
+      success: 'Feedback(s) successfully restored',
+      noSelection: 'You must select at least one feedback to restore.',
+      confirmTitle: 'Restore Feedback(s)?',
+      confirmDescription:
+        'Are you sure you want to restore the {0} selected feedback(s)?',
+    },
+
+    archiveMany: {
+      success: 'Feedback(s) successfully archived',
+      noSelection: 'You must select at least one feedback to archive.',
+      confirmTitle: 'Archive Feedback(s)?',
+      confirmDescription:
+        'Are you sure you want to archive the {0} selected feedback(s)?',
+    },
+
+    archive: {
+      success: 'Feedback successfully archived',
+      noSelection: 'You must select at least one feedback to archive.',
+      confirmTitle: 'Archive Feedback?',
+    },
+
+    destroyMany: {
+      success: 'Feedback(s) successfully deleted',
+      noSelection: 'You must select at least one feedback to delete.',
+      confirmTitle: 'Delete Feedback(s)?',
+      confirmDescription:
+        'Are you sure you want to delete the {0} selected feedback(s)?',
+    },
+
+    destroy: {
+      success: 'Feedback successfully deleted',
+      noSelection: 'You must select at least one feedback to delete.',
+      confirmTitle: 'Delete Feedback?',
+    },
+
+    fields: {
+      title: 'Title',
+      description: 'Description',
+      attachments: 'Attachments',
+      type: 'Type',
+      status: 'Status',
+      user: 'User',
+      createdByMembership: 'Created By',
+      updatedByMembership: 'Updated By',
+      archivedByMembership: 'Archived By',
+      createdAt: 'Created at',
+      updatedAt: 'Updated at',
+      archivedAt: 'Archived at',
+    },
+
+    hints: {
+      title: '',
+      description: '',
+      attachments: '',
+      type: '',
+      status: '',
+      user: '',
+    },
+
+    enumerators: {
+      type: {
+        feature_request: 'Feature_request',
+        bug_report: 'Bug_report',
+      },
+
+      status: {
+        submitted: 'Submitted',
+        reviewed: 'Reviewed',
+        completed: 'Completed',
+        rejected: 'Rejected',
+        pending: 'Pending',
       },
     },
   },

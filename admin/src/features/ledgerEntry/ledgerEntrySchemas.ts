@@ -4,6 +4,7 @@ import { importerInputSchema } from 'src/shared/schemas/importerSchemas';
 import { orderBySchema } from 'src/shared/schemas/orderBySchema';
 import { z } from 'zod';
 import { numberCoerceSchema, numberOptionalCoerceSchema } from 'src/shared/schemas/numberCoerceSchema';
+import { jsonSchema } from 'src/shared/schemas/jsonSchema';
 import { objectToUuidSchema, objectToUuidSchemaOptional } from 'src/shared/schemas/objectToUuidSchema';
 import { LedgerEvent } from '@prisma/client';
 
@@ -16,6 +17,7 @@ export const ledgerEntryFindSchema = z.object({
 export const ledgerEntryFilterFormSchema = z
   .object({
     amountRange: z.array(z.coerce.number()).max(2),
+    accountId: z.string(),
     archived: z
     .any()
     .transform((val) =>
@@ -68,6 +70,8 @@ export const ledgerEntryAutocompleteOutputSchema = z.object({
 
 export const ledgerEntryCreateInputSchema = z.object({
   amount: numberOptionalCoerceSchema(z.number().nullable().optional()),
+  accountId: z.string().trim().nullable().optional(),
+  meta: jsonSchema.optional(),
   event: objectToUuidSchemaOptional,
   importHash: z.string().optional(),
 });
@@ -78,6 +82,8 @@ export const ledgerEntryImportInputSchema =
 export const ledgerEntryImportFileSchema = z
   .object({
     amount: z.string(),
+    accountId: z.string(),
+    meta: z.string(),
     event: z.string(),
   })
   .partial();

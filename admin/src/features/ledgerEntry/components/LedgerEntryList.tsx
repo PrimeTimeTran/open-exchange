@@ -91,6 +91,12 @@ export default function LedgerEntryList({ context }: { context: AppContext }) {
       },
     },
     {
+      accessorKey: 'accountId',
+      meta: {
+        title: dictionary.ledgerEntry.fields.accountId,
+      },
+    },
+    {
       id: DataTableColumnIds.actions,
       meta: {
         sticky: true

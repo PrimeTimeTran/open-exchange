@@ -4,10 +4,11 @@ import { importerInputSchema } from 'src/shared/schemas/importerSchemas';
 import { orderBySchema } from 'src/shared/schemas/orderBySchema';
 import { z } from 'zod';
 import { numberCoerceSchema, numberOptionalCoerceSchema } from 'src/shared/schemas/numberCoerceSchema';
+import { jsonSchema } from 'src/shared/schemas/jsonSchema';
 import { objectToUuidSchema, objectToUuidSchemaOptional } from 'src/shared/schemas/objectToUuidSchema';
 import { Order } from '@prisma/client';
 import { Instrument } from '@prisma/client';
-import { TradeFill } from '@prisma/client';
+import { Fill } from '@prisma/client';
 
 extendZodWithOpenApi(z);
 
@@ -72,6 +73,7 @@ export const tradeAutocompleteOutputSchema = z.object({
 export const tradeCreateInputSchema = z.object({
   price: numberOptionalCoerceSchema(z.number().nullable().optional()),
   quantity: numberOptionalCoerceSchema(z.number().nullable().optional()),
+  meta: jsonSchema.optional(),
   buyOrderId: z.array(objectToUuidSchema).optional(),
   sellOrderId: z.array(objectToUuidSchema).optional(),
   instrument: objectToUuidSchemaOptional,
@@ -85,6 +87,7 @@ export const tradeImportFileSchema = z
   .object({
     price: z.string(),
     quantity: z.string(),
+    meta: z.string(),
     buyOrderId: z.string().transform((val) => val.split(' ')),
     sellOrderId: z.string().transform((val) => val.split(' ')),
     instrument: z.string(),
@@ -102,7 +105,7 @@ export interface TradeWithRelationships extends Trade {
   buyOrderId?: Order[];
   sellOrderId?: Order[];
   instrument?: Instrument;
-  tradeFills?: TradeFill[];
+  fills?: Fill[];
   createdByMembership?: Membership;
   updatedByMembership?: Membership;
   archivedByMembership?: Membership;

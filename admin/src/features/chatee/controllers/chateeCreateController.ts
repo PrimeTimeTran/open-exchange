@@ -46,6 +46,7 @@ export async function chateeCreate(body: unknown, context: AppContext) {
       nickname: data.nickname,
       status: data.status,
       role: data.role,
+      meta: data.meta,
       user: prismaRelationship.connectOne(data.user),
       chat: prismaRelationship.connectOne(data.chat),
       importHash: data.importHash,

@@ -131,6 +131,20 @@ export default function AssetList({ context }: { context: AppContext }) {
       },
     },
     {
+      accessorKey: 'decimals',
+      meta: {
+        title: dictionary.asset.fields.decimals,
+      },
+      header: dataTableHeader('right', dictionary),
+      cell: ({ getValue }) => {
+        return (
+          <div className="whitespace-nowrap text-right">
+            {getValue() as string}
+          </div>
+        );
+      },
+    },
+    {
       id: DataTableColumnIds.actions,
       meta: {
         sticky: true

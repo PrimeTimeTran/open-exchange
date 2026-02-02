@@ -4,6 +4,7 @@ import { importerInputSchema } from 'src/shared/schemas/importerSchemas';
 import { orderBySchema } from 'src/shared/schemas/orderBySchema';
 import { z } from 'zod';
 import { ledgerEventEnumerators } from 'src/features/ledgerEvent/ledgerEventEnumerators';
+import { jsonSchema } from 'src/shared/schemas/jsonSchema';
 import { objectToUuidSchema, objectToUuidSchemaOptional } from 'src/shared/schemas/objectToUuidSchema';
 import { LedgerEntry } from '@prisma/client';
 
@@ -16,7 +17,10 @@ export const ledgerEventFindSchema = z.object({
 export const ledgerEventFilterFormSchema = z
   .object({
     type: z.nativeEnum(ledgerEventEnumerators.type).nullable().optional(),
+    referenceId: z.string(),
     referenceType: z.nativeEnum(ledgerEventEnumerators.referenceType).nullable().optional(),
+    status: z.nativeEnum(ledgerEventEnumerators.status).nullable().optional(),
+    description: z.string(),
     archived: z
     .any()
     .transform((val) =>
@@ -69,7 +73,11 @@ export const ledgerEventAutocompleteOutputSchema = z.object({
 
 export const ledgerEventCreateInputSchema = z.object({
   type: z.nativeEnum(ledgerEventEnumerators.type).nullable().optional(),
+  referenceId: z.string().trim().nullable().optional(),
   referenceType: z.nativeEnum(ledgerEventEnumerators.referenceType).nullable().optional(),
+  status: z.nativeEnum(ledgerEventEnumerators.status).nullable().optional(),
+  description: z.string().trim().nullable().optional(),
+  meta: jsonSchema.optional(),
   importHash: z.string().optional(),
 });
 
@@ -79,7 +87,11 @@ export const ledgerEventImportInputSchema =
 export const ledgerEventImportFileSchema = z
   .object({
     type: z.string(),
+    referenceId: z.string(),
     referenceType: z.string(),
+    status: z.string(),
+    description: z.string(),
+    meta: z.string(),
   })
   .partial();
 

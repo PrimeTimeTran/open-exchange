@@ -17,14 +17,6 @@ export async function POST(request: NextRequest) {
     context = await appContext(request);
     const body = await request.json();
     const payload = await orderCreateController(body, context);
-
-    try {
-      const helloResponse = await sayHello('OrderCreated');
-      console.log('gRPC Hello Response:', helloResponse);
-    } catch (e) {
-      console.error('gRPC Hello Error:', e);
-    }
-
     return NextResponseSuccess(request, context, payload);
   } catch (error: any) {
     return NextResponseError(request, context, error);

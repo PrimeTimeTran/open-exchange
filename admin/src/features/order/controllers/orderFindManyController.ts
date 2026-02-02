@@ -91,18 +91,6 @@ export async function orderFindManyController(
     }
   }
 
-  if (filter?.status != null) {
-    whereAnd.push({
-      status: filter?.status,
-    });
-  }
-
-  if (filter?.timeInFore != null) {
-    whereAnd.push({
-      timeInFore: filter?.timeInFore,
-    });
-  }
-
   if (filter?.quantityFilledRange?.length) {
     const start = filter.quantityFilledRange?.[0];
     const end = filter.quantityFilledRange?.[1];
@@ -118,6 +106,18 @@ export async function orderFindManyController(
         quantityFilled: { lte: end },
       });
     }
+  }
+
+  if (filter?.status != null) {
+    whereAnd.push({
+      status: filter?.status,
+    });
+  }
+
+  if (filter?.timeInFore != null) {
+    whereAnd.push({
+      timeInFore: filter?.timeInFore,
+    });
   }
 
   const prisma = prismaAuth(context);

@@ -14,6 +14,7 @@ export function TradeImporter({ context }: { context: AppContext }) {
       keys={[
         'price',
         'quantity',
+        'meta',
         'buyOrderId',
         'sellOrderId',
         'instrument',

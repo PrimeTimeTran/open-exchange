@@ -15,6 +15,7 @@ export function ChateeImporter({ context }: { context: AppContext }) {
         'nickname',
         'status',
         'role',
+        'meta',
         'user',
         'chat',
       ]}

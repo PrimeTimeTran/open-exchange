@@ -42,6 +42,10 @@ export async function assetFindController(
     include: {
       baseInstruments: true,
       quoteInstruments: true,
+      wallets: true,
+      deposits: true,
+      withdrawals: true,
+      snapshots: true,
       createdByMembership: true,
       updatedByMembership: true,
       archivedByMembership: true,

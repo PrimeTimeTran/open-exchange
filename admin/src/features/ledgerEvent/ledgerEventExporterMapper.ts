@@ -16,10 +16,17 @@ export function ledgerEventExporterMapper(
         context.dictionary.ledgerEvent.enumerators.type,
         ledgerEvent.type,
       ),
+      referenceId: ledgerEvent.referenceId,
       referenceType: enumeratorLabel(
         context.dictionary.ledgerEvent.enumerators.referenceType,
         ledgerEvent.referenceType,
       ),
+      status: enumeratorLabel(
+        context.dictionary.ledgerEvent.enumerators.status,
+        ledgerEvent.status,
+      ),
+      description: ledgerEvent.description,
+      meta: ledgerEvent.meta?.toString(),
       createdByMembership: membershipLabel(ledgerEvent.createdByMembership, context.dictionary),
       createdAt: String(ledgerEvent.createdAt),
       updatedByMembership: membershipLabel(ledgerEvent.createdByMembership, context.dictionary),

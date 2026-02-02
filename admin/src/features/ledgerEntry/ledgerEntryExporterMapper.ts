@@ -13,6 +13,8 @@ export function ledgerEntryExporterMapper(
     return {
       id: ledgerEntry.id,
       amount: formatDecimal(ledgerEntry.amount?.toString(), context.locale),
+      accountId: ledgerEntry.accountId,
+      meta: ledgerEntry.meta?.toString(),
       createdByMembership: membershipLabel(ledgerEntry.createdByMembership, context.dictionary),
       createdAt: String(ledgerEntry.createdAt),
       updatedByMembership: membershipLabel(ledgerEntry.createdByMembership, context.dictionary),

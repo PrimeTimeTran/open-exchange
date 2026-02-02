@@ -18,6 +18,7 @@ export function chateeExporterMapper(
         chatee.status,
       ),
       role: chatee.role?.join(', '),
+      meta: chatee.meta?.toString(),
       createdByMembership: membershipLabel(chatee.createdByMembership, context.dictionary),
       createdAt: String(chatee.createdAt),
       updatedByMembership: membershipLabel(chatee.createdByMembership, context.dictionary),

@@ -29,6 +29,7 @@ import { accountEnumerators } from 'src/features/account/accountEnumerators';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
 import SelectInput from 'src/shared/components/form/SelectInput';
 import { Textarea } from 'src/shared/components/ui/textarea';
+import { MembershipAutocompleteInput } from 'src/features/membership/components/MembershipAutocompleteInput';
 
 export function AccountForm({
   account,
@@ -54,6 +55,7 @@ export function AccountForm({
     type: account?.type || null,
     status: account?.status || null,
     meta: account?.meta?.toString() || '',
+    user: account?.user || null,
   });
 
   const form = useForm({
@@ -213,6 +215,34 @@ export function AccountForm({
                   ) : null}
 
                   <FormMessage data-testid="meta-error" />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="user"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{dictionary.account.fields.user}</FormLabel>
+
+                  <MembershipAutocompleteInput
+                    context={context}
+                    onChange={field.onChange}
+                    value={field.value}
+                    isClearable={true}
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    mode="memory"
+                  />
+
+                  {dictionary.account.hints.user ? (
+                    <FormDescription>
+                      {dictionary.account.hints.user}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="user-error" />
                 </FormItem>
               )}
             />

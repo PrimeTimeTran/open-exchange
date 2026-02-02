@@ -57,6 +57,8 @@ export async function ledgerEntryUpdateController(
     },
     data: {
       amount: data.amount,
+      accountId: data.accountId,
+      meta: data.meta,
       event: prismaRelationship.connectOrDisconnectOne(data.event),
     },
   });

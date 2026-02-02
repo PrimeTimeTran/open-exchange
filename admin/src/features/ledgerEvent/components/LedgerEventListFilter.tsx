@@ -23,11 +23,15 @@ import { z } from 'zod';
 import { ledgerEventEnumerators } from 'src/features/ledgerEvent/ledgerEventEnumerators';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
 import SelectInput from 'src/shared/components/form/SelectInput';
+import { Input } from 'src/shared/components/ui/input';
 import { Switch } from 'src/shared/components/ui/switch';
 
 const emptyValues = {
   type: null,
+  referenceId: '',
   referenceType: null,
+  status: null,
+  description: '',
   archived: false,
 };
 
@@ -52,11 +56,23 @@ function LedgerEventListFilter({
         dictionary.ledgerEvent.enumerators.type,
       ),
     },
+    referenceId: {
+      label: dictionary.ledgerEvent.fields.referenceId,
+    },
     referenceType: {
       label: dictionary.ledgerEvent.fields.referenceType,
       render: dataTableFilterRenders(context).enumerator(
         dictionary.ledgerEvent.enumerators.referenceType,
       ),
+    },
+    status: {
+      label: dictionary.ledgerEvent.fields.status,
+      render: dataTableFilterRenders(context).enumerator(
+        dictionary.ledgerEvent.enumerators.status,
+      ),
+    },
+    description: {
+      label: dictionary.ledgerEvent.fields.description,
     },
     archived: {
       label: dictionary.shared.showArchived,
@@ -148,6 +164,18 @@ function LedgerEventListFilter({
 
               <FormField
                 control={form.control}
+                name="referenceId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{dictionary.ledgerEvent.fields.referenceId}</FormLabel>
+                    <Input disabled={isLoading} {...field} />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="referenceType"
                 render={({ field }) => (
                   <FormItem>
@@ -168,6 +196,45 @@ function LedgerEventListFilter({
                       onChange={field.onChange}
                       value={field.value}
                     />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{dictionary.ledgerEvent.fields.status}</FormLabel>
+                    <SelectInput
+                      options={Object.keys(ledgerEventEnumerators.status).map(
+                        (value) => ({
+                          value,
+                          label: enumeratorLabel(
+                            dictionary.ledgerEvent.enumerators.status,
+                            value,
+                          ),
+                        }),
+                      )}
+                      dictionary={dictionary}
+                      isClearable={true}
+                      disabled={isLoading}
+                      onChange={field.onChange}
+                      value={field.value}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{dictionary.ledgerEvent.fields.description}</FormLabel>
+                    <Input disabled={isLoading} {...field} />
                     <FormMessage />
                   </FormItem>
                 )}

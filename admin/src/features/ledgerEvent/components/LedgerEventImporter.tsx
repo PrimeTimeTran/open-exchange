@@ -13,7 +13,11 @@ export function LedgerEventImporter({ context }: { context: AppContext }) {
     <Importer
       keys={[
         'type',
+        'referenceId',
         'referenceType',
+        'status',
+        'description',
+        'meta',
       ]}
       labels={context.dictionary.ledgerEvent.fields}
       context={context}

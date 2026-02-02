@@ -8,7 +8,7 @@ import { permissions } from 'src/features/permissions';
 import { validateHasPermission } from 'src/features/security';
 import { prismaAuth } from 'src/prisma';
 import { AppContext } from 'src/shared/controller/appContext';
-
+import { prismaRelationship } from 'src/prisma/prismaRelationship';
 
 export const accountUpdateApiDoc: RouteConfig = {
   method: 'put',
@@ -59,6 +59,7 @@ export async function accountUpdateController(
       type: data.type,
       status: data.status,
       meta: data.meta,
+      user: prismaRelationship.connectOrDisconnectOne(data.user),
     },
   });
 
@@ -70,7 +71,12 @@ export async function accountUpdateController(
       },
     },
     include: {
+      user: true,
       orders: true,
+      wallets: true,
+      deposits: true,
+      withdrawals: true,
+      snapshots: true,
       createdByMembership: true,
       updatedByMembership: true,
       archivedByMembership: true,

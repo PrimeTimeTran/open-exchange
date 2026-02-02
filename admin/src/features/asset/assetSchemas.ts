@@ -8,6 +8,10 @@ import { numberCoerceSchema, numberOptionalCoerceSchema } from 'src/shared/schem
 import { jsonSchema } from 'src/shared/schemas/jsonSchema';
 import { objectToUuidSchema, objectToUuidSchemaOptional } from 'src/shared/schemas/objectToUuidSchema';
 import { Instrument } from '@prisma/client';
+import { Wallet } from '@prisma/client';
+import { Deposit } from '@prisma/client';
+import { Withdrawal } from '@prisma/client';
+import { BalanceSnapshot } from '@prisma/client';
 
 extendZodWithOpenApi(z);
 
@@ -21,6 +25,7 @@ export const assetFilterFormSchema = z
     type: z.nativeEnum(assetEnumerators.type).nullable().optional(),
     precisionRange: z.array(z.coerce.number()).max(2),
     isFractional: z.string().nullable().optional(),
+    decimalsRange: z.array(z.coerce.number()).max(2),
     archived: z
     .any()
     .transform((val) =>
@@ -78,6 +83,7 @@ export const assetCreateInputSchema = z.object({
   precision: numberOptionalCoerceSchema(z.number().int().nullable().optional()),
   isFractional: z.boolean().default(false),
   meta: jsonSchema.optional(),
+  decimals: numberOptionalCoerceSchema(z.number().int().nullable().optional()),
   importHash: z.string().optional(),
 });
 
@@ -91,6 +97,7 @@ export const assetImportFileSchema = z
     precision: z.string(),
     isFractional: z.string().transform((val) => val === 'true' || val === 'TRUE'),
     meta: z.string(),
+    decimals: z.string(),
   })
   .partial();
 
@@ -104,6 +111,10 @@ export const assetUpdateBodyInputSchema =
 export interface AssetWithRelationships extends Asset {
   baseInstruments?: Instrument[];
   quoteInstruments?: Instrument[];
+  wallets?: Wallet[];
+  deposits?: Deposit[];
+  withdrawals?: Withdrawal[];
+  snapshots?: BalanceSnapshot[];
   createdByMembership?: Membership;
   updatedByMembership?: Membership;
   archivedByMembership?: Membership;

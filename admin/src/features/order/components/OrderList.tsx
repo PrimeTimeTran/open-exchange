@@ -167,7 +167,6 @@ export default function OrderList({ context }: { context: AppContext }) {
         );
       },
     },
-
     {
       id: DataTableColumnIds.actions,
       meta: {

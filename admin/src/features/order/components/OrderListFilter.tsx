@@ -31,10 +31,9 @@ const emptyValues = {
   type: null,
   priceRange: [],
   quantityRange: [],
+  quantityFilledRange: [],
   status: null,
   timeInFore: null,
-  quantityFilledRange: [],
-  user: null,
   account: null,
   instrument: null,
   archived: false,
@@ -75,6 +74,10 @@ function OrderListFilter({
       label: dictionary.order.fields.quantity,
       render: dataTableFilterRenders(context).decimalRange(),
     },
+    quantityFilledRange: {
+      label: dictionary.order.fields.quantityFilled,
+      render: dataTableFilterRenders(context).decimalRange(),
+    },
     status: {
       label: dictionary.order.fields.status,
       render: dataTableFilterRenders(context).enumerator(
@@ -86,10 +89,6 @@ function OrderListFilter({
       render: dataTableFilterRenders(context).enumerator(
         dictionary.order.enumerators.timeInFore,
       ),
-    },
-    quantityFilledRange: {
-      label: dictionary.order.fields.quantityFilled,
-      render: dataTableFilterRenders(context).decimalRange(),
     },
     archived: {
       label: dictionary.shared.showArchived,

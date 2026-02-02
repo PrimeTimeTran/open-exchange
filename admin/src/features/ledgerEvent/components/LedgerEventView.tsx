@@ -100,6 +100,20 @@ export function LedgerEventView({
             </div>
           </div>
         )}
+        {Boolean(ledgerEvent.referenceId) && (
+          <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
+            <div className="font-semibold">
+              {dictionary.ledgerEvent.fields.referenceId}
+            </div>
+            <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
+              <span>{ledgerEvent.referenceId}</span>
+              <CopyToClipboardButton
+                text={ledgerEvent.referenceId}
+                dictionary={context.dictionary}
+              />
+            </div>
+          </div>
+        )}
         {ledgerEvent.referenceType != null && (
           <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
             <div className="font-semibold">
@@ -117,6 +131,42 @@ export function LedgerEventView({
                   dictionary.ledgerEvent.enumerators.referenceType,
                   ledgerEvent.referenceType,
                 )}
+                dictionary={context.dictionary}
+              />
+            </div>
+          </div>
+        )}
+        {ledgerEvent.status != null && (
+          <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
+            <div className="font-semibold">
+              {dictionary.ledgerEvent.fields.status}
+            </div>
+            <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
+              <span>
+                {enumeratorLabel(
+                  dictionary.ledgerEvent.enumerators.status,
+                  ledgerEvent.status,
+                )}
+              </span>
+              <CopyToClipboardButton
+                text={enumeratorLabel(
+                  dictionary.ledgerEvent.enumerators.status,
+                  ledgerEvent.status,
+                )}
+                dictionary={context.dictionary}
+              />
+            </div>
+          </div>
+        )}
+        {Boolean(ledgerEvent.description) && (
+          <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
+            <div className="font-semibold">
+              {dictionary.ledgerEvent.fields.description}
+            </div>
+            <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
+              <span>{ledgerEvent.description}</span>
+              <CopyToClipboardButton
+                text={ledgerEvent.description}
                 dictionary={context.dictionary}
               />
             </div>

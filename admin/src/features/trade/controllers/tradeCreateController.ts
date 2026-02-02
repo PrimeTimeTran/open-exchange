@@ -45,6 +45,7 @@ export async function tradeCreate(body: unknown, context: AppContext) {
     data: {
       price: data.price,
       quantity: data.quantity,
+      meta: data.meta,
       buyOrderId: prismaRelationship.connectMany(data.buyOrderId),
       sellOrderId: prismaRelationship.connectMany(data.sellOrderId),
       instrument: prismaRelationship.connectOne(data.instrument),
@@ -54,7 +55,7 @@ export async function tradeCreate(body: unknown, context: AppContext) {
       buyOrderId: true,
       sellOrderId: true,
       instrument: true,
-      tradeFills: true,
+      fills: true,
       createdByMembership: true,
       updatedByMembership: true,
       archivedByMembership: true,

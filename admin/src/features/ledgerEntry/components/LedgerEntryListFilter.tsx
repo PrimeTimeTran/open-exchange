@@ -21,10 +21,12 @@ import { AppContext } from 'src/shared/controller/appContext';
 import { getZodErrorMap } from 'src/translation/getZodErrorMap';
 import { z } from 'zod';
 import RangeInput from 'src/shared/components/form/RangeInput';
+import { Input } from 'src/shared/components/ui/input';
 import { Switch } from 'src/shared/components/ui/switch';
 
 const emptyValues = {
   amountRange: [],
+  accountId: '',
   event: null,
   archived: false,
 };
@@ -47,6 +49,9 @@ function LedgerEntryListFilter({
     amountRange: {
       label: dictionary.ledgerEntry.fields.amount,
       render: dataTableFilterRenders(context).decimalRange(),
+    },
+    accountId: {
+      label: dictionary.ledgerEntry.fields.accountId,
     },
     archived: {
       label: dictionary.shared.showArchived,
@@ -122,6 +127,18 @@ function LedgerEntryListFilter({
                       onChange={field.onChange}
                       value={field.value}
                     />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="accountId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{dictionary.ledgerEntry.fields.accountId}</FormLabel>
+                    <Input disabled={isLoading} {...field} />
                     <FormMessage />
                   </FormItem>
                 )}

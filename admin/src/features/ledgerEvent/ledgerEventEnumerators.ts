@@ -6,12 +6,21 @@ export const ledgerEventEnumerators = {
     fee: 'fee',
     settlement: 'settlement',
     adjustment: 'adjustment',
+    transfer: 'transfer',
+    reversal: 'reversal',
   },
 
   referenceType: {
+    deposit: 'deposit',
+    withdrawal: 'withdrawal',
     order: 'order',
     trade: 'trade',
-    blockchain_tx: 'blockchain_tx',
-    admin_action: 'admin_action',
+    manual_adjustment: 'manual_adjustment',
+  },
+
+  status: {
+    pending: 'pending',
+    posted: 'posted',
+    reversed: 'reversed',
   },
 };

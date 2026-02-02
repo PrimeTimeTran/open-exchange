@@ -80,6 +80,23 @@ export async function assetFindManyController(
     });
   }
 
+  if (filter?.decimalsRange?.length) {
+    const start = filter.decimalsRange?.[0];
+    const end = filter.decimalsRange?.[1];
+
+    if (start != null) {
+      whereAnd.push({
+        decimals: { gte: start },
+      });
+    }
+
+    if (end != null) {
+      whereAnd.push({
+        decimals: { lte: end },
+      });
+    }
+  }
+
   const prisma = prismaAuth(context);
 
   let assets = await prisma.asset.findMany({

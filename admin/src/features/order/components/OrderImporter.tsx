@@ -12,7 +12,6 @@ export function OrderImporter({ context }: { context: AppContext }) {
   return (
     <Importer
       keys={[
-        'user',
         'account',
         'instrument',
         'side',

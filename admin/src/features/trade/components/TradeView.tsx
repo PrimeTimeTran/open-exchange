@@ -16,8 +16,8 @@ import { orderLabel } from 'src/features/order/orderLabel';
 import { OrderLink } from 'src/features/order/components/OrderLink';
 import { instrumentLabel } from 'src/features/instrument/instrumentLabel';
 import { InstrumentLink } from 'src/features/instrument/components/InstrumentLink';
-import { tradeFillLabel } from 'src/features/tradeFill/tradeFillLabel';
-import { TradeFillLink } from 'src/features/tradeFill/components/TradeFillLink';
+import { fillLabel } from 'src/features/fill/fillLabel';
+import { FillLink } from 'src/features/fill/components/FillLink';
 import { tradeLabel } from 'src/features/trade/tradeLabel';
 import { MembershipLink } from 'src/features/membership/components/MembershipLink';
 import { membershipLabel } from 'src/features/membership/membershipLabel';
@@ -178,21 +178,21 @@ export function TradeView({
             </div>
           </div>
         )}
-        {trade.tradeFills?.length ? (<div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
+        {trade.fills?.length ? (<div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
           <div className="font-semibold">
-            {dictionary.trade.fields.tradeFills}
+            {dictionary.trade.fields.fills}
           </div>
           <div className="col-span-2 flex flex-col gap-1">
-            {trade.tradeFills?.map((item) => {
+            {trade.fills?.map((item) => {
               return (
                 <div key={item?.id} className="flex items-center gap-4">
-                  <TradeFillLink
-                    tradeFill={item}
+                  <FillLink
+                    fill={item}
                     context={context}
                     className="whitespace-nowrap"
                   />
                   <CopyToClipboardButton
-                    text={tradeFillLabel(item, context.dictionary)}
+                    text={fillLabel(item, context.dictionary)}
                     dictionary={context.dictionary}
                   />
                 </div>

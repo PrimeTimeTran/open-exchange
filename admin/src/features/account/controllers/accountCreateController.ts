@@ -5,7 +5,7 @@ import { permissions } from 'src/features/permissions';
 import { validateHasPermission } from 'src/features/security';
 import { prismaAuth } from 'src/prisma';
 import { AppContext } from 'src/shared/controller/appContext';
-
+import { prismaRelationship } from 'src/prisma/prismaRelationship';
 
 export const accountCreateApiDoc: RouteConfig = {
   method: 'post',
@@ -46,10 +46,16 @@ export async function accountCreate(body: unknown, context: AppContext) {
       type: data.type,
       status: data.status,
       meta: data.meta,
+      user: prismaRelationship.connectOne(data.user),
       importHash: data.importHash,
     },
     include: {
+      user: true,
       orders: true,
+      wallets: true,
+      deposits: true,
+      withdrawals: true,
+      snapshots: true,
       createdByMembership: true,
       updatedByMembership: true,
       archivedByMembership: true,

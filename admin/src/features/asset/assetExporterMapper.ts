@@ -22,6 +22,7 @@ export function assetExporterMapper(
         ? context.dictionary.shared.yes
         : context.dictionary.shared.no,
       meta: asset.meta?.toString(),
+      decimals: asset.decimals?.toString(),
       createdByMembership: membershipLabel(asset.createdByMembership, context.dictionary),
       createdAt: String(asset.createdAt),
       updatedByMembership: membershipLabel(asset.createdByMembership, context.dictionary),

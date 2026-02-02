@@ -28,6 +28,7 @@ import { Switch } from 'src/shared/components/ui/switch';
 const emptyValues = {
   type: null,
   status: null,
+  user: null,
   archived: false,
 };
 

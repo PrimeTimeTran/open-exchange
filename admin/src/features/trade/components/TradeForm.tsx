@@ -26,6 +26,7 @@ import { z } from 'zod';
 import { tradeCreateInputSchema } from 'src/features/trade/tradeSchemas';
 import { useSetUnsavedChanges } from 'src/shared/components/unsavedChanges/UnsavedChangesProvider';
 import { Input } from 'src/shared/components/ui/input';
+import { Textarea } from 'src/shared/components/ui/textarea';
 import { OrderAutocompleteMultipleInput } from 'src/features/order/components/OrderAutocompleteMultipleInput';
 import { InstrumentAutocompleteInput } from 'src/features/instrument/components/InstrumentAutocompleteInput';
 
@@ -52,6 +53,7 @@ export function TradeForm({
   const [initialValues] = React.useState({
     price: trade?.price ? Number(trade?.price) : '',
     quantity: trade?.quantity ? Number(trade?.quantity) : '',
+    meta: trade?.meta?.toString() || '',
     buyOrderId: trade?.buyOrderId || [],
     sellOrderId: trade?.sellOrderId || [],
     instrument: trade?.instrument || null,
@@ -173,6 +175,32 @@ export function TradeForm({
                 )}
               />
             </div>
+          <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="meta"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {dictionary.trade.fields.meta}
+                  </FormLabel>
+
+                  <Textarea
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    {...field}
+                  />
+
+                  {dictionary.trade.hints.meta ? (
+                    <FormDescription>
+                      {dictionary.trade.hints.meta}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="meta-error" />
+                </FormItem>
+              )}
+            />
+          </div>
           <div className="grid max-w-lg gap-1">
             <FormField
               control={form.control}

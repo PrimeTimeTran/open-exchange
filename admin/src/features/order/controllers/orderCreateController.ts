@@ -43,21 +43,19 @@ export async function orderCreate(body: unknown, context: AppContext) {
 
   let order = await prisma.order.create({
     data: {
-      meta: data.meta,
       side: data.side,
       type: data.type,
       price: data.price,
       quantity: data.quantity,
+      quantityFilled: data.quantityFilled,
       status: data.status,
       timeInFore: data.timeInFore,
-      quantityFilled: data.quantityFilled,
-      user: prismaRelationship.connectOne(data.user),
+      meta: data.meta,
       account: prismaRelationship.connectOne(data.account),
       instrument: prismaRelationship.connectOne(data.instrument),
       importHash: data.importHash,
     },
     include: {
-      user: true,
       account: true,
       instrument: true,
       buys: true,
