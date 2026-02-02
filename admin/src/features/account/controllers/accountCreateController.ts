@@ -1,0 +1,62 @@
+import { RouteConfig } from '@asteasolutions/zod-to-openapi';
+import { accountCreateInputSchema } from 'src/features/account/accountSchemas';
+import { filePopulateDownloadUrlInTree } from 'src/features/file/fileService';
+import { permissions } from 'src/features/permissions';
+import { validateHasPermission } from 'src/features/security';
+import { prismaAuth } from 'src/prisma';
+import { AppContext } from 'src/shared/controller/appContext';
+
+
+export const accountCreateApiDoc: RouteConfig = {
+  method: 'post',
+  path: '/api/account',
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: accountCreateInputSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Account',
+    },
+  },
+};
+
+export async function accountCreateController(
+  body: unknown,
+  context: AppContext,
+) {
+  validateHasPermission(permissions.accountCreate, context);
+  return await accountCreate(body, context);
+}
+
+export async function accountCreate(body: unknown, context: AppContext) {
+  const data = accountCreateInputSchema.parse(body);
+
+  const prisma = prismaAuth(context);
+
+
+
+  let account = await prisma.account.create({
+    data: {
+      type: data.type,
+      status: data.status,
+      meta: data.meta,
+      importHash: data.importHash,
+    },
+    include: {
+      orders: true,
+      createdByMembership: true,
+      updatedByMembership: true,
+      archivedByMembership: true,
+    },
+  });
+
+  account = await filePopulateDownloadUrlInTree(account);
+
+  return account;
+}

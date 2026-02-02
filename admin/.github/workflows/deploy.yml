@@ -1,0 +1,47 @@
+name: Deploy
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  NODE_ENV: 'production'
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  DATABASE_MIGRATION_URL: ${{ secrets.DATABASE_MIGRATION_URL }}
+  DATABASE_APP_PASSWORD: ${{ secrets.DATABASE_APP_PASSWORD }}
+  DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
+  DATABASE_SCHEMA: ${{ secrets.DATABASE_SCHEMA }}
+  DATABASE_APP_USER: 'appuser'
+  NEXT_PUBLIC_TENANT_MODE: 'multi'
+  NEXT_PUBLIC_SUBSCRIPTION_MODE: 'disabled'
+  NEXT_PUBLIC_BACKEND_URL: 'http://localhost:3000'
+  AUTH_TOKEN_SECRET: 'complex_password_at_least_32_characters_long'
+  AUTH_TOKEN_EXPIRES_IN: '7 days'
+  FILE_STORAGE_PROVIDER: 'local'
+  FRONTEND_URL: 'http://localhost:3000'
+on:
+  workflow_run:
+    workflows: [Tests]
+    branches: [main]
+    types:
+      - completed
+
+jobs:
+  database:
+    runs-on: ubuntu-latest
+    container: node:18-alpine
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - name: Install dependencies
+        run: npm ci
+      - name: Run Migrations
+        run: npm run prisma:migrate:production
+  deploy:
+    needs: ['database']
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Vercel CLI
+        run: npm install --global vercel
+      - name: Trigger deployment
+        run: vercel --prod --token=${{ secrets.VERCEL_TOKEN }}

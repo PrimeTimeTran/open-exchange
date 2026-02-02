@@ -1,0 +1,94 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+concurrency:
+  # Pushing new changes to a branch will cancel any in-progress CI runs
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_ENV: 'test'
+  TEST: 'true'
+  POSTGRES_HOST: localhost
+
+  POSTGRES_PORT: 5432
+  DATABASE_URL: 'postgresql://appuser:appuser@localhost:5432/tests?schema=public'
+  DATABASE_MIGRATION_URL: 'postgresql://postgres:postgres@localhost:5432/tests?schema=public'
+  DATABASE_NAME: 'tests'
+  DATABASE_APP_PASSWORD: 'appuser'
+  DATABASE_APP_USER: 'appuser'
+  DATABASE_SCHEMA: 'public'
+  NEXT_PUBLIC_TENANT_MODE: 'multi'
+  NEXT_PUBLIC_SUBSCRIPTION_MODE: 'tenant'
+  NEXT_PUBLIC_SUBSCRIPTION_PRICES_BASIC: 'basic'
+  NEXT_PUBLIC_SUBSCRIPTION_PRICES_ENTERPRISE: 'enterprise'
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test'
+  STRIPE_SECRET_KEY: 'test'
+  STRIPE_WEBHOOK_SECRET: 'test'
+  NEXT_PUBLIC_BACKEND_URL: 'http://localhost:3000'
+  AUTH_TOKEN_SECRET: 'complex_password_at_least_32_characters_long'
+  AUTH_TOKEN_EXPIRES_IN: '7 days'
+  FILE_STORAGE_PROVIDER: 'local'
+  FRONTEND_URL: 'http://localhost:3000'
+
+jobs:
+  tests-e2e:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        ports: ['5432:5432']
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+      - name: Run Playwright tests
+        run: npm run test:e2e:ci
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+  tests-backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        ports: ['5432:5432']
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm ci
+      - name: Run Tests
+        run: npm run test:backend

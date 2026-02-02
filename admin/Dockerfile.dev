@@ -1,0 +1,24 @@
+FROM node:18-bookworm
+
+# Install dependencies
+RUN apt-get update && apt-get install -y python3 make g++ cmake && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
+COPY src/prisma/schema.prisma ./src/prisma/schema.prisma
+
+# Install dependencies
+RUN \
+  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+  elif [ -f package-lock.json ]; then npm install; \
+  elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm i --frozen-lockfile; \
+  else echo "Lockfile not found." && exit 1; \
+  fi
+
+# Expose port
+EXPOSE 3000
+
+# Start development server
+CMD npx prisma generate && npm run dev

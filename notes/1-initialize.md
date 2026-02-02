@@ -1,0 +1,7 @@
+- Setup Admin
+  - Disable Strip(NEXT_PUBLIC_SUBSCRIPTION_MODE="disabled")
+- Setup Go Matching Engine
+- Containerized
+  - docker-compose up --build
+  - Hot Reloading(2-5 seconds to reflect)
+  - Connect to localhost Postgres instance

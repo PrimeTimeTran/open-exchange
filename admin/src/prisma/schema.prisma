@@ -1,0 +1,728 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-1.0.x", "linux-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_MIGRATION_URL")
+}
+
+model User {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  email                       String         @unique
+  password                    String?
+  emailVerified               Boolean        @default(false)
+  verifyEmailToken            String?
+  verifyEmailTokenExpiresAt   DateTime? @db.Timestamptz(3)
+  provider                    String?
+  providerId                  String?
+  passwordResetToken          String?
+  passwordResetTokenExpiresAt DateTime? @db.Timestamptz(3)
+  expireSessionsOlderThan     DateTime? @db.Timestamptz(3)
+  memberships                 Membership[]
+  subscriptions               Subscription[]
+}
+
+model AuditLog {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  timestamp           DateTime @default(now()) @db.Timestamptz(3)
+  entityName          String
+  entityId            String   @db.Uuid // No FK to keep deleted entities logs
+  tenantId            String?  @db.Uuid // No FK to keep deleted entities logs
+  userId              String?  @db.Uuid // No FK to keep deleted entities logs
+  membershipId        String?  @db.Uuid // No FK to keep deleted entities logs
+  apiKeyId            String?  @db.Uuid // No FK to keep deleted entities logs
+  apiEndpoint         String?
+  apiHttpResponseCode String?
+  operation           String
+  oldData             Json?
+  newData             Json?
+  transactionId       BigInt   @default(dbgenerated("txid_current()"))
+}
+
+model ApiKey {
+  id                    String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String      @default(dbgenerated("NULLIF((current_setting('app.current_tenant_id'::text)), '')::uuid")) @db.Uuid
+  tenant                Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt             DateTime    @default(now()) @db.Timestamptz(3)
+  createdByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembership   Membership? @relation("createdByMembership", fields: [createdByMembershipId], references: [id], onDelete: SetNull)
+  updatedAt             DateTime    @updatedAt @db.Timestamptz(3)
+  updatedByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembership   Membership? @relation("updatedByMembership", fields: [updatedByMembershipId], references: [id], onDelete: SetNull)
+
+  name      String
+  keyPrefix String
+  secret    String    @unique
+  scopes    String[]
+  expiresAt DateTime? @db.Timestamptz(3)
+
+  disabledAt DateTime? @db.Timestamptz(3)
+
+  membership   Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  membershipId String     @db.Uuid
+
+  @@unique([id, tenantId])
+  @@unique([id, tenantId, membershipId])
+}
+
+model Tenant {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  createdAt       DateTime @default(now()) @db.Timestamptz(3)
+  createdByUserId String?  @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  updatedAt       DateTime @updatedAt @db.Timestamptz(3)
+  updatedByUserId String?  @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+
+  name String
+
+  memberships   Membership[]
+  subscriptions Subscription[]
+  apiKeys       ApiKey[]
+
+  postTenant Post[]
+  commentTenant Comment[]
+  orderTenant Order[]
+  articleTenant Article[]
+  itemTenant Item[]
+  chatTenant Chat[]
+  chateeTenant Chatee[]
+  messageTenant Message[]
+  assetTenant Asset[]
+  accountTenant Account[]
+  instrumentTenant Instrument[]
+  ledgerEventTenant LedgerEvent[]
+  ledgerEntryTenant LedgerEntry[]
+  tradeTenant Trade[]
+  tradeFillTenant TradeFill[]
+}
+
+enum MembershipStatus {
+  active
+  disabled
+  invited
+}
+
+model Membership {
+  id                    String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String      @default(dbgenerated("NULLIF((current_setting('app.current_tenant_id'::text)), '')::uuid")) @db.Uuid
+  tenant                Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt             DateTime    @default(now()) @db.Timestamptz(3)
+  createdByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembership   Membership? @relation("createdByMembership", fields: [createdByMembershipId], references: [id], onDelete: SetNull)
+  updatedAt             DateTime    @updatedAt @db.Timestamptz(3)
+  updatedByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembership   Membership? @relation("updatedByMembership", fields: [updatedByMembershipId], references: [id], onDelete: SetNull)
+  importHash            String?     @unique
+
+  userId          String           @db.Uuid
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName       String?
+  lastName        String?
+  fullName        String?
+  avatars         Json?
+  roles           String[]
+  invitationToken String?          @unique
+  apiKeys         ApiKey[]
+  subscriptions   Subscription[]
+  status          MembershipStatus @default(active)
+
+  membershipCreatedBy Membership[] @relation("createdByMembership")
+  membershipUpdatedBy Membership[] @relation("updatedByMembership")
+  apiKeyCreatedBy ApiKey[] @relation("createdByMembership")
+  apiKeyUpdatedBy ApiKey[] @relation("updatedByMembership")
+
+  postCreatedBy Post[] @relation("createdByMembership") 
+  postUpdatedBy Post[] @relation("updatedByMembership") 
+  postArchivedBy Post[] @relation("archivedByMembership")
+
+  commentCreatedBy Comment[] @relation("createdByMembership") 
+  commentUpdatedBy Comment[] @relation("updatedByMembership") 
+  commentArchivedBy Comment[] @relation("archivedByMembership")
+
+  orderCreatedBy Order[] @relation("createdByMembership") 
+  orderUpdatedBy Order[] @relation("updatedByMembership") 
+  orderArchivedBy Order[] @relation("archivedByMembership")
+
+  articleCreatedBy Article[] @relation("createdByMembership") 
+  articleUpdatedBy Article[] @relation("updatedByMembership") 
+  articleArchivedBy Article[] @relation("archivedByMembership")
+
+  itemCreatedBy Item[] @relation("createdByMembership") 
+  itemUpdatedBy Item[] @relation("updatedByMembership") 
+  itemArchivedBy Item[] @relation("archivedByMembership")
+
+  chatCreatedBy Chat[] @relation("createdByMembership") 
+  chatUpdatedBy Chat[] @relation("updatedByMembership") 
+  chatArchivedBy Chat[] @relation("archivedByMembership")
+
+  chateeCreatedBy Chatee[] @relation("createdByMembership") 
+  chateeUpdatedBy Chatee[] @relation("updatedByMembership") 
+  chateeArchivedBy Chatee[] @relation("archivedByMembership")
+
+  messageCreatedBy Message[] @relation("createdByMembership") 
+  messageUpdatedBy Message[] @relation("updatedByMembership") 
+  messageArchivedBy Message[] @relation("archivedByMembership")
+
+  assetCreatedBy Asset[] @relation("createdByMembership") 
+  assetUpdatedBy Asset[] @relation("updatedByMembership") 
+  assetArchivedBy Asset[] @relation("archivedByMembership")
+
+  accountCreatedBy Account[] @relation("createdByMembership") 
+  accountUpdatedBy Account[] @relation("updatedByMembership") 
+  accountArchivedBy Account[] @relation("archivedByMembership")
+
+  instrumentCreatedBy Instrument[] @relation("createdByMembership") 
+  instrumentUpdatedBy Instrument[] @relation("updatedByMembership") 
+  instrumentArchivedBy Instrument[] @relation("archivedByMembership")
+
+  ledgerEventCreatedBy LedgerEvent[] @relation("createdByMembership") 
+  ledgerEventUpdatedBy LedgerEvent[] @relation("updatedByMembership") 
+  ledgerEventArchivedBy LedgerEvent[] @relation("archivedByMembership")
+
+  ledgerEntryCreatedBy LedgerEntry[] @relation("createdByMembership") 
+  ledgerEntryUpdatedBy LedgerEntry[] @relation("updatedByMembership") 
+  ledgerEntryArchivedBy LedgerEntry[] @relation("archivedByMembership")
+
+  tradeCreatedBy Trade[] @relation("createdByMembership") 
+  tradeUpdatedBy Trade[] @relation("updatedByMembership") 
+  tradeArchivedBy Trade[] @relation("archivedByMembership")
+
+  tradeFillCreatedBy TradeFill[] @relation("createdByMembership") 
+  tradeFillUpdatedBy TradeFill[] @relation("updatedByMembership") 
+  tradeFillArchivedBy TradeFill[] @relation("archivedByMembership")
+  posts Post[] @relation("posts_user")
+
+  comments Comment[] @relation("comments_user")
+
+  articles Article[] @relation("articles_user")
+
+  chats Chatee[] @relation("chats_user")
+
+  messages Message[] @relation("messages_sender")
+
+  orders Order[] @relation("orders_user")
+
+
+  @@unique([id, tenantId])
+  @@unique([userId, tenantId])
+}
+
+enum SubscriptionStatus {
+  incomplete
+  incomplete_expired
+  trialing
+  active
+  past_due
+  canceled
+  unpaid
+  paused
+}
+
+enum SubscriptionMode {
+  user
+  tenant
+  membership
+  disabled
+}
+
+model Subscription {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String?  @db.Uuid
+  tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  membershipId         String?            @db.Uuid
+  membership           Membership?        @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  userId               String             @db.Uuid
+  user                 User               @relation(fields: [userId], references: [id])
+  mode                 SubscriptionMode
+  isCancelAtEndPeriod  Boolean            @default(false)
+  stripeCustomerId     String
+  stripeSubscriptionId String             @unique
+  stripePriceId        String
+  status               SubscriptionStatus
+}
+
+model Post {
+  id                    String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String      @default(dbgenerated("NULLIF((current_setting('app.current_tenant_id'::text)), '')::uuid")) @db.Uuid
+  tenant                Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt             DateTime    @default(now()) @db.Timestamptz(3)
+  createdByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembership   Membership? @relation("createdByMembership", fields: [createdByMembershipId], references: [id], onDelete: SetNull)
+  updatedAt             DateTime    @updatedAt @db.Timestamptz(3)
+  updatedByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembership   Membership? @relation("updatedByMembership", fields: [updatedByMembershipId], references: [id], onDelete: SetNull)
+  archivedAt             DateTime?   @db.Timestamptz(3)
+  archivedByMembershipId String?     @db.Uuid
+  archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
+  importHash            String?     @unique
+
+  title String?
+  body String?
+  meta Json?
+  files Json?
+  images Json?
+  type String[] @default([])
+  userId String @db.Uuid
+  user Membership @relation("posts_user", fields: [userId], references: [id])
+
+
+
+  @@unique([id, tenantId])
+}
+
+model Comment {
+  id                    String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String      @default(dbgenerated("NULLIF((current_setting('app.current_tenant_id'::text)), '')::uuid")) @db.Uuid
+  tenant                Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt             DateTime    @default(now()) @db.Timestamptz(3)
+  createdByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembership   Membership? @relation("createdByMembership", fields: [createdByMembershipId], references: [id], onDelete: SetNull)
+  updatedAt             DateTime    @updatedAt @db.Timestamptz(3)
+  updatedByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembership   Membership? @relation("updatedByMembership", fields: [updatedByMembershipId], references: [id], onDelete: SetNull)
+  archivedAt             DateTime?   @db.Timestamptz(3)
+  archivedByMembershipId String?     @db.Uuid
+  archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
+  importHash            String?     @unique
+
+  body String?
+  meta Json?
+  type String[] @default([])
+  images Json?
+  userId String @db.Uuid
+  user Membership @relation("comments_user", fields: [userId], references: [id])
+
+
+
+  @@unique([id, tenantId])
+}
+
+model Order {
+  id                    String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String      @default(dbgenerated("NULLIF((current_setting('app.current_tenant_id'::text)), '')::uuid")) @db.Uuid
+  tenant                Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt             DateTime    @default(now()) @db.Timestamptz(3)
+  createdByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembership   Membership? @relation("createdByMembership", fields: [createdByMembershipId], references: [id], onDelete: SetNull)
+  updatedAt             DateTime    @updatedAt @db.Timestamptz(3)
+  updatedByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembership   Membership? @relation("updatedByMembership", fields: [updatedByMembershipId], references: [id], onDelete: SetNull)
+  archivedAt             DateTime?   @db.Timestamptz(3)
+  archivedByMembershipId String?     @db.Uuid
+  archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
+  importHash            String?     @unique
+
+  meta Json?
+  side String?
+  type String?
+  price Decimal?
+  quantity Decimal?
+  status String?
+  timeInFore String?
+  quantityFilled Decimal?
+  userId String? @db.Uuid
+  user Membership? @relation("orders_user", fields: [userId], references: [id])
+
+  accountId String? @db.Uuid
+  account Account? @relation("account_orders", fields: [accountId], references: [id])
+
+  instrumentId String? @db.Uuid
+  instrument Instrument? @relation("instrument_orders", fields: [instrumentId], references: [id])
+
+  buys Trade[] @relation("buyOrderId_buys")
+
+  sells Trade[] @relation("sellOrderId_sells")
+
+
+
+  @@unique([id, tenantId])
+}
+
+model Article {
+  id                    String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String      @default(dbgenerated("NULLIF((current_setting('app.current_tenant_id'::text)), '')::uuid")) @db.Uuid
+  tenant                Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt             DateTime    @default(now()) @db.Timestamptz(3)
+  createdByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembership   Membership? @relation("createdByMembership", fields: [createdByMembershipId], references: [id], onDelete: SetNull)
+  updatedAt             DateTime    @updatedAt @db.Timestamptz(3)
+  updatedByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembership   Membership? @relation("updatedByMembership", fields: [updatedByMembershipId], references: [id], onDelete: SetNull)
+  archivedAt             DateTime?   @db.Timestamptz(3)
+  archivedByMembershipId String?     @db.Uuid
+  archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
+  importHash            String?     @unique
+
+  title String?
+  body String?
+  meta Json?
+  type String[] @default([])
+  images Json?
+  files Json?
+  userId String? @db.Uuid
+  user Membership? @relation("articles_user", fields: [userId], references: [id])
+
+
+
+  @@unique([id, tenantId])
+}
+
+model Item {
+  id                    String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String      @default(dbgenerated("NULLIF((current_setting('app.current_tenant_id'::text)), '')::uuid")) @db.Uuid
+  tenant                Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt             DateTime    @default(now()) @db.Timestamptz(3)
+  createdByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembership   Membership? @relation("createdByMembership", fields: [createdByMembershipId], references: [id], onDelete: SetNull)
+  updatedAt             DateTime    @updatedAt @db.Timestamptz(3)
+  updatedByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembership   Membership? @relation("updatedByMembership", fields: [updatedByMembershipId], references: [id], onDelete: SetNull)
+  archivedAt             DateTime?   @db.Timestamptz(3)
+  archivedByMembershipId String?     @db.Uuid
+  archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
+  importHash            String?     @unique
+
+  name String?
+  caption String?
+  description String?
+  price Decimal?
+  photos Json?
+  category String[] @default([])
+  meta Json?
+  files Json?
+
+
+
+  @@unique([id, tenantId])
+}
+
+model Chat {
+  id                    String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String      @default(dbgenerated("NULLIF((current_setting('app.current_tenant_id'::text)), '')::uuid")) @db.Uuid
+  tenant                Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt             DateTime    @default(now()) @db.Timestamptz(3)
+  createdByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembership   Membership? @relation("createdByMembership", fields: [createdByMembershipId], references: [id], onDelete: SetNull)
+  updatedAt             DateTime    @updatedAt @db.Timestamptz(3)
+  updatedByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembership   Membership? @relation("updatedByMembership", fields: [updatedByMembershipId], references: [id], onDelete: SetNull)
+  archivedAt             DateTime?   @db.Timestamptz(3)
+  archivedByMembershipId String?     @db.Uuid
+  archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
+  importHash            String?     @unique
+
+  name String?
+  media Json?
+  meta Json?
+  active Boolean @default(false)
+  messages Message[] @relation("chat_messages")
+
+  chatees Chatee[] @relation("chat_chatees")
+
+
+
+  @@unique([id, tenantId])
+}
+
+model Chatee {
+  id                    String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String      @default(dbgenerated("NULLIF((current_setting('app.current_tenant_id'::text)), '')::uuid")) @db.Uuid
+  tenant                Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt             DateTime    @default(now()) @db.Timestamptz(3)
+  createdByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembership   Membership? @relation("createdByMembership", fields: [createdByMembershipId], references: [id], onDelete: SetNull)
+  updatedAt             DateTime    @updatedAt @db.Timestamptz(3)
+  updatedByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembership   Membership? @relation("updatedByMembership", fields: [updatedByMembershipId], references: [id], onDelete: SetNull)
+  archivedAt             DateTime?   @db.Timestamptz(3)
+  archivedByMembershipId String?     @db.Uuid
+  archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
+  importHash            String?     @unique
+
+  nickname String?
+  status String?
+  role String[] @default([])
+  userId String? @db.Uuid
+  user Membership? @relation("chats_user", fields: [userId], references: [id])
+
+  chatId String? @db.Uuid
+  chat Chat? @relation("chat_chatees", fields: [chatId], references: [id])
+
+  messages Message[] @relation("chatee_messages")
+
+
+
+  @@unique([id, tenantId])
+}
+
+model Message {
+  id                    String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String      @default(dbgenerated("NULLIF((current_setting('app.current_tenant_id'::text)), '')::uuid")) @db.Uuid
+  tenant                Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt             DateTime    @default(now()) @db.Timestamptz(3)
+  createdByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembership   Membership? @relation("createdByMembership", fields: [createdByMembershipId], references: [id], onDelete: SetNull)
+  updatedAt             DateTime    @updatedAt @db.Timestamptz(3)
+  updatedByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembership   Membership? @relation("updatedByMembership", fields: [updatedByMembershipId], references: [id], onDelete: SetNull)
+  archivedAt             DateTime?   @db.Timestamptz(3)
+  archivedByMembershipId String?     @db.Uuid
+  archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
+  importHash            String?     @unique
+
+  body String?
+  attachment Json?
+  images Json?
+  type String[] @default([])
+  meta Json?
+  chatId String? @db.Uuid
+  chat Chat? @relation("chat_messages", fields: [chatId], references: [id])
+
+  chateeId String? @db.Uuid
+  chatee Chatee? @relation("chatee_messages", fields: [chateeId], references: [id])
+
+  senderId String? @db.Uuid
+  sender Membership? @relation("messages_sender", fields: [senderId], references: [id])
+
+
+
+  @@unique([id, tenantId])
+}
+
+model Asset {
+  id                    String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String      @default(dbgenerated("NULLIF((current_setting('app.current_tenant_id'::text)), '')::uuid")) @db.Uuid
+  tenant                Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt             DateTime    @default(now()) @db.Timestamptz(3)
+  createdByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembership   Membership? @relation("createdByMembership", fields: [createdByMembershipId], references: [id], onDelete: SetNull)
+  updatedAt             DateTime    @updatedAt @db.Timestamptz(3)
+  updatedByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembership   Membership? @relation("updatedByMembership", fields: [updatedByMembershipId], references: [id], onDelete: SetNull)
+  archivedAt             DateTime?   @db.Timestamptz(3)
+  archivedByMembershipId String?     @db.Uuid
+  archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
+  importHash            String?     @unique
+
+  symbol String
+  type String?
+  precision Int?
+  isFractional Boolean @default(false)
+  meta Json?
+  baseInstruments Instrument[] @relation("baseInstruments_underlyingAsset")
+
+  quoteInstruments Instrument[] @relation("quoteAsset_quoteInstruments")
+
+
+
+  @@unique([id, tenantId])
+}
+
+model Account {
+  id                    String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String      @default(dbgenerated("NULLIF((current_setting('app.current_tenant_id'::text)), '')::uuid")) @db.Uuid
+  tenant                Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt             DateTime    @default(now()) @db.Timestamptz(3)
+  createdByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembership   Membership? @relation("createdByMembership", fields: [createdByMembershipId], references: [id], onDelete: SetNull)
+  updatedAt             DateTime    @updatedAt @db.Timestamptz(3)
+  updatedByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembership   Membership? @relation("updatedByMembership", fields: [updatedByMembershipId], references: [id], onDelete: SetNull)
+  archivedAt             DateTime?   @db.Timestamptz(3)
+  archivedByMembershipId String?     @db.Uuid
+  archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
+  importHash            String?     @unique
+
+  type String?
+  status String?
+  meta Json?
+  orders Order[] @relation("account_orders")
+
+
+
+  @@unique([id, tenantId])
+}
+
+model Instrument {
+  id                    String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String      @default(dbgenerated("NULLIF((current_setting('app.current_tenant_id'::text)), '')::uuid")) @db.Uuid
+  tenant                Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt             DateTime    @default(now()) @db.Timestamptz(3)
+  createdByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembership   Membership? @relation("createdByMembership", fields: [createdByMembershipId], references: [id], onDelete: SetNull)
+  updatedAt             DateTime    @updatedAt @db.Timestamptz(3)
+  updatedByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembership   Membership? @relation("updatedByMembership", fields: [updatedByMembershipId], references: [id], onDelete: SetNull)
+  archivedAt             DateTime?   @db.Timestamptz(3)
+  archivedByMembershipId String?     @db.Uuid
+  archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
+  importHash            String?     @unique
+
+  type String?
+  meta Json?
+  status String?
+  underlyingAssetId String? @db.Uuid
+  underlyingAsset Asset? @relation("baseInstruments_underlyingAsset", fields: [underlyingAssetId], references: [id])
+
+  quoteAssetId String? @db.Uuid
+  quoteAsset Asset? @relation("quoteAsset_quoteInstruments", fields: [quoteAssetId], references: [id])
+
+  orders Order[] @relation("instrument_orders")
+
+  trades Trade[] @relation("instrument_trades")
+
+
+
+  @@unique([id, tenantId])
+}
+
+model LedgerEvent {
+  id                    String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String      @default(dbgenerated("NULLIF((current_setting('app.current_tenant_id'::text)), '')::uuid")) @db.Uuid
+  tenant                Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt             DateTime    @default(now()) @db.Timestamptz(3)
+  createdByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembership   Membership? @relation("createdByMembership", fields: [createdByMembershipId], references: [id], onDelete: SetNull)
+  updatedAt             DateTime    @updatedAt @db.Timestamptz(3)
+  updatedByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembership   Membership? @relation("updatedByMembership", fields: [updatedByMembershipId], references: [id], onDelete: SetNull)
+  archivedAt             DateTime?   @db.Timestamptz(3)
+  archivedByMembershipId String?     @db.Uuid
+  archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
+  importHash            String?     @unique
+
+  type String?
+  referenceType String?
+  entries LedgerEntry[] @relation("entries_event")
+
+
+
+  @@unique([id, tenantId])
+}
+
+model LedgerEntry {
+  id                    String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String      @default(dbgenerated("NULLIF((current_setting('app.current_tenant_id'::text)), '')::uuid")) @db.Uuid
+  tenant                Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt             DateTime    @default(now()) @db.Timestamptz(3)
+  createdByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembership   Membership? @relation("createdByMembership", fields: [createdByMembershipId], references: [id], onDelete: SetNull)
+  updatedAt             DateTime    @updatedAt @db.Timestamptz(3)
+  updatedByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembership   Membership? @relation("updatedByMembership", fields: [updatedByMembershipId], references: [id], onDelete: SetNull)
+  archivedAt             DateTime?   @db.Timestamptz(3)
+  archivedByMembershipId String?     @db.Uuid
+  archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
+  importHash            String?     @unique
+
+  amount Decimal?
+  eventId String? @db.Uuid
+  event LedgerEvent? @relation("entries_event", fields: [eventId], references: [id])
+
+
+
+  @@unique([id, tenantId])
+}
+
+model Trade {
+  id                    String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String      @default(dbgenerated("NULLIF((current_setting('app.current_tenant_id'::text)), '')::uuid")) @db.Uuid
+  tenant                Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt             DateTime    @default(now()) @db.Timestamptz(3)
+  createdByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembership   Membership? @relation("createdByMembership", fields: [createdByMembershipId], references: [id], onDelete: SetNull)
+  updatedAt             DateTime    @updatedAt @db.Timestamptz(3)
+  updatedByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembership   Membership? @relation("updatedByMembership", fields: [updatedByMembershipId], references: [id], onDelete: SetNull)
+  archivedAt             DateTime?   @db.Timestamptz(3)
+  archivedByMembershipId String?     @db.Uuid
+  archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
+  importHash            String?     @unique
+
+  price Decimal?
+  quantity Decimal?
+  buyOrderId Order[] @relation("buyOrderId_buys")
+
+  sellOrderId Order[] @relation("sellOrderId_sells")
+
+  instrumentId String? @db.Uuid
+  instrument Instrument? @relation("instrument_trades", fields: [instrumentId], references: [id])
+
+  tradeFills TradeFill[] @relation("trade_tradeFills")
+
+
+
+  @@unique([id, tenantId])
+}
+
+model TradeFill {
+  id                    String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String      @default(dbgenerated("NULLIF((current_setting('app.current_tenant_id'::text)), '')::uuid")) @db.Uuid
+  tenant                Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt             DateTime    @default(now()) @db.Timestamptz(3)
+  createdByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  createdByMembership   Membership? @relation("createdByMembership", fields: [createdByMembershipId], references: [id], onDelete: SetNull)
+  updatedAt             DateTime    @updatedAt @db.Timestamptz(3)
+  updatedByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
+  updatedByMembership   Membership? @relation("updatedByMembership", fields: [updatedByMembershipId], references: [id], onDelete: SetNull)
+  archivedAt             DateTime?   @db.Timestamptz(3)
+  archivedByMembershipId String?     @db.Uuid
+  archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
+  importHash            String?     @unique
+
+  side String?
+  price Decimal?
+  quantity Decimal?
+  fee Decimal?
+  tradeId String? @db.Uuid
+  trade Trade? @relation("trade_tradeFills", fields: [tradeId], references: [id])
+
+
+
+  @@unique([id, tenantId])
+}
