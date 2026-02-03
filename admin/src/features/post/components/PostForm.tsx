@@ -132,14 +132,12 @@ export function PostForm({
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    {dictionary.post.fields.title}
-                  </FormLabel>
+                  <FormLabel>{dictionary.post.fields.title}</FormLabel>
 
                   <Input
                     disabled={mutation.isPending || mutation.isSuccess}
                     autoFocus
-          {...field}
+                    {...field}
                   />
 
                   {dictionary.post.hints.title ? (
@@ -159,9 +157,7 @@ export function PostForm({
               name="body"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    {dictionary.post.fields.body}
-                  </FormLabel>
+                  <FormLabel>{dictionary.post.fields.body}</FormLabel>
 
                   <Textarea
                     disabled={mutation.isPending || mutation.isSuccess}
@@ -185,9 +181,7 @@ export function PostForm({
               name="meta"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    {dictionary.post.fields.meta}
-                  </FormLabel>
+                  <FormLabel>{dictionary.post.fields.meta}</FormLabel>
 
                   <Textarea
                     disabled={mutation.isPending || mutation.isSuccess}
@@ -211,9 +205,7 @@ export function PostForm({
               name="files"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    {dictionary.post.fields.files}
-                  </FormLabel>
+                  <FormLabel>{dictionary.post.fields.files}</FormLabel>
 
                   <div>
                     <FilesInput
@@ -242,9 +234,7 @@ export function PostForm({
               name="images"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    {dictionary.post.fields.images}
-                  </FormLabel>
+                  <FormLabel>{dictionary.post.fields.images}</FormLabel>
 
                   <div>
                     <ImagesInput
@@ -267,7 +257,7 @@ export function PostForm({
               )}
             />
           </div>
-           <div className="grid max-w-lg gap-1">
+          <div className="grid max-w-lg gap-1">
             <FormField
               control={form.control}
               name="type"
@@ -300,7 +290,9 @@ export function PostForm({
               name="user"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="required">{dictionary.post.fields.user}</FormLabel>
+                  <FormLabel className="required">
+                    {dictionary.post.fields.user}
+                  </FormLabel>
 
                   <MembershipAutocompleteInput
                     context={context}

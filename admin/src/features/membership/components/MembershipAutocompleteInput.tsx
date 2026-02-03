@@ -62,7 +62,7 @@ export function MembershipAutocompleteInput({
   };
 
   return (
-    <div className="flex w-full gap-1">
+    <div className="flex w-full gap-1 ">
       <div className="flex-1">
         <AutocompleteInput
           queryFn={queryFn}

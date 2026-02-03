@@ -111,7 +111,7 @@ export default function AutocompleteMemoryInput<T extends { id: string }>({
             </Button>
           </FormControl>
         </PopoverTrigger>
-        <PopoverContent className="w-[340px] p-0" align="start">
+        <PopoverContent className="w-[340px] p-0 bg-surface" align="start">
           <Command filter={commandFilter}>
             <CommandInput
               placeholder={
