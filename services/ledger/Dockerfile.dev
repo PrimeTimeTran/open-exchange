@@ -1,0 +1,15 @@
+FROM rust:latest
+
+WORKDIR /app
+
+# Install protobuf compiler
+RUN apt-get update && apt-get install -y protobuf-compiler
+
+# Install cargo-watch for hot reloading
+RUN cargo install cargo-watch
+
+# We don't copy source here because we will mount it
+# But we might want to copy Cargo files to cache deps if we weren't just using cargo run on mount
+# For dev, we just want environment ready.
+
+CMD ["cargo", "watch", "-x", "run"]

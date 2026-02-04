@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package ledger;
+
+import "common/order.proto";
+
+option go_package = "github.com/crypto-exchange/matching_engine/proto/ledger";
+
+service LedgerService {
+  rpc RecordOrder(RecordOrderRequest) returns (RecordOrderResponse);
+}
+
+message RecordOrderRequest {
+  common.Order order = 1;
+}
+
+message RecordOrderResponse {
+  string transaction_id = 1;
+  bool success = 2;
+  string message = 3;
+}
