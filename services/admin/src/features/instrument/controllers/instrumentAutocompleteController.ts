@@ -58,7 +58,10 @@ export async function instrumentAutocompleteController(
 
   if (search) {
     whereAnd.push({
-      id: search,
+      symbol: {
+        contains: search,
+        mode: 'insensitive',
+      },
     });
   }
 
@@ -73,6 +76,7 @@ export async function instrumentAutocompleteController(
   return instruments.map((instrument) => {
     return {
       id: instrument.id,
+      symbol: String(instrument.symbol),
     };
   });
 }
