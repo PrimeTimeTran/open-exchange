@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package common;
+
+option go_package = "github.com/crypto-exchange/matching_engine/proto/common";
+
+enum OrderSide {
+  ORDER_SIDE_UNSPECIFIED = 0;
+  ORDER_SIDE_BUY = 1;
+  ORDER_SIDE_SELL = 2;
+}
+
+enum OrderType {
+  ORDER_TYPE_UNSPECIFIED = 0;
+  ORDER_TYPE_LIMIT = 1;
+  ORDER_TYPE_MARKET = 2;
+}
+
+enum OrderStatus {
+  ORDER_STATUS_UNSPECIFIED = 0;
+  ORDER_STATUS_OPEN = 1;
+  ORDER_STATUS_PARTIALLY_FILLED = 2;
+  ORDER_STATUS_FILLED = 3;
+  ORDER_STATUS_CANCELLED = 4;
+  ORDER_STATUS_REJECTED = 5;
+}
+
+enum TimeInForce {
+  TIME_IN_FORCE_UNSPECIFIED = 0;
+  TIME_IN_FORCE_GTC = 1; // Good Till Cancelled
+  TIME_IN_FORCE_IOC = 2; // Immediate or Cancel
+  TIME_IN_FORCE_FOK = 3; // Fill or Kill
+}
+
+message Order {
+  string id = 1;
+  string tenant_id = 2;
+  OrderSide side = 3;
+  OrderType type = 4;
+  
+  // Using string for decimals to avoid precision loss (e.g. "0.00000001")
+  // In Go/Node, these should be parsed with a Decimal library.
+  string price = 5;
+  string quantity = 6;
+  string quantity_filled = 7;
+  
+  OrderStatus status = 8;
+  TimeInForce time_in_force = 9;
+  
+  string account_id = 10;
+  string instrument_id = 11;
+  
+  // JSON string for extra metadata
+  string meta = 12;
+  
+  // Audit timestamps
+  int64 created_at = 13; // Unix timestamp
+  int64 updated_at = 14; // Unix timestamp
+}

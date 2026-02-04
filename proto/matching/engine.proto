@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package matching;
+
+import "common/order.proto";
+
+option go_package = "github.com/crypto-exchange/matching_engine/proto/matching";
+
+service MatchingEngine {
+  rpc PlaceOrder(PlaceOrderRequest) returns (PlaceOrderResponse);
+}
+
+message PlaceOrderRequest {
+  common.Order order = 1;
+}
+
+message PlaceOrderResponse {
+  string order_id = 1;
+  bool success = 2;
+  string error_message = 3;
+}
