@@ -106,8 +106,8 @@ export async function orderCreate(body: unknown, context: AppContext) {
         accountId: order.accountId || '',
         instrumentId: order.instrumentId || '',
         meta: JSON.stringify(order.meta),
-        createdAt: order.createdAt.getTime().toString(),
-        updatedAt: order.updatedAt.getTime().toString(),
+        createdAt: Math.floor(order.createdAt.getTime() / 1000).toString(),
+        updatedAt: Math.floor(order.updatedAt.getTime() / 1000).toString(),
       },
     });
   } catch (error) {

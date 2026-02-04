@@ -27,7 +27,10 @@ services:
   matching:
     build:
       context: ./services/matching
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./services/matching:/app
+      - /app/tmp
     ports:
       - '50051:50051'
     environment:

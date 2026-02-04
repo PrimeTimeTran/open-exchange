@@ -10,7 +10,10 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/crypto-exchange/matching_engine/internal/engine"
 	"github.com/crypto-exchange/matching_engine/internal/server"
+	"github.com/crypto-exchange/matching_engine/internal/service"
+	"github.com/crypto-exchange/matching_engine/proto/helloworld"
 	ledger "github.com/crypto-exchange/matching_engine/proto/ledger"
 	pb "github.com/crypto-exchange/matching_engine/proto/matching"
 )
@@ -35,16 +38,24 @@ func main() {
 	}
 	defer conn.Close()
 	ledgerClient := ledger.NewLedgerServiceClient(conn)
+	greeterClient := helloworld.NewGreeterClient(conn)
 
-	// 2. Start Matching Engine Server
+	// 2. Initialize Engine and Service
+	eng := engine.NewEngine()
+	svc := service.NewMatchingService(eng, ledgerClient)
+
+	// 3. Start Matching Engine Server
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
 	s := grpc.NewServer()
-	matchingServer := server.NewMatchingServer(ledgerClient)
+	matchingServer := server.NewMatchingServer(svc)
 	pb.RegisterMatchingEngineServer(s, matchingServer)
+
+	greeterServer := server.NewGreeterServer(greeterClient)
+	helloworld.RegisterGreeterServer(s, greeterServer)
 
 	log.Printf("Matching Engine listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {

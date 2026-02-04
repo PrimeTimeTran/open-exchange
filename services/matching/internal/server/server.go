@@ -2,48 +2,35 @@ package server
 
 import (
 	"context"
-	"fmt"
-	"log"
 
-	ledger "github.com/crypto-exchange/matching_engine/proto/ledger"
+	"github.com/crypto-exchange/matching_engine/internal/service"
 	pb "github.com/crypto-exchange/matching_engine/proto/matching"
 )
 
 type MatchingServer struct {
 	pb.UnimplementedMatchingEngineServer
-	LedgerClient ledger.LedgerServiceClient
+	Service *service.MatchingService
 }
 
-func NewMatchingServer(ledgerClient ledger.LedgerServiceClient) *MatchingServer {
+func NewMatchingServer(svc *service.MatchingService) *MatchingServer {
 	return &MatchingServer{
-		LedgerClient: ledgerClient,
+		Service: svc,
 	}
 }
 
 func (s *MatchingServer) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
-	log.Printf("Matching Engine: Received order placement request: %v", req.Order)
-
-	// Forward to Ledger
-	log.Printf("Matching Engine: Forwarding to Ledger Service...")
-	ledgerResp, err := s.LedgerClient.RecordOrder(ctx, &ledger.RecordOrderRequest{
-		Order: req.Order,
-	})
-
+	orderID, err := s.Service.PlaceOrder(ctx, req.Order)
 	if err != nil {
-		log.Printf("Error calling Ledger: %v", err)
 		return &pb.PlaceOrderResponse{
 			Success:      false,
-			ErrorMessage: fmt.Sprintf("Failed to record order in ledger: %v", err),
+			ErrorMessage: err.Error(),
 		}, nil
 	}
 
-	log.Printf("Ledger Response: %v", ledgerResp)
-
-	// In a real engine, we would add to order book here.
-	
 	return &pb.PlaceOrderResponse{
-		OrderId:      "test-order-id-123", // Mock ID
+		OrderId:      orderID,
 		Success:      true,
 		ErrorMessage: "",
 	}, nil
 }
+
