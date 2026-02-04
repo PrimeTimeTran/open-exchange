@@ -57,8 +57,8 @@ export function AssetForm({
     type: asset?.type || null,
     precision: asset?.precision || '',
     isFractional: asset?.isFractional || false,
-    meta: asset?.meta?.toString() || '',
     decimals: asset?.decimals || '',
+    meta: asset?.meta?.toString() || '',
   });
 
   const form = useForm({
@@ -245,32 +245,6 @@ export function AssetForm({
             />
           </div>
           <div className="grid max-w-lg gap-1">
-            <FormField
-              control={form.control}
-              name="meta"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {dictionary.asset.fields.meta}
-                  </FormLabel>
-
-                  <Textarea
-                    disabled={mutation.isPending || mutation.isSuccess}
-                    {...field}
-                  />
-
-                  {dictionary.asset.hints.meta ? (
-                    <FormDescription>
-                      {dictionary.asset.hints.meta}
-                    </FormDescription>
-                  ) : null}
-
-                  <FormMessage data-testid="meta-error" />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="grid max-w-lg gap-1">
               <FormField
                 control={form.control}
                 name="decimals"
@@ -297,6 +271,32 @@ export function AssetForm({
                 )}
               />
             </div>
+          <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="meta"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {dictionary.asset.fields.meta}
+                  </FormLabel>
+
+                  <Textarea
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    {...field}
+                  />
+
+                  {dictionary.asset.hints.meta ? (
+                    <FormDescription>
+                      {dictionary.asset.hints.meta}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="meta-error" />
+                </FormItem>
+              )}
+            />
+          </div>
 
           <div className="flex gap-2">
             <Button

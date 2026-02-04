@@ -22,6 +22,7 @@ export function feedbackExporterMapper(
         context.dictionary.feedback.enumerators.status,
         feedback.status,
       ),
+      json: feedback.json?.toString(),
       createdByMembership: membershipLabel(feedback.createdByMembership, context.dictionary),
       createdAt: String(feedback.createdAt),
       updatedByMembership: membershipLabel(feedback.createdByMembership, context.dictionary),

@@ -57,8 +57,8 @@ export function FillForm({
     price: fill?.price ? Number(fill?.price) : '',
     quantity: fill?.quantity ? Number(fill?.quantity) : '',
     fee: fill?.fee ? Number(fill?.fee) : '',
-    meta: fill?.meta?.toString() || '',
     trade: fill?.trade || null,
+    meta: fill?.meta?.toString() || '',
   });
 
   const form = useForm({
@@ -241,32 +241,6 @@ export function FillForm({
           <div className="grid max-w-lg gap-1">
             <FormField
               control={form.control}
-              name="meta"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {dictionary.fill.fields.meta}
-                  </FormLabel>
-
-                  <Textarea
-                    disabled={mutation.isPending || mutation.isSuccess}
-                    {...field}
-                  />
-
-                  {dictionary.fill.hints.meta ? (
-                    <FormDescription>
-                      {dictionary.fill.hints.meta}
-                    </FormDescription>
-                  ) : null}
-
-                  <FormMessage data-testid="meta-error" />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="grid max-w-lg gap-1">
-            <FormField
-              control={form.control}
               name="trade"
               render={({ field }) => (
                 <FormItem>
@@ -288,6 +262,32 @@ export function FillForm({
                   ) : null}
 
                   <FormMessage data-testid="trade-error" />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="meta"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {dictionary.fill.fields.meta}
+                  </FormLabel>
+
+                  <Textarea
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    {...field}
+                  />
+
+                  {dictionary.fill.hints.meta ? (
+                    <FormDescription>
+                      {dictionary.fill.hints.meta}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="meta-error" />
                 </FormItem>
               )}
             />

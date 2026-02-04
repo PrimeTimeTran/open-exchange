@@ -53,10 +53,10 @@ export function CommentForm({
 
   const [initialValues] = React.useState({
     body: comment?.body || '',
-    meta: comment?.meta?.toString() || '',
     type: comment?.type || [],
     images: comment?.images || [],
     user: comment?.user || null,
+    meta: comment?.meta?.toString() || '',
   });
 
   const form = useForm({
@@ -149,32 +149,6 @@ export function CommentForm({
               )}
             />
           </div>
-          <div className="grid max-w-lg gap-1">
-            <FormField
-              control={form.control}
-              name="meta"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {dictionary.comment.fields.meta}
-                  </FormLabel>
-
-                  <Textarea
-                    disabled={mutation.isPending || mutation.isSuccess}
-                    {...field}
-                  />
-
-                  {dictionary.comment.hints.meta ? (
-                    <FormDescription>
-                      {dictionary.comment.hints.meta}
-                    </FormDescription>
-                  ) : null}
-
-                  <FormMessage data-testid="meta-error" />
-                </FormItem>
-              )}
-            />
-          </div>
            <div className="grid max-w-lg gap-1">
             <FormField
               control={form.control}
@@ -257,6 +231,32 @@ export function CommentForm({
                   ) : null}
 
                   <FormMessage data-testid="user-error" />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="meta"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {dictionary.comment.fields.meta}
+                  </FormLabel>
+
+                  <Textarea
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    {...field}
+                  />
+
+                  {dictionary.comment.hints.meta ? (
+                    <FormDescription>
+                      {dictionary.comment.hints.meta}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="meta-error" />
                 </FormItem>
               )}
             />

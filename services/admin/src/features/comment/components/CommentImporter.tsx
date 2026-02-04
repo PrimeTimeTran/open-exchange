@@ -13,10 +13,10 @@ export function CommentImporter({ context }: { context: AppContext }) {
     <Importer
       keys={[
         'body',
-        'meta',
         'type',
         'images',
         'user',
+        'meta',
       ]}
       labels={context.dictionary.comment.fields}
       context={context}

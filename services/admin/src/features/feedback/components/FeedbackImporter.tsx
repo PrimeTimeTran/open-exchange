@@ -18,6 +18,7 @@ export function FeedbackImporter({ context }: { context: AppContext }) {
         'type',
         'status',
         'user',
+        'json',
       ]}
       labels={context.dictionary.feedback.fields}
       context={context}

@@ -54,13 +54,13 @@ export function ArticleForm({
   const isEditing = Boolean(article?.id);
 
   const [initialValues] = React.useState({
+    user: article?.user || null,
     title: article?.title || '',
     body: article?.body || '',
-    meta: article?.meta?.toString() || '',
     type: article?.type || [],
     images: article?.images || [],
     files: article?.files || [],
-    user: article?.user || null,
+    meta: article?.meta?.toString() || '',
   });
 
   const form = useForm({
@@ -129,6 +129,34 @@ export function ArticleForm({
           <div className="grid max-w-lg gap-1">
             <FormField
               control={form.control}
+              name="user"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{dictionary.article.fields.user}</FormLabel>
+
+                  <MembershipAutocompleteInput
+                    context={context}
+                    onChange={field.onChange}
+                    value={field.value}
+                    isClearable={true}
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    mode="memory"
+                  />
+
+                  {dictionary.article.hints.user ? (
+                    <FormDescription>
+                      {dictionary.article.hints.user}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="user-error" />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
               name="title"
               render={({ field }) => (
                 <FormItem>
@@ -138,8 +166,7 @@ export function ArticleForm({
 
                   <Input
                     disabled={mutation.isPending || mutation.isSuccess}
-                    autoFocus
-          {...field}
+                    {...field}
                   />
 
                   {dictionary.article.hints.title ? (
@@ -175,32 +202,6 @@ export function ArticleForm({
                   ) : null}
 
                   <FormMessage data-testid="body-error" />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="grid max-w-lg gap-1">
-            <FormField
-              control={form.control}
-              name="meta"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {dictionary.article.fields.meta}
-                  </FormLabel>
-
-                  <Textarea
-                    disabled={mutation.isPending || mutation.isSuccess}
-                    {...field}
-                  />
-
-                  {dictionary.article.hints.meta ? (
-                    <FormDescription>
-                      {dictionary.article.hints.meta}
-                    </FormDescription>
-                  ) : null}
-
-                  <FormMessage data-testid="meta-error" />
                 </FormItem>
               )}
             />
@@ -297,27 +298,25 @@ export function ArticleForm({
           <div className="grid max-w-lg gap-1">
             <FormField
               control={form.control}
-              name="user"
+              name="meta"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{dictionary.article.fields.user}</FormLabel>
+                  <FormLabel>
+                    {dictionary.article.fields.meta}
+                  </FormLabel>
 
-                  <MembershipAutocompleteInput
-                    context={context}
-                    onChange={field.onChange}
-                    value={field.value}
-                    isClearable={true}
+                  <Textarea
                     disabled={mutation.isPending || mutation.isSuccess}
-                    mode="memory"
+                    {...field}
                   />
 
-                  {dictionary.article.hints.user ? (
+                  {dictionary.article.hints.meta ? (
                     <FormDescription>
-                      {dictionary.article.hints.user}
+                      {dictionary.article.hints.meta}
                     </FormDescription>
                   ) : null}
 
-                  <FormMessage data-testid="user-error" />
+                  <FormMessage data-testid="meta-error" />
                 </FormItem>
               )}
             />

@@ -56,11 +56,11 @@ export function PostForm({
   const [initialValues] = React.useState({
     title: post?.title || '',
     body: post?.body || '',
-    meta: post?.meta?.toString() || '',
     files: post?.files || [],
     images: post?.images || [],
     type: post?.type || [],
     user: post?.user || null,
+    meta: post?.meta?.toString() || '',
   });
 
   const form = useForm({
@@ -132,12 +132,14 @@ export function PostForm({
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{dictionary.post.fields.title}</FormLabel>
+                  <FormLabel>
+                    {dictionary.post.fields.title}
+                  </FormLabel>
 
                   <Input
                     disabled={mutation.isPending || mutation.isSuccess}
                     autoFocus
-                    {...field}
+          {...field}
                   />
 
                   {dictionary.post.hints.title ? (
@@ -157,7 +159,9 @@ export function PostForm({
               name="body"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{dictionary.post.fields.body}</FormLabel>
+                  <FormLabel>
+                    {dictionary.post.fields.body}
+                  </FormLabel>
 
                   <Textarea
                     disabled={mutation.isPending || mutation.isSuccess}
@@ -178,34 +182,12 @@ export function PostForm({
           <div className="grid max-w-lg gap-1">
             <FormField
               control={form.control}
-              name="meta"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{dictionary.post.fields.meta}</FormLabel>
-
-                  <Textarea
-                    disabled={mutation.isPending || mutation.isSuccess}
-                    {...field}
-                  />
-
-                  {dictionary.post.hints.meta ? (
-                    <FormDescription>
-                      {dictionary.post.hints.meta}
-                    </FormDescription>
-                  ) : null}
-
-                  <FormMessage data-testid="meta-error" />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="grid max-w-lg gap-1">
-            <FormField
-              control={form.control}
               name="files"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{dictionary.post.fields.files}</FormLabel>
+                  <FormLabel>
+                    {dictionary.post.fields.files}
+                  </FormLabel>
 
                   <div>
                     <FilesInput
@@ -234,7 +216,9 @@ export function PostForm({
               name="images"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{dictionary.post.fields.images}</FormLabel>
+                  <FormLabel>
+                    {dictionary.post.fields.images}
+                  </FormLabel>
 
                   <div>
                     <ImagesInput
@@ -257,7 +241,7 @@ export function PostForm({
               )}
             />
           </div>
-          <div className="grid max-w-lg gap-1">
+           <div className="grid max-w-lg gap-1">
             <FormField
               control={form.control}
               name="type"
@@ -290,9 +274,7 @@ export function PostForm({
               name="user"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="required">
-                    {dictionary.post.fields.user}
-                  </FormLabel>
+                  <FormLabel className="required">{dictionary.post.fields.user}</FormLabel>
 
                   <MembershipAutocompleteInput
                     context={context}
@@ -310,6 +292,32 @@ export function PostForm({
                   ) : null}
 
                   <FormMessage data-testid="user-error" />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="meta"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {dictionary.post.fields.meta}
+                  </FormLabel>
+
+                  <Textarea
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    {...field}
+                  />
+
+                  {dictionary.post.hints.meta ? (
+                    <FormDescription>
+                      {dictionary.post.hints.meta}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="meta-error" />
                 </FormItem>
               )}
             />

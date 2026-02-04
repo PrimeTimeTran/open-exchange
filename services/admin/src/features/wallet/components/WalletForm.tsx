@@ -56,10 +56,10 @@ export function WalletForm({
     locked: wallet?.locked || '',
     total: wallet?.total || '',
     version: wallet?.version || '',
-    meta: wallet?.meta?.toString() || '',
     user: wallet?.user || null,
     asset: wallet?.asset || null,
     account: wallet?.account || null,
+    meta: wallet?.meta?.toString() || '',
   });
 
   const form = useForm({
@@ -237,32 +237,6 @@ export function WalletForm({
           <div className="grid max-w-lg gap-1">
             <FormField
               control={form.control}
-              name="meta"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {dictionary.wallet.fields.meta}
-                  </FormLabel>
-
-                  <Textarea
-                    disabled={mutation.isPending || mutation.isSuccess}
-                    {...field}
-                  />
-
-                  {dictionary.wallet.hints.meta ? (
-                    <FormDescription>
-                      {dictionary.wallet.hints.meta}
-                    </FormDescription>
-                  ) : null}
-
-                  <FormMessage data-testid="meta-error" />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="grid max-w-lg gap-1">
-            <FormField
-              control={form.control}
               name="user"
               render={({ field }) => (
                 <FormItem>
@@ -340,6 +314,32 @@ export function WalletForm({
                   ) : null}
 
                   <FormMessage data-testid="account-error" />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="meta"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {dictionary.wallet.fields.meta}
+                  </FormLabel>
+
+                  <Textarea
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    {...field}
+                  />
+
+                  {dictionary.wallet.hints.meta ? (
+                    <FormDescription>
+                      {dictionary.wallet.hints.meta}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="meta-error" />
                 </FormItem>
               )}
             />

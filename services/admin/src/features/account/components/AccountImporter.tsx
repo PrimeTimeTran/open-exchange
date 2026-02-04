@@ -14,8 +14,8 @@ export function AccountImporter({ context }: { context: AppContext }) {
       keys={[
         'type',
         'status',
-        'meta',
         'user',
+        'meta',
       ]}
       labels={context.dictionary.account.fields}
       context={context}

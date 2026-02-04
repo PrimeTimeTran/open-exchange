@@ -5,6 +5,7 @@ import { orderBySchema } from 'src/shared/schemas/orderBySchema';
 import { z } from 'zod';
 import { fileUploadedSchema } from 'src/features/file/fileSchemas';
 import { feedbackEnumerators } from 'src/features/feedback/feedbackEnumerators';
+import { jsonSchema } from 'src/shared/schemas/jsonSchema';
 import { objectToUuidSchema, objectToUuidSchemaOptional } from 'src/shared/schemas/objectToUuidSchema';
 
 extendZodWithOpenApi(z);
@@ -75,6 +76,7 @@ export const feedbackCreateInputSchema = z.object({
   attachments: z.array(fileUploadedSchema).optional(),
   type: z.nativeEnum(feedbackEnumerators.type).nullable().optional(),
   status: z.nativeEnum(feedbackEnumerators.status).nullable().optional(),
+  json: jsonSchema.optional(),
   user: objectToUuidSchemaOptional,
   importHash: z.string().optional(),
 });
@@ -89,6 +91,7 @@ export const feedbackImportFileSchema = z
     attachments: z.string().transform((val) => val?.split(' ')?.filter(Boolean) || []),
     type: z.string(),
     status: z.string(),
+    json: z.string(),
     user: z.string(),
   })
   .partial();

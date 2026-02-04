@@ -16,10 +16,10 @@ export function WalletImporter({ context }: { context: AppContext }) {
         'locked',
         'total',
         'version',
-        'meta',
         'user',
         'asset',
         'account',
+        'meta',
       ]}
       labels={context.dictionary.wallet.fields}
       context={context}

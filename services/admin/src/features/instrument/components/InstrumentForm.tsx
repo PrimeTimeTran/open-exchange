@@ -29,6 +29,7 @@ import { instrumentEnumerators } from 'src/features/instrument/instrumentEnumera
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
 import SelectInput from 'src/shared/components/form/SelectInput';
 import { Textarea } from 'src/shared/components/ui/textarea';
+import { Input } from 'src/shared/components/ui/input';
 import { AssetAutocompleteInput } from 'src/features/asset/components/AssetAutocompleteInput';
 
 export function InstrumentForm({
@@ -52,11 +53,12 @@ export function InstrumentForm({
   const isEditing = Boolean(instrument?.id);
 
   const [initialValues] = React.useState({
+    symbol: instrument?.symbol || '',
     type: instrument?.type || null,
-    meta: instrument?.meta?.toString() || '',
     status: instrument?.status || null,
     underlyingAsset: instrument?.underlyingAsset || null,
     quoteAsset: instrument?.quoteAsset || null,
+    meta: instrument?.meta?.toString() || '',
   });
 
   const form = useForm({
@@ -123,6 +125,33 @@ export function InstrumentForm({
       >
         <div className="grid w-full gap-8">
           <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="symbol"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {dictionary.instrument.fields.symbol}
+                  </FormLabel>
+
+                  <Input
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    autoFocus
+          {...field}
+                  />
+
+                  {dictionary.instrument.hints.symbol ? (
+                    <FormDescription>
+                      {dictionary.instrument.hints.symbol}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="symbol-error" />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid max-w-lg gap-1">
           <FormField
             control={form.control}
             name="type"
@@ -157,32 +186,6 @@ export function InstrumentForm({
               </FormItem>
             )}
           />
-          </div>
-          <div className="grid max-w-lg gap-1">
-            <FormField
-              control={form.control}
-              name="meta"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {dictionary.instrument.fields.meta}
-                  </FormLabel>
-
-                  <Textarea
-                    disabled={mutation.isPending || mutation.isSuccess}
-                    {...field}
-                  />
-
-                  {dictionary.instrument.hints.meta ? (
-                    <FormDescription>
-                      {dictionary.instrument.hints.meta}
-                    </FormDescription>
-                  ) : null}
-
-                  <FormMessage data-testid="meta-error" />
-                </FormItem>
-              )}
-            />
           </div>
           <div className="grid max-w-lg gap-1">
           <FormField
@@ -272,6 +275,32 @@ export function InstrumentForm({
                   ) : null}
 
                   <FormMessage data-testid="quoteAsset-error" />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="meta"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {dictionary.instrument.fields.meta}
+                  </FormLabel>
+
+                  <Textarea
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    {...field}
+                  />
+
+                  {dictionary.instrument.hints.meta ? (
+                    <FormDescription>
+                      {dictionary.instrument.hints.meta}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="meta-error" />
                 </FormItem>
               )}
             />

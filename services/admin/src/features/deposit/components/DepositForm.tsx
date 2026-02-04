@@ -65,9 +65,9 @@ export function DepositForm({
     detectedAt: deposit?.detectedAt || '',
     confirmedAt: deposit?.confirmedAt || '',
     creditedAt: deposit?.creditedAt || '',
-    meta: deposit?.meta?.toString() || '',
     account: deposit?.account || null,
     asset: deposit?.asset || null,
+    meta: deposit?.meta?.toString() || '',
   });
 
   const form = useForm({
@@ -425,32 +425,6 @@ export function DepositForm({
           <div className="grid max-w-lg gap-1">
             <FormField
               control={form.control}
-              name="meta"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {dictionary.deposit.fields.meta}
-                  </FormLabel>
-
-                  <Textarea
-                    disabled={mutation.isPending || mutation.isSuccess}
-                    {...field}
-                  />
-
-                  {dictionary.deposit.hints.meta ? (
-                    <FormDescription>
-                      {dictionary.deposit.hints.meta}
-                    </FormDescription>
-                  ) : null}
-
-                  <FormMessage data-testid="meta-error" />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="grid max-w-lg gap-1">
-            <FormField
-              control={form.control}
               name="account"
               render={({ field }) => (
                 <FormItem>
@@ -500,6 +474,32 @@ export function DepositForm({
                   ) : null}
 
                   <FormMessage data-testid="asset-error" />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="meta"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {dictionary.deposit.fields.meta}
+                  </FormLabel>
+
+                  <Textarea
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    {...field}
+                  />
+
+                  {dictionary.deposit.hints.meta ? (
+                    <FormDescription>
+                      {dictionary.deposit.hints.meta}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="meta-error" />
                 </FormItem>
               )}
             />

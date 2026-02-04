@@ -12,15 +12,16 @@ export function instrumentExporterMapper(
   return instruments.map((instrument) => {
     return {
       id: instrument.id,
+      symbol: instrument.symbol,
       type: enumeratorLabel(
         context.dictionary.instrument.enumerators.type,
         instrument.type,
       ),
-      meta: instrument.meta?.toString(),
       status: enumeratorLabel(
         context.dictionary.instrument.enumerators.status,
         instrument.status,
       ),
+      meta: instrument.meta?.toString(),
       createdByMembership: membershipLabel(instrument.createdByMembership, context.dictionary),
       createdAt: String(instrument.createdAt),
       updatedByMembership: membershipLabel(instrument.createdByMembership, context.dictionary),

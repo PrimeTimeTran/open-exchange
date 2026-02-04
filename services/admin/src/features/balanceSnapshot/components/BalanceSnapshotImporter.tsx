@@ -16,10 +16,10 @@ export function BalanceSnapshotImporter({ context }: { context: AppContext }) {
         'locked',
         'total',
         'snapshotAt',
-        'meta',
         'account',
         'wallet',
         'asset',
+        'meta',
       ]}
       labels={context.dictionary.balanceSnapshot.fields}
       context={context}

@@ -12,11 +12,12 @@ export function InstrumentImporter({ context }: { context: AppContext }) {
   return (
     <Importer
       keys={[
+        'symbol',
         'type',
-        'meta',
         'status',
         'underlyingAsset',
         'quoteAsset',
+        'meta',
       ]}
       labels={context.dictionary.instrument.fields}
       context={context}

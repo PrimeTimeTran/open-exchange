@@ -22,9 +22,9 @@ export function DepositImporter({ context }: { context: AppContext }) {
         'detectedAt',
         'confirmedAt',
         'creditedAt',
-        'meta',
         'account',
         'asset',
+        'meta',
       ]}
       labels={context.dictionary.deposit.fields}
       context={context}

@@ -20,6 +20,7 @@ import {
 import { AppContext } from 'src/shared/controller/appContext';
 import { getZodErrorMap } from 'src/translation/getZodErrorMap';
 import { z } from 'zod';
+import { Input } from 'src/shared/components/ui/input';
 import { instrumentEnumerators } from 'src/features/instrument/instrumentEnumerators';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
 import SelectInput from 'src/shared/components/form/SelectInput';
@@ -28,6 +29,7 @@ import { Switch } from 'src/shared/components/ui/switch';
 const emptyValues = {
   type: null,
   status: null,
+  symbol: '',
   underlyingAsset: null,
   quoteAsset: null,
   archived: false,
@@ -59,6 +61,9 @@ function InstrumentListFilter({
       render: dataTableFilterRenders(context).enumerator(
         dictionary.instrument.enumerators.status,
       ),
+    },
+    symbol: {
+      label: dictionary.instrument.fields.symbol,
     },
     archived: {
       label: dictionary.shared.showArchived,
@@ -121,6 +126,18 @@ function InstrumentListFilter({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="symbol"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{dictionary.instrument.fields.symbol}</FormLabel>
+                    <Input disabled={isLoading} {...field} />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="type"

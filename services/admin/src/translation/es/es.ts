@@ -415,7 +415,7 @@ const dictionary = {
       noSelection: 'Debes seleccionar al menos un usuario para eliminar.',
       confirmTitle: '¿Eliminar Usuario(s)?',
       confirmDescription:
-        '��Estás seguro de que quieres eliminar los {0} usuario(s) seleccionado(s)?',
+        '¿Estás seguro de que quieres eliminar los {0} usuario(s) seleccionado(s)?',
     },
 
     destroy: {
@@ -1299,7 +1299,7 @@ const dictionary = {
     edit: {
       menu: 'Editar Instrument',
       title: 'Editar Instrument',
-      success: 'Instrument actualizado con éxito',
+      success: 'Instrument actualizado con ��xito',
     },
 
     restore: {
@@ -1348,6 +1348,7 @@ const dictionary = {
       type: 'Type',
       meta: 'Meta',
       status: 'Status',
+      symbol: 'Symbol',
       underlyingAsset: 'UnderlyingAsset',
       quoteAsset: 'QuoteAsset',
       orders: 'Orders',
@@ -1364,6 +1365,7 @@ const dictionary = {
       type: '',
       meta: '',
       status: '',
+      symbol: '',
       underlyingAsset: '',
       quoteAsset: '',
       orders: '',
@@ -2883,6 +2885,7 @@ const dictionary = {
       attachments: 'Attachments',
       type: 'Type',
       status: 'Status',
+      json: 'Json',
       user: 'User',
       createdByMembership: 'Creado por',
       updatedByMembership: 'Actualizado por',
@@ -2898,6 +2901,7 @@ const dictionary = {
       attachments: '',
       type: '',
       status: '',
+      json: '',
       user: '',
     },
 

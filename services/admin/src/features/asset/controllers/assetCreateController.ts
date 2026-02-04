@@ -5,7 +5,8 @@ import { permissions } from 'src/features/permissions';
 import { validateHasPermission } from 'src/features/security';
 import { prismaAuth } from 'src/prisma';
 import { AppContext } from 'src/shared/controller/appContext';
-
+import Error400 from 'src/shared/errors/Error400';
+import { formatTranslation } from 'src/translation/formatTranslation';
 
 export const assetCreateApiDoc: RouteConfig = {
   method: 'post',
@@ -39,7 +40,18 @@ export async function assetCreate(body: unknown, context: AppContext) {
 
   const prisma = prismaAuth(context);
 
+  const duplicatedSymbol = await prisma.asset.count({
+    where: { symbol: data.symbol },
+  });
 
+  if (duplicatedSymbol) {
+    throw new Error400(
+      formatTranslation(
+        context.dictionary.shared.errors.unique,
+        context.dictionary.asset.fields.symbol,
+      ),
+    );
+  }
 
   let asset = await prisma.asset.create({
     data: {

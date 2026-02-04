@@ -16,10 +16,10 @@ export function MessageImporter({ context }: { context: AppContext }) {
         'attachment',
         'images',
         'type',
-        'meta',
         'chat',
         'chatee',
         'sender',
+        'meta',
       ]}
       labels={context.dictionary.message.fields}
       context={context}

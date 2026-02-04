@@ -12,11 +12,11 @@ export function articleExporterMapper(
   return articles.map((article) => {
     return {
       id: article.id,
+      user: membershipLabel(article.user, context.dictionary),
       title: article.title,
       body: article.body,
-      meta: article.meta?.toString(),
       type: article.type?.join(', '),
-      user: membershipLabel(article.user, context.dictionary),
+      meta: article.meta?.toString(),
       createdByMembership: membershipLabel(article.createdByMembership, context.dictionary),
       createdAt: String(article.createdAt),
       updatedByMembership: membershipLabel(article.createdByMembership, context.dictionary),

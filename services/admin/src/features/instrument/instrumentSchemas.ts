@@ -5,7 +5,10 @@ import { orderBySchema } from 'src/shared/schemas/orderBySchema';
 import { z } from 'zod';
 import { instrumentEnumerators } from 'src/features/instrument/instrumentEnumerators';
 import { jsonSchema } from 'src/shared/schemas/jsonSchema';
-import { objectToUuidSchema, objectToUuidSchemaOptional } from 'src/shared/schemas/objectToUuidSchema';
+import {
+  objectToUuidSchema,
+  objectToUuidSchemaOptional,
+} from 'src/shared/schemas/objectToUuidSchema';
 import { Asset } from '@prisma/client';
 import { Order } from '@prisma/client';
 import { Trade } from '@prisma/client';
@@ -20,24 +23,21 @@ export const instrumentFilterFormSchema = z
   .object({
     type: z.nativeEnum(instrumentEnumerators.type).nullable().optional(),
     status: z.nativeEnum(instrumentEnumerators.status).nullable().optional(),
+    symbol: z.string(),
     archived: z
-    .any()
-    .transform((val) =>
-      val != null && val !== ''
-        ? val === 'true' || val === true
-          ? true
-          : null
-        : null,
-    ),
+      .any()
+      .transform((val) =>
+        val != null && val !== ''
+          ? val === 'true' || val === true
+            ? true
+            : null
+          : null,
+      ),
   })
   .partial();
 
 export const instrumentFilterInputSchema = instrumentFilterFormSchema
-  .merge(
-    z.object({
-
-    }),
-  )
+  .merge(z.object({}))
   .partial();
 
 export const instrumentFindManyInputSchema = z.object({
@@ -68,12 +68,14 @@ export const instrumentAutocompleteInputSchema = z.object({
 
 export const instrumentAutocompleteOutputSchema = z.object({
   id: z.string(),
+  symbol: z.string(),
 });
 
 export const instrumentCreateInputSchema = z.object({
   type: z.nativeEnum(instrumentEnumerators.type).nullable().optional(),
   meta: jsonSchema.optional(),
   status: z.nativeEnum(instrumentEnumerators.status).nullable().optional(),
+  symbol: z.string().trim().nullable().optional(),
   underlyingAsset: objectToUuidSchemaOptional,
   quoteAsset: objectToUuidSchemaOptional,
   importHash: z.string().optional(),
@@ -87,6 +89,7 @@ export const instrumentImportFileSchema = z
     type: z.string(),
     meta: z.string(),
     status: z.string(),
+    symbol: z.string(),
     underlyingAsset: z.string(),
     quoteAsset: z.string(),
   })

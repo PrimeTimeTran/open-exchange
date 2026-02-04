@@ -59,10 +59,10 @@ export function MessageForm({
     attachment: message?.attachment || [],
     images: message?.images || [],
     type: message?.type || [],
-    meta: message?.meta?.toString() || '',
     chat: message?.chat || null,
     chatee: message?.chatee || null,
     sender: message?.sender || null,
+    meta: message?.meta?.toString() || '',
   });
 
   const form = useForm({
@@ -247,32 +247,6 @@ export function MessageForm({
           <div className="grid max-w-lg gap-1">
             <FormField
               control={form.control}
-              name="meta"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {dictionary.message.fields.meta}
-                  </FormLabel>
-
-                  <Textarea
-                    disabled={mutation.isPending || mutation.isSuccess}
-                    {...field}
-                  />
-
-                  {dictionary.message.hints.meta ? (
-                    <FormDescription>
-                      {dictionary.message.hints.meta}
-                    </FormDescription>
-                  ) : null}
-
-                  <FormMessage data-testid="meta-error" />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="grid max-w-lg gap-1">
-            <FormField
-              control={form.control}
               name="chat"
               render={({ field }) => (
                 <FormItem>
@@ -350,6 +324,32 @@ export function MessageForm({
                   ) : null}
 
                   <FormMessage data-testid="sender-error" />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="meta"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {dictionary.message.fields.meta}
+                  </FormLabel>
+
+                  <Textarea
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    {...field}
+                  />
+
+                  {dictionary.message.hints.meta ? (
+                    <FormDescription>
+                      {dictionary.message.hints.meta}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="meta-error" />
                 </FormItem>
               )}
             />

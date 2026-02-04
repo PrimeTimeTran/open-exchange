@@ -77,6 +77,12 @@ export default function InstrumentList({ context }: { context: AppContext }) {
       enableHiding: false,
     },
     {
+      accessorKey: 'symbol',
+      meta: {
+        title: dictionary.instrument.fields.symbol,
+      },
+    },
+    {
       accessorKey: 'type',
       meta: {
         title: dictionary.instrument.fields.type,

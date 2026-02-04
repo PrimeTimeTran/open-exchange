@@ -13,9 +13,9 @@ export function commentExporterMapper(
     return {
       id: comment.id,
       body: comment.body,
-      meta: comment.meta?.toString(),
       type: comment.type?.join(', '),
       user: membershipLabel(comment.user, context.dictionary),
+      meta: comment.meta?.toString(),
       createdByMembership: membershipLabel(comment.createdByMembership, context.dictionary),
       createdAt: String(comment.createdAt),
       updatedByMembership: membershipLabel(comment.createdByMembership, context.dictionary),

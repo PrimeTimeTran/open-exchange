@@ -54,8 +54,8 @@ export function AccountForm({
   const [initialValues] = React.useState({
     type: account?.type || null,
     status: account?.status || null,
-    meta: account?.meta?.toString() || '',
     user: account?.user || null,
+    meta: account?.meta?.toString() || '',
   });
 
   const form = useForm({
@@ -196,32 +196,6 @@ export function AccountForm({
           <div className="grid max-w-lg gap-1">
             <FormField
               control={form.control}
-              name="meta"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {dictionary.account.fields.meta}
-                  </FormLabel>
-
-                  <Textarea
-                    disabled={mutation.isPending || mutation.isSuccess}
-                    {...field}
-                  />
-
-                  {dictionary.account.hints.meta ? (
-                    <FormDescription>
-                      {dictionary.account.hints.meta}
-                    </FormDescription>
-                  ) : null}
-
-                  <FormMessage data-testid="meta-error" />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="grid max-w-lg gap-1">
-            <FormField
-              control={form.control}
               name="user"
               render={({ field }) => (
                 <FormItem>
@@ -243,6 +217,32 @@ export function AccountForm({
                   ) : null}
 
                   <FormMessage data-testid="user-error" />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="meta"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {dictionary.account.fields.meta}
+                  </FormLabel>
+
+                  <Textarea
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    {...field}
+                  />
+
+                  {dictionary.account.hints.meta ? (
+                    <FormDescription>
+                      {dictionary.account.hints.meta}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="meta-error" />
                 </FormItem>
               )}
             />

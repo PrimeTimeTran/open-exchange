@@ -81,6 +81,21 @@ export default function ArticleList({ context }: { context: AppContext }) {
       enableHiding: false,
     },
     {
+      accessorKey: 'user',
+      meta: {
+        title: dictionary.article.fields.user,
+      },
+      enableSorting: false,
+      cell: ({ row }) => {
+        return (
+          <MembershipLink
+            membership={row.getValue('user')}
+            context={context}
+          />
+        );
+      },
+    },
+    {
       accessorKey: 'title',
       meta: {
         title: dictionary.article.fields.title,
@@ -135,21 +150,6 @@ export default function ArticleList({ context }: { context: AppContext }) {
           <span className="whitespace-nowrap">
             <FileListItem files={row.getValue('files')} />
           </span>
-        );
-      },
-    },
-    {
-      accessorKey: 'user',
-      meta: {
-        title: dictionary.article.fields.user,
-      },
-      enableSorting: false,
-      cell: ({ row }) => {
-        return (
-          <MembershipLink
-            membership={row.getValue('user')}
-            context={context}
-          />
         );
       },
     },

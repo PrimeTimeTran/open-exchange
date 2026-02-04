@@ -14,11 +14,11 @@ export function PostImporter({ context }: { context: AppContext }) {
       keys={[
         'title',
         'body',
-        'meta',
         'files',
         'images',
         'type',
         'user',
+        'meta',
       ]}
       labels={context.dictionary.post.fields}
       context={context}

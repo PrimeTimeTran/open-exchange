@@ -22,7 +22,6 @@ export async function postFindManyPublicController(
   query: unknown,
   context: AppContext,
 ) {
-  console.log('Loi');
   const { filter, orderBy, skip, take } = postFindManyInputSchema.parse(query);
 
   const whereAnd: Array<Prisma.PostWhereInput> = [];
@@ -89,5 +88,5 @@ export async function postFindManyPublicController(
 
   posts = await filePopulateDownloadUrlInTree(posts);
 
-  return { posts: [posts[0]], count };
+  return { posts, count };
 }

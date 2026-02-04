@@ -297,6 +297,7 @@ CREATE TABLE "Instrument" (
     "type" TEXT,
     "meta" JSONB,
     "status" TEXT,
+    "symbol" TEXT,
     "underlyingAssetId" UUID,
     "quoteAssetId" UUID,
 
@@ -622,6 +623,7 @@ CREATE TABLE "Feedback" (
     "attachments" JSONB,
     "type" TEXT,
     "status" TEXT,
+    "json" JSONB,
     "userId" UUID,
 
     CONSTRAINT "Feedback_pkey" PRIMARY KEY ("id")
@@ -700,10 +702,16 @@ CREATE UNIQUE INDEX "Order_id_tenantId_key" ON "Order"("id", "tenantId");
 CREATE UNIQUE INDEX "Asset_importHash_key" ON "Asset"("importHash");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Asset_symbol_tenantId_key" ON "Asset"("symbol", "tenantId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Asset_id_tenantId_key" ON "Asset"("id", "tenantId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Instrument_importHash_key" ON "Instrument"("importHash");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Instrument_symbol_tenantId_key" ON "Instrument"("symbol", "tenantId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Instrument_id_tenantId_key" ON "Instrument"("id", "tenantId");

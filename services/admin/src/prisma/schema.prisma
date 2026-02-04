@@ -525,9 +525,8 @@ model Asset {
   snapshots BalanceSnapshot[] @relation("asset_snapshots")
 
 
-
-  @@unique([id, tenantId])
   @@unique([symbol, tenantId])
+  @@unique([id, tenantId])
 }
 
 model Instrument {
@@ -550,6 +549,7 @@ model Instrument {
   type String?
   meta Json?
   status String?
+  symbol String?
   underlyingAssetId String? @db.Uuid
   underlyingAsset Asset? @relation("baseInstruments_underlyingAsset", fields: [underlyingAssetId], references: [id])
 
@@ -561,7 +561,7 @@ model Instrument {
   trades Trade[] @relation("instrument_trades")
 
 
-
+  @@unique([symbol, tenantId])
   @@unique([id, tenantId])
 }
 
@@ -997,6 +997,7 @@ model Feedback {
   attachments Json?
   type String?
   status String?
+  json Json?
   userId String? @db.Uuid
   user Membership? @relation("feedbacks_user", fields: [userId], references: [id])
 

@@ -31,6 +31,7 @@ import { storage } from 'src/features/storage';
 import { feedbackEnumerators } from 'src/features/feedback/feedbackEnumerators';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
 import SelectInput from 'src/shared/components/form/SelectInput';
+import { Textarea } from 'src/shared/components/ui/textarea';
 import { MembershipAutocompleteInput } from 'src/features/membership/components/MembershipAutocompleteInput';
 
 export function FeedbackForm({
@@ -60,6 +61,7 @@ export function FeedbackForm({
     type: feedback?.type || null,
     status: feedback?.status || null,
     user: feedback?.user || null,
+    json: feedback?.json?.toString() || '',
   });
 
   const form = useForm({
@@ -305,6 +307,32 @@ export function FeedbackForm({
                   ) : null}
 
                   <FormMessage data-testid="user-error" />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="json"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {dictionary.feedback.fields.json}
+                  </FormLabel>
+
+                  <Textarea
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    {...field}
+                  />
+
+                  {dictionary.feedback.hints.json ? (
+                    <FormDescription>
+                      {dictionary.feedback.hints.json}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="json-error" />
                 </FormItem>
               )}
             />

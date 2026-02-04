@@ -12,13 +12,13 @@ export function ArticleImporter({ context }: { context: AppContext }) {
   return (
     <Importer
       keys={[
+        'user',
         'title',
         'body',
-        'meta',
         'type',
         'images',
         'files',
-        'user',
+        'meta',
       ]}
       labels={context.dictionary.article.fields}
       context={context}

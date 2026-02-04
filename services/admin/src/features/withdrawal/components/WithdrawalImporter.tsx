@@ -27,8 +27,8 @@ export function WithdrawalImporter({ context }: { context: AppContext }) {
         'broadcastAt',
         'confirmedAt',
         'confirmations',
-        'meta',
         'account',
+        'meta',
         'asset',
       ]}
       labels={context.dictionary.withdrawal.fields}

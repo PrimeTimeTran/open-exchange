@@ -16,8 +16,8 @@ export function FillImporter({ context }: { context: AppContext }) {
         'price',
         'quantity',
         'fee',
-        'meta',
         'trade',
+        'meta',
       ]}
       labels={context.dictionary.fill.fields}
       context={context}

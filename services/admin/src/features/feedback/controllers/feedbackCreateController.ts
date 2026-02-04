@@ -48,6 +48,7 @@ export async function feedbackCreate(body: unknown, context: AppContext) {
       attachments: data.attachments,
       type: data.type,
       status: data.status,
+      json: data.json,
       user: prismaRelationship.connectOne(data.user),
       importHash: data.importHash,
     },

@@ -77,6 +77,20 @@ export function ArticleView({
       </div>
 
       <div className="my-6 divide-y border-t">
+        {article.user != null && (
+          <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
+            <div className="font-semibold">
+              {dictionary.article.fields.user}
+            </div>
+            <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
+              <MembershipLink membership={article.user} context={context} />
+              <CopyToClipboardButton
+                text={membershipLabel(article.user, context.dictionary)}
+                dictionary={context.dictionary}
+              />
+            </div>
+          </div>
+        )}
         {Boolean(article.title) && (
           <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
             <div className="font-semibold">
@@ -142,20 +156,6 @@ export function ArticleView({
             </div>
             <div className="col-span-2">
               <FileListItem files={article.files as Array<any>} />
-            </div>
-          </div>
-        )}
-        {article.user != null && (
-          <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
-            <div className="font-semibold">
-              {dictionary.article.fields.user}
-            </div>
-            <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
-              <MembershipLink membership={article.user} context={context} />
-              <CopyToClipboardButton
-                text={membershipLabel(article.user, context.dictionary)}
-                dictionary={context.dictionary}
-              />
             </div>
           </div>
         )}

@@ -21,8 +21,8 @@ export function assetExporterMapper(
       isFractional: asset.isFractional
         ? context.dictionary.shared.yes
         : context.dictionary.shared.no,
-      meta: asset.meta?.toString(),
       decimals: asset.decimals?.toString(),
+      meta: asset.meta?.toString(),
       createdByMembership: membershipLabel(asset.createdByMembership, context.dictionary),
       createdAt: String(asset.createdAt),
       updatedByMembership: membershipLabel(asset.createdByMembership, context.dictionary),

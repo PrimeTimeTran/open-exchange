@@ -6,6 +6,8 @@ import { validateHasPermission } from 'src/features/security';
 import { prismaAuth } from 'src/prisma';
 import { AppContext } from 'src/shared/controller/appContext';
 import { prismaRelationship } from 'src/prisma/prismaRelationship';
+import Error400 from 'src/shared/errors/Error400';
+import { formatTranslation } from 'src/translation/formatTranslation';
 
 export const instrumentCreateApiDoc: RouteConfig = {
   method: 'post',
@@ -39,13 +41,25 @@ export async function instrumentCreate(body: unknown, context: AppContext) {
 
   const prisma = prismaAuth(context);
 
+  const duplicatedSymbol = await prisma.instrument.count({
+    where: { symbol: data.symbol },
+  });
 
+  if (duplicatedSymbol) {
+    throw new Error400(
+      formatTranslation(
+        context.dictionary.shared.errors.unique,
+        context.dictionary.instrument.fields.symbol,
+      ),
+    );
+  }
 
   let instrument = await prisma.instrument.create({
     data: {
       type: data.type,
       meta: data.meta,
       status: data.status,
+      symbol: data.symbol,
       underlyingAsset: prismaRelationship.connectOne(data.underlyingAsset),
       quoteAsset: prismaRelationship.connectOne(data.quoteAsset),
       importHash: data.importHash,

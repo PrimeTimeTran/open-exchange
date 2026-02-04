@@ -57,6 +57,12 @@ export async function instrumentFindManyController(
     });
   }
 
+  if (filter?.symbol != null) {
+    whereAnd.push({
+      symbol: { contains: filter?.symbol, mode: 'insensitive' },
+    });
+  }
+
   const prisma = prismaAuth(context);
 
   let instruments = await prisma.instrument.findMany({

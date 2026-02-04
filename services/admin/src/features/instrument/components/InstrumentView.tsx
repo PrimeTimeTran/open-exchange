@@ -82,6 +82,20 @@ export function InstrumentView({
       </div>
 
       <div className="my-6 divide-y border-t">
+        {Boolean(instrument.symbol) && (
+          <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
+            <div className="font-semibold">
+              {dictionary.instrument.fields.symbol}
+            </div>
+            <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
+              <span>{instrument.symbol}</span>
+              <CopyToClipboardButton
+                text={instrument.symbol}
+                dictionary={context.dictionary}
+              />
+            </div>
+          </div>
+        )}
         {instrument.type != null && (
           <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
             <div className="font-semibold">

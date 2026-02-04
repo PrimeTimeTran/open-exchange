@@ -130,20 +130,6 @@ export function AccountView({
             </div>
           </div>
         )}
-        {account.user != null && (
-          <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
-            <div className="font-semibold">
-              {dictionary.account.fields.user}
-            </div>
-            <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
-              <MembershipLink membership={account.user} context={context} />
-              <CopyToClipboardButton
-                text={membershipLabel(account.user, context.dictionary)}
-                dictionary={context.dictionary}
-              />
-            </div>
-          </div>
-        )}
         {account.orders?.length ? (<div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
           <div className="font-semibold">
             {dictionary.account.fields.orders}
@@ -188,6 +174,20 @@ export function AccountView({
             })}
           </div>
         </div>): null}
+        {account.user != null && (
+          <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
+            <div className="font-semibold">
+              {dictionary.account.fields.user}
+            </div>
+            <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
+              <MembershipLink membership={account.user} context={context} />
+              <CopyToClipboardButton
+                text={membershipLabel(account.user, context.dictionary)}
+                dictionary={context.dictionary}
+              />
+            </div>
+          </div>
+        )}
         {account.deposits?.length ? (<div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
           <div className="font-semibold">
             {dictionary.account.fields.deposits}

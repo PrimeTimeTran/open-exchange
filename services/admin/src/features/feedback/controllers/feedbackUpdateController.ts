@@ -61,6 +61,7 @@ export async function feedbackUpdateController(
       attachments: data.attachments,
       type: data.type,
       status: data.status,
+      json: data.json,
       user: prismaRelationship.connectOrDisconnectOne(data.user),
     },
   });

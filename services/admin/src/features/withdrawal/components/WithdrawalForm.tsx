@@ -70,8 +70,8 @@ export function WithdrawalForm({
     broadcastAt: withdrawal?.broadcastAt || '',
     confirmedAt: withdrawal?.confirmedAt || '',
     confirmations: withdrawal?.confirmations || '',
-    meta: withdrawal?.meta?.toString() || '',
     account: withdrawal?.account || null,
+    meta: withdrawal?.meta?.toString() || '',
     asset: withdrawal?.asset || null,
   });
 
@@ -565,32 +565,6 @@ export function WithdrawalForm({
           <div className="grid max-w-lg gap-1">
             <FormField
               control={form.control}
-              name="meta"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {dictionary.withdrawal.fields.meta}
-                  </FormLabel>
-
-                  <Textarea
-                    disabled={mutation.isPending || mutation.isSuccess}
-                    {...field}
-                  />
-
-                  {dictionary.withdrawal.hints.meta ? (
-                    <FormDescription>
-                      {dictionary.withdrawal.hints.meta}
-                    </FormDescription>
-                  ) : null}
-
-                  <FormMessage data-testid="meta-error" />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="grid max-w-lg gap-1">
-            <FormField
-              control={form.control}
               name="account"
               render={({ field }) => (
                 <FormItem>
@@ -612,6 +586,32 @@ export function WithdrawalForm({
                   ) : null}
 
                   <FormMessage data-testid="account-error" />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="meta"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {dictionary.withdrawal.fields.meta}
+                  </FormLabel>
+
+                  <Textarea
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    {...field}
+                  />
+
+                  {dictionary.withdrawal.hints.meta ? (
+                    <FormDescription>
+                      {dictionary.withdrawal.hints.meta}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="meta-error" />
                 </FormItem>
               )}
             />

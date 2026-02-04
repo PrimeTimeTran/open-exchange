@@ -57,10 +57,10 @@ export function BalanceSnapshotForm({
     locked: balanceSnapshot?.locked || '',
     total: balanceSnapshot?.total || '',
     snapshotAt: balanceSnapshot?.snapshotAt || '',
-    meta: balanceSnapshot?.meta?.toString() || '',
     account: balanceSnapshot?.account || null,
     wallet: balanceSnapshot?.wallet || null,
     asset: balanceSnapshot?.asset || null,
+    meta: balanceSnapshot?.meta?.toString() || '',
   });
 
   const form = useForm({
@@ -242,32 +242,6 @@ export function BalanceSnapshotForm({
           <div className="grid max-w-lg gap-1">
             <FormField
               control={form.control}
-              name="meta"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {dictionary.balanceSnapshot.fields.meta}
-                  </FormLabel>
-
-                  <Textarea
-                    disabled={mutation.isPending || mutation.isSuccess}
-                    {...field}
-                  />
-
-                  {dictionary.balanceSnapshot.hints.meta ? (
-                    <FormDescription>
-                      {dictionary.balanceSnapshot.hints.meta}
-                    </FormDescription>
-                  ) : null}
-
-                  <FormMessage data-testid="meta-error" />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="grid max-w-lg gap-1">
-            <FormField
-              control={form.control}
               name="account"
               render={({ field }) => (
                 <FormItem>
@@ -345,6 +319,32 @@ export function BalanceSnapshotForm({
                   ) : null}
 
                   <FormMessage data-testid="asset-error" />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="meta"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {dictionary.balanceSnapshot.fields.meta}
+                  </FormLabel>
+
+                  <Textarea
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    {...field}
+                  />
+
+                  {dictionary.balanceSnapshot.hints.meta ? (
+                    <FormDescription>
+                      {dictionary.balanceSnapshot.hints.meta}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="meta-error" />
                 </FormItem>
               )}
             />

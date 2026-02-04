@@ -8,7 +8,8 @@ import { permissions } from 'src/features/permissions';
 import { validateHasPermission } from 'src/features/security';
 import { prismaAuth } from 'src/prisma';
 import { AppContext } from 'src/shared/controller/appContext';
-
+import Error400 from 'src/shared/errors/Error400';
+import { formatTranslation } from 'src/translation/formatTranslation';
 
 export const assetUpdateApiDoc: RouteConfig = {
   method: 'put',
@@ -46,7 +47,18 @@ export async function assetUpdateController(
 
   const prisma = prismaAuth(context);
 
+  const duplicatedSymbol = await prisma.asset.count({
+    where: { symbol: data.symbol, id: { not: id } },
+  });
 
+  if (duplicatedSymbol) {
+    throw new Error400(
+      formatTranslation(
+        context.dictionary.shared.errors.unique,
+        context.dictionary.asset.fields.symbol,
+      ),
+    );
+  }
 
   await prisma.asset.update({
     where: {

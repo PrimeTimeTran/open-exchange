@@ -53,10 +53,10 @@ export function TradeForm({
   const [initialValues] = React.useState({
     price: trade?.price ? Number(trade?.price) : '',
     quantity: trade?.quantity ? Number(trade?.quantity) : '',
-    meta: trade?.meta?.toString() || '',
     buyOrderId: trade?.buyOrderId || [],
     sellOrderId: trade?.sellOrderId || [],
     instrument: trade?.instrument || null,
+    meta: trade?.meta?.toString() || '',
   });
 
   const form = useForm({
@@ -178,32 +178,6 @@ export function TradeForm({
           <div className="grid max-w-lg gap-1">
             <FormField
               control={form.control}
-              name="meta"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {dictionary.trade.fields.meta}
-                  </FormLabel>
-
-                  <Textarea
-                    disabled={mutation.isPending || mutation.isSuccess}
-                    {...field}
-                  />
-
-                  {dictionary.trade.hints.meta ? (
-                    <FormDescription>
-                      {dictionary.trade.hints.meta}
-                    </FormDescription>
-                  ) : null}
-
-                  <FormMessage data-testid="meta-error" />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="grid max-w-lg gap-1">
-            <FormField
-              control={form.control}
               name="buyOrderId"
               render={({ field }) => (
                 <FormItem>
@@ -279,6 +253,32 @@ export function TradeForm({
                   ) : null}
 
                   <FormMessage data-testid="instrument-error" />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="meta"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {dictionary.trade.fields.meta}
+                  </FormLabel>
+
+                  <Textarea
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    {...field}
+                  />
+
+                  {dictionary.trade.hints.meta ? (
+                    <FormDescription>
+                      {dictionary.trade.hints.meta}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="meta-error" />
                 </FormItem>
               )}
             />

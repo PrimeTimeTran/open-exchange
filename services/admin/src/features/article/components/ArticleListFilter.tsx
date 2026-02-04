@@ -20,10 +20,10 @@ import {
 import { AppContext } from 'src/shared/controller/appContext';
 import { getZodErrorMap } from 'src/translation/getZodErrorMap';
 import { z } from 'zod';
-import { Input } from 'src/shared/components/ui/input';
-import TagsInput from 'src/shared/components/form/TagsInput';
 import { membershipLabel } from 'src/features/membership/membershipLabel';
 import { MembershipAutocompleteInput } from 'src/features/membership/components/MembershipAutocompleteInput';
+import { Input } from 'src/shared/components/ui/input';
+import TagsInput from 'src/shared/components/form/TagsInput';
 import { Switch } from 'src/shared/components/ui/switch';
 
 const emptyValues = {
@@ -126,6 +126,26 @@ function ArticleListFilter({
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
+                name="user"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{dictionary.article.fields.user}</FormLabel>
+                    <MembershipAutocompleteInput
+                      context={context}
+                      onChange={field.onChange}
+                      value={field.value}
+                      isClearable={true}
+                      disabled={isLoading}
+                      hideFormButton={true}
+                      mode="memory"
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="title"
                 render={({ field }) => (
                   <FormItem>
@@ -160,26 +180,6 @@ function ArticleListFilter({
                       disabled={isLoading}
                       onChange={field.onChange}
                       value={field.value}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="user"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{dictionary.article.fields.user}</FormLabel>
-                    <MembershipAutocompleteInput
-                      context={context}
-                      onChange={field.onChange}
-                      value={field.value}
-                      isClearable={true}
-                      disabled={isLoading}
-                      hideFormButton={true}
-                      mode="memory"
                     />
                     <FormMessage />
                   </FormItem>
