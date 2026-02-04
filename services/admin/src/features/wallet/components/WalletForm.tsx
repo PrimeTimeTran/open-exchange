@@ -52,10 +52,10 @@ export function WalletForm({
   const isEditing = Boolean(wallet?.id);
 
   const [initialValues] = React.useState({
-    available: wallet?.available || '',
-    locked: wallet?.locked || '',
-    total: wallet?.total || '',
-    version: wallet?.version || '',
+    available: wallet?.available || 0,
+    locked: wallet?.locked || 0,
+    total: wallet?.total || 0,
+    version: wallet?.version ?? 1,
     user: wallet?.user || null,
     asset: wallet?.asset || null,
     account: wallet?.account || null,
@@ -126,114 +126,106 @@ export function WalletForm({
       >
         <div className="grid w-full gap-8">
           <div className="grid max-w-lg gap-1">
-              <FormField
-                control={form.control}
-                name="available"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {dictionary.wallet.fields.available}
-                    </FormLabel>
+            <FormField
+              control={form.control}
+              name="available"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{dictionary.wallet.fields.available}</FormLabel>
 
-                    <Input
-                      type="number"
-                      disabled={mutation.isPending || mutation.isSuccess}
-                      autoFocus
-          {...field}
-                    />
+                  <Input
+                    type="number"
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    autoFocus
+                    {...field}
+                  />
 
-                    {dictionary.wallet.hints.available ? (
-                      <FormDescription>
-                        {dictionary.wallet.hints.available}
-                      </FormDescription>
-                    ) : null}
+                  {dictionary.wallet.hints.available ? (
+                    <FormDescription>
+                      {dictionary.wallet.hints.available}
+                    </FormDescription>
+                  ) : null}
 
-                    <FormMessage data-testid="available-error" />
-                  </FormItem>
-                )}
-              />
-            </div>
+                  <FormMessage data-testid="available-error" />
+                </FormItem>
+              )}
+            />
+          </div>
           <div className="grid max-w-lg gap-1">
-              <FormField
-                control={form.control}
-                name="locked"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {dictionary.wallet.fields.locked}
-                    </FormLabel>
+            <FormField
+              control={form.control}
+              name="locked"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{dictionary.wallet.fields.locked}</FormLabel>
 
-                    <Input
-                      type="number"
-                      disabled={mutation.isPending || mutation.isSuccess}
-                      {...field}
-                    />
+                  <Input
+                    type="number"
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    {...field}
+                  />
 
-                    {dictionary.wallet.hints.locked ? (
-                      <FormDescription>
-                        {dictionary.wallet.hints.locked}
-                      </FormDescription>
-                    ) : null}
+                  {dictionary.wallet.hints.locked ? (
+                    <FormDescription>
+                      {dictionary.wallet.hints.locked}
+                    </FormDescription>
+                  ) : null}
 
-                    <FormMessage data-testid="locked-error" />
-                  </FormItem>
-                )}
-              />
-            </div>
+                  <FormMessage data-testid="locked-error" />
+                </FormItem>
+              )}
+            />
+          </div>
           <div className="grid max-w-lg gap-1">
-              <FormField
-                control={form.control}
-                name="total"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {dictionary.wallet.fields.total}
-                    </FormLabel>
+            <FormField
+              control={form.control}
+              name="total"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{dictionary.wallet.fields.total}</FormLabel>
 
-                    <Input
-                      type="number"
-                      disabled={mutation.isPending || mutation.isSuccess}
-                      {...field}
-                    />
+                  <Input
+                    type="number"
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    {...field}
+                  />
 
-                    {dictionary.wallet.hints.total ? (
-                      <FormDescription>
-                        {dictionary.wallet.hints.total}
-                      </FormDescription>
-                    ) : null}
+                  {dictionary.wallet.hints.total ? (
+                    <FormDescription>
+                      {dictionary.wallet.hints.total}
+                    </FormDescription>
+                  ) : null}
 
-                    <FormMessage data-testid="total-error" />
-                  </FormItem>
-                )}
-              />
-            </div>
+                  <FormMessage data-testid="total-error" />
+                </FormItem>
+              )}
+            />
+          </div>
           <div className="grid max-w-lg gap-1">
-              <FormField
-                control={form.control}
-                name="version"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {dictionary.wallet.fields.version}
-                    </FormLabel>
+            <FormField
+              control={form.control}
+              name="version"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{dictionary.wallet.fields.version}</FormLabel>
 
-                    <Input
-                      type="number"
-                      disabled={mutation.isPending || mutation.isSuccess}
-                      {...field}
-                    />
+                  <Input
+                    type="number"
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    {...field}
+                  />
 
-                    {dictionary.wallet.hints.version ? (
-                      <FormDescription>
-                        {dictionary.wallet.hints.version}
-                      </FormDescription>
-                    ) : null}
+                  {dictionary.wallet.hints.version ? (
+                    <FormDescription>
+                      {dictionary.wallet.hints.version}
+                    </FormDescription>
+                  ) : null}
 
-                    <FormMessage data-testid="version-error" />
-                  </FormItem>
-                )}
-              />
-            </div>
+                  <FormMessage data-testid="version-error" />
+                </FormItem>
+              )}
+            />
+          </div>
           <div className="grid max-w-lg gap-1">
             <FormField
               control={form.control}
@@ -324,9 +316,7 @@ export function WalletForm({
               name="meta"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    {dictionary.wallet.fields.meta}
-                  </FormLabel>
+                  <FormLabel>{dictionary.wallet.fields.meta}</FormLabel>
 
                   <Textarea
                     disabled={mutation.isPending || mutation.isSuccess}

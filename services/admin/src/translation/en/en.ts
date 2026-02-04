@@ -1,6 +1,4 @@
 const dictionary = {
-  
-
   projectName: 'Project',
 
   shared: {
@@ -737,9 +735,7 @@ const dictionary = {
       snapshots: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   deposit: {
@@ -1137,10 +1133,10 @@ const dictionary = {
       },
 
       timeInFore: {
-        gtc: 'Gtc',
-        ioc: 'Ioc',
-        fok: 'Fok',
-        day: 'Day',
+        gtc: 'Good Til Cancelled (GTC)',
+        ioc: 'Immediate Or Cancel (IOC)',
+        fok: 'Fill Or Kill (FOK)',
+        day: 'Day Order (DAY)',
       },
     },
   },
@@ -1610,9 +1606,7 @@ const dictionary = {
       event: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   trade: {
@@ -1716,9 +1710,7 @@ const dictionary = {
       fills: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   fill: {
@@ -1929,9 +1921,7 @@ const dictionary = {
       user: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   comment: {
@@ -2031,9 +2021,7 @@ const dictionary = {
       user: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   article: {
@@ -2137,9 +2125,7 @@ const dictionary = {
       user: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   chat: {
@@ -2241,9 +2227,7 @@ const dictionary = {
       chatees: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   chatee: {
@@ -2460,9 +2444,7 @@ const dictionary = {
       sender: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   feeSchedule: {
@@ -2571,7 +2553,6 @@ const dictionary = {
       accountId: '',
       instrumentId: '',
       meta: '',
-
     },
 
     enumerators: {
@@ -2688,9 +2669,7 @@ const dictionary = {
       asset: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   systemAccount: {
@@ -2789,7 +2768,6 @@ const dictionary = {
       description: '',
       isActive: '',
       meta: '',
-
     },
 
     enumerators: {

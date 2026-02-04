@@ -91,7 +91,7 @@ export default function SelectInput({
             </Button>
           </FormControl>
         </PopoverTrigger>
-        <PopoverContent align="start" className="w-[340px] p-0">
+        <PopoverContent align="start" className="w-[340px] p-0 bg-surface">
           <Command filter={commandFilter}>
             <CommandInput
               placeholder={
