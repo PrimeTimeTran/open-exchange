@@ -5,8 +5,6 @@ import {
   PlaceOrderResponse,
 } from 'src/proto/matching/engine';
 
-console.log('MatchingEngineClient imported:', MatchingEngineClient);
-
 const MATCHING_ENGINE_URL =
   process.env.MATCHING_ENGINE_URL || 'localhost:50051';
 

@@ -2,8 +2,8 @@
 
 # Directories
 PROTO_DIR="./proto"
-ADMIN_OUT_DIR="./admin/src/proto"
-MATCHING_OUT_DIR="./matching_engine/proto"
+ADMIN_OUT_DIR="./services/admin/src/proto"
+MATCHING_OUT_DIR="./services/matching/proto"
 
 # Create output directories if they don't exist
 mkdir -p $ADMIN_OUT_DIR

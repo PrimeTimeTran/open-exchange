@@ -3,28 +3,28 @@ version: '3.8'
 services:
   admin:
     build:
-      context: ./admin
+      context: ./services/admin
       dockerfile: Dockerfile.dev
     volumes:
-      - ./admin:/app
+      - ./services/admin:/app
       - /app/node_modules
-      - ./matching_engine/proto:/app/proto
+      - ./proto:/app/proto
     ports:
       - '3000:3000'
     environment:
-      - MATCHING_ENGINE_URL=matching-engine:50051
+      - MATCHING_ENGINE_URL=matching:50051
       # Use host.docker.internal to access localhost on the host machine (macOS/Windows)
       # You may need to update 'user:password' and 'crypto' to match your local credentials
       - DATABASE_URL=postgresql://appuser@host.docker.internal:5432/scaffoldhub-localhost-app?schema=public
       # Enable polling for hot reload in Docker
       - CHOKIDAR_USEPOLLING=true
     depends_on:
-      - matching-engine
+      - matching
       # - db
 
-  matching-engine:
+  matching:
     build:
-      context: ./matching_engine
+      context: ./services/matching
       dockerfile: Dockerfile
     ports:
       - '50051:50051'
