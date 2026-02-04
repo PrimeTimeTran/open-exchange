@@ -18,6 +18,8 @@
     "prisma:setup:script": "ts-node -T ./src/prisma/prismaSetupScript.ts",
     "prisma:migrate:development": "npx prisma generate && dotenv -e .env.local -- prisma migrate dev && dotenv -e .env.local -- npm run prisma:setup:script",
     "prisma:migrate:production": "prisma migrate deploy && npm run prisma:setup:script",
+    "prisma:seed:dev": "ts-node -T ./src/prisma/seedDev.ts",
+    "prisma:truncate:dev": "ts-node -T ./src/prisma/truncateDev.ts",
     "setup": "npm install && npm run prisma:migrate:development",
     "stripe:login": "stripe login",
     "stripe:listen": "stripe listen --forward-to localhost:3000/api/subscription/webhook"
