@@ -13,3 +13,5 @@ RUN cargo install cargo-watch
 # For dev, we just want environment ready.
 
 CMD ["cargo", "watch", "-x", "run"]
+
+EXPOSE 50052 8081

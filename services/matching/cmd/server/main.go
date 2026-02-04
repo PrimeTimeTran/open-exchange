@@ -13,6 +13,7 @@ import (
 	"github.com/crypto-exchange/matching_engine/internal/engine"
 	"github.com/crypto-exchange/matching_engine/internal/server"
 	"github.com/crypto-exchange/matching_engine/internal/service"
+	"github.com/crypto-exchange/matching_engine/internal/system"
 	"github.com/crypto-exchange/matching_engine/proto/helloworld"
 	ledger "github.com/crypto-exchange/matching_engine/proto/ledger"
 	pb "github.com/crypto-exchange/matching_engine/proto/matching"
@@ -58,6 +59,10 @@ func main() {
 	helloworld.RegisterGreeterServer(s, greeterServer)
 
 	log.Printf("Matching Engine listening at %v", lis.Addr())
+	
+	// Start HTTP Health Check Server
+	go system.StartHealthServer(":8080")
+
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

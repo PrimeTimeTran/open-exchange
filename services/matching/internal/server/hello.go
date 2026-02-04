@@ -23,7 +23,7 @@ func (s *GreeterServer) SayHello(ctx context.Context, in *helloworld.HelloReques
 	log.Printf("Received: %v", in.GetName())
 
 	// Call Ledger's Greeter
-	log.Printf("Calling Ledger Greeter... Tran Van Loi")
+	log.Printf("Calling Ledger Greeter... PrimeTranTran")
 	ledgerResp, err := s.GreeterClient.SayHello(ctx, &helloworld.HelloRequest{Name: "Matching Engine"})
 	ledgerMsg := " (Ledger said nothing)"
 	if err != nil {

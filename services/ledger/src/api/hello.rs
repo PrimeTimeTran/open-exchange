@@ -14,7 +14,7 @@ impl Greeter for MyGreeter {
         println!("Got a request: {:?}", request);
 
         let reply = HelloReply {
-            message: format!("Hello {} from Ledger  LoiTranLoi (Rust)!", request.into_inner().name),
+            message: format!("Hello {} from Ledger  PrimeTranTran (Rust)!", request.into_inner().name),
         };
 
         Ok(Response::new(reply))

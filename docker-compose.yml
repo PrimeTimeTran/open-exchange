@@ -33,6 +33,7 @@ services:
       - /app/tmp
     ports:
       - '50051:50051'
+      - '8080:8080'
     environment:
       - PORT=50051
 
@@ -46,6 +47,7 @@ services:
       - /app/target
     ports:
       - '50052:50052'
+      - '8081:8081'
     environment:
       # - DATABASE_URL=postgres://user:password@host.docker.internal:5432/crypto
       - RUST_LOG=info

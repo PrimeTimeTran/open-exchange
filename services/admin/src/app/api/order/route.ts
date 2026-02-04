@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
   // Confirm GRPC works between Admin -> Matching Engine & Matching Engine -> GRPC
   //
   try {
-    const helloResponse = await sayHello('OrderCreated by Loi Van Tran');
+    const helloResponse = await sayHello('OrderCreated by helloOrder');
     console.log('gRPC Hello Response:', helloResponse);
   } catch (e) {
     console.error('gRPC Hello Error:', e);
