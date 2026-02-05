@@ -7,7 +7,6 @@ import {
   Typewriter,
   SpotlightCard,
   ShadowParticles,
-  RippleSection,
 } from '@/components/ui';
 import { CodeWindow } from '@/components/code-window';
 
@@ -17,33 +16,35 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-background">
         <div className="absolute inset-0 z-0">
-          <ShadowParticles seed={12345} />
+          <ShadowParticles />
         </div>
         <div className="container mx-auto px-6 relative z-10 text-center space-y-8">
           <h1 className="text-5xl md:text-7xl font-display font-bold text-primary tracking-tight">
-            Trade the Future
+            The World's First <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
+              Open Exchange
+            </span>
           </h1>
           <div className="text-2xl md:text-4xl text-muted-foreground font-light h-20">
-            <span>Access </span>
+            <span>No walled gardens. Just </span>
             <span className="text-on-surface-variant font-medium">
               <Typewriter
-                loop
                 typeSpeed={70}
                 deleteSpeed={50}
                 delayBetween={2000}
                 strings={[
-                  'Stocks & ETFs',
-                  'Options Strategies',
-                  'Futures Contracts',
-                  'Crypto Assets',
+                  'Radical Transparency.',
+                  'Public Architecture.',
+                  'Verifiable Trust.',
+                  'Community Driven.',
                 ]}
               />
             </span>
           </div>
           <p className="max-w-2xl mx-auto text-lg text-muted-foreground">
-            The world's most advanced exchange platform. Lightning fast
-            execution, institutional-grade security, and deep liquidity across
-            all asset classes.
+            We're building the financial infrastructure of tomorrow in public.
+            Open source, audible, and designed for skeptics. Join the revolution
+            against black boxes.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
             <Link href="/auth/register">
@@ -60,39 +61,39 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Features Grid */}
+      {/* Principles Grid */}
       <section className="py-24 bg-surface-variant/30">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16 space-y-4">
             <h2 className="text-3xl md:text-4xl font-bold text-on-surface">
-              One Platform, Every Asset
+              Built on First Principles
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Unified account management for all your trading needs. Experience
-              seamless transitions between traditional and digital markets.
+              We believe trust is earned, not given. That's why we operate
+              differently from traditional "walled garden" tech companies.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <FeatureCard
-              title="Stocks"
-              description="Trade thousands of global equities with zero commission on select markets. Real-time data and advanced charting."
-              icon="stocks"
+              title="Built in Public"
+              description="We share our journey, decisions, and code. Watch us build, break, and fix things in real-time."
+              icon="git-branch"
             />
             <FeatureCard
-              title="Options"
-              description="Execute complex options strategies with our intuitive interface. Risk management tools built right in."
-              icon="options"
+              title="Designed for Skeptics"
+              description="Don't trust us? You don't have to. Our architecture is open for inspection and verification by anyone."
+              icon="shield-check"
             />
             <FeatureCard
-              title="Futures"
-              description="Hedge your portfolio with competitive futures contracts. High leverage options available for qualified traders."
-              icon="futures"
+              title="Public Artifacts"
+              description="Live dashboards, real-time metrics, and 'hack me' challenges. We prove our reliability every single day."
+              icon="layout"
             />
             <FeatureCard
-              title="Crypto"
-              description="Buy, sell, and earn on top cryptocurrencies. Industry-leading cold storage security and insurance."
-              icon="crypto"
+              title="No Walled Gardens"
+              description="Your data is yours. Deep interoperability and open APIs mean you're never locked in."
+              icon="globe"
             />
           </div>
         </div>
@@ -144,21 +145,21 @@ export default function LandingPage() {
                 >
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                 </svg>
-                Bank-Grade Security
+                Public Security Challenge
               </div>
               <h2 className="text-3xl md:text-4xl font-bold text-on-surface">
-                Your Assets, Protected.
+                Robustness via Transparency
               </h2>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                We employ the most advanced security measures available to
-                ensure your funds and personal information are always safe.
+                We invite ethical hackers to test our system. Our security model
+                is public, our audits are published, and our bounties are paid.
               </p>
               <ul className="space-y-4 pt-4">
                 {[
-                  '98% of assets held in cold storage',
-                  'Real-time fraud monitoring & prevention',
+                  'Live "Hack Me" Challenges',
+                  'Public Post-Mortems',
                   'Proof of Reserves audits every quarter',
-                  'SOC 2 Type II Certified',
+                  'Open Source Security Models',
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-3">
                     <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
@@ -302,27 +303,27 @@ api.start()`}
                   <polyline points="16 18 22 12 16 6"></polyline>
                   <polyline points="8 6 2 12 8 18"></polyline>
                 </svg>
-                Developers First
+                Verify, Don't Trust
               </div>
               <h2 className="text-3xl md:text-4xl font-bold text-on-surface">
-                Build on a Powerful Foundation
+                Open Architecture
               </h2>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                Connect to our high-performance matching engine via REST or
-                WebSocket. Designed for algorithmic traders who demand speed and
-                reliability.
+                Understand exactly how your orders are routed, matched, and
+                settled. Our architecture is documented and observable by
+                design.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
                 <div className="p-4 rounded-lg bg-surface-variant/30 border border-outline-variant/50">
-                  <h4 className="font-semibold mb-1">Low Latency</h4>
+                  <h4 className="font-semibold mb-1">Observable</h4>
                   <p className="text-sm text-muted-foreground">
-                    &lt;50ms average execution time
+                    Live system metrics & dashboards
                   </p>
                 </div>
                 <div className="p-4 rounded-lg bg-surface-variant/30 border border-outline-variant/50">
-                  <h4 className="font-semibold mb-1">WebSocket API</h4>
+                  <h4 className="font-semibold mb-1">Open Source</h4>
                   <p className="text-sm text-muted-foreground">
-                    Real-time market data streaming
+                    Core components built in public
                   </p>
                 </div>
                 <div className="p-4 rounded-lg bg-surface-variant/30 border border-outline-variant/50">
@@ -339,7 +340,7 @@ api.start()`}
                 </div>
               </div>
               <div className="pt-4">
-                <Link href="/api-docs">
+                <Link href="#">
                   <Button variant="primary">Read Documentation</Button>
                 </Link>
               </div>
@@ -349,8 +350,8 @@ api.start()`}
       </section>
 
       {/* CTA Section */}
-      <RippleSection
-        themes={['#0F172A', '#1E293B', '#334155']}
+      <section
+        // themes={['#0F172A', '#1E293B', '#334155']}
         className="py-32 text-center text-white cursor-pointer"
       >
         <div className="container mx-auto px-6 space-y-8 relative z-10 pointer-events-none">
@@ -375,7 +376,7 @@ api.start()`}
             (Click anywhere in this section for a ripple effect)
           </p>
         </div>
-      </RippleSection>
+      </section>
     </div>
   );
 }
@@ -387,7 +388,7 @@ function FeatureCard({
 }: {
   title: string;
   description: string;
-  icon: 'stocks' | 'crypto' | 'futures' | 'options';
+  icon: 'git-branch' | 'shield-check' | 'layout' | 'globe';
 }) {
   return (
     <SpotlightCard
@@ -395,60 +396,7 @@ function FeatureCard({
       spotlightColor="rgba(103, 80, 164, 0.15)"
     >
       <div className="mb-6 p-3 bg-surface-variant w-fit rounded-xl text-primary">
-        {icon === 'stocks' && (
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-            <polyline points="17 6 23 6 23 12"></polyline>
-          </svg>
-        )}
-        {icon === 'crypto' && (
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M6 6h8a3 3 0 0 1 0 6a3 3 0 0 1 0 6h-8" />
-            <line x1="8" x2="8" y1="6" y2="18" />
-            <line x1="8" x2="14" y1="12" y2="12" />
-            <line x1="9" x2="9" y1="3" y2="6" />
-            <line x1="13" x2="13" y1="3" y2="6" />
-            <line x1="9" x2="9" y1="18" y2="21" />
-            <line x1="13" x2="13" y1="18" y2="21" />
-          </svg>
-        )}
-        {icon === 'futures' && (
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="12" cy="12" r="10"></circle>
-            <polyline points="12 6 12 12 16 14"></polyline>
-          </svg>
-        )}
-        {icon === 'options' && (
+        {icon === 'git-branch' && (
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -464,6 +412,56 @@ function FeatureCard({
             <circle cx="18" cy="6" r="3"></circle>
             <circle cx="6" cy="18" r="3"></circle>
             <path d="M18 9a9 9 0 0 1-9 9"></path>
+          </svg>
+        )}
+        {icon === 'shield-check' && (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            <path d="m9 12 2 2 4-4"></path>
+          </svg>
+        )}
+        {icon === 'layout' && (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+            <line x1="3" x2="21" y1="9" y2="9"></line>
+            <line x1="9" x2="9" y1="21" y2="9"></line>
+          </svg>
+        )}
+        {icon === 'globe' && (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" x2="22" y1="12" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
           </svg>
         )}
       </div>
