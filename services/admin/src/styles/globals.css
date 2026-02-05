@@ -241,3 +241,13 @@ body {
 .animate-gradient {
   animation: gradient 8s ease infinite;
 }
+
+@keyframes scroll {
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-scroll {
+  animation: scroll var(--animation-duration, 40s) linear infinite;
+}

@@ -9,6 +9,7 @@ import {
   ShadowParticles,
 } from '@/components/ui';
 import { CodeWindow } from '@/components/code-window';
+import { MarketTicker } from '@/components/landing/market-ticker';
 
 export default function LandingPage() {
   return (
@@ -61,6 +62,9 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Live Markets Ticker */}
+      <MarketTicker />
+
       {/* Principles Grid */}
       <section className="py-24 bg-surface-variant/30">
         <div className="container mx-auto px-6">
@@ -95,6 +99,147 @@ export default function LandingPage() {
               description="Your data is yours. Deep interoperability and open APIs mean you're never locked in."
               icon="globe"
             />
+          </div>
+        </div>
+      </section>
+
+      {/* Pro Interface Preview */}
+      <section className="py-24 bg-background">
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col items-center text-center mb-16 space-y-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-on-surface">
+              Professional Grade Interface
+            </h2>
+            <p className="text-muted-foreground max-w-2xl">
+              Designed for speed and precision. Customizable workspaces,
+              real-time depth charts, and advanced order types at your
+              fingertips.
+            </p>
+          </div>
+
+          <div className="relative rounded-xl overflow-hidden border border-outline-variant shadow-2xl bg-[#0F172A] w-full max-w-5xl mx-auto group flex flex-col md:aspect-video h-auto">
+            {/* Mock UI Header */}
+            <div className="h-10 border-b border-white/10 bg-white/5 flex items-center px-4 justify-between shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-[#ff5f56]" />
+                  <div className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
+                  <div className="w-3 h-3 rounded-full bg-[#27c93f]" />
+                </div>
+                <div className="ml-4 h-6 px-3 bg-white/10 rounded text-xs text-white/70 flex items-center">
+                  BTC-USD
+                </div>
+              </div>
+              <div className="text-xs text-white/50 font-mono">
+                Connected: 14ms
+              </div>
+            </div>
+
+            {/* Mock UI Body */}
+            <div className="flex flex-col md:flex-row h-full p-1 text-xs text-white/70 font-mono">
+              {/* Left Panel: Orderbook */}
+              <div className="w-full md:w-64 border-b md:border-b-0 md:border-r border-white/10 flex flex-col h-64 md:h-auto order-2 md:order-1">
+                <div className="p-2 border-b border-white/10 font-bold text-white">
+                  Order Book
+                </div>
+                <div className="flex-1 overflow-hidden p-2 space-y-0.5">
+                  {[...Array(12)]
+                    .map((_, i) => (
+                      <div
+                        key={`ask-${i}`}
+                        className="flex justify-between text-red-400"
+                      >
+                        <span>{(43250 + i * 5).toFixed(2)}</span>
+                        <span>{(Math.random() * 2).toFixed(4)}</span>
+                      </div>
+                    ))
+                    .reverse()}
+                  <div className="py-2 text-center text-lg font-bold text-white border-y border-white/10 my-2">
+                    43,240.50
+                  </div>
+                  {[...Array(12)].map((_, i) => (
+                    <div
+                      key={`bid-${i}`}
+                      className="flex justify-between text-green-400"
+                    >
+                      <span>{(43230 - i * 5).toFixed(2)}</span>
+                      <span>{(Math.random() * 2).toFixed(4)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Center Panel: Chart Placeholder */}
+              <div className="flex-1 flex flex-col border-b md:border-b-0 md:border-r border-white/10 min-h-[300px] md:min-h-0 order-1 md:order-2">
+                <div className="h-10 border-b border-white/10 flex items-center px-4 gap-4">
+                  <span className="text-white font-bold">Timeframe:</span>
+                  <span className="cursor-pointer hover:text-white">1m</span>
+                  <span className="cursor-pointer text-white">5m</span>
+                  <span className="cursor-pointer hover:text-white">15m</span>
+                  <span className="cursor-pointer hover:text-white">1h</span>
+                </div>
+                <div className="flex-1 relative bg-gradient-to-b from-transparent to-primary/5 p-8 flex items-center justify-center">
+                  <div className="absolute inset-0 flex items-end justify-around px-8 pb-8 opacity-30">
+                    {[40, 60, 45, 70, 65, 80, 75, 90, 85, 95].map((h, i) => (
+                      <div
+                        key={i}
+                        style={{ height: `${h}%` }}
+                        className="w-full mx-1 bg-primary/40 rounded-t-sm"
+                      />
+                    ))}
+                  </div>
+                  {/* SVG Line Chart Overlay */}
+                  <svg
+                    className="absolute inset-0 w-full h-full p-8"
+                    preserveAspectRatio="none"
+                  >
+                    <polyline
+                      fill="none"
+                      stroke="#6366f1"
+                      strokeWidth="2"
+                      points="0,300 100,250 200,280 300,150 400,180 500,100 600,120 700,50 800,80 900,20"
+                    />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Right Panel: Order Entry */}
+              <div className="w-full md:w-72 flex flex-col bg-white/5 order-3">
+                <div className="flex border-b border-white/10">
+                  <div className="flex-1 p-3 text-center bg-green-500/20 text-green-400 font-bold border-b-2 border-green-500">
+                    Buy
+                  </div>
+                  <div className="flex-1 p-3 text-center hover:bg-white/5 cursor-pointer">
+                    Sell
+                  </div>
+                </div>
+                <div className="p-4 space-y-4">
+                  <div className="space-y-1">
+                    <div className="text-[10px] uppercase">Order Type</div>
+                    <div className="p-2 bg-black/40 rounded border border-white/10">
+                      Limit
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-[10px] uppercase">Price (USD)</div>
+                    <div className="p-2 bg-black/40 rounded border border-white/10">
+                      43,240.50
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-[10px] uppercase">Amount (BTC)</div>
+                    <div className="p-2 bg-black/40 rounded border border-white/10">
+                      0.5
+                    </div>
+                  </div>
+                  <div className="pt-4">
+                    <button className="w-full py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded">
+                      Place Buy Order
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
