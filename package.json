@@ -1,5 +1,9 @@
 {
   "devDependencies": {
     "ts-proto": "^2.11.2"
+  },
+  "dependencies": {
+    "ace-builds": "^1.43.6",
+    "react-ace": "^14.0.1"
   }
 }
