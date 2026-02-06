@@ -222,8 +222,11 @@ export default function CareersSearchPage() {
                         <Button
                           variant="outline"
                           className="w-fit hover:bg-primary hover:text-on-primary"
+                          asChild
                         >
-                          Apply Now <ArrowRight className="ml-2 w-4 h-4" />
+                          <a href={`/careers/${encodeURIComponent(job.title)}`}>
+                            Learn More <ArrowRight className="ml-2 w-4 h-4" />
+                          </a>
                         </Button>
                       </div>
                     </CardHeader>
