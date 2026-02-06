@@ -32,6 +32,16 @@ export interface PlaceOrderResponse {
   errorMessage?: string | undefined;
 }
 
+export interface CancelOrderRequest {
+  orderId?: string | undefined;
+  instrumentId?: string | undefined;
+}
+
+export interface CancelOrderResponse {
+  success?: boolean | undefined;
+  errorMessage?: string | undefined;
+}
+
 function createBasePlaceOrderRequest(): PlaceOrderRequest {
   return { order: undefined };
 }
@@ -190,6 +200,170 @@ export const PlaceOrderResponse: MessageFns<PlaceOrderResponse> = {
   },
 };
 
+function createBaseCancelOrderRequest(): CancelOrderRequest {
+  return { orderId: "", instrumentId: "" };
+}
+
+export const CancelOrderRequest: MessageFns<CancelOrderRequest> = {
+  encode(message: CancelOrderRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.orderId !== undefined && message.orderId !== "") {
+      writer.uint32(10).string(message.orderId);
+    }
+    if (message.instrumentId !== undefined && message.instrumentId !== "") {
+      writer.uint32(18).string(message.instrumentId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CancelOrderRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCancelOrderRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.orderId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.instrumentId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CancelOrderRequest {
+    return {
+      orderId: isSet(object.orderId)
+        ? globalThis.String(object.orderId)
+        : isSet(object.order_id)
+        ? globalThis.String(object.order_id)
+        : "",
+      instrumentId: isSet(object.instrumentId)
+        ? globalThis.String(object.instrumentId)
+        : isSet(object.instrument_id)
+        ? globalThis.String(object.instrument_id)
+        : "",
+    };
+  },
+
+  toJSON(message: CancelOrderRequest): unknown {
+    const obj: any = {};
+    if (message.orderId !== undefined && message.orderId !== "") {
+      obj.orderId = message.orderId;
+    }
+    if (message.instrumentId !== undefined && message.instrumentId !== "") {
+      obj.instrumentId = message.instrumentId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CancelOrderRequest>, I>>(base?: I): CancelOrderRequest {
+    return CancelOrderRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CancelOrderRequest>, I>>(object: I): CancelOrderRequest {
+    const message = createBaseCancelOrderRequest();
+    message.orderId = object.orderId ?? "";
+    message.instrumentId = object.instrumentId ?? "";
+    return message;
+  },
+};
+
+function createBaseCancelOrderResponse(): CancelOrderResponse {
+  return { success: false, errorMessage: "" };
+}
+
+export const CancelOrderResponse: MessageFns<CancelOrderResponse> = {
+  encode(message: CancelOrderResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== undefined && message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.errorMessage !== undefined && message.errorMessage !== "") {
+      writer.uint32(18).string(message.errorMessage);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CancelOrderResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCancelOrderResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.errorMessage = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CancelOrderResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      errorMessage: isSet(object.errorMessage)
+        ? globalThis.String(object.errorMessage)
+        : isSet(object.error_message)
+        ? globalThis.String(object.error_message)
+        : "",
+    };
+  },
+
+  toJSON(message: CancelOrderResponse): unknown {
+    const obj: any = {};
+    if (message.success !== undefined && message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.errorMessage !== undefined && message.errorMessage !== "") {
+      obj.errorMessage = message.errorMessage;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CancelOrderResponse>, I>>(base?: I): CancelOrderResponse {
+    return CancelOrderResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CancelOrderResponse>, I>>(object: I): CancelOrderResponse {
+    const message = createBaseCancelOrderResponse();
+    message.success = object.success ?? false;
+    message.errorMessage = object.errorMessage ?? "";
+    return message;
+  },
+};
+
 export type MatchingEngineService = typeof MatchingEngineService;
 export const MatchingEngineService = {
   placeOrder: {
@@ -201,10 +375,20 @@ export const MatchingEngineService = {
     responseSerialize: (value: PlaceOrderResponse): Buffer => Buffer.from(PlaceOrderResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): PlaceOrderResponse => PlaceOrderResponse.decode(value),
   },
+  cancelOrder: {
+    path: "/matching.MatchingEngine/CancelOrder",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CancelOrderRequest): Buffer => Buffer.from(CancelOrderRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CancelOrderRequest => CancelOrderRequest.decode(value),
+    responseSerialize: (value: CancelOrderResponse): Buffer => Buffer.from(CancelOrderResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CancelOrderResponse => CancelOrderResponse.decode(value),
+  },
 } as const;
 
 export interface MatchingEngineServer extends UntypedServiceImplementation {
   placeOrder: handleUnaryCall<PlaceOrderRequest, PlaceOrderResponse>;
+  cancelOrder: handleUnaryCall<CancelOrderRequest, CancelOrderResponse>;
 }
 
 export interface MatchingEngineClient extends Client {
@@ -222,6 +406,21 @@ export interface MatchingEngineClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: PlaceOrderResponse) => void,
+  ): ClientUnaryCall;
+  cancelOrder(
+    request: CancelOrderRequest,
+    callback: (error: ServiceError | null, response: CancelOrderResponse) => void,
+  ): ClientUnaryCall;
+  cancelOrder(
+    request: CancelOrderRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CancelOrderResponse) => void,
+  ): ClientUnaryCall;
+  cancelOrder(
+    request: CancelOrderRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CancelOrderResponse) => void,
   ): ClientUnaryCall;
 }
 

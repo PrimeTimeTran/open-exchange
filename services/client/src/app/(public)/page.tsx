@@ -496,14 +496,13 @@ api.start()`}
 
       {/* CTA Section */}
       <section
-        // themes={['#0F172A', '#1E293B', '#334155']}
-        className="py-32 text-center text-white cursor-pointer"
+        className="py-32 text-center text-on-surface-variant"
       >
         <div className="container mx-auto px-6 space-y-8 relative z-10 pointer-events-none">
           <h2 className="text-4xl md:text-6xl font-bold tracking-tight">
             Ready to dive in?
           </h2>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+          <p className="text-xl text-on-background max-w-2xl mx-auto">
             Join millions of traders worldwide and experience the next
             generation of financial technology.
           </p>
@@ -511,15 +510,13 @@ api.start()`}
             <Link href="/auth/sign-up">
               <Button
                 size="lg"
-                className="bg-white text-slate-900 hover:bg-gray-100 border-none"
+                variant="primary"
+                // className=" text-slate-900 hover:bg-gray-100 border-none"
               >
                 Create Free Account
               </Button>
             </Link>
           </div>
-          <p className="text-sm text-gray-500 pt-4">
-            (Click anywhere in this section for a ripple effect)
-          </p>
         </div>
       </section>
     </div>

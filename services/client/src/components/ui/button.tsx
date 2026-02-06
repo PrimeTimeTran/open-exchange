@@ -1,6 +1,6 @@
 // components/ui/button.tsx
-import * as React from 'react'
-import { cn } from '@/lib/utils'
+import * as React from 'react';
+import { cn } from '@/lib/utils';
 
 type ButtonVariant =
   | 'primary'
@@ -10,12 +10,12 @@ type ButtonVariant =
   | 'destructive'
   | 'success'
   | 'warning'
-  | 'link'
+  | 'link';
 
-type ButtonSize = 'sm' | 'md' | 'lg' | 'icon'
+type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
 
 const base =
-  'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]'
+  'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]  cursor-pointer';
 
 const variants: Record<ButtonVariant, string> = {
   primary: 'bg-primary text-on-primary hover:bg-primary/80',
@@ -26,18 +26,19 @@ const variants: Record<ButtonVariant, string> = {
   success: 'bg-success text-on-success hover:bg-success/80',
   warning: 'bg-warning text-on-warning hover:bg-warning/80',
   link: 'text-primary underline-offset-4 hover:underline',
-}
+};
 
 const sizes: Record<ButtonSize, string> = {
   sm: 'h-9 px-4 text-sm',
   md: 'h-10 px-5 text-sm',
   lg: 'h-12 px-8 text-base',
   icon: 'h-10 w-10',
-}
+};
 
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant
-  size?: ButtonSize
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
 }
 
 export function Button({
@@ -51,5 +52,5 @@ export function Button({
       className={cn(base, variants[variant], sizes[size], className)}
       {...props}
     />
-  )
+  );
 }

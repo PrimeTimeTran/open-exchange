@@ -31,3 +31,4 @@ The Matching Engine is the core of the exchange. It maintains the Order Book sta
 - [ ] **Partial Fills**: Handle cases where an order is only 50% filled.
 - [ ] **Stop Loss / Take Profit**: Trigger orders based on price movement.
 - [ ] **Self-Trade Prevention**: Prevent a user from matching against their own order.
+

@@ -16,7 +16,7 @@ func TestEngine_ProcessOrder_AddsToBook(t *testing.T) {
 	order.InstrumentID = "BTC-USD"
 
 	// 2. Process the order
-	trades, err := eng.ProcessOrder(order)
+	trades, _, err := eng.ProcessOrder(order)
 	assert.NoError(t, err)
 	assert.Empty(t, trades, "Expected no trades for the first order in the book")
 

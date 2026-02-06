@@ -34,3 +34,17 @@ func (s *MatchingServer) PlaceOrder(ctx context.Context, req *pb.PlaceOrderReque
 	}, nil
 }
 
+func (s *MatchingServer) CancelOrder(ctx context.Context, req *pb.CancelOrderRequest) (*pb.CancelOrderResponse, error) {
+	err := s.Service.CancelOrder(ctx, req.OrderId, req.InstrumentId)
+	if err != nil {
+		return &pb.CancelOrderResponse{
+			Success:      false,
+			ErrorMessage: err.Error(),
+		}, nil
+	}
+
+	return &pb.CancelOrderResponse{
+		Success: true,
+	}, nil
+}
+

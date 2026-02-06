@@ -3,6 +3,8 @@ package engine
 import (
 	"fmt"
 	"sync"
+
+	"github.com/open-exchange/matching_engine/internal/events"
 )
 
 type Engine struct {
@@ -26,9 +28,9 @@ func (e *Engine) GetOrderBook(instrumentID string) *OrderBook {
 	return e.OrderBooks[instrumentID]
 }
 
-func (e *Engine) ProcessOrder(order *Order) ([]Trade, error) {
+func (e *Engine) ProcessOrder(order *Order) ([]Trade, []events.OrderBookEvent, error) {
 	if order.InstrumentID == "" {
-		return nil, fmt.Errorf("instrument ID is required")
+		return nil, nil, fmt.Errorf("instrument ID is required")
 	}
 
 	ob := e.GetOrderBook(order.InstrumentID)
@@ -42,4 +44,25 @@ func (e *Engine) ProcessOrder(order *Order) ([]Trade, error) {
 	// For this scaffold, I'll rely on the fact that we are just implementing the logic.
 	
 	return ob.ProcessOrder(order)
+}
+
+func (e *Engine) CancelOrder(instrumentID, orderID string) (*Order, error) {
+	if instrumentID == "" {
+		return nil, fmt.Errorf("instrument ID is required")
+	}
+
+	e.mu.Lock()
+	ob, ok := e.OrderBooks[instrumentID]
+	e.mu.Unlock()
+
+	if !ok {
+		return nil, fmt.Errorf("orderbook not found for instrument %s", instrumentID)
+	}
+
+	cancelledOrder := ob.CancelOrder(orderID)
+	if cancelledOrder == nil {
+		return nil, fmt.Errorf("order %s not found", orderID)
+	}
+
+	return cancelledOrder, nil
 }

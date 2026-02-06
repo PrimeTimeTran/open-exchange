@@ -8,6 +8,7 @@ option go_package = "github.com/open-exchange/matching_engine/proto/matching";
 
 service MatchingEngine {
   rpc PlaceOrder(PlaceOrderRequest) returns (PlaceOrderResponse);
+  rpc CancelOrder(CancelOrderRequest) returns (CancelOrderResponse);
 }
 
 message PlaceOrderRequest {
@@ -18,4 +19,14 @@ message PlaceOrderResponse {
   string order_id = 1;
   bool success = 2;
   string error_message = 3;
+}
+
+message CancelOrderRequest {
+  string order_id = 1;
+  string instrument_id = 2;
+}
+
+message CancelOrderResponse {
+  bool success = 1;
+  string error_message = 2;
 }

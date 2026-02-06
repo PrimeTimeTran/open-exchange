@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/open-exchange/matching_engine/internal/engine"
+	"github.com/open-exchange/matching_engine/internal/events"
 	"github.com/open-exchange/matching_engine/internal/server"
 	"github.com/open-exchange/matching_engine/internal/service"
 	"github.com/open-exchange/matching_engine/internal/system"
@@ -43,7 +44,29 @@ func main() {
 
 	// 2. Initialize Engine and Service
 	eng := engine.NewEngine()
-	svc := service.NewMatchingService(eng, ledgerClient)
+
+	// Initialize Publisher
+	// Always use LogPublisher for visibility
+	publishers := []events.Publisher{
+		events.NewLogPublisher(),
+	}
+
+	redisAddr := os.Getenv("REDIS_URL")
+	if redisAddr == "" {
+		redisAddr = "redis:6379"
+	}
+
+	redisPub, err := events.NewRedisPublisher(redisAddr)
+	if err != nil {
+		log.Printf("Warning: Could not connect to Redis at %s: %v. Running without Redis publisher.", redisAddr, err)
+	} else {
+		log.Printf("Connected to Redis at %s", redisAddr)
+		publishers = append(publishers, redisPub)
+	}
+
+	publisher := events.NewMultiPublisher(publishers...)
+
+	svc := service.NewMatchingService(eng, ledgerClient, publisher)
 
 	// 3. Start Matching Engine Server
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))

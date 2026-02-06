@@ -9,7 +9,6 @@ use crate::api::hello::MyGreeter;
 use crate::api::ledger::LedgerImpl;
 use crate::proto::hello_world::greeter_server::GreeterServer;
 use crate::proto::ledger::ledger_service_server::LedgerServiceServer;
-use std::env;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
