@@ -11,6 +11,7 @@ import { cookies } from 'next/headers';
 import { getLocaleFromCookies } from 'src/translation/getLocaleFromCookies';
 import { cookieGet } from 'src/shared/lib/cookie';
 import { Viewport } from 'next';
+import Script from 'next/script';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -66,6 +67,19 @@ export default function RootLayout({
           </ClientProviders>
           <Toaster />
         </body>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-MFFQRL807K"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'G-MFFQRL807K');
+        `}
+        </Script>
       </html>
     </>
   );
