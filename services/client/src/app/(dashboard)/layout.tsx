@@ -8,19 +8,31 @@ import { getDictionary } from '@/translation/getDictionary';
 import { getLocaleFromCookies } from '@/translation/getLocaleFromCookies';
 
 export async function generateMetadata() {
-  const locale = getLocaleFromCookies(cookies());
-  const dictionary = await getDictionary(locale);
+  try {
+    const locale = getLocaleFromCookies(cookies()) ?? 'en';
+    const dictionary = await getDictionary(locale);
 
-  return {
-    title: {
-      default: dictionary.projectName,
-      // template: `%s - ${dictionary.projectName}`,
-    },
-    robots: {
-      follow: true,
-      index: true,
-    },
-  };
+    return {
+      title: {
+        default: dictionary.projectName,
+      },
+      robots: {
+        follow: true,
+        index: true,
+      },
+    };
+  } catch (err) {
+    console.error('generateMetadata failed', err);
+
+    // Fallback metadata — DO NOT throw
+    return {
+      title: 'Open Exchange',
+      robots: {
+        follow: true,
+        index: true,
+      },
+    };
+  }
 }
 
 export default function DashboardLayout({
