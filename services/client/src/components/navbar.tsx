@@ -6,7 +6,7 @@ import { Moon, Sun, Menu } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { GlobalSidebar } from './global-sidebar';
 
-export function Navbar() {
+export function Navbar({ currentUser }: { currentUser?: any }) {
   const [mounted, setMounted] = useState(false);
   const { setTheme, resolvedTheme } = useTheme();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -61,6 +61,7 @@ export function Navbar() {
       <GlobalSidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
+        currentUser={currentUser}
       />
     </>
   );

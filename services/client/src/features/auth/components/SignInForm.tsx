@@ -47,7 +47,10 @@ function SignInForm({ locale, dictionary }: SignInFormProps) {
   z.setErrorMap(getZodErrorMap(locale));
 
   const schema = z.object({
-    email: z.string().transform(value => value.replace(/\s+/g, '')).pipe(z.string().min(1).email()),
+    email: z
+      .string()
+      .transform((value) => value.replace(/\s+/g, ''))
+      .pipe(z.string().min(1).email()),
     password: z.string().min(8),
     recaptchaToken: z.string().optional(),
   });
@@ -83,7 +86,7 @@ function SignInForm({ locale, dictionary }: SignInFormProps) {
       if (redirect) {
         router.push(redirect);
       } else {
-        router.push('/');
+        router.push('/home');
       }
 
       toast({

@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { getDictionary } from '@/translation/getDictionary';
 import { DesignSystemProvider } from '@/providers/design-system';
 import { getLocaleFromCookies } from '@/translation/getLocaleFromCookies';
+import { appContextForReact } from 'src/shared/controller/appContext';
 
 export async function generateMetadata() {
   const locale = getLocaleFromCookies(cookies());
@@ -23,11 +24,13 @@ export async function generateMetadata() {
   };
 }
 
-export default function PublicLayout({
+export default async function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const context = await appContextForReact(cookies());
+
   return (
     <ThemeProvider
       enableSystem
@@ -36,7 +39,7 @@ export default function PublicLayout({
       disableTransitionOnChange
     >
       <DesignSystemProvider>
-        <Navbar />
+        <Navbar currentUser={context.currentUser} />
         <main>{children}</main>
         <Footer />
       </DesignSystemProvider>

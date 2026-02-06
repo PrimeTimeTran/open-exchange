@@ -22,7 +22,7 @@ export default async function SignInPage() {
   const dictionary = context.dictionary;
 
   if (context.currentUser) {
-    return redirect(`/`);
+    return redirect(`/home`);
   }
 
   return (

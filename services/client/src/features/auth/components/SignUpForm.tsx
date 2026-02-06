@@ -66,7 +66,7 @@ function SignUpForm({ locale, dictionary }: SignUpFormProps) {
       );
     },
     onSuccess: () => {
-      router.push(`/`);
+      router.push(`/home`);
 
       toast({
         title: dictionary.auth.signUp.success,

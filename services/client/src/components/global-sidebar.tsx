@@ -1,9 +1,10 @@
-'use client'
+'use client';
 
-import Link from 'next/link'
-import { cn } from '@/lib/utils'
-import { createPortal } from 'react-dom'
-import { useState, useEffect } from 'react'
+import Link from 'next/link';
+import { cn } from '@/lib/utils';
+import { createPortal } from 'react-dom';
+import { useState, useEffect } from 'react';
+import { authSignOutApiCall } from 'src/features/auth/authApiCalls';
 import {
   X,
   Home,
@@ -14,40 +15,57 @@ import {
   Settings,
   HelpCircle,
   MessageSquarePlus,
-} from 'lucide-react'
+  LogOut,
+  LogIn,
+} from 'lucide-react';
 
-import { FeedbackModal } from './feedback-modal'
+import { FeedbackModal } from './feedback-modal';
 
 interface GlobalSidebarProps {
-  isOpen: boolean
-  onClose: () => void
+  isOpen: boolean;
+  onClose: () => void;
+  currentUser?: any;
 }
 
-export function GlobalSidebar({ isOpen, onClose }: GlobalSidebarProps) {
-  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
+export function GlobalSidebar({
+  isOpen,
+  onClose,
+  currentUser,
+}: GlobalSidebarProps) {
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   // Prevent scrolling when sidebar is open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden'
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = 'unset'
+      document.body.style.overflow = 'unset';
     }
     return () => {
-      document.body.style.overflow = 'unset'
-    }
-  }, [isOpen])
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   // Close on escape key
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', handleEsc)
-    return () => window.removeEventListener('keydown', handleEsc)
-  }, [onClose])
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
 
-  if (typeof window === 'undefined') return null
+  if (typeof window === 'undefined') return null;
+
+  const handleSignOut = async () => {
+    try {
+      await authSignOutApiCall();
+      onClose();
+      window.location.href = '/';
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const content = (
     <>
@@ -67,91 +85,108 @@ export function GlobalSidebar({ isOpen, onClose }: GlobalSidebarProps) {
           isOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
-        <div className='p-6 flex items-center justify-between border-b border-outline-variant'>
-          <span className='font-semibold text-lg text-on-surface'>Menu</span>
+        <div className="p-6 flex items-center justify-between border-b border-outline-variant">
+          <span className="font-semibold text-lg text-on-surface">Menu</span>
           <button
             onClick={onClose}
-            className='p-2 rounded-full hover:bg-surface-variant text-on-surface-variant transition-colors'
+            className="p-2 rounded-full hover:bg-surface-variant text-on-surface-variant transition-colors"
           >
-            <X className='w-5 h-5' />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className='flex-1 overflow-y-auto py-6 px-4'>
-          <nav className='flex flex-col min-h-full'>
-            <div className='space-y-2'>
+        <div className="flex-1 overflow-y-auto py-6 px-4">
+          <nav className="flex flex-col min-h-full">
+            <div className="space-y-2">
               <SidebarLink
-                href='/'
+                href="/"
                 icon={Home}
-                label='Home'
+                label="Home"
                 onClick={onClose}
               />
               <SidebarLink
-                href='/home'
+                href="/home"
                 icon={Rocket}
-                label='Dashboard'
+                label="Dashboard"
                 onClick={onClose}
               />
               <SidebarLink
-                href='/design-kit'
+                href="/design-kit"
                 icon={Layout}
-                label='Design Kit'
+                label="Design Kit"
                 onClick={onClose}
               />
 
-              <div className='pt-6 pb-2 px-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider'>
+              <div className="pt-6 pb-2 px-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
                 Account
               </div>
               <SidebarLink
-                href='/profile'
+                href="/profile"
                 icon={User}
-                label='Profile'
+                label="Profile"
                 onClick={onClose}
               />
               <SidebarLink
-                href='#'
+                href="#"
                 icon={Settings}
-                label='Settings'
+                label="Settings"
                 onClick={onClose}
               />
+              {currentUser ? (
+                <SidebarLink
+                  href="#"
+                  icon={LogOut}
+                  label="Sign out"
+                  onClick={handleSignOut}
+                  className="hover:text-red-500 hover:bg-red-500/10"
+                  iconClassName="text-red-500"
+                />
+              ) : (
+                <SidebarLink
+                  href="/auth/sign-in"
+                  icon={LogIn}
+                  label="Sign in"
+                  onClick={onClose}
+                />
+              )}
             </div>
 
-            <div className='mt-auto space-y-2'>
-              <div className='pt-6 pb-2 px-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider'>
+            <div className="mt-auto space-y-2">
+              <div className="pt-6 pb-2 px-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
                 Support
               </div>
               <SidebarLink
-                href='#'
+                href="#"
                 icon={MessageSquarePlus}
-                label='Feedback & Bugs'
+                label="Feedback & Bugs"
                 onClick={() => {
-                  onClose()
-                  setIsFeedbackOpen(true)
+                  onClose();
+                  setIsFeedbackOpen(true);
                 }}
               />
               <SidebarLink
-                href='/docs'
+                href="/docs"
                 icon={FileText}
-                label='Documentation'
+                label="Documentation"
                 onClick={onClose}
               />
               <SidebarLink
-                href='/help'
+                href="/help"
                 icon={HelpCircle}
-                label='Help Center'
+                label="Help Center"
                 onClick={onClose}
               />
             </div>
           </nav>
         </div>
 
-        <div className='p-6 border-t border-outline-variant'>
-          <div className='bg-surface-variant/30 rounded-lg p-4'>
-            <h4 className='font-medium text-sm mb-1'>Pro Plan</h4>
-            <p className='text-xs text-on-surface-variant mb-3'>
+        <div className="p-6 border-t border-outline-variant">
+          <div className="bg-surface-variant/30 rounded-lg p-4">
+            <h4 className="font-medium text-sm mb-1">Pro Plan</h4>
+            <p className="text-xs text-on-surface-variant mb-3">
               Upgrade for more features
             </p>
-            <button className='w-full py-2 bg-primary text-on-primary rounded text-xs font-medium hover:bg-primary/90 transition-colors'>
+            <button className="w-full py-2 bg-primary text-on-primary rounded text-xs font-medium hover:bg-primary/90 transition-colors">
               Upgrade
             </button>
           </div>
@@ -162,9 +197,9 @@ export function GlobalSidebar({ isOpen, onClose }: GlobalSidebarProps) {
         onClose={() => setIsFeedbackOpen(false)}
       />
     </>
-  )
+  );
 
-  return createPortal(content, document.body)
+  return createPortal(content, document.body);
 }
 
 function SidebarLink({
@@ -172,20 +207,27 @@ function SidebarLink({
   label,
   onClick,
   icon: Icon,
+  className,
+  iconClassName,
 }: {
-  icon: any
-  href: string
-  label: string
-  onClick: () => void
+  icon: any;
+  href: string;
+  label: string;
+  onClick: () => void;
+  className?: string;
+  iconClassName?: string;
 }) {
   return (
     <Link
       href={href}
       onClick={onClick}
-      className='flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface hover:bg-surface-variant hover:text-primary transition-colors'
+      className={cn(
+        'flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface hover:bg-surface-variant hover:text-primary transition-colors',
+        className,
+      )}
     >
-      <Icon className='w-5 h-5' />
-      <span className='font-medium text-sm'>{label}</span>
+      <Icon className={cn('w-5 h-5', iconClassName)} />
+      <span className="font-medium text-sm">{label}</span>
     </Link>
-  )
+  );
 }

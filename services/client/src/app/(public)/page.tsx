@@ -508,7 +508,7 @@ api.start()`}
             generation of financial technology.
           </p>
           <div className="pt-8 pointer-events-auto">
-            <Link href="/auth/register">
+            <Link href="/auth/sign-up">
               <Button
                 size="lg"
                 className="bg-white text-slate-900 hover:bg-gray-100 border-none"
