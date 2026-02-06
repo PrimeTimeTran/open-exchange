@@ -64,7 +64,7 @@ export default function JobPage({ params }: { params: { slug: string } }) {
       <div className="border-b border-border/40 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto max-w-5xl px-6 h-16 flex items-center justify-between">
           <Link
-            href="/careers"
+            href="/careers/search"
             className="flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors group"
           >
             <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
