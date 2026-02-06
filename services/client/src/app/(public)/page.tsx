@@ -48,12 +48,12 @@ export default function LandingPage() {
             against black boxes.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
-            <Link href="/auth/register">
+            <Link href="/auth/sign-up">
               <Button size="lg" variant="primary" className="min-w-[160px]">
                 Start Trading
               </Button>
             </Link>
-            <Link href="/markets">
+            <Link href="/home">
               <Button size="lg" variant="outline" className="min-w-[160px]">
                 View Markets
               </Button>
