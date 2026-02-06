@@ -13,6 +13,7 @@ const triggers = [
   'src/features/order/orderTriggers.sql',
   'src/features/asset/assetTriggers.sql',
   'src/features/instrument/instrumentTriggers.sql',
+  'src/features/marketMaker/marketMakerTriggers.sql',
   'src/features/ledgerEvent/ledgerEventTriggers.sql',
   'src/features/ledgerEntry/ledgerEntryTriggers.sql',
   'src/features/trade/tradeTriggers.sql',

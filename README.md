@@ -7,9 +7,10 @@ dropdb -h localhost -p 5432 -U postgres scaffoldhub-localhost-app
 ```
 
 ```sh
-npx run setup
+npm run setup
+npm run prisma:seed:dev
 ```
 
 ```sh
-$ docker-compose up --build
+docker-compose up --build
 ```

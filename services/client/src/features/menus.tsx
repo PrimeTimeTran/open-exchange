@@ -18,7 +18,7 @@ export function menus(context: AppContext) {
   menus.push({
     id: 'dashboard',
     label: context.dictionary.shared.dashboard,
-    href: `/dashboard`,
+    href: `/`,
     Icon: FaChartPie,
     isExact: true,
   });
@@ -209,6 +209,17 @@ export function menus(context: AppContext) {
         : undefined,
     });
   }
+  if (hasPermission(permissions.marketMakerRead, context)) {
+    menus.push({
+      id: 'marketMaker',
+      label: context.dictionary.marketMaker.list.menu,
+      href: `/market-maker`,
+      Icon: LuLayoutGrid,
+      createHref: hasPermission(permissions.marketMakerCreate, context)
+        ? `/market-maker/new`
+        : undefined,
+    });
+  }
   if (hasPermission(permissions.ledgerEventRead, context)) {
     menus.push({
       id: 'ledgerEvent',
@@ -231,17 +242,6 @@ export function menus(context: AppContext) {
         : undefined,
     });
   }
-  if (hasPermission(permissions.postRead, context)) {
-    menus.push({
-      id: 'post',
-      label: context.dictionary.post.list.menu,
-      href: `/post`,
-      Icon: LuLayoutGrid,
-      createHref: hasPermission(permissions.postCreate, context)
-        ? `/post/new`
-        : undefined,
-    });
-  }
   if (hasPermission(permissions.articleRead, context)) {
     menus.push({
       id: 'article',
@@ -250,6 +250,17 @@ export function menus(context: AppContext) {
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.articleCreate, context)
         ? `/article/new`
+        : undefined,
+    });
+  }
+  if (hasPermission(permissions.postRead, context)) {
+    menus.push({
+      id: 'post',
+      label: context.dictionary.post.list.menu,
+      href: `/post`,
+      Icon: LuLayoutGrid,
+      createHref: hasPermission(permissions.postCreate, context)
+        ? `/post/new`
         : undefined,
     });
   }

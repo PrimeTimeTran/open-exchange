@@ -634,116 +634,6 @@ const dictionary = {
     },
   },
 
-  wallet: {
-    label: 'Wallet',
-
-    dashboardCard: {
-      title: 'Wallets',
-    },
-
-    list: {
-      menu: 'Wallets',
-      title: 'Wallets',
-      noResults: 'No se encontraron wallets.',
-    },
-
-    export: {
-      success: 'Wallets exportados con éxito',
-    },
-
-    new: {
-      menu: 'Nuevo Wallet',
-      title: 'Nuevo Wallet',
-      success: 'Wallet creado con éxito',
-    },
-
-    view: {
-      title: 'Ver Wallet',
-    },
-
-    edit: {
-      menu: 'Editar Wallet',
-      title: 'Editar Wallet',
-      success: 'Wallet actualizado con éxito',
-    },
-
-    restore: {
-      success: 'Wallet restaurado con éxito',
-      noSelection: 'Debe seleccionar al menos un wallet para restaurar.',
-      confirmTitle: '¿Restaurar Wallet?',
-    },
-
-    restoreMany: {
-      success: 'Wallet(es) restaurado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un wallet para restaurar.',
-      confirmTitle: '¿Restaurar Wallet(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea restaurar los {0} wallet(es) seleccionados?',
-    },
-
-    archiveMany: {
-      success: 'Wallet(es) archivado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un wallet para archivar.',
-      confirmTitle: '¿Archivar Wallet(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea archivar los {0} wallet(es) seleccionados?',
-    },
-
-    archive: {
-      success: 'Wallet archivado con éxito',
-      noSelection: 'Debe seleccionar al menos un wallet para archivar.',
-      confirmTitle: '¿Archivar Wallet?',
-    },
-
-    destroyMany: {
-      success: 'Wallet(s) eliminado(s) con éxito',
-      noSelection: 'Debes seleccionar al menos un Wallet para eliminar.',
-      confirmTitle: '¿Eliminar Wallet(s)?',
-      confirmDescription:
-        '¿Estás seguro de que quieres eliminar los {0} Wallet(s) seleccionados?',
-    },
-
-    destroy: {
-      success: 'Wallet eliminado con éxito',
-      noSelection: 'Debes seleccionar al menos un Wallet para eliminar.',
-      confirmTitle: '¿Eliminar Wallet?',
-    },
-
-    fields: {
-      available: 'Available',
-      locked: 'Locked',
-      total: 'Total',
-      version: 'Version',
-      meta: 'Meta',
-      user: 'User',
-      asset: 'Asset',
-      account: 'Account',
-      snapshots: 'Snapshots',
-      createdByMembership: 'Creado por',
-      updatedByMembership: 'Actualizado por',
-      archivedByMembership: 'Archivado por',
-      createdAt: 'Creado el',
-      updatedAt: 'Actualizado el',
-      archivedAt: 'Archivado el',
-    },
-
-    hints: {
-      available: '',
-      locked: '',
-      total: '',
-      version: '',
-      meta: '',
-      user: '',
-      asset: '',
-      account: '',
-      snapshots: '',
-    },
-
-    enumerators: {
-
-    },
-  },
-
   deposit: {
     label: 'Deposit',
 
@@ -1005,6 +895,116 @@ const dictionary = {
     },
   },
 
+  wallet: {
+    label: 'Wallet',
+
+    dashboardCard: {
+      title: 'Wallets',
+    },
+
+    list: {
+      menu: 'Wallets',
+      title: 'Wallets',
+      noResults: 'No se encontraron wallets.',
+    },
+
+    export: {
+      success: 'Wallets exportados con éxito',
+    },
+
+    new: {
+      menu: 'Nuevo Wallet',
+      title: 'Nuevo Wallet',
+      success: 'Wallet creado con éxito',
+    },
+
+    view: {
+      title: 'Ver Wallet',
+    },
+
+    edit: {
+      menu: 'Editar Wallet',
+      title: 'Editar Wallet',
+      success: 'Wallet actualizado con éxito',
+    },
+
+    restore: {
+      success: 'Wallet restaurado con éxito',
+      noSelection: 'Debe seleccionar al menos un wallet para restaurar.',
+      confirmTitle: '¿Restaurar Wallet?',
+    },
+
+    restoreMany: {
+      success: 'Wallet(es) restaurado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un wallet para restaurar.',
+      confirmTitle: '¿Restaurar Wallet(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea restaurar los {0} wallet(es) seleccionados?',
+    },
+
+    archiveMany: {
+      success: 'Wallet(es) archivado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un wallet para archivar.',
+      confirmTitle: '¿Archivar Wallet(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea archivar los {0} wallet(es) seleccionados?',
+    },
+
+    archive: {
+      success: 'Wallet archivado con éxito',
+      noSelection: 'Debe seleccionar al menos un wallet para archivar.',
+      confirmTitle: '¿Archivar Wallet?',
+    },
+
+    destroyMany: {
+      success: 'Wallet(s) eliminado(s) con éxito',
+      noSelection: 'Debes seleccionar al menos un Wallet para eliminar.',
+      confirmTitle: '¿Eliminar Wallet(s)?',
+      confirmDescription:
+        '¿Estás seguro de que quieres eliminar los {0} Wallet(s) seleccionados?',
+    },
+
+    destroy: {
+      success: 'Wallet eliminado con éxito',
+      noSelection: 'Debes seleccionar al menos un Wallet para eliminar.',
+      confirmTitle: '¿Eliminar Wallet?',
+    },
+
+    fields: {
+      available: 'Available',
+      locked: 'Locked',
+      total: 'Total',
+      version: 'Version',
+      meta: 'Meta',
+      user: 'User',
+      asset: 'Asset',
+      account: 'Account',
+      snapshots: 'Snapshots',
+      createdByMembership: 'Creado por',
+      updatedByMembership: 'Actualizado por',
+      archivedByMembership: 'Archivado por',
+      createdAt: 'Creado el',
+      updatedAt: 'Actualizado el',
+      archivedAt: 'Archivado el',
+    },
+
+    hints: {
+      available: '',
+      locked: '',
+      total: '',
+      version: '',
+      meta: '',
+      user: '',
+      asset: '',
+      account: '',
+      snapshots: '',
+    },
+
+    enumerators: {
+
+    },
+  },
+
   order: {
     label: 'Order',
 
@@ -1144,6 +1144,219 @@ const dictionary = {
         fok: 'Fok',
         day: 'Day',
       },
+    },
+  },
+
+  fill: {
+    label: 'Fill',
+
+    dashboardCard: {
+      title: 'Fills',
+    },
+
+    list: {
+      menu: 'Fills',
+      title: 'Fills',
+      noResults: 'No se encontraron fills.',
+    },
+
+    export: {
+      success: 'Fills exportados con éxito',
+    },
+
+    new: {
+      menu: 'Nuevo Fill',
+      title: 'Nuevo Fill',
+      success: 'Fill creado con éxito',
+    },
+
+    view: {
+      title: 'Ver Fill',
+    },
+
+    edit: {
+      menu: 'Editar Fill',
+      title: 'Editar Fill',
+      success: 'Fill actualizado con éxito',
+    },
+
+    restore: {
+      success: 'Fill restaurado con éxito',
+      noSelection: 'Debe seleccionar al menos un fill para restaurar.',
+      confirmTitle: '¿Restaurar Fill?',
+    },
+
+    restoreMany: {
+      success: 'Fill(es) restaurado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un fill para restaurar.',
+      confirmTitle: '¿Restaurar Fill(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea restaurar los {0} fill(es) seleccionados?',
+    },
+
+    archiveMany: {
+      success: 'Fill(es) archivado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un fill para archivar.',
+      confirmTitle: '¿Archivar Fill(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea archivar los {0} fill(es) seleccionados?',
+    },
+
+    archive: {
+      success: 'Fill archivado con éxito',
+      noSelection: 'Debe seleccionar al menos un fill para archivar.',
+      confirmTitle: '¿Archivar Fill?',
+    },
+
+    destroyMany: {
+      success: 'Fill(s) eliminado(s) con éxito',
+      noSelection: 'Debes seleccionar al menos un Fill para eliminar.',
+      confirmTitle: '¿Eliminar Fill(s)?',
+      confirmDescription:
+        '¿Estás seguro de que quieres eliminar los {0} Fill(s) seleccionados?',
+    },
+
+    destroy: {
+      success: 'Fill eliminado con éxito',
+      noSelection: 'Debes seleccionar al menos un Fill para eliminar.',
+      confirmTitle: '¿Eliminar Fill?',
+    },
+
+    fields: {
+      side: 'Side',
+      price: 'Price',
+      quantity: 'Quantity',
+      fee: 'Fee',
+      meta: 'Meta',
+      trade: 'Trade',
+      createdByMembership: 'Creado por',
+      updatedByMembership: 'Actualizado por',
+      archivedByMembership: 'Archivado por',
+      createdAt: 'Creado el',
+      updatedAt: 'Actualizado el',
+      archivedAt: 'Archivado el',
+    },
+
+    hints: {
+      side: '',
+      price: '',
+      quantity: '',
+      fee: '',
+      meta: '',
+      trade: '',
+    },
+
+    enumerators: {
+      side: {
+        buy: 'Buy',
+        sell: 'Sell',
+      },
+    },
+  },
+
+  trade: {
+    label: 'Trade',
+
+    dashboardCard: {
+      title: 'Trades',
+    },
+
+    list: {
+      menu: 'Trades',
+      title: 'Trades',
+      noResults: 'No se encontraron trades.',
+    },
+
+    export: {
+      success: 'Trades exportados con éxito',
+    },
+
+    new: {
+      menu: 'Nuevo Trade',
+      title: 'Nuevo Trade',
+      success: 'Trade creado con éxito',
+    },
+
+    view: {
+      title: 'Ver Trade',
+    },
+
+    edit: {
+      menu: 'Editar Trade',
+      title: 'Editar Trade',
+      success: 'Trade actualizado con éxito',
+    },
+
+    restore: {
+      success: 'Trade restaurado con éxito',
+      noSelection: 'Debe seleccionar al menos un trade para restaurar.',
+      confirmTitle: '¿Restaurar Trade?',
+    },
+
+    restoreMany: {
+      success: 'Trade(es) restaurado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un trade para restaurar.',
+      confirmTitle: '¿Restaurar Trade(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea restaurar los {0} trade(es) seleccionados?',
+    },
+
+    archiveMany: {
+      success: 'Trade(es) archivado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un trade para archivar.',
+      confirmTitle: '¿Archivar Trade(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea archivar los {0} trade(es) seleccionados?',
+    },
+
+    archive: {
+      success: 'Trade archivado con éxito',
+      noSelection: 'Debe seleccionar al menos un trade para archivar.',
+      confirmTitle: '¿Archivar Trade?',
+    },
+
+    destroyMany: {
+      success: 'Trade(s) eliminado(s) con éxito',
+      noSelection: 'Debes seleccionar al menos un Trade para eliminar.',
+      confirmTitle: '¿Eliminar Trade(s)?',
+      confirmDescription:
+        '¿Estás seguro de que quieres eliminar los {0} Trade(s) seleccionados?',
+    },
+
+    destroy: {
+      success: 'Trade eliminado con éxito',
+      noSelection: 'Debes seleccionar al menos un Trade para eliminar.',
+      confirmTitle: '¿Eliminar Trade?',
+    },
+
+    fields: {
+      price: 'Price',
+      quantity: 'Quantity',
+      meta: 'Meta',
+      buyOrderId: 'BuyOrderId',
+      sellOrderId: 'SellOrderId',
+      instrument: 'Instrument',
+      fills: 'Fills',
+      createdByMembership: 'Creado por',
+      updatedByMembership: 'Actualizado por',
+      archivedByMembership: 'Archivado por',
+      createdAt: 'Creado el',
+      updatedAt: 'Actualizado el',
+      archivedAt: 'Archivado el',
+    },
+
+    hints: {
+      price: '',
+      quantity: '',
+      meta: '',
+      buyOrderId: '',
+      sellOrderId: '',
+      instrument: '',
+      fills: '',
+    },
+
+    enumerators: {
+
     },
   },
 
@@ -1385,1085 +1598,6 @@ const dictionary = {
         halted: 'Halted',
         delisted: 'Delisted',
       },
-    },
-  },
-
-  ledgerEvent: {
-    label: 'LedgerEvent',
-
-    dashboardCard: {
-      title: 'LedgerEvents',
-    },
-
-    list: {
-      menu: 'LedgerEvents',
-      title: 'LedgerEvents',
-      noResults: 'No se encontraron ledgerevents.',
-    },
-
-    export: {
-      success: 'LedgerEvents exportados con éxito',
-    },
-
-    new: {
-      menu: 'Nuevo LedgerEvent',
-      title: 'Nuevo LedgerEvent',
-      success: 'LedgerEvent creado con éxito',
-    },
-
-    view: {
-      title: 'Ver LedgerEvent',
-    },
-
-    edit: {
-      menu: 'Editar LedgerEvent',
-      title: 'Editar LedgerEvent',
-      success: 'LedgerEvent actualizado con éxito',
-    },
-
-    restore: {
-      success: 'LedgerEvent restaurado con éxito',
-      noSelection: 'Debe seleccionar al menos un ledgerevent para restaurar.',
-      confirmTitle: '¿Restaurar LedgerEvent?',
-    },
-
-    restoreMany: {
-      success: 'LedgerEvent(es) restaurado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un ledgerevent para restaurar.',
-      confirmTitle: '¿Restaurar LedgerEvent(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea restaurar los {0} ledgerevent(es) seleccionados?',
-    },
-
-    archiveMany: {
-      success: 'LedgerEvent(es) archivado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un ledgerevent para archivar.',
-      confirmTitle: '¿Archivar LedgerEvent(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea archivar los {0} ledgerevent(es) seleccionados?',
-    },
-
-    archive: {
-      success: 'LedgerEvent archivado con éxito',
-      noSelection: 'Debe seleccionar al menos un ledgerevent para archivar.',
-      confirmTitle: '¿Archivar LedgerEvent?',
-    },
-
-    destroyMany: {
-      success: 'LedgerEvent(s) eliminado(s) con éxito',
-      noSelection: 'Debes seleccionar al menos un LedgerEvent para eliminar.',
-      confirmTitle: '¿Eliminar LedgerEvent(s)?',
-      confirmDescription:
-        '¿Estás seguro de que quieres eliminar los {0} LedgerEvent(s) seleccionados?',
-    },
-
-    destroy: {
-      success: 'LedgerEvent eliminado con éxito',
-      noSelection: 'Debes seleccionar al menos un LedgerEvent para eliminar.',
-      confirmTitle: '¿Eliminar LedgerEvent?',
-    },
-
-    fields: {
-      type: 'Type',
-      referenceId: 'ReferenceId',
-      referenceType: 'ReferenceType',
-      status: 'Status',
-      description: 'Description',
-      meta: 'Meta',
-      entries: 'Entries',
-      createdByMembership: 'Creado por',
-      updatedByMembership: 'Actualizado por',
-      archivedByMembership: 'Archivado por',
-      createdAt: 'Creado el',
-      updatedAt: 'Actualizado el',
-      archivedAt: 'Archivado el',
-    },
-
-    hints: {
-      type: '',
-      referenceId: '',
-      referenceType: '',
-      status: '',
-      description: '',
-      meta: '',
-      entries: '',
-    },
-
-    enumerators: {
-      type: {
-        trade: 'Trade',
-        deposit: 'Deposit',
-        withdrawal: 'Withdrawal',
-        fee: 'Fee',
-        settlement: 'Settlement',
-        adjustment: 'Adjustment',
-        transfer: 'Transfer',
-        reversal: 'Reversal',
-      },
-
-      referenceType: {
-        deposit: 'Deposit',
-        withdrawal: 'Withdrawal',
-        order: 'Order',
-        trade: 'Trade',
-        manual_adjustment: 'Manual_adjustment',
-      },
-
-      status: {
-        pending: 'Pending',
-        posted: 'Posted',
-        reversed: 'Reversed',
-      },
-    },
-  },
-
-  ledgerEntry: {
-    label: 'LedgerEntry',
-
-    dashboardCard: {
-      title: 'LedgerEntries',
-    },
-
-    list: {
-      menu: 'LedgerEntries',
-      title: 'LedgerEntries',
-      noResults: 'No se encontraron ledgerentries.',
-    },
-
-    export: {
-      success: 'LedgerEntries exportados con éxito',
-    },
-
-    new: {
-      menu: 'Nuevo LedgerEntry',
-      title: 'Nuevo LedgerEntry',
-      success: 'LedgerEntry creado con éxito',
-    },
-
-    view: {
-      title: 'Ver LedgerEntry',
-    },
-
-    edit: {
-      menu: 'Editar LedgerEntry',
-      title: 'Editar LedgerEntry',
-      success: 'LedgerEntry actualizado con éxito',
-    },
-
-    restore: {
-      success: 'LedgerEntry restaurado con éxito',
-      noSelection: 'Debe seleccionar al menos un ledgerentry para restaurar.',
-      confirmTitle: '¿Restaurar LedgerEntry?',
-    },
-
-    restoreMany: {
-      success: 'LedgerEntry(es) restaurado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un ledgerentry para restaurar.',
-      confirmTitle: '¿Restaurar LedgerEntry(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea restaurar los {0} ledgerentry(es) seleccionados?',
-    },
-
-    archiveMany: {
-      success: 'LedgerEntry(es) archivado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un ledgerentry para archivar.',
-      confirmTitle: '¿Archivar LedgerEntry(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea archivar los {0} ledgerentry(es) seleccionados?',
-    },
-
-    archive: {
-      success: 'LedgerEntry archivado con éxito',
-      noSelection: 'Debe seleccionar al menos un ledgerentry para archivar.',
-      confirmTitle: '¿Archivar LedgerEntry?',
-    },
-
-    destroyMany: {
-      success: 'LedgerEntry(s) eliminado(s) con éxito',
-      noSelection: 'Debes seleccionar al menos un LedgerEntry para eliminar.',
-      confirmTitle: '¿Eliminar LedgerEntry(s)?',
-      confirmDescription:
-        '¿Estás seguro de que quieres eliminar los {0} LedgerEntry(s) seleccionados?',
-    },
-
-    destroy: {
-      success: 'LedgerEntry eliminado con éxito',
-      noSelection: 'Debes seleccionar al menos un LedgerEntry para eliminar.',
-      confirmTitle: '¿Eliminar LedgerEntry?',
-    },
-
-    fields: {
-      amount: 'Amount',
-      accountId: 'AccountId',
-      meta: 'Meta',
-      event: 'Event',
-      createdByMembership: 'Creado por',
-      updatedByMembership: 'Actualizado por',
-      archivedByMembership: 'Archivado por',
-      createdAt: 'Creado el',
-      updatedAt: 'Actualizado el',
-      archivedAt: 'Archivado el',
-    },
-
-    hints: {
-      amount: '',
-      accountId: '',
-      meta: '',
-      event: '',
-    },
-
-    enumerators: {
-
-    },
-  },
-
-  trade: {
-    label: 'Trade',
-
-    dashboardCard: {
-      title: 'Trades',
-    },
-
-    list: {
-      menu: 'Trades',
-      title: 'Trades',
-      noResults: 'No se encontraron trades.',
-    },
-
-    export: {
-      success: 'Trades exportados con éxito',
-    },
-
-    new: {
-      menu: 'Nuevo Trade',
-      title: 'Nuevo Trade',
-      success: 'Trade creado con éxito',
-    },
-
-    view: {
-      title: 'Ver Trade',
-    },
-
-    edit: {
-      menu: 'Editar Trade',
-      title: 'Editar Trade',
-      success: 'Trade actualizado con éxito',
-    },
-
-    restore: {
-      success: 'Trade restaurado con éxito',
-      noSelection: 'Debe seleccionar al menos un trade para restaurar.',
-      confirmTitle: '¿Restaurar Trade?',
-    },
-
-    restoreMany: {
-      success: 'Trade(es) restaurado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un trade para restaurar.',
-      confirmTitle: '¿Restaurar Trade(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea restaurar los {0} trade(es) seleccionados?',
-    },
-
-    archiveMany: {
-      success: 'Trade(es) archivado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un trade para archivar.',
-      confirmTitle: '¿Archivar Trade(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea archivar los {0} trade(es) seleccionados?',
-    },
-
-    archive: {
-      success: 'Trade archivado con éxito',
-      noSelection: 'Debe seleccionar al menos un trade para archivar.',
-      confirmTitle: '¿Archivar Trade?',
-    },
-
-    destroyMany: {
-      success: 'Trade(s) eliminado(s) con éxito',
-      noSelection: 'Debes seleccionar al menos un Trade para eliminar.',
-      confirmTitle: '¿Eliminar Trade(s)?',
-      confirmDescription:
-        '¿Estás seguro de que quieres eliminar los {0} Trade(s) seleccionados?',
-    },
-
-    destroy: {
-      success: 'Trade eliminado con éxito',
-      noSelection: 'Debes seleccionar al menos un Trade para eliminar.',
-      confirmTitle: '¿Eliminar Trade?',
-    },
-
-    fields: {
-      price: 'Price',
-      quantity: 'Quantity',
-      meta: 'Meta',
-      buyOrderId: 'BuyOrderId',
-      sellOrderId: 'SellOrderId',
-      instrument: 'Instrument',
-      fills: 'Fills',
-      createdByMembership: 'Creado por',
-      updatedByMembership: 'Actualizado por',
-      archivedByMembership: 'Archivado por',
-      createdAt: 'Creado el',
-      updatedAt: 'Actualizado el',
-      archivedAt: 'Archivado el',
-    },
-
-    hints: {
-      price: '',
-      quantity: '',
-      meta: '',
-      buyOrderId: '',
-      sellOrderId: '',
-      instrument: '',
-      fills: '',
-    },
-
-    enumerators: {
-
-    },
-  },
-
-  fill: {
-    label: 'Fill',
-
-    dashboardCard: {
-      title: 'Fills',
-    },
-
-    list: {
-      menu: 'Fills',
-      title: 'Fills',
-      noResults: 'No se encontraron fills.',
-    },
-
-    export: {
-      success: 'Fills exportados con éxito',
-    },
-
-    new: {
-      menu: 'Nuevo Fill',
-      title: 'Nuevo Fill',
-      success: 'Fill creado con éxito',
-    },
-
-    view: {
-      title: 'Ver Fill',
-    },
-
-    edit: {
-      menu: 'Editar Fill',
-      title: 'Editar Fill',
-      success: 'Fill actualizado con éxito',
-    },
-
-    restore: {
-      success: 'Fill restaurado con éxito',
-      noSelection: 'Debe seleccionar al menos un fill para restaurar.',
-      confirmTitle: '¿Restaurar Fill?',
-    },
-
-    restoreMany: {
-      success: 'Fill(es) restaurado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un fill para restaurar.',
-      confirmTitle: '¿Restaurar Fill(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea restaurar los {0} fill(es) seleccionados?',
-    },
-
-    archiveMany: {
-      success: 'Fill(es) archivado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un fill para archivar.',
-      confirmTitle: '¿Archivar Fill(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea archivar los {0} fill(es) seleccionados?',
-    },
-
-    archive: {
-      success: 'Fill archivado con éxito',
-      noSelection: 'Debe seleccionar al menos un fill para archivar.',
-      confirmTitle: '¿Archivar Fill?',
-    },
-
-    destroyMany: {
-      success: 'Fill(s) eliminado(s) con éxito',
-      noSelection: 'Debes seleccionar al menos un Fill para eliminar.',
-      confirmTitle: '¿Eliminar Fill(s)?',
-      confirmDescription:
-        '¿Estás seguro de que quieres eliminar los {0} Fill(s) seleccionados?',
-    },
-
-    destroy: {
-      success: 'Fill eliminado con éxito',
-      noSelection: 'Debes seleccionar al menos un Fill para eliminar.',
-      confirmTitle: '¿Eliminar Fill?',
-    },
-
-    fields: {
-      side: 'Side',
-      price: 'Price',
-      quantity: 'Quantity',
-      fee: 'Fee',
-      meta: 'Meta',
-      trade: 'Trade',
-      createdByMembership: 'Creado por',
-      updatedByMembership: 'Actualizado por',
-      archivedByMembership: 'Archivado por',
-      createdAt: 'Creado el',
-      updatedAt: 'Actualizado el',
-      archivedAt: 'Archivado el',
-    },
-
-    hints: {
-      side: '',
-      price: '',
-      quantity: '',
-      fee: '',
-      meta: '',
-      trade: '',
-    },
-
-    enumerators: {
-      side: {
-        buy: 'Buy',
-        sell: 'Sell',
-      },
-    },
-  },
-
-  post: {
-    label: 'Post',
-
-    dashboardCard: {
-      title: 'Posts',
-    },
-
-    list: {
-      menu: 'Posts',
-      title: 'Posts',
-      noResults: 'No se encontraron posts.',
-    },
-
-    export: {
-      success: 'Posts exportados con éxito',
-    },
-
-    new: {
-      menu: 'Nuevo Post',
-      title: 'Nuevo Post',
-      success: 'Post creado con éxito',
-    },
-
-    view: {
-      title: 'Ver Post',
-    },
-
-    edit: {
-      menu: 'Editar Post',
-      title: 'Editar Post',
-      success: 'Post actualizado con éxito',
-    },
-
-    restore: {
-      success: 'Post restaurado con éxito',
-      noSelection: 'Debe seleccionar al menos un post para restaurar.',
-      confirmTitle: '¿Restaurar Post?',
-    },
-
-    restoreMany: {
-      success: 'Post(es) restaurado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un post para restaurar.',
-      confirmTitle: '¿Restaurar Post(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea restaurar los {0} post(es) seleccionados?',
-    },
-
-    archiveMany: {
-      success: 'Post(es) archivado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un post para archivar.',
-      confirmTitle: '¿Archivar Post(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea archivar los {0} post(es) seleccionados?',
-    },
-
-    archive: {
-      success: 'Post archivado con éxito',
-      noSelection: 'Debe seleccionar al menos un post para archivar.',
-      confirmTitle: '¿Archivar Post?',
-    },
-
-    destroyMany: {
-      success: 'Post(s) eliminado(s) con éxito',
-      noSelection: 'Debes seleccionar al menos un Post para eliminar.',
-      confirmTitle: '¿Eliminar Post(s)?',
-      confirmDescription:
-        '¿Estás seguro de que quieres eliminar los {0} Post(s) seleccionados?',
-    },
-
-    destroy: {
-      success: 'Post eliminado con éxito',
-      noSelection: 'Debes seleccionar al menos un Post para eliminar.',
-      confirmTitle: '¿Eliminar Post?',
-    },
-
-    fields: {
-      title: 'Title',
-      body: 'Body',
-      files: 'Files',
-      images: 'Images',
-      type: 'Type',
-      meta: 'Meta',
-      user: 'User',
-      createdByMembership: 'Creado por',
-      updatedByMembership: 'Actualizado por',
-      archivedByMembership: 'Archivado por',
-      createdAt: 'Creado el',
-      updatedAt: 'Actualizado el',
-      archivedAt: 'Archivado el',
-    },
-
-    hints: {
-      title: '',
-      body: '',
-      files: '',
-      images: '',
-      type: '',
-      meta: '',
-      user: '',
-    },
-
-    enumerators: {
-
-    },
-  },
-
-  comment: {
-    label: 'Comment',
-
-    dashboardCard: {
-      title: 'Comments',
-    },
-
-    list: {
-      menu: 'Comments',
-      title: 'Comments',
-      noResults: 'No se encontraron comments.',
-    },
-
-    export: {
-      success: 'Comments exportados con éxito',
-    },
-
-    new: {
-      menu: 'Nuevo Comment',
-      title: 'Nuevo Comment',
-      success: 'Comment creado con éxito',
-    },
-
-    view: {
-      title: 'Ver Comment',
-    },
-
-    edit: {
-      menu: 'Editar Comment',
-      title: 'Editar Comment',
-      success: 'Comment actualizado con éxito',
-    },
-
-    restore: {
-      success: 'Comment restaurado con éxito',
-      noSelection: 'Debe seleccionar al menos un comment para restaurar.',
-      confirmTitle: '¿Restaurar Comment?',
-    },
-
-    restoreMany: {
-      success: 'Comment(es) restaurado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un comment para restaurar.',
-      confirmTitle: '¿Restaurar Comment(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea restaurar los {0} comment(es) seleccionados?',
-    },
-
-    archiveMany: {
-      success: 'Comment(es) archivado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un comment para archivar.',
-      confirmTitle: '¿Archivar Comment(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea archivar los {0} comment(es) seleccionados?',
-    },
-
-    archive: {
-      success: 'Comment archivado con éxito',
-      noSelection: 'Debe seleccionar al menos un comment para archivar.',
-      confirmTitle: '¿Archivar Comment?',
-    },
-
-    destroyMany: {
-      success: 'Comment(s) eliminado(s) con éxito',
-      noSelection: 'Debes seleccionar al menos un Comment para eliminar.',
-      confirmTitle: '¿Eliminar Comment(s)?',
-      confirmDescription:
-        '¿Estás seguro de que quieres eliminar los {0} Comment(s) seleccionados?',
-    },
-
-    destroy: {
-      success: 'Comment eliminado con éxito',
-      noSelection: 'Debes seleccionar al menos un Comment para eliminar.',
-      confirmTitle: '¿Eliminar Comment?',
-    },
-
-    fields: {
-      body: 'Body',
-      type: 'Type',
-      images: 'Images',
-      meta: 'Meta',
-      user: 'User',
-      createdByMembership: 'Creado por',
-      updatedByMembership: 'Actualizado por',
-      archivedByMembership: 'Archivado por',
-      createdAt: 'Creado el',
-      updatedAt: 'Actualizado el',
-      archivedAt: 'Archivado el',
-    },
-
-    hints: {
-      body: '',
-      type: '',
-      images: '',
-      meta: '',
-      user: '',
-    },
-
-    enumerators: {
-
-    },
-  },
-
-  article: {
-    label: 'Article',
-
-    dashboardCard: {
-      title: 'Articles',
-    },
-
-    list: {
-      menu: 'Articles',
-      title: 'Articles',
-      noResults: 'No se encontraron articles.',
-    },
-
-    export: {
-      success: 'Articles exportados con éxito',
-    },
-
-    new: {
-      menu: 'Nuevo Article',
-      title: 'Nuevo Article',
-      success: 'Article creado con éxito',
-    },
-
-    view: {
-      title: 'Ver Article',
-    },
-
-    edit: {
-      menu: 'Editar Article',
-      title: 'Editar Article',
-      success: 'Article actualizado con éxito',
-    },
-
-    restore: {
-      success: 'Article restaurado con éxito',
-      noSelection: 'Debe seleccionar al menos un article para restaurar.',
-      confirmTitle: '¿Restaurar Article?',
-    },
-
-    restoreMany: {
-      success: 'Article(es) restaurado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un article para restaurar.',
-      confirmTitle: '¿Restaurar Article(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea restaurar los {0} article(es) seleccionados?',
-    },
-
-    archiveMany: {
-      success: 'Article(es) archivado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un article para archivar.',
-      confirmTitle: '¿Archivar Article(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea archivar los {0} article(es) seleccionados?',
-    },
-
-    archive: {
-      success: 'Article archivado con éxito',
-      noSelection: 'Debe seleccionar al menos un article para archivar.',
-      confirmTitle: '¿Archivar Article?',
-    },
-
-    destroyMany: {
-      success: 'Article(s) eliminado(s) con éxito',
-      noSelection: 'Debes seleccionar al menos un Article para eliminar.',
-      confirmTitle: '¿Eliminar Article(s)?',
-      confirmDescription:
-        '¿Estás seguro de que quieres eliminar los {0} Article(s) seleccionados?',
-    },
-
-    destroy: {
-      success: 'Article eliminado con éxito',
-      noSelection: 'Debes seleccionar al menos un Article para eliminar.',
-      confirmTitle: '¿Eliminar Article?',
-    },
-
-    fields: {
-      title: 'Title',
-      body: 'Body',
-      type: 'Type',
-      images: 'Images',
-      files: 'Files',
-      meta: 'Meta',
-      user: 'User',
-      createdByMembership: 'Creado por',
-      updatedByMembership: 'Actualizado por',
-      archivedByMembership: 'Archivado por',
-      createdAt: 'Creado el',
-      updatedAt: 'Actualizado el',
-      archivedAt: 'Archivado el',
-    },
-
-    hints: {
-      title: '',
-      body: '',
-      type: '',
-      images: '',
-      files: '',
-      meta: '',
-      user: '',
-    },
-
-    enumerators: {
-
-    },
-  },
-
-  chat: {
-    label: 'Chat',
-
-    dashboardCard: {
-      title: 'Chats',
-    },
-
-    list: {
-      menu: 'Chats',
-      title: 'Chats',
-      noResults: 'No se encontraron chats.',
-    },
-
-    export: {
-      success: 'Chats exportados con éxito',
-    },
-
-    new: {
-      menu: 'Nuevo Chat',
-      title: 'Nuevo Chat',
-      success: 'Chat creado con éxito',
-    },
-
-    view: {
-      title: 'Ver Chat',
-    },
-
-    edit: {
-      menu: 'Editar Chat',
-      title: 'Editar Chat',
-      success: 'Chat actualizado con éxito',
-    },
-
-    restore: {
-      success: 'Chat restaurado con éxito',
-      noSelection: 'Debe seleccionar al menos un chat para restaurar.',
-      confirmTitle: '¿Restaurar Chat?',
-    },
-
-    restoreMany: {
-      success: 'Chat(es) restaurado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un chat para restaurar.',
-      confirmTitle: '¿Restaurar Chat(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea restaurar los {0} chat(es) seleccionados?',
-    },
-
-    archiveMany: {
-      success: 'Chat(es) archivado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un chat para archivar.',
-      confirmTitle: '¿Archivar Chat(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea archivar los {0} chat(es) seleccionados?',
-    },
-
-    archive: {
-      success: 'Chat archivado con éxito',
-      noSelection: 'Debe seleccionar al menos un chat para archivar.',
-      confirmTitle: '¿Archivar Chat?',
-    },
-
-    destroyMany: {
-      success: 'Chat(s) eliminado(s) con éxito',
-      noSelection: 'Debes seleccionar al menos un Chat para eliminar.',
-      confirmTitle: '¿Eliminar Chat(s)?',
-      confirmDescription:
-        '¿Estás seguro de que quieres eliminar los {0} Chat(s) seleccionados?',
-    },
-
-    destroy: {
-      success: 'Chat eliminado con éxito',
-      noSelection: 'Debes seleccionar al menos un Chat para eliminar.',
-      confirmTitle: '¿Eliminar Chat?',
-    },
-
-    fields: {
-      name: 'Name',
-      media: 'Media',
-      meta: 'Meta',
-      active: 'Active',
-      messages: 'Messages',
-      chaters: 'Chaters',
-      createdByMembership: 'Creado por',
-      updatedByMembership: 'Actualizado por',
-      archivedByMembership: 'Archivado por',
-      createdAt: 'Creado el',
-      updatedAt: 'Actualizado el',
-      archivedAt: 'Archivado el',
-    },
-
-    hints: {
-      name: '',
-      media: '',
-      meta: '',
-      active: '',
-      messages: '',
-      chaters: '',
-    },
-
-    enumerators: {
-
-    },
-  },
-
-  chater: {
-    label: 'Chater',
-
-    dashboardCard: {
-      title: 'Chaters',
-    },
-
-    list: {
-      menu: 'Chaters',
-      title: 'Chaters',
-      noResults: 'No se encontraron chaters.',
-    },
-
-    export: {
-      success: 'Chaters exportados con éxito',
-    },
-
-    new: {
-      menu: 'Nuevo Chater',
-      title: 'Nuevo Chater',
-      success: 'Chater creado con éxito',
-    },
-
-    view: {
-      title: 'Ver Chater',
-    },
-
-    edit: {
-      menu: 'Editar Chater',
-      title: 'Editar Chater',
-      success: 'Chater actualizado con éxito',
-    },
-
-    restore: {
-      success: 'Chater restaurado con éxito',
-      noSelection: 'Debe seleccionar al menos un chater para restaurar.',
-      confirmTitle: '¿Restaurar Chater?',
-    },
-
-    restoreMany: {
-      success: 'Chater(es) restaurado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un chater para restaurar.',
-      confirmTitle: '¿Restaurar Chater(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea restaurar los {0} chater(es) seleccionados?',
-    },
-
-    archiveMany: {
-      success: 'Chater(es) archivado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un chater para archivar.',
-      confirmTitle: '¿Archivar Chater(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea archivar los {0} chater(es) seleccionados?',
-    },
-
-    archive: {
-      success: 'Chater archivado con éxito',
-      noSelection: 'Debe seleccionar al menos un chater para archivar.',
-      confirmTitle: '¿Archivar Chater?',
-    },
-
-    destroyMany: {
-      success: 'Chater(s) eliminado(s) con éxito',
-      noSelection: 'Debes seleccionar al menos un Chater para eliminar.',
-      confirmTitle: '¿Eliminar Chater(s)?',
-      confirmDescription:
-        '¿Estás seguro de que quieres eliminar los {0} Chater(s) seleccionados?',
-    },
-
-    destroy: {
-      success: 'Chater eliminado con éxito',
-      noSelection: 'Debes seleccionar al menos un Chater para eliminar.',
-      confirmTitle: '¿Eliminar Chater?',
-    },
-
-    fields: {
-      nickname: 'Nickname',
-      status: 'Status',
-      role: 'Role',
-      meta: 'Meta',
-      user: 'User',
-      chat: 'Chat',
-      messages: 'Messages',
-      createdByMembership: 'Creado por',
-      updatedByMembership: 'Actualizado por',
-      archivedByMembership: 'Archivado por',
-      createdAt: 'Creado el',
-      updatedAt: 'Actualizado el',
-      archivedAt: 'Archivado el',
-    },
-
-    hints: {
-      nickname: '',
-      status: 'Status of the user in the chat.',
-      role: '',
-      meta: '',
-      user: '',
-      chat: '',
-      messages: '',
-    },
-
-    enumerators: {
-      status: {
-        pending: 'Pending',
-        current: 'Current',
-        block: 'Block',
-        refuse: 'Refuse',
-      },
-    },
-  },
-
-  message: {
-    label: 'Message',
-
-    dashboardCard: {
-      title: 'Messages',
-    },
-
-    list: {
-      menu: 'Messages',
-      title: 'Messages',
-      noResults: 'No se encontraron messages.',
-    },
-
-    export: {
-      success: 'Messages exportados con éxito',
-    },
-
-    new: {
-      menu: 'Nuevo Message',
-      title: 'Nuevo Message',
-      success: 'Message creado con éxito',
-    },
-
-    view: {
-      title: 'Ver Message',
-    },
-
-    edit: {
-      menu: 'Editar Message',
-      title: 'Editar Message',
-      success: 'Message actualizado con éxito',
-    },
-
-    restore: {
-      success: 'Message restaurado con éxito',
-      noSelection: 'Debe seleccionar al menos un message para restaurar.',
-      confirmTitle: '¿Restaurar Message?',
-    },
-
-    restoreMany: {
-      success: 'Message(es) restaurado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un message para restaurar.',
-      confirmTitle: '¿Restaurar Message(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea restaurar los {0} message(es) seleccionados?',
-    },
-
-    archiveMany: {
-      success: 'Message(es) archivado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un message para archivar.',
-      confirmTitle: '¿Archivar Message(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea archivar los {0} message(es) seleccionados?',
-    },
-
-    archive: {
-      success: 'Message archivado con éxito',
-      noSelection: 'Debe seleccionar al menos un message para archivar.',
-      confirmTitle: '¿Archivar Message?',
-    },
-
-    destroyMany: {
-      success: 'Message(s) eliminado(s) con éxito',
-      noSelection: 'Debes seleccionar al menos un Message para eliminar.',
-      confirmTitle: '¿Eliminar Message(s)?',
-      confirmDescription:
-        '¿Estás seguro de que quieres eliminar los {0} Message(s) seleccionados?',
-    },
-
-    destroy: {
-      success: 'Message eliminado con éxito',
-      noSelection: 'Debes seleccionar al menos un Message para eliminar.',
-      confirmTitle: '¿Eliminar Message?',
-    },
-
-    fields: {
-      body: 'Body',
-      attachment: 'Attachment',
-      images: 'Images',
-      type: 'Type',
-      meta: 'Meta',
-      chat: 'Chat',
-      chater: 'Chater',
-      sender: 'Sender',
-      createdByMembership: 'Creado por',
-      updatedByMembership: 'Actualizado por',
-      archivedByMembership: 'Archivado por',
-      createdAt: 'Creado el',
-      updatedAt: 'Actualizado el',
-      archivedAt: 'Archivado el',
-    },
-
-    hints: {
-      body: '',
-      attachment: '',
-      images: '',
-      type: '',
-      meta: '',
-      chat: '',
-      chater: '',
-      sender: '',
-    },
-
-    enumerators: {
-
     },
   },
 
@@ -2804,213 +1938,91 @@ const dictionary = {
     },
   },
 
-  feedback: {
-    label: 'Feedback',
+  referral: {
+    label: 'Referral',
 
     dashboardCard: {
-      title: 'Feedbacks',
+      title: 'Referrals',
     },
 
     list: {
-      menu: 'Feedbacks',
-      title: 'Feedbacks',
-      noResults: 'No se encontraron feedbacks.',
+      menu: 'Referrals',
+      title: 'Referrals',
+      noResults: 'No se encontraron referrals.',
     },
 
     export: {
-      success: 'Feedbacks exportados con éxito',
+      success: 'Referrals exportados con éxito',
     },
 
     new: {
-      menu: 'Nuevo Feedback',
-      title: 'Nuevo Feedback',
-      success: 'Feedback creado con éxito',
+      menu: 'Nuevo Referral',
+      title: 'Nuevo Referral',
+      success: 'Referral creado con éxito',
     },
 
     view: {
-      title: 'Ver Feedback',
+      title: 'Ver Referral',
     },
 
     edit: {
-      menu: 'Editar Feedback',
-      title: 'Editar Feedback',
-      success: 'Feedback actualizado con éxito',
+      menu: 'Editar Referral',
+      title: 'Editar Referral',
+      success: 'Referral actualizado con éxito',
     },
 
     restore: {
-      success: 'Feedback restaurado con éxito',
-      noSelection: 'Debe seleccionar al menos un feedback para restaurar.',
-      confirmTitle: '¿Restaurar Feedback?',
+      success: 'Referral restaurado con éxito',
+      noSelection: 'Debe seleccionar al menos un referral para restaurar.',
+      confirmTitle: '¿Restaurar Referral?',
     },
 
     restoreMany: {
-      success: 'Feedback(es) restaurado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un feedback para restaurar.',
-      confirmTitle: '¿Restaurar Feedback(es)?',
+      success: 'Referral(es) restaurado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un referral para restaurar.',
+      confirmTitle: '¿Restaurar Referral(es)?',
       confirmDescription:
-        '¿Está seguro de que desea restaurar los {0} feedback(es) seleccionados?',
+        '¿Está seguro de que desea restaurar los {0} referral(es) seleccionados?',
     },
 
     archiveMany: {
-      success: 'Feedback(es) archivado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un feedback para archivar.',
-      confirmTitle: '¿Archivar Feedback(es)?',
+      success: 'Referral(es) archivado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un referral para archivar.',
+      confirmTitle: '¿Archivar Referral(es)?',
       confirmDescription:
-        '¿Está seguro de que desea archivar los {0} feedback(es) seleccionados?',
+        '¿Está seguro de que desea archivar los {0} referral(es) seleccionados?',
     },
 
     archive: {
-      success: 'Feedback archivado con éxito',
-      noSelection: 'Debe seleccionar al menos un feedback para archivar.',
-      confirmTitle: '¿Archivar Feedback?',
+      success: 'Referral archivado con éxito',
+      noSelection: 'Debe seleccionar al menos un referral para archivar.',
+      confirmTitle: '¿Archivar Referral?',
     },
 
     destroyMany: {
-      success: 'Feedback(s) eliminado(s) con éxito',
-      noSelection: 'Debes seleccionar al menos un Feedback para eliminar.',
-      confirmTitle: '¿Eliminar Feedback(s)?',
+      success: 'Referral(s) eliminado(s) con éxito',
+      noSelection: 'Debes seleccionar al menos un Referral para eliminar.',
+      confirmTitle: '¿Eliminar Referral(s)?',
       confirmDescription:
-        '¿Estás seguro de que quieres eliminar los {0} Feedback(s) seleccionados?',
+        '¿Estás seguro de que quieres eliminar los {0} Referral(s) seleccionados?',
     },
 
     destroy: {
-      success: 'Feedback eliminado con éxito',
-      noSelection: 'Debes seleccionar al menos un Feedback para eliminar.',
-      confirmTitle: '¿Eliminar Feedback?',
+      success: 'Referral eliminado con éxito',
+      noSelection: 'Debes seleccionar al menos un Referral para eliminar.',
+      confirmTitle: '¿Eliminar Referral?',
     },
 
     fields: {
-      title: 'Title',
-      description: 'Description',
-      attachments: 'Attachments',
-      type: 'Type',
+      referrerUserId: 'ReferrerUserId',
+      referredUserId: 'ReferredUserId',
+      referralCode: 'ReferralCode',
+      source: 'Source',
       status: 'Status',
-      json: 'Json',
-      user: 'User',
-      createdByMembership: 'Creado por',
-      updatedByMembership: 'Actualizado por',
-      archivedByMembership: 'Archivado por',
-      createdAt: 'Creado el',
-      updatedAt: 'Actualizado el',
-      archivedAt: 'Archivado el',
-    },
-
-    hints: {
-      title: '',
-      description: '',
-      attachments: '',
-      type: '',
-      status: '',
-      json: '',
-      user: '',
-    },
-
-    enumerators: {
-      type: {
-        feature_request: 'Feature_request',
-        bug_report: 'Bug_report',
-      },
-
-      status: {
-        submitted: 'Submitted',
-        reviewed: 'Reviewed',
-        completed: 'Completed',
-        rejected: 'Rejected',
-        pending: 'Pending',
-      },
-    },
-  },
-
-  job: {
-    label: 'Job',
-
-    dashboardCard: {
-      title: 'Jobs',
-    },
-
-    list: {
-      menu: 'Jobs',
-      title: 'Jobs',
-      noResults: 'No se encontraron jobs.',
-    },
-
-    export: {
-      success: 'Jobs exportados con éxito',
-    },
-
-    new: {
-      menu: 'Nuevo Job',
-      title: 'Nuevo Job',
-      success: 'Job creado con éxito',
-    },
-
-    view: {
-      title: 'Ver Job',
-    },
-
-    edit: {
-      menu: 'Editar Job',
-      title: 'Editar Job',
-      success: 'Job actualizado con éxito',
-    },
-
-    restore: {
-      success: 'Job restaurado con éxito',
-      noSelection: 'Debe seleccionar al menos un job para restaurar.',
-      confirmTitle: '¿Restaurar Job?',
-    },
-
-    restoreMany: {
-      success: 'Job(es) restaurado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un job para restaurar.',
-      confirmTitle: '¿Restaurar Job(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea restaurar los {0} job(es) seleccionados?',
-    },
-
-    archiveMany: {
-      success: 'Job(es) archivado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un job para archivar.',
-      confirmTitle: '¿Archivar Job(es)?',
-      confirmDescription:
-        '¿Está seguro de que desea archivar los {0} job(es) seleccionados?',
-    },
-
-    archive: {
-      success: 'Job archivado con éxito',
-      noSelection: 'Debe seleccionar al menos un job para archivar.',
-      confirmTitle: '¿Archivar Job?',
-    },
-
-    destroyMany: {
-      success: 'Job(s) eliminado(s) con éxito',
-      noSelection: 'Debes seleccionar al menos un Job para eliminar.',
-      confirmTitle: '¿Eliminar Job(s)?',
-      confirmDescription:
-        '¿Estás seguro de que quieres eliminar los {0} Job(s) seleccionados?',
-    },
-
-    destroy: {
-      success: 'Job eliminado con éxito',
-      noSelection: 'Debes seleccionar al menos un Job para eliminar.',
-      confirmTitle: '¿Eliminar Job?',
-    },
-
-    fields: {
-      title: 'Title',
-      team: 'Team',
-      location: 'Location',
-      type: 'Type',
-      remote: 'Remote',
-      description: 'Description',
-      requirements: 'Requirements',
-      responsibilities: 'Responsibilities',
-      quantity: 'Quantity',
-      salaryLow: 'SalaryLow',
-      salaryHigh: 'SalaryHigh',
-      status: 'Status',
-      seniority: 'Seniority',
-      currency: 'Currency',
+      rewardType: 'RewardType',
+      rewardAmount: 'RewardAmount',
+      rewardCurrency: 'RewardCurrency',
+      rewardedAt: 'RewardedAt',
       meta: 'Meta',
 
       createdByMembership: 'Creado por',
@@ -3022,46 +2034,38 @@ const dictionary = {
     },
 
     hints: {
-      title: '',
-      team: '',
-      location: '',
-      type: '',
-      remote: '',
-      description: '',
-      requirements: '',
-      responsibilities: '',
-      quantity: '',
-      salaryLow: '',
-      salaryHigh: '',
+      referrerUserId: '',
+      referredUserId: '',
+      referralCode: '',
+      source: '',
       status: '',
-      seniority: '',
-      currency: '',
+      rewardType: '',
+      rewardAmount: '',
+      rewardCurrency: '',
+      rewardedAt: '',
       meta: '',
 
     },
 
     enumerators: {
-      type: {
-        full_time: 'Full_time',
-        part_time: 'Part_time',
-        contract: 'Contract',
-        internship: 'Internship',
+      source: {
+        link: 'Link',
+        email: 'Email',
+        promo: 'Promo',
+        manual: 'Manual',
       },
 
       status: {
-        draft: 'Draft',
-        published: 'Published',
-        paused: 'Paused',
-        closed: 'Closed',
+        pending: 'Pending',
+        activated: 'Activated',
+        rewarded: 'Rewarded',
+        expired: 'Expired',
       },
 
-      seniority: {
-        intern: 'Intern',
-        junior: 'Junior',
-        mid: 'Mid',
-        senior: 'Senior',
-        staff: 'Staff',
-        founding: 'Founding',
+      rewardType: {
+        fee_rebate: 'Fee_rebate',
+        credit: 'Credit',
+        token: 'Token',
       },
     },
   },
@@ -3207,92 +2211,222 @@ const dictionary = {
     },
   },
 
-  referral: {
-    label: 'Referral',
+  feedback: {
+    label: 'Feedback',
 
     dashboardCard: {
-      title: 'Referrals',
+      title: 'Feedbacks',
     },
 
     list: {
-      menu: 'Referrals',
-      title: 'Referrals',
-      noResults: 'No se encontraron referrals.',
+      menu: 'Feedbacks',
+      title: 'Feedbacks',
+      noResults: 'No se encontraron feedbacks.',
     },
 
     export: {
-      success: 'Referrals exportados con éxito',
+      success: 'Feedbacks exportados con éxito',
     },
 
     new: {
-      menu: 'Nuevo Referral',
-      title: 'Nuevo Referral',
-      success: 'Referral creado con éxito',
+      menu: 'Nuevo Feedback',
+      title: 'Nuevo Feedback',
+      success: 'Feedback creado con éxito',
     },
 
     view: {
-      title: 'Ver Referral',
+      title: 'Ver Feedback',
     },
 
     edit: {
-      menu: 'Editar Referral',
-      title: 'Editar Referral',
-      success: 'Referral actualizado con éxito',
+      menu: 'Editar Feedback',
+      title: 'Editar Feedback',
+      success: 'Feedback actualizado con éxito',
     },
 
     restore: {
-      success: 'Referral restaurado con éxito',
-      noSelection: 'Debe seleccionar al menos un referral para restaurar.',
-      confirmTitle: '¿Restaurar Referral?',
+      success: 'Feedback restaurado con éxito',
+      noSelection: 'Debe seleccionar al menos un feedback para restaurar.',
+      confirmTitle: '¿Restaurar Feedback?',
     },
 
     restoreMany: {
-      success: 'Referral(es) restaurado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un referral para restaurar.',
-      confirmTitle: '¿Restaurar Referral(es)?',
+      success: 'Feedback(es) restaurado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un feedback para restaurar.',
+      confirmTitle: '¿Restaurar Feedback(es)?',
       confirmDescription:
-        '¿Está seguro de que desea restaurar los {0} referral(es) seleccionados?',
+        '¿Está seguro de que desea restaurar los {0} feedback(es) seleccionados?',
     },
 
     archiveMany: {
-      success: 'Referral(es) archivado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un referral para archivar.',
-      confirmTitle: '¿Archivar Referral(es)?',
+      success: 'Feedback(es) archivado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un feedback para archivar.',
+      confirmTitle: '¿Archivar Feedback(es)?',
       confirmDescription:
-        '¿Está seguro de que desea archivar los {0} referral(es) seleccionados?',
+        '¿Está seguro de que desea archivar los {0} feedback(es) seleccionados?',
     },
 
     archive: {
-      success: 'Referral archivado con éxito',
-      noSelection: 'Debe seleccionar al menos un referral para archivar.',
-      confirmTitle: '¿Archivar Referral?',
+      success: 'Feedback archivado con éxito',
+      noSelection: 'Debe seleccionar al menos un feedback para archivar.',
+      confirmTitle: '¿Archivar Feedback?',
     },
 
     destroyMany: {
-      success: 'Referral(s) eliminado(s) con éxito',
-      noSelection: 'Debes seleccionar al menos un Referral para eliminar.',
-      confirmTitle: '¿Eliminar Referral(s)?',
+      success: 'Feedback(s) eliminado(s) con éxito',
+      noSelection: 'Debes seleccionar al menos un Feedback para eliminar.',
+      confirmTitle: '¿Eliminar Feedback(s)?',
       confirmDescription:
-        '¿Estás seguro de que quieres eliminar los {0} Referral(s) seleccionados?',
+        '¿Estás seguro de que quieres eliminar los {0} Feedback(s) seleccionados?',
     },
 
     destroy: {
-      success: 'Referral eliminado con éxito',
-      noSelection: 'Debes seleccionar al menos un Referral para eliminar.',
-      confirmTitle: '¿Eliminar Referral?',
+      success: 'Feedback eliminado con éxito',
+      noSelection: 'Debes seleccionar al menos un Feedback para eliminar.',
+      confirmTitle: '¿Eliminar Feedback?',
     },
 
     fields: {
-      referrerUserId: 'ReferrerUserId',
-      referredUserId: 'ReferredUserId',
-      referralCode: 'ReferralCode',
-      source: 'Source',
+      title: 'Title',
+      description: 'Description',
+      attachments: 'Attachments',
+      type: 'Type',
       status: 'Status',
-      rewardType: 'RewardType',
-      rewardAmount: 'RewardAmount',
-      rewardCurrency: 'RewardCurrency',
-      rewardedAt: 'RewardedAt',
-      meta: 'Meta',
+      json: 'Json',
+      user: 'User',
+      createdByMembership: 'Creado por',
+      updatedByMembership: 'Actualizado por',
+      archivedByMembership: 'Archivado por',
+      createdAt: 'Creado el',
+      updatedAt: 'Actualizado el',
+      archivedAt: 'Archivado el',
+    },
+
+    hints: {
+      title: '',
+      description: '',
+      attachments: '',
+      type: '',
+      status: '',
+      json: '',
+      user: '',
+    },
+
+    enumerators: {
+      type: {
+        feature_request: 'Feature_request',
+        bug_report: 'Bug_report',
+      },
+
+      status: {
+        submitted: 'Submitted',
+        reviewed: 'Reviewed',
+        completed: 'Completed',
+        rejected: 'Rejected',
+        pending: 'Pending',
+      },
+    },
+  },
+
+  marketMaker: {
+    label: 'MarketMaker',
+
+    dashboardCard: {
+      title: 'MarketMakers',
+    },
+
+    list: {
+      menu: 'MarketMakers',
+      title: 'MarketMakers',
+      noResults: 'No se encontraron marketmakers.',
+    },
+
+    export: {
+      success: 'MarketMakers exportados con éxito',
+    },
+
+    new: {
+      menu: 'Nuevo MarketMaker',
+      title: 'Nuevo MarketMaker',
+      success: 'MarketMaker creado con éxito',
+    },
+
+    view: {
+      title: 'Ver MarketMaker',
+    },
+
+    edit: {
+      menu: 'Editar MarketMaker',
+      title: 'Editar MarketMaker',
+      success: 'MarketMaker actualizado con éxito',
+    },
+
+    restore: {
+      success: 'MarketMaker restaurado con éxito',
+      noSelection: 'Debe seleccionar al menos un marketmaker para restaurar.',
+      confirmTitle: '¿Restaurar MarketMaker?',
+    },
+
+    restoreMany: {
+      success: 'MarketMaker(es) restaurado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un marketmaker para restaurar.',
+      confirmTitle: '¿Restaurar MarketMaker(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea restaurar los {0} marketmaker(es) seleccionados?',
+    },
+
+    archiveMany: {
+      success: 'MarketMaker(es) archivado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un marketmaker para archivar.',
+      confirmTitle: '¿Archivar MarketMaker(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea archivar los {0} marketmaker(es) seleccionados?',
+    },
+
+    archive: {
+      success: 'MarketMaker archivado con éxito',
+      noSelection: 'Debe seleccionar al menos un marketmaker para archivar.',
+      confirmTitle: '¿Archivar MarketMaker?',
+    },
+
+    destroyMany: {
+      success: 'MarketMaker(s) eliminado(s) con éxito',
+      noSelection: 'Debes seleccionar al menos un MarketMaker para eliminar.',
+      confirmTitle: '¿Eliminar MarketMaker(s)?',
+      confirmDescription:
+        '¿Estás seguro de que quieres eliminar los {0} MarketMaker(s) seleccionados?',
+    },
+
+    destroy: {
+      success: 'MarketMaker eliminado con éxito',
+      noSelection: 'Debes seleccionar al menos un MarketMaker para eliminar.',
+      confirmTitle: '¿Eliminar MarketMaker?',
+    },
+
+    fields: {
+      organizationName: 'OrganizationName',
+      contactEmail: 'ContactEmail',
+      contactPhone: 'ContactPhone',
+      status: 'Status',
+      tier: 'Tier',
+      marketsSupported: 'MarketsSupported',
+      minQuoteSize: 'MinQuoteSize',
+      maxQuoteSize: 'MaxQuoteSize',
+      spreadLimit: 'SpreadLimit',
+      quoteObligation: 'QuoteObligation',
+      dailyVolumeTarget: 'DailyVolumeTarget',
+      makerFee: 'MakerFee',
+      takerFee: 'TakerFee',
+      rebateRate: 'RebateRate',
+      rebateBalance: 'RebateBalance',
+      apiAccess: 'ApiAccess',
+      maxOrdersPerSecond: 'MaxOrdersPerSecond',
+      directMarketAccess: 'DirectMarketAccess',
+      contractSignedAt: 'ContractSignedAt',
+      obligationViolationCount: 'ObligationViolationCount',
+      auditLog: 'AuditLog',
+      notesInternal: 'NotesInternal',
+      specialOrderTypes: 'SpecialOrderTypes',
 
       createdByMembership: 'Creado por',
       updatedByMembership: 'Actualizado por',
@@ -3303,39 +2437,935 @@ const dictionary = {
     },
 
     hints: {
-      referrerUserId: '',
-      referredUserId: '',
-      referralCode: '',
-      source: '',
+      organizationName: '',
+      contactEmail: '',
+      contactPhone: '',
       status: '',
-      rewardType: '',
-      rewardAmount: '',
-      rewardCurrency: '',
-      rewardedAt: '',
-      meta: '',
+      tier: '',
+      marketsSupported: '',
+      minQuoteSize: '',
+      maxQuoteSize: '',
+      spreadLimit: '',
+      quoteObligation: '',
+      dailyVolumeTarget: '',
+      makerFee: '',
+      takerFee: '',
+      rebateRate: '',
+      rebateBalance: '',
+      apiAccess: '',
+      maxOrdersPerSecond: '',
+      directMarketAccess: '',
+      contractSignedAt: '',
+      obligationViolationCount: '',
+      auditLog: '',
+      notesInternal: '',
+      specialOrderTypes: '',
 
     },
 
     enumerators: {
-      source: {
-        link: 'Link',
-        email: 'Email',
-        promo: 'Promo',
-        manual: 'Manual',
+      status: {
+        active: 'Active',
+        inactive: 'Inactive',
+        suspended: 'Suspended',
+      },
+
+      tier: {
+        standard: 'Standard',
+        premium: 'Premium',
+        institutional: 'Institutional',
+      },
+
+      specialOrderTypes: {
+        LIMIT: 'LIMIT',
+        MARKET: 'MARKET',
+        IOC: 'IOC',
+        FOK: 'FOK',
+        GTC: 'GTC',
+        GTD: 'GTD',
+        DAY: 'DAY',
+        STOP: 'STOP',
+        STOP_LIMIT: 'STOP_LIMIT',
+        TRAILING_STOP: 'TRAILING_STOP',
+        TRAILING_STOP_LIMIT: 'TRAILING_STOP_LIMIT',
+        ICEBERG: 'ICEBERG',
+        TWAP: 'TWAP',
+        VWAP: 'VWAP',
+        POV: 'POV',
+        BLOCK: 'BLOCK',
+        QUOTE: 'QUOTE',
+        LIQUIDITY_PROVISION: 'LIQUIDITY_PROVISION',
+        PEGGED: 'PEGGED',
+        MATCHING_ENGINE_DIRECT: 'MATCHING_ENGINE_DIRECT',
+        RFQ_RESPONSE: 'RFQ_RESPONSE',
+        CONDITIONAL_CANCEL: 'CONDITIONAL_CANCEL',
+      },
+    },
+  },
+
+  ledgerEvent: {
+    label: 'LedgerEvent',
+
+    dashboardCard: {
+      title: 'LedgerEvents',
+    },
+
+    list: {
+      menu: 'LedgerEvents',
+      title: 'LedgerEvents',
+      noResults: 'No se encontraron ledgerevents.',
+    },
+
+    export: {
+      success: 'LedgerEvents exportados con éxito',
+    },
+
+    new: {
+      menu: 'Nuevo LedgerEvent',
+      title: 'Nuevo LedgerEvent',
+      success: 'LedgerEvent creado con éxito',
+    },
+
+    view: {
+      title: 'Ver LedgerEvent',
+    },
+
+    edit: {
+      menu: 'Editar LedgerEvent',
+      title: 'Editar LedgerEvent',
+      success: 'LedgerEvent actualizado con éxito',
+    },
+
+    restore: {
+      success: 'LedgerEvent restaurado con éxito',
+      noSelection: 'Debe seleccionar al menos un ledgerevent para restaurar.',
+      confirmTitle: '¿Restaurar LedgerEvent?',
+    },
+
+    restoreMany: {
+      success: 'LedgerEvent(es) restaurado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un ledgerevent para restaurar.',
+      confirmTitle: '¿Restaurar LedgerEvent(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea restaurar los {0} ledgerevent(es) seleccionados?',
+    },
+
+    archiveMany: {
+      success: 'LedgerEvent(es) archivado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un ledgerevent para archivar.',
+      confirmTitle: '¿Archivar LedgerEvent(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea archivar los {0} ledgerevent(es) seleccionados?',
+    },
+
+    archive: {
+      success: 'LedgerEvent archivado con éxito',
+      noSelection: 'Debe seleccionar al menos un ledgerevent para archivar.',
+      confirmTitle: '¿Archivar LedgerEvent?',
+    },
+
+    destroyMany: {
+      success: 'LedgerEvent(s) eliminado(s) con éxito',
+      noSelection: 'Debes seleccionar al menos un LedgerEvent para eliminar.',
+      confirmTitle: '¿Eliminar LedgerEvent(s)?',
+      confirmDescription:
+        '¿Estás seguro de que quieres eliminar los {0} LedgerEvent(s) seleccionados?',
+    },
+
+    destroy: {
+      success: 'LedgerEvent eliminado con éxito',
+      noSelection: 'Debes seleccionar al menos un LedgerEvent para eliminar.',
+      confirmTitle: '¿Eliminar LedgerEvent?',
+    },
+
+    fields: {
+      type: 'Type',
+      referenceId: 'ReferenceId',
+      referenceType: 'ReferenceType',
+      status: 'Status',
+      description: 'Description',
+      meta: 'Meta',
+      entries: 'Entries',
+      createdByMembership: 'Creado por',
+      updatedByMembership: 'Actualizado por',
+      archivedByMembership: 'Archivado por',
+      createdAt: 'Creado el',
+      updatedAt: 'Actualizado el',
+      archivedAt: 'Archivado el',
+    },
+
+    hints: {
+      type: '',
+      referenceId: '',
+      referenceType: '',
+      status: '',
+      description: '',
+      meta: '',
+      entries: '',
+    },
+
+    enumerators: {
+      type: {
+        trade: 'Trade',
+        deposit: 'Deposit',
+        withdrawal: 'Withdrawal',
+        fee: 'Fee',
+        settlement: 'Settlement',
+        adjustment: 'Adjustment',
+        transfer: 'Transfer',
+        reversal: 'Reversal',
+      },
+
+      referenceType: {
+        deposit: 'Deposit',
+        withdrawal: 'Withdrawal',
+        order: 'Order',
+        trade: 'Trade',
+        manual_adjustment: 'Manual_adjustment',
       },
 
       status: {
         pending: 'Pending',
-        activated: 'Activated',
-        rewarded: 'Rewarded',
-        expired: 'Expired',
+        posted: 'Posted',
+        reversed: 'Reversed',
       },
+    },
+  },
 
-      rewardType: {
-        fee_rebate: 'Fee_rebate',
-        credit: 'Credit',
-        token: 'Token',
+  ledgerEntry: {
+    label: 'LedgerEntry',
+
+    dashboardCard: {
+      title: 'LedgerEntries',
+    },
+
+    list: {
+      menu: 'LedgerEntries',
+      title: 'LedgerEntries',
+      noResults: 'No se encontraron ledgerentries.',
+    },
+
+    export: {
+      success: 'LedgerEntries exportados con éxito',
+    },
+
+    new: {
+      menu: 'Nuevo LedgerEntry',
+      title: 'Nuevo LedgerEntry',
+      success: 'LedgerEntry creado con éxito',
+    },
+
+    view: {
+      title: 'Ver LedgerEntry',
+    },
+
+    edit: {
+      menu: 'Editar LedgerEntry',
+      title: 'Editar LedgerEntry',
+      success: 'LedgerEntry actualizado con éxito',
+    },
+
+    restore: {
+      success: 'LedgerEntry restaurado con éxito',
+      noSelection: 'Debe seleccionar al menos un ledgerentry para restaurar.',
+      confirmTitle: '¿Restaurar LedgerEntry?',
+    },
+
+    restoreMany: {
+      success: 'LedgerEntry(es) restaurado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un ledgerentry para restaurar.',
+      confirmTitle: '¿Restaurar LedgerEntry(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea restaurar los {0} ledgerentry(es) seleccionados?',
+    },
+
+    archiveMany: {
+      success: 'LedgerEntry(es) archivado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un ledgerentry para archivar.',
+      confirmTitle: '¿Archivar LedgerEntry(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea archivar los {0} ledgerentry(es) seleccionados?',
+    },
+
+    archive: {
+      success: 'LedgerEntry archivado con éxito',
+      noSelection: 'Debe seleccionar al menos un ledgerentry para archivar.',
+      confirmTitle: '¿Archivar LedgerEntry?',
+    },
+
+    destroyMany: {
+      success: 'LedgerEntry(s) eliminado(s) con éxito',
+      noSelection: 'Debes seleccionar al menos un LedgerEntry para eliminar.',
+      confirmTitle: '¿Eliminar LedgerEntry(s)?',
+      confirmDescription:
+        '¿Estás seguro de que quieres eliminar los {0} LedgerEntry(s) seleccionados?',
+    },
+
+    destroy: {
+      success: 'LedgerEntry eliminado con éxito',
+      noSelection: 'Debes seleccionar al menos un LedgerEntry para eliminar.',
+      confirmTitle: '¿Eliminar LedgerEntry?',
+    },
+
+    fields: {
+      amount: 'Amount',
+      accountId: 'AccountId',
+      meta: 'Meta',
+      event: 'Event',
+      createdByMembership: 'Creado por',
+      updatedByMembership: 'Actualizado por',
+      archivedByMembership: 'Archivado por',
+      createdAt: 'Creado el',
+      updatedAt: 'Actualizado el',
+      archivedAt: 'Archivado el',
+    },
+
+    hints: {
+      amount: '',
+      accountId: '',
+      meta: '',
+      event: '',
+    },
+
+    enumerators: {
+
+    },
+  },
+
+  article: {
+    label: 'Article',
+
+    dashboardCard: {
+      title: 'Articles',
+    },
+
+    list: {
+      menu: 'Articles',
+      title: 'Articles',
+      noResults: 'No se encontraron articles.',
+    },
+
+    export: {
+      success: 'Articles exportados con éxito',
+    },
+
+    new: {
+      menu: 'Nuevo Article',
+      title: 'Nuevo Article',
+      success: 'Article creado con éxito',
+    },
+
+    view: {
+      title: 'Ver Article',
+    },
+
+    edit: {
+      menu: 'Editar Article',
+      title: 'Editar Article',
+      success: 'Article actualizado con éxito',
+    },
+
+    restore: {
+      success: 'Article restaurado con éxito',
+      noSelection: 'Debe seleccionar al menos un article para restaurar.',
+      confirmTitle: '¿Restaurar Article?',
+    },
+
+    restoreMany: {
+      success: 'Article(es) restaurado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un article para restaurar.',
+      confirmTitle: '¿Restaurar Article(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea restaurar los {0} article(es) seleccionados?',
+    },
+
+    archiveMany: {
+      success: 'Article(es) archivado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un article para archivar.',
+      confirmTitle: '¿Archivar Article(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea archivar los {0} article(es) seleccionados?',
+    },
+
+    archive: {
+      success: 'Article archivado con éxito',
+      noSelection: 'Debe seleccionar al menos un article para archivar.',
+      confirmTitle: '¿Archivar Article?',
+    },
+
+    destroyMany: {
+      success: 'Article(s) eliminado(s) con éxito',
+      noSelection: 'Debes seleccionar al menos un Article para eliminar.',
+      confirmTitle: '¿Eliminar Article(s)?',
+      confirmDescription:
+        '¿Estás seguro de que quieres eliminar los {0} Article(s) seleccionados?',
+    },
+
+    destroy: {
+      success: 'Article eliminado con éxito',
+      noSelection: 'Debes seleccionar al menos un Article para eliminar.',
+      confirmTitle: '¿Eliminar Article?',
+    },
+
+    fields: {
+      title: 'Title',
+      body: 'Body',
+      type: 'Type',
+      images: 'Images',
+      files: 'Files',
+      meta: 'Meta',
+      user: 'User',
+      createdByMembership: 'Creado por',
+      updatedByMembership: 'Actualizado por',
+      archivedByMembership: 'Archivado por',
+      createdAt: 'Creado el',
+      updatedAt: 'Actualizado el',
+      archivedAt: 'Archivado el',
+    },
+
+    hints: {
+      title: '',
+      body: '',
+      type: '',
+      images: '',
+      files: '',
+      meta: '',
+      user: '',
+    },
+
+    enumerators: {
+
+    },
+  },
+
+  post: {
+    label: 'Post',
+
+    dashboardCard: {
+      title: 'Posts',
+    },
+
+    list: {
+      menu: 'Posts',
+      title: 'Posts',
+      noResults: 'No se encontraron posts.',
+    },
+
+    export: {
+      success: 'Posts exportados con éxito',
+    },
+
+    new: {
+      menu: 'Nuevo Post',
+      title: 'Nuevo Post',
+      success: 'Post creado con éxito',
+    },
+
+    view: {
+      title: 'Ver Post',
+    },
+
+    edit: {
+      menu: 'Editar Post',
+      title: 'Editar Post',
+      success: 'Post actualizado con éxito',
+    },
+
+    restore: {
+      success: 'Post restaurado con éxito',
+      noSelection: 'Debe seleccionar al menos un post para restaurar.',
+      confirmTitle: '¿Restaurar Post?',
+    },
+
+    restoreMany: {
+      success: 'Post(es) restaurado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un post para restaurar.',
+      confirmTitle: '¿Restaurar Post(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea restaurar los {0} post(es) seleccionados?',
+    },
+
+    archiveMany: {
+      success: 'Post(es) archivado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un post para archivar.',
+      confirmTitle: '¿Archivar Post(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea archivar los {0} post(es) seleccionados?',
+    },
+
+    archive: {
+      success: 'Post archivado con éxito',
+      noSelection: 'Debe seleccionar al menos un post para archivar.',
+      confirmTitle: '¿Archivar Post?',
+    },
+
+    destroyMany: {
+      success: 'Post(s) eliminado(s) con éxito',
+      noSelection: 'Debes seleccionar al menos un Post para eliminar.',
+      confirmTitle: '¿Eliminar Post(s)?',
+      confirmDescription:
+        '¿Estás seguro de que quieres eliminar los {0} Post(s) seleccionados?',
+    },
+
+    destroy: {
+      success: 'Post eliminado con éxito',
+      noSelection: 'Debes seleccionar al menos un Post para eliminar.',
+      confirmTitle: '¿Eliminar Post?',
+    },
+
+    fields: {
+      title: 'Title',
+      body: 'Body',
+      files: 'Files',
+      images: 'Images',
+      type: 'Type',
+      meta: 'Meta',
+      user: 'User',
+      createdByMembership: 'Creado por',
+      updatedByMembership: 'Actualizado por',
+      archivedByMembership: 'Archivado por',
+      createdAt: 'Creado el',
+      updatedAt: 'Actualizado el',
+      archivedAt: 'Archivado el',
+    },
+
+    hints: {
+      title: '',
+      body: '',
+      files: '',
+      images: '',
+      type: '',
+      meta: '',
+      user: '',
+    },
+
+    enumerators: {
+
+    },
+  },
+
+  comment: {
+    label: 'Comment',
+
+    dashboardCard: {
+      title: 'Comments',
+    },
+
+    list: {
+      menu: 'Comments',
+      title: 'Comments',
+      noResults: 'No se encontraron comments.',
+    },
+
+    export: {
+      success: 'Comments exportados con éxito',
+    },
+
+    new: {
+      menu: 'Nuevo Comment',
+      title: 'Nuevo Comment',
+      success: 'Comment creado con éxito',
+    },
+
+    view: {
+      title: 'Ver Comment',
+    },
+
+    edit: {
+      menu: 'Editar Comment',
+      title: 'Editar Comment',
+      success: 'Comment actualizado con éxito',
+    },
+
+    restore: {
+      success: 'Comment restaurado con éxito',
+      noSelection: 'Debe seleccionar al menos un comment para restaurar.',
+      confirmTitle: '¿Restaurar Comment?',
+    },
+
+    restoreMany: {
+      success: 'Comment(es) restaurado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un comment para restaurar.',
+      confirmTitle: '¿Restaurar Comment(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea restaurar los {0} comment(es) seleccionados?',
+    },
+
+    archiveMany: {
+      success: 'Comment(es) archivado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un comment para archivar.',
+      confirmTitle: '¿Archivar Comment(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea archivar los {0} comment(es) seleccionados?',
+    },
+
+    archive: {
+      success: 'Comment archivado con éxito',
+      noSelection: 'Debe seleccionar al menos un comment para archivar.',
+      confirmTitle: '¿Archivar Comment?',
+    },
+
+    destroyMany: {
+      success: 'Comment(s) eliminado(s) con éxito',
+      noSelection: 'Debes seleccionar al menos un Comment para eliminar.',
+      confirmTitle: '¿Eliminar Comment(s)?',
+      confirmDescription:
+        '¿Estás seguro de que quieres eliminar los {0} Comment(s) seleccionados?',
+    },
+
+    destroy: {
+      success: 'Comment eliminado con éxito',
+      noSelection: 'Debes seleccionar al menos un Comment para eliminar.',
+      confirmTitle: '¿Eliminar Comment?',
+    },
+
+    fields: {
+      body: 'Body',
+      type: 'Type',
+      images: 'Images',
+      meta: 'Meta',
+      user: 'User',
+      createdByMembership: 'Creado por',
+      updatedByMembership: 'Actualizado por',
+      archivedByMembership: 'Archivado por',
+      createdAt: 'Creado el',
+      updatedAt: 'Actualizado el',
+      archivedAt: 'Archivado el',
+    },
+
+    hints: {
+      body: '',
+      type: '',
+      images: '',
+      meta: '',
+      user: '',
+    },
+
+    enumerators: {
+
+    },
+  },
+
+  chat: {
+    label: 'Chat',
+
+    dashboardCard: {
+      title: 'Chats',
+    },
+
+    list: {
+      menu: 'Chats',
+      title: 'Chats',
+      noResults: 'No se encontraron chats.',
+    },
+
+    export: {
+      success: 'Chats exportados con éxito',
+    },
+
+    new: {
+      menu: 'Nuevo Chat',
+      title: 'Nuevo Chat',
+      success: 'Chat creado con éxito',
+    },
+
+    view: {
+      title: 'Ver Chat',
+    },
+
+    edit: {
+      menu: 'Editar Chat',
+      title: 'Editar Chat',
+      success: 'Chat actualizado con éxito',
+    },
+
+    restore: {
+      success: 'Chat restaurado con éxito',
+      noSelection: 'Debe seleccionar al menos un chat para restaurar.',
+      confirmTitle: '¿Restaurar Chat?',
+    },
+
+    restoreMany: {
+      success: 'Chat(es) restaurado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un chat para restaurar.',
+      confirmTitle: '¿Restaurar Chat(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea restaurar los {0} chat(es) seleccionados?',
+    },
+
+    archiveMany: {
+      success: 'Chat(es) archivado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un chat para archivar.',
+      confirmTitle: '¿Archivar Chat(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea archivar los {0} chat(es) seleccionados?',
+    },
+
+    archive: {
+      success: 'Chat archivado con éxito',
+      noSelection: 'Debe seleccionar al menos un chat para archivar.',
+      confirmTitle: '¿Archivar Chat?',
+    },
+
+    destroyMany: {
+      success: 'Chat(s) eliminado(s) con éxito',
+      noSelection: 'Debes seleccionar al menos un Chat para eliminar.',
+      confirmTitle: '¿Eliminar Chat(s)?',
+      confirmDescription:
+        '¿Estás seguro de que quieres eliminar los {0} Chat(s) seleccionados?',
+    },
+
+    destroy: {
+      success: 'Chat eliminado con éxito',
+      noSelection: 'Debes seleccionar al menos un Chat para eliminar.',
+      confirmTitle: '¿Eliminar Chat?',
+    },
+
+    fields: {
+      name: 'Name',
+      media: 'Media',
+      meta: 'Meta',
+      active: 'Active',
+      messages: 'Messages',
+      chaters: 'Chaters',
+      createdByMembership: 'Creado por',
+      updatedByMembership: 'Actualizado por',
+      archivedByMembership: 'Archivado por',
+      createdAt: 'Creado el',
+      updatedAt: 'Actualizado el',
+      archivedAt: 'Archivado el',
+    },
+
+    hints: {
+      name: '',
+      media: '',
+      meta: '',
+      active: '',
+      messages: '',
+      chaters: '',
+    },
+
+    enumerators: {
+
+    },
+  },
+
+  chater: {
+    label: 'Chater',
+
+    dashboardCard: {
+      title: 'Chaters',
+    },
+
+    list: {
+      menu: 'Chaters',
+      title: 'Chaters',
+      noResults: 'No se encontraron chaters.',
+    },
+
+    export: {
+      success: 'Chaters exportados con éxito',
+    },
+
+    new: {
+      menu: 'Nuevo Chater',
+      title: 'Nuevo Chater',
+      success: 'Chater creado con éxito',
+    },
+
+    view: {
+      title: 'Ver Chater',
+    },
+
+    edit: {
+      menu: 'Editar Chater',
+      title: 'Editar Chater',
+      success: 'Chater actualizado con éxito',
+    },
+
+    restore: {
+      success: 'Chater restaurado con éxito',
+      noSelection: 'Debe seleccionar al menos un chater para restaurar.',
+      confirmTitle: '¿Restaurar Chater?',
+    },
+
+    restoreMany: {
+      success: 'Chater(es) restaurado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un chater para restaurar.',
+      confirmTitle: '¿Restaurar Chater(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea restaurar los {0} chater(es) seleccionados?',
+    },
+
+    archiveMany: {
+      success: 'Chater(es) archivado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un chater para archivar.',
+      confirmTitle: '¿Archivar Chater(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea archivar los {0} chater(es) seleccionados?',
+    },
+
+    archive: {
+      success: 'Chater archivado con éxito',
+      noSelection: 'Debe seleccionar al menos un chater para archivar.',
+      confirmTitle: '¿Archivar Chater?',
+    },
+
+    destroyMany: {
+      success: 'Chater(s) eliminado(s) con éxito',
+      noSelection: 'Debes seleccionar al menos un Chater para eliminar.',
+      confirmTitle: '¿Eliminar Chater(s)?',
+      confirmDescription:
+        '¿Estás seguro de que quieres eliminar los {0} Chater(s) seleccionados?',
+    },
+
+    destroy: {
+      success: 'Chater eliminado con éxito',
+      noSelection: 'Debes seleccionar al menos un Chater para eliminar.',
+      confirmTitle: '¿Eliminar Chater?',
+    },
+
+    fields: {
+      nickname: 'Nickname',
+      status: 'Status',
+      role: 'Role',
+      meta: 'Meta',
+      user: 'User',
+      chat: 'Chat',
+      messages: 'Messages',
+      createdByMembership: 'Creado por',
+      updatedByMembership: 'Actualizado por',
+      archivedByMembership: 'Archivado por',
+      createdAt: 'Creado el',
+      updatedAt: 'Actualizado el',
+      archivedAt: 'Archivado el',
+    },
+
+    hints: {
+      nickname: '',
+      status: 'Status of the user in the chat.',
+      role: '',
+      meta: '',
+      user: '',
+      chat: '',
+      messages: '',
+    },
+
+    enumerators: {
+      status: {
+        pending: 'Pending',
+        current: 'Current',
+        block: 'Block',
+        refuse: 'Refuse',
       },
+    },
+  },
+
+  message: {
+    label: 'Message',
+
+    dashboardCard: {
+      title: 'Messages',
+    },
+
+    list: {
+      menu: 'Messages',
+      title: 'Messages',
+      noResults: 'No se encontraron messages.',
+    },
+
+    export: {
+      success: 'Messages exportados con éxito',
+    },
+
+    new: {
+      menu: 'Nuevo Message',
+      title: 'Nuevo Message',
+      success: 'Message creado con éxito',
+    },
+
+    view: {
+      title: 'Ver Message',
+    },
+
+    edit: {
+      menu: 'Editar Message',
+      title: 'Editar Message',
+      success: 'Message actualizado con éxito',
+    },
+
+    restore: {
+      success: 'Message restaurado con éxito',
+      noSelection: 'Debe seleccionar al menos un message para restaurar.',
+      confirmTitle: '¿Restaurar Message?',
+    },
+
+    restoreMany: {
+      success: 'Message(es) restaurado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un message para restaurar.',
+      confirmTitle: '¿Restaurar Message(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea restaurar los {0} message(es) seleccionados?',
+    },
+
+    archiveMany: {
+      success: 'Message(es) archivado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un message para archivar.',
+      confirmTitle: '¿Archivar Message(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea archivar los {0} message(es) seleccionados?',
+    },
+
+    archive: {
+      success: 'Message archivado con éxito',
+      noSelection: 'Debe seleccionar al menos un message para archivar.',
+      confirmTitle: '¿Archivar Message?',
+    },
+
+    destroyMany: {
+      success: 'Message(s) eliminado(s) con éxito',
+      noSelection: 'Debes seleccionar al menos un Message para eliminar.',
+      confirmTitle: '¿Eliminar Message(s)?',
+      confirmDescription:
+        '¿Estás seguro de que quieres eliminar los {0} Message(s) seleccionados?',
+    },
+
+    destroy: {
+      success: 'Message eliminado con éxito',
+      noSelection: 'Debes seleccionar al menos un Message para eliminar.',
+      confirmTitle: '¿Eliminar Message?',
+    },
+
+    fields: {
+      body: 'Body',
+      attachment: 'Attachment',
+      images: 'Images',
+      type: 'Type',
+      meta: 'Meta',
+      chat: 'Chat',
+      chater: 'Chater',
+      sender: 'Sender',
+      createdByMembership: 'Creado por',
+      updatedByMembership: 'Actualizado por',
+      archivedByMembership: 'Archivado por',
+      createdAt: 'Creado el',
+      updatedAt: 'Actualizado el',
+      archivedAt: 'Archivado el',
+    },
+
+    hints: {
+      body: '',
+      attachment: '',
+      images: '',
+      type: '',
+      meta: '',
+      chat: '',
+      chater: '',
+      sender: '',
+    },
+
+    enumerators: {
+
     },
   },
 
@@ -3583,6 +3613,151 @@ const dictionary = {
         in_app: 'In_app',
         email: 'Email',
         push: 'Push',
+      },
+    },
+  },
+
+  job: {
+    label: 'Job',
+
+    dashboardCard: {
+      title: 'Jobs',
+    },
+
+    list: {
+      menu: 'Jobs',
+      title: 'Jobs',
+      noResults: 'No se encontraron jobs.',
+    },
+
+    export: {
+      success: 'Jobs exportados con éxito',
+    },
+
+    new: {
+      menu: 'Nuevo Job',
+      title: 'Nuevo Job',
+      success: 'Job creado con éxito',
+    },
+
+    view: {
+      title: 'Ver Job',
+    },
+
+    edit: {
+      menu: 'Editar Job',
+      title: 'Editar Job',
+      success: 'Job actualizado con éxito',
+    },
+
+    restore: {
+      success: 'Job restaurado con éxito',
+      noSelection: 'Debe seleccionar al menos un job para restaurar.',
+      confirmTitle: '¿Restaurar Job?',
+    },
+
+    restoreMany: {
+      success: 'Job(es) restaurado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un job para restaurar.',
+      confirmTitle: '¿Restaurar Job(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea restaurar los {0} job(es) seleccionados?',
+    },
+
+    archiveMany: {
+      success: 'Job(es) archivado(s) con éxito',
+      noSelection: 'Debe seleccionar al menos un job para archivar.',
+      confirmTitle: '¿Archivar Job(es)?',
+      confirmDescription:
+        '¿Está seguro de que desea archivar los {0} job(es) seleccionados?',
+    },
+
+    archive: {
+      success: 'Job archivado con éxito',
+      noSelection: 'Debe seleccionar al menos un job para archivar.',
+      confirmTitle: '¿Archivar Job?',
+    },
+
+    destroyMany: {
+      success: 'Job(s) eliminado(s) con éxito',
+      noSelection: 'Debes seleccionar al menos un Job para eliminar.',
+      confirmTitle: '¿Eliminar Job(s)?',
+      confirmDescription:
+        '¿Estás seguro de que quieres eliminar los {0} Job(s) seleccionados?',
+    },
+
+    destroy: {
+      success: 'Job eliminado con éxito',
+      noSelection: 'Debes seleccionar al menos un Job para eliminar.',
+      confirmTitle: '¿Eliminar Job?',
+    },
+
+    fields: {
+      title: 'Title',
+      team: 'Team',
+      location: 'Location',
+      type: 'Type',
+      remote: 'Remote',
+      description: 'Description',
+      requirements: 'Requirements',
+      responsibilities: 'Responsibilities',
+      quantity: 'Quantity',
+      salaryLow: 'SalaryLow',
+      salaryHigh: 'SalaryHigh',
+      status: 'Status',
+      seniority: 'Seniority',
+      currency: 'Currency',
+      meta: 'Meta',
+
+      createdByMembership: 'Creado por',
+      updatedByMembership: 'Actualizado por',
+      archivedByMembership: 'Archivado por',
+      createdAt: 'Creado el',
+      updatedAt: 'Actualizado el',
+      archivedAt: 'Archivado el',
+    },
+
+    hints: {
+      title: '',
+      team: '',
+      location: '',
+      type: '',
+      remote: '',
+      description: '',
+      requirements: '',
+      responsibilities: '',
+      quantity: '',
+      salaryLow: '',
+      salaryHigh: '',
+      status: '',
+      seniority: '',
+      currency: '',
+      meta: '',
+
+    },
+
+    enumerators: {
+      type: {
+        full_time: 'Full_time',
+        part_time: 'Part_time',
+        contract: 'Contract',
+        internship: 'Internship',
+      },
+
+      status: {
+        draft: 'Draft',
+        published: 'Published',
+        paused: 'Paused',
+        closed: 'Closed',
+      },
+
+      seniority: {
+        intern: 'Intern',
+        junior: 'Junior',
+        mid: 'Mid',
+        senior: 'Senior',
+        staff: 'Staff',
+        founding: 'Founding',
       },
     },
   },
