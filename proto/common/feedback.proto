@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package common;
+
+option go_package = "github.com/open-exchange/matching_engine/proto/common";
+
+message Feedback {
+  string id = 1;
+  string tenant_id = 2;
+  
+  string title = 3;
+  string description = 4;
+  string type = 5;
+  string status = 6;
+  string attachments = 7; // JSON string
+  string json = 8; // JSON string
+  string user_id = 9;
+  
+  int64 created_at = 10;
+  int64 updated_at = 11;
+}

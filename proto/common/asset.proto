@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package common;
+
+option go_package = "github.com/open-exchange/matching_engine/proto/common";
+
+message Asset {
+  string id = 1;
+  string tenant_id = 2;
+  string symbol = 3;
+  string type = 4; // e.g., "crypto", "fiat"
+  
+  int32 precision = 5;
+  bool is_fractional = 6;
+  int32 decimals = 7;
+  
+  string meta = 8; // JSON string
+  
+  int64 created_at = 9;
+  int64 updated_at = 10;
+}

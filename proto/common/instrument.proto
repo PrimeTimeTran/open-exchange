@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package common;
+
+option go_package = "github.com/open-exchange/matching_engine/proto/common";
+
+message Instrument {
+  string id = 1;
+  string tenant_id = 2;
+  string symbol = 3;
+  string type = 4; // e.g., "spot", "future"
+  string status = 5;
+  
+  string underlying_asset_id = 6;
+  string quote_asset_id = 7;
+  
+  string meta = 8; // JSON string
+  
+  int64 created_at = 9;
+  int64 updated_at = 10;
+}

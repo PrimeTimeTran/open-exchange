@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package common;
+
+option go_package = "github.com/open-exchange/matching_engine/proto/common";
+
+message Deposit {
+  string id = 1;
+  string tenant_id = 2;
+  string account_id = 3;
+  string asset_id = 4;
+  string wallet_id = 5; // Added for context, though schema links via account/asset
+  
+  string amount = 6;
+  string status = 7;
+  
+  string chain = 8;
+  string tx_hash = 9;
+  string from_address = 10;
+  
+  int32 confirmations = 11;
+  int32 required_confirmations = 12;
+  
+  int64 detected_at = 13;
+  int64 confirmed_at = 14;
+  int64 credited_at = 15;
+  
+  string meta = 16; // JSON string
+  
+  int64 created_at = 17;
+  int64 updated_at = 18;
+}

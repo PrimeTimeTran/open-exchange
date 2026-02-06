@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package common;
+
+option go_package = "github.com/open-exchange/matching_engine/proto/common";
+
+message Comment {
+  string id = 1;
+  string tenant_id = 2;
+  
+  string body = 3;
+  repeated string type = 4;
+  string user_id = 5;
+  
+  string meta = 6; // JSON string
+  string images = 7; // JSON string
+  
+  int64 created_at = 8;
+  int64 updated_at = 9;
+}

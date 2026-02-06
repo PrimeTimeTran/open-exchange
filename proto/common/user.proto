@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package common;
+
+option go_package = "github.com/open-exchange/matching_engine/proto/common";
+
+message User {
+  string id = 1;
+  string email = 2;
+  bool email_verified = 3;
+  string provider = 4;
+  string provider_id = 5;
+  
+  int64 created_at = 10;
+  int64 updated_at = 11;
+}

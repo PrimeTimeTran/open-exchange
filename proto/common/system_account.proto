@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package common;
+
+option go_package = "github.com/open-exchange/matching_engine/proto/common";
+
+message SystemAccount {
+  string id = 1;
+  string tenant_id = 2;
+  
+  string type = 3; // e.g. "fee_collector", "insurance_fund"
+  string name = 4;
+  string description = 5;
+  bool is_active = 6;
+  
+  string meta = 7; // JSON string
+  
+  int64 created_at = 8;
+  int64 updated_at = 9;
+}

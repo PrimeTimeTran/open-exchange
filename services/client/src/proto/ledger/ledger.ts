@@ -18,7 +18,15 @@ import {
   type ServiceError,
   type UntypedServiceImplementation,
 } from "@grpc/grpc-js";
+import { Account } from "../common/account";
+import { Asset } from "../common/asset";
+import { Deposit } from "../common/deposit";
+import { Instrument } from "../common/instrument";
 import { Order } from "../common/order";
+import { SystemAccount } from "../common/system_account";
+import { User } from "../common/user";
+import { Wallet } from "../common/wallet";
+import { Withdrawal } from "../common/withdrawal";
 
 export const protobufPackage = "ledger";
 
@@ -30,6 +38,309 @@ export interface RecordOrderResponse {
   transactionId?: string | undefined;
   success?: boolean | undefined;
   message?: string | undefined;
+}
+
+export interface CancelOrderRequest {
+  orderId?: string | undefined;
+}
+
+export interface CancelOrderResponse {
+  success?: boolean | undefined;
+  message?: string | undefined;
+}
+
+export interface DeleteOrderRequest {
+  orderId?: string | undefined;
+}
+
+export interface DeleteOrderResponse {
+  success?: boolean | undefined;
+  message?: string | undefined;
+}
+
+export interface GetOpenOrdersRequest {
+  /** Optional: Fetch for all if empty */
+  instrumentId?: string | undefined;
+}
+
+export interface GetOpenOrdersResponse {
+  orders?: Order[] | undefined;
+}
+
+export interface RecordTradeRequest {
+  makerOrderId?: string | undefined;
+  takerOrderId?: string | undefined;
+  price?: string | undefined;
+  quantity?: string | undefined;
+  timestamp?: string | undefined;
+  instrumentId?: string | undefined;
+}
+
+export interface RecordTradeResponse {
+  transactionId?: string | undefined;
+  success?: boolean | undefined;
+}
+
+export interface CreateUserRequest {
+  email?:
+    | string
+    | undefined;
+  /** Should be hashed before storage or sent securely */
+  password?: string | undefined;
+  firstName?: string | undefined;
+  lastName?: string | undefined;
+}
+
+export interface CreateUserResponse {
+  user?: User | undefined;
+}
+
+export interface GetUserRequest {
+  userId?: string | undefined;
+}
+
+export interface GetUserResponse {
+  user?: User | undefined;
+}
+
+export interface UpdateUserRequest {
+  /** Send full object or fields to update? Usually partial update needs mask or specific fields. For simplicity, full object replacement or specific fields. */
+  user?: User | undefined;
+}
+
+export interface UpdateUserResponse {
+  user?: User | undefined;
+}
+
+export interface DeleteUserRequest {
+  userId?: string | undefined;
+}
+
+export interface DeleteUserResponse {
+  success?: boolean | undefined;
+  message?: string | undefined;
+}
+
+export interface CreateAccountRequest {
+  userId?: string | undefined;
+  type?: string | undefined;
+}
+
+export interface CreateAccountResponse {
+  account?: Account | undefined;
+}
+
+export interface GetAccountRequest {
+  accountId?: string | undefined;
+}
+
+export interface GetAccountResponse {
+  account?: Account | undefined;
+}
+
+export interface UpdateAccountRequest {
+  accountId?:
+    | string
+    | undefined;
+  /** e.g. suspend */
+  status?: string | undefined;
+  type?: string | undefined;
+}
+
+export interface UpdateAccountResponse {
+  account?: Account | undefined;
+}
+
+export interface ListAccountsRequest {
+  userId?: string | undefined;
+}
+
+export interface ListAccountsResponse {
+  accounts?: Account[] | undefined;
+}
+
+export interface DeleteAccountRequest {
+  accountId?: string | undefined;
+}
+
+export interface DeleteAccountResponse {
+  success?: boolean | undefined;
+  message?: string | undefined;
+}
+
+export interface CreateWalletRequest {
+  accountId?: string | undefined;
+  assetId?: string | undefined;
+}
+
+export interface CreateWalletResponse {
+  wallet?: Wallet | undefined;
+}
+
+export interface GetWalletRequest {
+  walletId?: string | undefined;
+}
+
+export interface GetWalletResponse {
+  wallet?: Wallet | undefined;
+}
+
+export interface UpdateWalletRequest {
+  walletId?:
+    | string
+    | undefined;
+  /** e.g. freeze */
+  status?: string | undefined;
+}
+
+export interface UpdateWalletResponse {
+  wallet?: Wallet | undefined;
+}
+
+export interface ListWalletsRequest {
+  accountId?: string | undefined;
+}
+
+export interface ListWalletsResponse {
+  wallets?: Wallet[] | undefined;
+}
+
+export interface DeleteWalletRequest {
+  walletId?: string | undefined;
+}
+
+export interface DeleteWalletResponse {
+  success?: boolean | undefined;
+  message?: string | undefined;
+}
+
+export interface CreateDepositRequest {
+  walletId?: string | undefined;
+  amount?: string | undefined;
+  transactionRef?: string | undefined;
+}
+
+export interface CreateDepositResponse {
+  deposit?: Deposit | undefined;
+}
+
+export interface GetDepositRequest {
+  depositId?: string | undefined;
+}
+
+export interface GetDepositResponse {
+  deposit?: Deposit | undefined;
+}
+
+export interface UpdateDepositRequest {
+  depositId?: string | undefined;
+  status?: string | undefined;
+  confirmations?: number | undefined;
+}
+
+export interface UpdateDepositResponse {
+  deposit?: Deposit | undefined;
+}
+
+export interface ListDepositsRequest {
+  /** Optional filter */
+  walletId?:
+    | string
+    | undefined;
+  /** Optional filter */
+  status?: string | undefined;
+}
+
+export interface ListDepositsResponse {
+  deposits?: Deposit[] | undefined;
+}
+
+export interface CancelDepositRequest {
+  depositId?: string | undefined;
+}
+
+export interface CancelDepositResponse {
+  success?: boolean | undefined;
+  message?: string | undefined;
+}
+
+export interface CreateWithdrawalRequest {
+  walletId?: string | undefined;
+  amount?: string | undefined;
+  address?: string | undefined;
+}
+
+export interface CreateWithdrawalResponse {
+  withdrawal?: Withdrawal | undefined;
+}
+
+export interface GetWithdrawalRequest {
+  withdrawalId?: string | undefined;
+}
+
+export interface GetWithdrawalResponse {
+  withdrawal?: Withdrawal | undefined;
+}
+
+export interface UpdateWithdrawalRequest {
+  withdrawalId?: string | undefined;
+  status?: string | undefined;
+  txHash?: string | undefined;
+}
+
+export interface UpdateWithdrawalResponse {
+  withdrawal?: Withdrawal | undefined;
+}
+
+export interface ListWithdrawalsRequest {
+  /** Optional filter */
+  walletId?:
+    | string
+    | undefined;
+  /** Optional filter */
+  status?: string | undefined;
+}
+
+export interface ListWithdrawalsResponse {
+  withdrawals?: Withdrawal[] | undefined;
+}
+
+export interface CancelWithdrawalRequest {
+  withdrawalId?: string | undefined;
+}
+
+export interface CancelWithdrawalResponse {
+  success?: boolean | undefined;
+  message?: string | undefined;
+}
+
+export interface CreateAssetRequest {
+  symbol?: string | undefined;
+  type?: string | undefined;
+  precision?: number | undefined;
+}
+
+export interface CreateAssetResponse {
+  asset?: Asset | undefined;
+}
+
+export interface CreateInstrumentRequest {
+  symbol?: string | undefined;
+  type?: string | undefined;
+  baseAssetId?: string | undefined;
+  quoteAssetId?: string | undefined;
+}
+
+export interface CreateInstrumentResponse {
+  instrument?: Instrument | undefined;
+}
+
+export interface GetSystemAccountRequest {
+  type?: string | undefined;
+}
+
+export interface GetSystemAccountResponse {
+  account?: SystemAccount | undefined;
 }
 
 function createBaseRecordOrderRequest(): RecordOrderRequest {
@@ -186,8 +497,4462 @@ export const RecordOrderResponse: MessageFns<RecordOrderResponse> = {
   },
 };
 
+function createBaseCancelOrderRequest(): CancelOrderRequest {
+  return { orderId: "" };
+}
+
+export const CancelOrderRequest: MessageFns<CancelOrderRequest> = {
+  encode(message: CancelOrderRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.orderId !== undefined && message.orderId !== "") {
+      writer.uint32(10).string(message.orderId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CancelOrderRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCancelOrderRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.orderId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CancelOrderRequest {
+    return {
+      orderId: isSet(object.orderId)
+        ? globalThis.String(object.orderId)
+        : isSet(object.order_id)
+        ? globalThis.String(object.order_id)
+        : "",
+    };
+  },
+
+  toJSON(message: CancelOrderRequest): unknown {
+    const obj: any = {};
+    if (message.orderId !== undefined && message.orderId !== "") {
+      obj.orderId = message.orderId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CancelOrderRequest>, I>>(base?: I): CancelOrderRequest {
+    return CancelOrderRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CancelOrderRequest>, I>>(object: I): CancelOrderRequest {
+    const message = createBaseCancelOrderRequest();
+    message.orderId = object.orderId ?? "";
+    return message;
+  },
+};
+
+function createBaseCancelOrderResponse(): CancelOrderResponse {
+  return { success: false, message: "" };
+}
+
+export const CancelOrderResponse: MessageFns<CancelOrderResponse> = {
+  encode(message: CancelOrderResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== undefined && message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.message !== undefined && message.message !== "") {
+      writer.uint32(18).string(message.message);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CancelOrderResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCancelOrderResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.message = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CancelOrderResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      message: isSet(object.message) ? globalThis.String(object.message) : "",
+    };
+  },
+
+  toJSON(message: CancelOrderResponse): unknown {
+    const obj: any = {};
+    if (message.success !== undefined && message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.message !== undefined && message.message !== "") {
+      obj.message = message.message;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CancelOrderResponse>, I>>(base?: I): CancelOrderResponse {
+    return CancelOrderResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CancelOrderResponse>, I>>(object: I): CancelOrderResponse {
+    const message = createBaseCancelOrderResponse();
+    message.success = object.success ?? false;
+    message.message = object.message ?? "";
+    return message;
+  },
+};
+
+function createBaseDeleteOrderRequest(): DeleteOrderRequest {
+  return { orderId: "" };
+}
+
+export const DeleteOrderRequest: MessageFns<DeleteOrderRequest> = {
+  encode(message: DeleteOrderRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.orderId !== undefined && message.orderId !== "") {
+      writer.uint32(10).string(message.orderId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeleteOrderRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteOrderRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.orderId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeleteOrderRequest {
+    return {
+      orderId: isSet(object.orderId)
+        ? globalThis.String(object.orderId)
+        : isSet(object.order_id)
+        ? globalThis.String(object.order_id)
+        : "",
+    };
+  },
+
+  toJSON(message: DeleteOrderRequest): unknown {
+    const obj: any = {};
+    if (message.orderId !== undefined && message.orderId !== "") {
+      obj.orderId = message.orderId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DeleteOrderRequest>, I>>(base?: I): DeleteOrderRequest {
+    return DeleteOrderRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DeleteOrderRequest>, I>>(object: I): DeleteOrderRequest {
+    const message = createBaseDeleteOrderRequest();
+    message.orderId = object.orderId ?? "";
+    return message;
+  },
+};
+
+function createBaseDeleteOrderResponse(): DeleteOrderResponse {
+  return { success: false, message: "" };
+}
+
+export const DeleteOrderResponse: MessageFns<DeleteOrderResponse> = {
+  encode(message: DeleteOrderResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== undefined && message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.message !== undefined && message.message !== "") {
+      writer.uint32(18).string(message.message);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeleteOrderResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteOrderResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.message = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeleteOrderResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      message: isSet(object.message) ? globalThis.String(object.message) : "",
+    };
+  },
+
+  toJSON(message: DeleteOrderResponse): unknown {
+    const obj: any = {};
+    if (message.success !== undefined && message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.message !== undefined && message.message !== "") {
+      obj.message = message.message;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DeleteOrderResponse>, I>>(base?: I): DeleteOrderResponse {
+    return DeleteOrderResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DeleteOrderResponse>, I>>(object: I): DeleteOrderResponse {
+    const message = createBaseDeleteOrderResponse();
+    message.success = object.success ?? false;
+    message.message = object.message ?? "";
+    return message;
+  },
+};
+
+function createBaseGetOpenOrdersRequest(): GetOpenOrdersRequest {
+  return { instrumentId: "" };
+}
+
+export const GetOpenOrdersRequest: MessageFns<GetOpenOrdersRequest> = {
+  encode(message: GetOpenOrdersRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.instrumentId !== undefined && message.instrumentId !== "") {
+      writer.uint32(10).string(message.instrumentId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetOpenOrdersRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetOpenOrdersRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.instrumentId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetOpenOrdersRequest {
+    return {
+      instrumentId: isSet(object.instrumentId)
+        ? globalThis.String(object.instrumentId)
+        : isSet(object.instrument_id)
+        ? globalThis.String(object.instrument_id)
+        : "",
+    };
+  },
+
+  toJSON(message: GetOpenOrdersRequest): unknown {
+    const obj: any = {};
+    if (message.instrumentId !== undefined && message.instrumentId !== "") {
+      obj.instrumentId = message.instrumentId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetOpenOrdersRequest>, I>>(base?: I): GetOpenOrdersRequest {
+    return GetOpenOrdersRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetOpenOrdersRequest>, I>>(object: I): GetOpenOrdersRequest {
+    const message = createBaseGetOpenOrdersRequest();
+    message.instrumentId = object.instrumentId ?? "";
+    return message;
+  },
+};
+
+function createBaseGetOpenOrdersResponse(): GetOpenOrdersResponse {
+  return { orders: [] };
+}
+
+export const GetOpenOrdersResponse: MessageFns<GetOpenOrdersResponse> = {
+  encode(message: GetOpenOrdersResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.orders !== undefined && message.orders.length !== 0) {
+      for (const v of message.orders) {
+        Order.encode(v!, writer.uint32(10).fork()).join();
+      }
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetOpenOrdersResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetOpenOrdersResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          const el = Order.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.orders!.push(el);
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetOpenOrdersResponse {
+    return { orders: globalThis.Array.isArray(object?.orders) ? object.orders.map((e: any) => Order.fromJSON(e)) : [] };
+  },
+
+  toJSON(message: GetOpenOrdersResponse): unknown {
+    const obj: any = {};
+    if (message.orders?.length) {
+      obj.orders = message.orders.map((e) => Order.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetOpenOrdersResponse>, I>>(base?: I): GetOpenOrdersResponse {
+    return GetOpenOrdersResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetOpenOrdersResponse>, I>>(object: I): GetOpenOrdersResponse {
+    const message = createBaseGetOpenOrdersResponse();
+    message.orders = object.orders?.map((e) => Order.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseRecordTradeRequest(): RecordTradeRequest {
+  return { makerOrderId: "", takerOrderId: "", price: "", quantity: "", timestamp: "0", instrumentId: "" };
+}
+
+export const RecordTradeRequest: MessageFns<RecordTradeRequest> = {
+  encode(message: RecordTradeRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.makerOrderId !== undefined && message.makerOrderId !== "") {
+      writer.uint32(10).string(message.makerOrderId);
+    }
+    if (message.takerOrderId !== undefined && message.takerOrderId !== "") {
+      writer.uint32(18).string(message.takerOrderId);
+    }
+    if (message.price !== undefined && message.price !== "") {
+      writer.uint32(26).string(message.price);
+    }
+    if (message.quantity !== undefined && message.quantity !== "") {
+      writer.uint32(34).string(message.quantity);
+    }
+    if (message.timestamp !== undefined && message.timestamp !== "0") {
+      writer.uint32(40).int64(message.timestamp);
+    }
+    if (message.instrumentId !== undefined && message.instrumentId !== "") {
+      writer.uint32(50).string(message.instrumentId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RecordTradeRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRecordTradeRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.makerOrderId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.takerOrderId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.price = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.quantity = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.timestamp = reader.int64().toString();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.instrumentId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RecordTradeRequest {
+    return {
+      makerOrderId: isSet(object.makerOrderId)
+        ? globalThis.String(object.makerOrderId)
+        : isSet(object.maker_order_id)
+        ? globalThis.String(object.maker_order_id)
+        : "",
+      takerOrderId: isSet(object.takerOrderId)
+        ? globalThis.String(object.takerOrderId)
+        : isSet(object.taker_order_id)
+        ? globalThis.String(object.taker_order_id)
+        : "",
+      price: isSet(object.price) ? globalThis.String(object.price) : "",
+      quantity: isSet(object.quantity) ? globalThis.String(object.quantity) : "",
+      timestamp: isSet(object.timestamp) ? globalThis.String(object.timestamp) : "0",
+      instrumentId: isSet(object.instrumentId)
+        ? globalThis.String(object.instrumentId)
+        : isSet(object.instrument_id)
+        ? globalThis.String(object.instrument_id)
+        : "",
+    };
+  },
+
+  toJSON(message: RecordTradeRequest): unknown {
+    const obj: any = {};
+    if (message.makerOrderId !== undefined && message.makerOrderId !== "") {
+      obj.makerOrderId = message.makerOrderId;
+    }
+    if (message.takerOrderId !== undefined && message.takerOrderId !== "") {
+      obj.takerOrderId = message.takerOrderId;
+    }
+    if (message.price !== undefined && message.price !== "") {
+      obj.price = message.price;
+    }
+    if (message.quantity !== undefined && message.quantity !== "") {
+      obj.quantity = message.quantity;
+    }
+    if (message.timestamp !== undefined && message.timestamp !== "0") {
+      obj.timestamp = message.timestamp;
+    }
+    if (message.instrumentId !== undefined && message.instrumentId !== "") {
+      obj.instrumentId = message.instrumentId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RecordTradeRequest>, I>>(base?: I): RecordTradeRequest {
+    return RecordTradeRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<RecordTradeRequest>, I>>(object: I): RecordTradeRequest {
+    const message = createBaseRecordTradeRequest();
+    message.makerOrderId = object.makerOrderId ?? "";
+    message.takerOrderId = object.takerOrderId ?? "";
+    message.price = object.price ?? "";
+    message.quantity = object.quantity ?? "";
+    message.timestamp = object.timestamp ?? "0";
+    message.instrumentId = object.instrumentId ?? "";
+    return message;
+  },
+};
+
+function createBaseRecordTradeResponse(): RecordTradeResponse {
+  return { transactionId: "", success: false };
+}
+
+export const RecordTradeResponse: MessageFns<RecordTradeResponse> = {
+  encode(message: RecordTradeResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.transactionId !== undefined && message.transactionId !== "") {
+      writer.uint32(10).string(message.transactionId);
+    }
+    if (message.success !== undefined && message.success !== false) {
+      writer.uint32(16).bool(message.success);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RecordTradeResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRecordTradeResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.transactionId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RecordTradeResponse {
+    return {
+      transactionId: isSet(object.transactionId)
+        ? globalThis.String(object.transactionId)
+        : isSet(object.transaction_id)
+        ? globalThis.String(object.transaction_id)
+        : "",
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+    };
+  },
+
+  toJSON(message: RecordTradeResponse): unknown {
+    const obj: any = {};
+    if (message.transactionId !== undefined && message.transactionId !== "") {
+      obj.transactionId = message.transactionId;
+    }
+    if (message.success !== undefined && message.success !== false) {
+      obj.success = message.success;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RecordTradeResponse>, I>>(base?: I): RecordTradeResponse {
+    return RecordTradeResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<RecordTradeResponse>, I>>(object: I): RecordTradeResponse {
+    const message = createBaseRecordTradeResponse();
+    message.transactionId = object.transactionId ?? "";
+    message.success = object.success ?? false;
+    return message;
+  },
+};
+
+function createBaseCreateUserRequest(): CreateUserRequest {
+  return { email: "", password: "", firstName: "", lastName: "" };
+}
+
+export const CreateUserRequest: MessageFns<CreateUserRequest> = {
+  encode(message: CreateUserRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.email !== undefined && message.email !== "") {
+      writer.uint32(10).string(message.email);
+    }
+    if (message.password !== undefined && message.password !== "") {
+      writer.uint32(18).string(message.password);
+    }
+    if (message.firstName !== undefined && message.firstName !== "") {
+      writer.uint32(26).string(message.firstName);
+    }
+    if (message.lastName !== undefined && message.lastName !== "") {
+      writer.uint32(34).string(message.lastName);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateUserRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateUserRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.email = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.password = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.firstName = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.lastName = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateUserRequest {
+    return {
+      email: isSet(object.email) ? globalThis.String(object.email) : "",
+      password: isSet(object.password) ? globalThis.String(object.password) : "",
+      firstName: isSet(object.firstName)
+        ? globalThis.String(object.firstName)
+        : isSet(object.first_name)
+        ? globalThis.String(object.first_name)
+        : "",
+      lastName: isSet(object.lastName)
+        ? globalThis.String(object.lastName)
+        : isSet(object.last_name)
+        ? globalThis.String(object.last_name)
+        : "",
+    };
+  },
+
+  toJSON(message: CreateUserRequest): unknown {
+    const obj: any = {};
+    if (message.email !== undefined && message.email !== "") {
+      obj.email = message.email;
+    }
+    if (message.password !== undefined && message.password !== "") {
+      obj.password = message.password;
+    }
+    if (message.firstName !== undefined && message.firstName !== "") {
+      obj.firstName = message.firstName;
+    }
+    if (message.lastName !== undefined && message.lastName !== "") {
+      obj.lastName = message.lastName;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateUserRequest>, I>>(base?: I): CreateUserRequest {
+    return CreateUserRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateUserRequest>, I>>(object: I): CreateUserRequest {
+    const message = createBaseCreateUserRequest();
+    message.email = object.email ?? "";
+    message.password = object.password ?? "";
+    message.firstName = object.firstName ?? "";
+    message.lastName = object.lastName ?? "";
+    return message;
+  },
+};
+
+function createBaseCreateUserResponse(): CreateUserResponse {
+  return { user: undefined };
+}
+
+export const CreateUserResponse: MessageFns<CreateUserResponse> = {
+  encode(message: CreateUserResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.user !== undefined) {
+      User.encode(message.user, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateUserResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateUserResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.user = User.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateUserResponse {
+    return { user: isSet(object.user) ? User.fromJSON(object.user) : undefined };
+  },
+
+  toJSON(message: CreateUserResponse): unknown {
+    const obj: any = {};
+    if (message.user !== undefined) {
+      obj.user = User.toJSON(message.user);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateUserResponse>, I>>(base?: I): CreateUserResponse {
+    return CreateUserResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateUserResponse>, I>>(object: I): CreateUserResponse {
+    const message = createBaseCreateUserResponse();
+    message.user = (object.user !== undefined && object.user !== null) ? User.fromPartial(object.user) : undefined;
+    return message;
+  },
+};
+
+function createBaseGetUserRequest(): GetUserRequest {
+  return { userId: "" };
+}
+
+export const GetUserRequest: MessageFns<GetUserRequest> = {
+  encode(message: GetUserRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.userId !== undefined && message.userId !== "") {
+      writer.uint32(10).string(message.userId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetUserRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetUserRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetUserRequest {
+    return {
+      userId: isSet(object.userId)
+        ? globalThis.String(object.userId)
+        : isSet(object.user_id)
+        ? globalThis.String(object.user_id)
+        : "",
+    };
+  },
+
+  toJSON(message: GetUserRequest): unknown {
+    const obj: any = {};
+    if (message.userId !== undefined && message.userId !== "") {
+      obj.userId = message.userId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetUserRequest>, I>>(base?: I): GetUserRequest {
+    return GetUserRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetUserRequest>, I>>(object: I): GetUserRequest {
+    const message = createBaseGetUserRequest();
+    message.userId = object.userId ?? "";
+    return message;
+  },
+};
+
+function createBaseGetUserResponse(): GetUserResponse {
+  return { user: undefined };
+}
+
+export const GetUserResponse: MessageFns<GetUserResponse> = {
+  encode(message: GetUserResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.user !== undefined) {
+      User.encode(message.user, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetUserResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetUserResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.user = User.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetUserResponse {
+    return { user: isSet(object.user) ? User.fromJSON(object.user) : undefined };
+  },
+
+  toJSON(message: GetUserResponse): unknown {
+    const obj: any = {};
+    if (message.user !== undefined) {
+      obj.user = User.toJSON(message.user);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetUserResponse>, I>>(base?: I): GetUserResponse {
+    return GetUserResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetUserResponse>, I>>(object: I): GetUserResponse {
+    const message = createBaseGetUserResponse();
+    message.user = (object.user !== undefined && object.user !== null) ? User.fromPartial(object.user) : undefined;
+    return message;
+  },
+};
+
+function createBaseUpdateUserRequest(): UpdateUserRequest {
+  return { user: undefined };
+}
+
+export const UpdateUserRequest: MessageFns<UpdateUserRequest> = {
+  encode(message: UpdateUserRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.user !== undefined) {
+      User.encode(message.user, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateUserRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateUserRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.user = User.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateUserRequest {
+    return { user: isSet(object.user) ? User.fromJSON(object.user) : undefined };
+  },
+
+  toJSON(message: UpdateUserRequest): unknown {
+    const obj: any = {};
+    if (message.user !== undefined) {
+      obj.user = User.toJSON(message.user);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UpdateUserRequest>, I>>(base?: I): UpdateUserRequest {
+    return UpdateUserRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpdateUserRequest>, I>>(object: I): UpdateUserRequest {
+    const message = createBaseUpdateUserRequest();
+    message.user = (object.user !== undefined && object.user !== null) ? User.fromPartial(object.user) : undefined;
+    return message;
+  },
+};
+
+function createBaseUpdateUserResponse(): UpdateUserResponse {
+  return { user: undefined };
+}
+
+export const UpdateUserResponse: MessageFns<UpdateUserResponse> = {
+  encode(message: UpdateUserResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.user !== undefined) {
+      User.encode(message.user, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateUserResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateUserResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.user = User.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateUserResponse {
+    return { user: isSet(object.user) ? User.fromJSON(object.user) : undefined };
+  },
+
+  toJSON(message: UpdateUserResponse): unknown {
+    const obj: any = {};
+    if (message.user !== undefined) {
+      obj.user = User.toJSON(message.user);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UpdateUserResponse>, I>>(base?: I): UpdateUserResponse {
+    return UpdateUserResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpdateUserResponse>, I>>(object: I): UpdateUserResponse {
+    const message = createBaseUpdateUserResponse();
+    message.user = (object.user !== undefined && object.user !== null) ? User.fromPartial(object.user) : undefined;
+    return message;
+  },
+};
+
+function createBaseDeleteUserRequest(): DeleteUserRequest {
+  return { userId: "" };
+}
+
+export const DeleteUserRequest: MessageFns<DeleteUserRequest> = {
+  encode(message: DeleteUserRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.userId !== undefined && message.userId !== "") {
+      writer.uint32(10).string(message.userId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeleteUserRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteUserRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeleteUserRequest {
+    return {
+      userId: isSet(object.userId)
+        ? globalThis.String(object.userId)
+        : isSet(object.user_id)
+        ? globalThis.String(object.user_id)
+        : "",
+    };
+  },
+
+  toJSON(message: DeleteUserRequest): unknown {
+    const obj: any = {};
+    if (message.userId !== undefined && message.userId !== "") {
+      obj.userId = message.userId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DeleteUserRequest>, I>>(base?: I): DeleteUserRequest {
+    return DeleteUserRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DeleteUserRequest>, I>>(object: I): DeleteUserRequest {
+    const message = createBaseDeleteUserRequest();
+    message.userId = object.userId ?? "";
+    return message;
+  },
+};
+
+function createBaseDeleteUserResponse(): DeleteUserResponse {
+  return { success: false, message: "" };
+}
+
+export const DeleteUserResponse: MessageFns<DeleteUserResponse> = {
+  encode(message: DeleteUserResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== undefined && message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.message !== undefined && message.message !== "") {
+      writer.uint32(18).string(message.message);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeleteUserResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteUserResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.message = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeleteUserResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      message: isSet(object.message) ? globalThis.String(object.message) : "",
+    };
+  },
+
+  toJSON(message: DeleteUserResponse): unknown {
+    const obj: any = {};
+    if (message.success !== undefined && message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.message !== undefined && message.message !== "") {
+      obj.message = message.message;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DeleteUserResponse>, I>>(base?: I): DeleteUserResponse {
+    return DeleteUserResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DeleteUserResponse>, I>>(object: I): DeleteUserResponse {
+    const message = createBaseDeleteUserResponse();
+    message.success = object.success ?? false;
+    message.message = object.message ?? "";
+    return message;
+  },
+};
+
+function createBaseCreateAccountRequest(): CreateAccountRequest {
+  return { userId: "", type: "" };
+}
+
+export const CreateAccountRequest: MessageFns<CreateAccountRequest> = {
+  encode(message: CreateAccountRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.userId !== undefined && message.userId !== "") {
+      writer.uint32(10).string(message.userId);
+    }
+    if (message.type !== undefined && message.type !== "") {
+      writer.uint32(18).string(message.type);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateAccountRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateAccountRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.type = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateAccountRequest {
+    return {
+      userId: isSet(object.userId)
+        ? globalThis.String(object.userId)
+        : isSet(object.user_id)
+        ? globalThis.String(object.user_id)
+        : "",
+      type: isSet(object.type) ? globalThis.String(object.type) : "",
+    };
+  },
+
+  toJSON(message: CreateAccountRequest): unknown {
+    const obj: any = {};
+    if (message.userId !== undefined && message.userId !== "") {
+      obj.userId = message.userId;
+    }
+    if (message.type !== undefined && message.type !== "") {
+      obj.type = message.type;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateAccountRequest>, I>>(base?: I): CreateAccountRequest {
+    return CreateAccountRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateAccountRequest>, I>>(object: I): CreateAccountRequest {
+    const message = createBaseCreateAccountRequest();
+    message.userId = object.userId ?? "";
+    message.type = object.type ?? "";
+    return message;
+  },
+};
+
+function createBaseCreateAccountResponse(): CreateAccountResponse {
+  return { account: undefined };
+}
+
+export const CreateAccountResponse: MessageFns<CreateAccountResponse> = {
+  encode(message: CreateAccountResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.account !== undefined) {
+      Account.encode(message.account, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateAccountResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateAccountResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.account = Account.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateAccountResponse {
+    return { account: isSet(object.account) ? Account.fromJSON(object.account) : undefined };
+  },
+
+  toJSON(message: CreateAccountResponse): unknown {
+    const obj: any = {};
+    if (message.account !== undefined) {
+      obj.account = Account.toJSON(message.account);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateAccountResponse>, I>>(base?: I): CreateAccountResponse {
+    return CreateAccountResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateAccountResponse>, I>>(object: I): CreateAccountResponse {
+    const message = createBaseCreateAccountResponse();
+    message.account = (object.account !== undefined && object.account !== null)
+      ? Account.fromPartial(object.account)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseGetAccountRequest(): GetAccountRequest {
+  return { accountId: "" };
+}
+
+export const GetAccountRequest: MessageFns<GetAccountRequest> = {
+  encode(message: GetAccountRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.accountId !== undefined && message.accountId !== "") {
+      writer.uint32(10).string(message.accountId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetAccountRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetAccountRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.accountId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetAccountRequest {
+    return {
+      accountId: isSet(object.accountId)
+        ? globalThis.String(object.accountId)
+        : isSet(object.account_id)
+        ? globalThis.String(object.account_id)
+        : "",
+    };
+  },
+
+  toJSON(message: GetAccountRequest): unknown {
+    const obj: any = {};
+    if (message.accountId !== undefined && message.accountId !== "") {
+      obj.accountId = message.accountId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetAccountRequest>, I>>(base?: I): GetAccountRequest {
+    return GetAccountRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetAccountRequest>, I>>(object: I): GetAccountRequest {
+    const message = createBaseGetAccountRequest();
+    message.accountId = object.accountId ?? "";
+    return message;
+  },
+};
+
+function createBaseGetAccountResponse(): GetAccountResponse {
+  return { account: undefined };
+}
+
+export const GetAccountResponse: MessageFns<GetAccountResponse> = {
+  encode(message: GetAccountResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.account !== undefined) {
+      Account.encode(message.account, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetAccountResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetAccountResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.account = Account.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetAccountResponse {
+    return { account: isSet(object.account) ? Account.fromJSON(object.account) : undefined };
+  },
+
+  toJSON(message: GetAccountResponse): unknown {
+    const obj: any = {};
+    if (message.account !== undefined) {
+      obj.account = Account.toJSON(message.account);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetAccountResponse>, I>>(base?: I): GetAccountResponse {
+    return GetAccountResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetAccountResponse>, I>>(object: I): GetAccountResponse {
+    const message = createBaseGetAccountResponse();
+    message.account = (object.account !== undefined && object.account !== null)
+      ? Account.fromPartial(object.account)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseUpdateAccountRequest(): UpdateAccountRequest {
+  return { accountId: "", status: "", type: "" };
+}
+
+export const UpdateAccountRequest: MessageFns<UpdateAccountRequest> = {
+  encode(message: UpdateAccountRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.accountId !== undefined && message.accountId !== "") {
+      writer.uint32(10).string(message.accountId);
+    }
+    if (message.status !== undefined && message.status !== "") {
+      writer.uint32(18).string(message.status);
+    }
+    if (message.type !== undefined && message.type !== "") {
+      writer.uint32(26).string(message.type);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateAccountRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateAccountRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.accountId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.type = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateAccountRequest {
+    return {
+      accountId: isSet(object.accountId)
+        ? globalThis.String(object.accountId)
+        : isSet(object.account_id)
+        ? globalThis.String(object.account_id)
+        : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+      type: isSet(object.type) ? globalThis.String(object.type) : "",
+    };
+  },
+
+  toJSON(message: UpdateAccountRequest): unknown {
+    const obj: any = {};
+    if (message.accountId !== undefined && message.accountId !== "") {
+      obj.accountId = message.accountId;
+    }
+    if (message.status !== undefined && message.status !== "") {
+      obj.status = message.status;
+    }
+    if (message.type !== undefined && message.type !== "") {
+      obj.type = message.type;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UpdateAccountRequest>, I>>(base?: I): UpdateAccountRequest {
+    return UpdateAccountRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpdateAccountRequest>, I>>(object: I): UpdateAccountRequest {
+    const message = createBaseUpdateAccountRequest();
+    message.accountId = object.accountId ?? "";
+    message.status = object.status ?? "";
+    message.type = object.type ?? "";
+    return message;
+  },
+};
+
+function createBaseUpdateAccountResponse(): UpdateAccountResponse {
+  return { account: undefined };
+}
+
+export const UpdateAccountResponse: MessageFns<UpdateAccountResponse> = {
+  encode(message: UpdateAccountResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.account !== undefined) {
+      Account.encode(message.account, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateAccountResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateAccountResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.account = Account.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateAccountResponse {
+    return { account: isSet(object.account) ? Account.fromJSON(object.account) : undefined };
+  },
+
+  toJSON(message: UpdateAccountResponse): unknown {
+    const obj: any = {};
+    if (message.account !== undefined) {
+      obj.account = Account.toJSON(message.account);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UpdateAccountResponse>, I>>(base?: I): UpdateAccountResponse {
+    return UpdateAccountResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpdateAccountResponse>, I>>(object: I): UpdateAccountResponse {
+    const message = createBaseUpdateAccountResponse();
+    message.account = (object.account !== undefined && object.account !== null)
+      ? Account.fromPartial(object.account)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseListAccountsRequest(): ListAccountsRequest {
+  return { userId: "" };
+}
+
+export const ListAccountsRequest: MessageFns<ListAccountsRequest> = {
+  encode(message: ListAccountsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.userId !== undefined && message.userId !== "") {
+      writer.uint32(10).string(message.userId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListAccountsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListAccountsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListAccountsRequest {
+    return {
+      userId: isSet(object.userId)
+        ? globalThis.String(object.userId)
+        : isSet(object.user_id)
+        ? globalThis.String(object.user_id)
+        : "",
+    };
+  },
+
+  toJSON(message: ListAccountsRequest): unknown {
+    const obj: any = {};
+    if (message.userId !== undefined && message.userId !== "") {
+      obj.userId = message.userId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListAccountsRequest>, I>>(base?: I): ListAccountsRequest {
+    return ListAccountsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListAccountsRequest>, I>>(object: I): ListAccountsRequest {
+    const message = createBaseListAccountsRequest();
+    message.userId = object.userId ?? "";
+    return message;
+  },
+};
+
+function createBaseListAccountsResponse(): ListAccountsResponse {
+  return { accounts: [] };
+}
+
+export const ListAccountsResponse: MessageFns<ListAccountsResponse> = {
+  encode(message: ListAccountsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.accounts !== undefined && message.accounts.length !== 0) {
+      for (const v of message.accounts) {
+        Account.encode(v!, writer.uint32(10).fork()).join();
+      }
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListAccountsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListAccountsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          const el = Account.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.accounts!.push(el);
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListAccountsResponse {
+    return {
+      accounts: globalThis.Array.isArray(object?.accounts) ? object.accounts.map((e: any) => Account.fromJSON(e)) : [],
+    };
+  },
+
+  toJSON(message: ListAccountsResponse): unknown {
+    const obj: any = {};
+    if (message.accounts?.length) {
+      obj.accounts = message.accounts.map((e) => Account.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListAccountsResponse>, I>>(base?: I): ListAccountsResponse {
+    return ListAccountsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListAccountsResponse>, I>>(object: I): ListAccountsResponse {
+    const message = createBaseListAccountsResponse();
+    message.accounts = object.accounts?.map((e) => Account.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseDeleteAccountRequest(): DeleteAccountRequest {
+  return { accountId: "" };
+}
+
+export const DeleteAccountRequest: MessageFns<DeleteAccountRequest> = {
+  encode(message: DeleteAccountRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.accountId !== undefined && message.accountId !== "") {
+      writer.uint32(10).string(message.accountId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeleteAccountRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteAccountRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.accountId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeleteAccountRequest {
+    return {
+      accountId: isSet(object.accountId)
+        ? globalThis.String(object.accountId)
+        : isSet(object.account_id)
+        ? globalThis.String(object.account_id)
+        : "",
+    };
+  },
+
+  toJSON(message: DeleteAccountRequest): unknown {
+    const obj: any = {};
+    if (message.accountId !== undefined && message.accountId !== "") {
+      obj.accountId = message.accountId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DeleteAccountRequest>, I>>(base?: I): DeleteAccountRequest {
+    return DeleteAccountRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DeleteAccountRequest>, I>>(object: I): DeleteAccountRequest {
+    const message = createBaseDeleteAccountRequest();
+    message.accountId = object.accountId ?? "";
+    return message;
+  },
+};
+
+function createBaseDeleteAccountResponse(): DeleteAccountResponse {
+  return { success: false, message: "" };
+}
+
+export const DeleteAccountResponse: MessageFns<DeleteAccountResponse> = {
+  encode(message: DeleteAccountResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== undefined && message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.message !== undefined && message.message !== "") {
+      writer.uint32(18).string(message.message);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeleteAccountResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteAccountResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.message = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeleteAccountResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      message: isSet(object.message) ? globalThis.String(object.message) : "",
+    };
+  },
+
+  toJSON(message: DeleteAccountResponse): unknown {
+    const obj: any = {};
+    if (message.success !== undefined && message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.message !== undefined && message.message !== "") {
+      obj.message = message.message;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DeleteAccountResponse>, I>>(base?: I): DeleteAccountResponse {
+    return DeleteAccountResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DeleteAccountResponse>, I>>(object: I): DeleteAccountResponse {
+    const message = createBaseDeleteAccountResponse();
+    message.success = object.success ?? false;
+    message.message = object.message ?? "";
+    return message;
+  },
+};
+
+function createBaseCreateWalletRequest(): CreateWalletRequest {
+  return { accountId: "", assetId: "" };
+}
+
+export const CreateWalletRequest: MessageFns<CreateWalletRequest> = {
+  encode(message: CreateWalletRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.accountId !== undefined && message.accountId !== "") {
+      writer.uint32(10).string(message.accountId);
+    }
+    if (message.assetId !== undefined && message.assetId !== "") {
+      writer.uint32(18).string(message.assetId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateWalletRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateWalletRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.accountId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.assetId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateWalletRequest {
+    return {
+      accountId: isSet(object.accountId)
+        ? globalThis.String(object.accountId)
+        : isSet(object.account_id)
+        ? globalThis.String(object.account_id)
+        : "",
+      assetId: isSet(object.assetId)
+        ? globalThis.String(object.assetId)
+        : isSet(object.asset_id)
+        ? globalThis.String(object.asset_id)
+        : "",
+    };
+  },
+
+  toJSON(message: CreateWalletRequest): unknown {
+    const obj: any = {};
+    if (message.accountId !== undefined && message.accountId !== "") {
+      obj.accountId = message.accountId;
+    }
+    if (message.assetId !== undefined && message.assetId !== "") {
+      obj.assetId = message.assetId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateWalletRequest>, I>>(base?: I): CreateWalletRequest {
+    return CreateWalletRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateWalletRequest>, I>>(object: I): CreateWalletRequest {
+    const message = createBaseCreateWalletRequest();
+    message.accountId = object.accountId ?? "";
+    message.assetId = object.assetId ?? "";
+    return message;
+  },
+};
+
+function createBaseCreateWalletResponse(): CreateWalletResponse {
+  return { wallet: undefined };
+}
+
+export const CreateWalletResponse: MessageFns<CreateWalletResponse> = {
+  encode(message: CreateWalletResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.wallet !== undefined) {
+      Wallet.encode(message.wallet, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateWalletResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateWalletResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.wallet = Wallet.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateWalletResponse {
+    return { wallet: isSet(object.wallet) ? Wallet.fromJSON(object.wallet) : undefined };
+  },
+
+  toJSON(message: CreateWalletResponse): unknown {
+    const obj: any = {};
+    if (message.wallet !== undefined) {
+      obj.wallet = Wallet.toJSON(message.wallet);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateWalletResponse>, I>>(base?: I): CreateWalletResponse {
+    return CreateWalletResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateWalletResponse>, I>>(object: I): CreateWalletResponse {
+    const message = createBaseCreateWalletResponse();
+    message.wallet = (object.wallet !== undefined && object.wallet !== null)
+      ? Wallet.fromPartial(object.wallet)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseGetWalletRequest(): GetWalletRequest {
+  return { walletId: "" };
+}
+
+export const GetWalletRequest: MessageFns<GetWalletRequest> = {
+  encode(message: GetWalletRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.walletId !== undefined && message.walletId !== "") {
+      writer.uint32(10).string(message.walletId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetWalletRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetWalletRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.walletId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetWalletRequest {
+    return {
+      walletId: isSet(object.walletId)
+        ? globalThis.String(object.walletId)
+        : isSet(object.wallet_id)
+        ? globalThis.String(object.wallet_id)
+        : "",
+    };
+  },
+
+  toJSON(message: GetWalletRequest): unknown {
+    const obj: any = {};
+    if (message.walletId !== undefined && message.walletId !== "") {
+      obj.walletId = message.walletId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetWalletRequest>, I>>(base?: I): GetWalletRequest {
+    return GetWalletRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetWalletRequest>, I>>(object: I): GetWalletRequest {
+    const message = createBaseGetWalletRequest();
+    message.walletId = object.walletId ?? "";
+    return message;
+  },
+};
+
+function createBaseGetWalletResponse(): GetWalletResponse {
+  return { wallet: undefined };
+}
+
+export const GetWalletResponse: MessageFns<GetWalletResponse> = {
+  encode(message: GetWalletResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.wallet !== undefined) {
+      Wallet.encode(message.wallet, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetWalletResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetWalletResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.wallet = Wallet.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetWalletResponse {
+    return { wallet: isSet(object.wallet) ? Wallet.fromJSON(object.wallet) : undefined };
+  },
+
+  toJSON(message: GetWalletResponse): unknown {
+    const obj: any = {};
+    if (message.wallet !== undefined) {
+      obj.wallet = Wallet.toJSON(message.wallet);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetWalletResponse>, I>>(base?: I): GetWalletResponse {
+    return GetWalletResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetWalletResponse>, I>>(object: I): GetWalletResponse {
+    const message = createBaseGetWalletResponse();
+    message.wallet = (object.wallet !== undefined && object.wallet !== null)
+      ? Wallet.fromPartial(object.wallet)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseUpdateWalletRequest(): UpdateWalletRequest {
+  return { walletId: "", status: "" };
+}
+
+export const UpdateWalletRequest: MessageFns<UpdateWalletRequest> = {
+  encode(message: UpdateWalletRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.walletId !== undefined && message.walletId !== "") {
+      writer.uint32(10).string(message.walletId);
+    }
+    if (message.status !== undefined && message.status !== "") {
+      writer.uint32(18).string(message.status);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateWalletRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateWalletRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.walletId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateWalletRequest {
+    return {
+      walletId: isSet(object.walletId)
+        ? globalThis.String(object.walletId)
+        : isSet(object.wallet_id)
+        ? globalThis.String(object.wallet_id)
+        : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+    };
+  },
+
+  toJSON(message: UpdateWalletRequest): unknown {
+    const obj: any = {};
+    if (message.walletId !== undefined && message.walletId !== "") {
+      obj.walletId = message.walletId;
+    }
+    if (message.status !== undefined && message.status !== "") {
+      obj.status = message.status;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UpdateWalletRequest>, I>>(base?: I): UpdateWalletRequest {
+    return UpdateWalletRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpdateWalletRequest>, I>>(object: I): UpdateWalletRequest {
+    const message = createBaseUpdateWalletRequest();
+    message.walletId = object.walletId ?? "";
+    message.status = object.status ?? "";
+    return message;
+  },
+};
+
+function createBaseUpdateWalletResponse(): UpdateWalletResponse {
+  return { wallet: undefined };
+}
+
+export const UpdateWalletResponse: MessageFns<UpdateWalletResponse> = {
+  encode(message: UpdateWalletResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.wallet !== undefined) {
+      Wallet.encode(message.wallet, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateWalletResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateWalletResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.wallet = Wallet.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateWalletResponse {
+    return { wallet: isSet(object.wallet) ? Wallet.fromJSON(object.wallet) : undefined };
+  },
+
+  toJSON(message: UpdateWalletResponse): unknown {
+    const obj: any = {};
+    if (message.wallet !== undefined) {
+      obj.wallet = Wallet.toJSON(message.wallet);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UpdateWalletResponse>, I>>(base?: I): UpdateWalletResponse {
+    return UpdateWalletResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpdateWalletResponse>, I>>(object: I): UpdateWalletResponse {
+    const message = createBaseUpdateWalletResponse();
+    message.wallet = (object.wallet !== undefined && object.wallet !== null)
+      ? Wallet.fromPartial(object.wallet)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseListWalletsRequest(): ListWalletsRequest {
+  return { accountId: "" };
+}
+
+export const ListWalletsRequest: MessageFns<ListWalletsRequest> = {
+  encode(message: ListWalletsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.accountId !== undefined && message.accountId !== "") {
+      writer.uint32(10).string(message.accountId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListWalletsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListWalletsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.accountId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListWalletsRequest {
+    return {
+      accountId: isSet(object.accountId)
+        ? globalThis.String(object.accountId)
+        : isSet(object.account_id)
+        ? globalThis.String(object.account_id)
+        : "",
+    };
+  },
+
+  toJSON(message: ListWalletsRequest): unknown {
+    const obj: any = {};
+    if (message.accountId !== undefined && message.accountId !== "") {
+      obj.accountId = message.accountId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListWalletsRequest>, I>>(base?: I): ListWalletsRequest {
+    return ListWalletsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListWalletsRequest>, I>>(object: I): ListWalletsRequest {
+    const message = createBaseListWalletsRequest();
+    message.accountId = object.accountId ?? "";
+    return message;
+  },
+};
+
+function createBaseListWalletsResponse(): ListWalletsResponse {
+  return { wallets: [] };
+}
+
+export const ListWalletsResponse: MessageFns<ListWalletsResponse> = {
+  encode(message: ListWalletsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.wallets !== undefined && message.wallets.length !== 0) {
+      for (const v of message.wallets) {
+        Wallet.encode(v!, writer.uint32(10).fork()).join();
+      }
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListWalletsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListWalletsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          const el = Wallet.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.wallets!.push(el);
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListWalletsResponse {
+    return {
+      wallets: globalThis.Array.isArray(object?.wallets) ? object.wallets.map((e: any) => Wallet.fromJSON(e)) : [],
+    };
+  },
+
+  toJSON(message: ListWalletsResponse): unknown {
+    const obj: any = {};
+    if (message.wallets?.length) {
+      obj.wallets = message.wallets.map((e) => Wallet.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListWalletsResponse>, I>>(base?: I): ListWalletsResponse {
+    return ListWalletsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListWalletsResponse>, I>>(object: I): ListWalletsResponse {
+    const message = createBaseListWalletsResponse();
+    message.wallets = object.wallets?.map((e) => Wallet.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseDeleteWalletRequest(): DeleteWalletRequest {
+  return { walletId: "" };
+}
+
+export const DeleteWalletRequest: MessageFns<DeleteWalletRequest> = {
+  encode(message: DeleteWalletRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.walletId !== undefined && message.walletId !== "") {
+      writer.uint32(10).string(message.walletId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeleteWalletRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteWalletRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.walletId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeleteWalletRequest {
+    return {
+      walletId: isSet(object.walletId)
+        ? globalThis.String(object.walletId)
+        : isSet(object.wallet_id)
+        ? globalThis.String(object.wallet_id)
+        : "",
+    };
+  },
+
+  toJSON(message: DeleteWalletRequest): unknown {
+    const obj: any = {};
+    if (message.walletId !== undefined && message.walletId !== "") {
+      obj.walletId = message.walletId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DeleteWalletRequest>, I>>(base?: I): DeleteWalletRequest {
+    return DeleteWalletRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DeleteWalletRequest>, I>>(object: I): DeleteWalletRequest {
+    const message = createBaseDeleteWalletRequest();
+    message.walletId = object.walletId ?? "";
+    return message;
+  },
+};
+
+function createBaseDeleteWalletResponse(): DeleteWalletResponse {
+  return { success: false, message: "" };
+}
+
+export const DeleteWalletResponse: MessageFns<DeleteWalletResponse> = {
+  encode(message: DeleteWalletResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== undefined && message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.message !== undefined && message.message !== "") {
+      writer.uint32(18).string(message.message);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeleteWalletResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteWalletResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.message = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeleteWalletResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      message: isSet(object.message) ? globalThis.String(object.message) : "",
+    };
+  },
+
+  toJSON(message: DeleteWalletResponse): unknown {
+    const obj: any = {};
+    if (message.success !== undefined && message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.message !== undefined && message.message !== "") {
+      obj.message = message.message;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DeleteWalletResponse>, I>>(base?: I): DeleteWalletResponse {
+    return DeleteWalletResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DeleteWalletResponse>, I>>(object: I): DeleteWalletResponse {
+    const message = createBaseDeleteWalletResponse();
+    message.success = object.success ?? false;
+    message.message = object.message ?? "";
+    return message;
+  },
+};
+
+function createBaseCreateDepositRequest(): CreateDepositRequest {
+  return { walletId: "", amount: "", transactionRef: "" };
+}
+
+export const CreateDepositRequest: MessageFns<CreateDepositRequest> = {
+  encode(message: CreateDepositRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.walletId !== undefined && message.walletId !== "") {
+      writer.uint32(10).string(message.walletId);
+    }
+    if (message.amount !== undefined && message.amount !== "") {
+      writer.uint32(18).string(message.amount);
+    }
+    if (message.transactionRef !== undefined && message.transactionRef !== "") {
+      writer.uint32(26).string(message.transactionRef);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateDepositRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateDepositRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.walletId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.amount = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.transactionRef = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateDepositRequest {
+    return {
+      walletId: isSet(object.walletId)
+        ? globalThis.String(object.walletId)
+        : isSet(object.wallet_id)
+        ? globalThis.String(object.wallet_id)
+        : "",
+      amount: isSet(object.amount) ? globalThis.String(object.amount) : "",
+      transactionRef: isSet(object.transactionRef)
+        ? globalThis.String(object.transactionRef)
+        : isSet(object.transaction_ref)
+        ? globalThis.String(object.transaction_ref)
+        : "",
+    };
+  },
+
+  toJSON(message: CreateDepositRequest): unknown {
+    const obj: any = {};
+    if (message.walletId !== undefined && message.walletId !== "") {
+      obj.walletId = message.walletId;
+    }
+    if (message.amount !== undefined && message.amount !== "") {
+      obj.amount = message.amount;
+    }
+    if (message.transactionRef !== undefined && message.transactionRef !== "") {
+      obj.transactionRef = message.transactionRef;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateDepositRequest>, I>>(base?: I): CreateDepositRequest {
+    return CreateDepositRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateDepositRequest>, I>>(object: I): CreateDepositRequest {
+    const message = createBaseCreateDepositRequest();
+    message.walletId = object.walletId ?? "";
+    message.amount = object.amount ?? "";
+    message.transactionRef = object.transactionRef ?? "";
+    return message;
+  },
+};
+
+function createBaseCreateDepositResponse(): CreateDepositResponse {
+  return { deposit: undefined };
+}
+
+export const CreateDepositResponse: MessageFns<CreateDepositResponse> = {
+  encode(message: CreateDepositResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.deposit !== undefined) {
+      Deposit.encode(message.deposit, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateDepositResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateDepositResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.deposit = Deposit.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateDepositResponse {
+    return { deposit: isSet(object.deposit) ? Deposit.fromJSON(object.deposit) : undefined };
+  },
+
+  toJSON(message: CreateDepositResponse): unknown {
+    const obj: any = {};
+    if (message.deposit !== undefined) {
+      obj.deposit = Deposit.toJSON(message.deposit);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateDepositResponse>, I>>(base?: I): CreateDepositResponse {
+    return CreateDepositResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateDepositResponse>, I>>(object: I): CreateDepositResponse {
+    const message = createBaseCreateDepositResponse();
+    message.deposit = (object.deposit !== undefined && object.deposit !== null)
+      ? Deposit.fromPartial(object.deposit)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseGetDepositRequest(): GetDepositRequest {
+  return { depositId: "" };
+}
+
+export const GetDepositRequest: MessageFns<GetDepositRequest> = {
+  encode(message: GetDepositRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.depositId !== undefined && message.depositId !== "") {
+      writer.uint32(10).string(message.depositId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetDepositRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetDepositRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.depositId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetDepositRequest {
+    return {
+      depositId: isSet(object.depositId)
+        ? globalThis.String(object.depositId)
+        : isSet(object.deposit_id)
+        ? globalThis.String(object.deposit_id)
+        : "",
+    };
+  },
+
+  toJSON(message: GetDepositRequest): unknown {
+    const obj: any = {};
+    if (message.depositId !== undefined && message.depositId !== "") {
+      obj.depositId = message.depositId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetDepositRequest>, I>>(base?: I): GetDepositRequest {
+    return GetDepositRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetDepositRequest>, I>>(object: I): GetDepositRequest {
+    const message = createBaseGetDepositRequest();
+    message.depositId = object.depositId ?? "";
+    return message;
+  },
+};
+
+function createBaseGetDepositResponse(): GetDepositResponse {
+  return { deposit: undefined };
+}
+
+export const GetDepositResponse: MessageFns<GetDepositResponse> = {
+  encode(message: GetDepositResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.deposit !== undefined) {
+      Deposit.encode(message.deposit, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetDepositResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetDepositResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.deposit = Deposit.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetDepositResponse {
+    return { deposit: isSet(object.deposit) ? Deposit.fromJSON(object.deposit) : undefined };
+  },
+
+  toJSON(message: GetDepositResponse): unknown {
+    const obj: any = {};
+    if (message.deposit !== undefined) {
+      obj.deposit = Deposit.toJSON(message.deposit);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetDepositResponse>, I>>(base?: I): GetDepositResponse {
+    return GetDepositResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetDepositResponse>, I>>(object: I): GetDepositResponse {
+    const message = createBaseGetDepositResponse();
+    message.deposit = (object.deposit !== undefined && object.deposit !== null)
+      ? Deposit.fromPartial(object.deposit)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseUpdateDepositRequest(): UpdateDepositRequest {
+  return { depositId: "", status: "", confirmations: 0 };
+}
+
+export const UpdateDepositRequest: MessageFns<UpdateDepositRequest> = {
+  encode(message: UpdateDepositRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.depositId !== undefined && message.depositId !== "") {
+      writer.uint32(10).string(message.depositId);
+    }
+    if (message.status !== undefined && message.status !== "") {
+      writer.uint32(18).string(message.status);
+    }
+    if (message.confirmations !== undefined && message.confirmations !== 0) {
+      writer.uint32(24).int32(message.confirmations);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateDepositRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateDepositRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.depositId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.confirmations = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateDepositRequest {
+    return {
+      depositId: isSet(object.depositId)
+        ? globalThis.String(object.depositId)
+        : isSet(object.deposit_id)
+        ? globalThis.String(object.deposit_id)
+        : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+      confirmations: isSet(object.confirmations) ? globalThis.Number(object.confirmations) : 0,
+    };
+  },
+
+  toJSON(message: UpdateDepositRequest): unknown {
+    const obj: any = {};
+    if (message.depositId !== undefined && message.depositId !== "") {
+      obj.depositId = message.depositId;
+    }
+    if (message.status !== undefined && message.status !== "") {
+      obj.status = message.status;
+    }
+    if (message.confirmations !== undefined && message.confirmations !== 0) {
+      obj.confirmations = Math.round(message.confirmations);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UpdateDepositRequest>, I>>(base?: I): UpdateDepositRequest {
+    return UpdateDepositRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpdateDepositRequest>, I>>(object: I): UpdateDepositRequest {
+    const message = createBaseUpdateDepositRequest();
+    message.depositId = object.depositId ?? "";
+    message.status = object.status ?? "";
+    message.confirmations = object.confirmations ?? 0;
+    return message;
+  },
+};
+
+function createBaseUpdateDepositResponse(): UpdateDepositResponse {
+  return { deposit: undefined };
+}
+
+export const UpdateDepositResponse: MessageFns<UpdateDepositResponse> = {
+  encode(message: UpdateDepositResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.deposit !== undefined) {
+      Deposit.encode(message.deposit, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateDepositResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateDepositResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.deposit = Deposit.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateDepositResponse {
+    return { deposit: isSet(object.deposit) ? Deposit.fromJSON(object.deposit) : undefined };
+  },
+
+  toJSON(message: UpdateDepositResponse): unknown {
+    const obj: any = {};
+    if (message.deposit !== undefined) {
+      obj.deposit = Deposit.toJSON(message.deposit);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UpdateDepositResponse>, I>>(base?: I): UpdateDepositResponse {
+    return UpdateDepositResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpdateDepositResponse>, I>>(object: I): UpdateDepositResponse {
+    const message = createBaseUpdateDepositResponse();
+    message.deposit = (object.deposit !== undefined && object.deposit !== null)
+      ? Deposit.fromPartial(object.deposit)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseListDepositsRequest(): ListDepositsRequest {
+  return { walletId: "", status: "" };
+}
+
+export const ListDepositsRequest: MessageFns<ListDepositsRequest> = {
+  encode(message: ListDepositsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.walletId !== undefined && message.walletId !== "") {
+      writer.uint32(10).string(message.walletId);
+    }
+    if (message.status !== undefined && message.status !== "") {
+      writer.uint32(18).string(message.status);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListDepositsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListDepositsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.walletId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListDepositsRequest {
+    return {
+      walletId: isSet(object.walletId)
+        ? globalThis.String(object.walletId)
+        : isSet(object.wallet_id)
+        ? globalThis.String(object.wallet_id)
+        : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+    };
+  },
+
+  toJSON(message: ListDepositsRequest): unknown {
+    const obj: any = {};
+    if (message.walletId !== undefined && message.walletId !== "") {
+      obj.walletId = message.walletId;
+    }
+    if (message.status !== undefined && message.status !== "") {
+      obj.status = message.status;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListDepositsRequest>, I>>(base?: I): ListDepositsRequest {
+    return ListDepositsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListDepositsRequest>, I>>(object: I): ListDepositsRequest {
+    const message = createBaseListDepositsRequest();
+    message.walletId = object.walletId ?? "";
+    message.status = object.status ?? "";
+    return message;
+  },
+};
+
+function createBaseListDepositsResponse(): ListDepositsResponse {
+  return { deposits: [] };
+}
+
+export const ListDepositsResponse: MessageFns<ListDepositsResponse> = {
+  encode(message: ListDepositsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.deposits !== undefined && message.deposits.length !== 0) {
+      for (const v of message.deposits) {
+        Deposit.encode(v!, writer.uint32(10).fork()).join();
+      }
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListDepositsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListDepositsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          const el = Deposit.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.deposits!.push(el);
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListDepositsResponse {
+    return {
+      deposits: globalThis.Array.isArray(object?.deposits) ? object.deposits.map((e: any) => Deposit.fromJSON(e)) : [],
+    };
+  },
+
+  toJSON(message: ListDepositsResponse): unknown {
+    const obj: any = {};
+    if (message.deposits?.length) {
+      obj.deposits = message.deposits.map((e) => Deposit.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListDepositsResponse>, I>>(base?: I): ListDepositsResponse {
+    return ListDepositsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListDepositsResponse>, I>>(object: I): ListDepositsResponse {
+    const message = createBaseListDepositsResponse();
+    message.deposits = object.deposits?.map((e) => Deposit.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseCancelDepositRequest(): CancelDepositRequest {
+  return { depositId: "" };
+}
+
+export const CancelDepositRequest: MessageFns<CancelDepositRequest> = {
+  encode(message: CancelDepositRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.depositId !== undefined && message.depositId !== "") {
+      writer.uint32(10).string(message.depositId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CancelDepositRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCancelDepositRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.depositId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CancelDepositRequest {
+    return {
+      depositId: isSet(object.depositId)
+        ? globalThis.String(object.depositId)
+        : isSet(object.deposit_id)
+        ? globalThis.String(object.deposit_id)
+        : "",
+    };
+  },
+
+  toJSON(message: CancelDepositRequest): unknown {
+    const obj: any = {};
+    if (message.depositId !== undefined && message.depositId !== "") {
+      obj.depositId = message.depositId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CancelDepositRequest>, I>>(base?: I): CancelDepositRequest {
+    return CancelDepositRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CancelDepositRequest>, I>>(object: I): CancelDepositRequest {
+    const message = createBaseCancelDepositRequest();
+    message.depositId = object.depositId ?? "";
+    return message;
+  },
+};
+
+function createBaseCancelDepositResponse(): CancelDepositResponse {
+  return { success: false, message: "" };
+}
+
+export const CancelDepositResponse: MessageFns<CancelDepositResponse> = {
+  encode(message: CancelDepositResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== undefined && message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.message !== undefined && message.message !== "") {
+      writer.uint32(18).string(message.message);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CancelDepositResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCancelDepositResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.message = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CancelDepositResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      message: isSet(object.message) ? globalThis.String(object.message) : "",
+    };
+  },
+
+  toJSON(message: CancelDepositResponse): unknown {
+    const obj: any = {};
+    if (message.success !== undefined && message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.message !== undefined && message.message !== "") {
+      obj.message = message.message;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CancelDepositResponse>, I>>(base?: I): CancelDepositResponse {
+    return CancelDepositResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CancelDepositResponse>, I>>(object: I): CancelDepositResponse {
+    const message = createBaseCancelDepositResponse();
+    message.success = object.success ?? false;
+    message.message = object.message ?? "";
+    return message;
+  },
+};
+
+function createBaseCreateWithdrawalRequest(): CreateWithdrawalRequest {
+  return { walletId: "", amount: "", address: "" };
+}
+
+export const CreateWithdrawalRequest: MessageFns<CreateWithdrawalRequest> = {
+  encode(message: CreateWithdrawalRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.walletId !== undefined && message.walletId !== "") {
+      writer.uint32(10).string(message.walletId);
+    }
+    if (message.amount !== undefined && message.amount !== "") {
+      writer.uint32(18).string(message.amount);
+    }
+    if (message.address !== undefined && message.address !== "") {
+      writer.uint32(26).string(message.address);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateWithdrawalRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateWithdrawalRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.walletId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.amount = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.address = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateWithdrawalRequest {
+    return {
+      walletId: isSet(object.walletId)
+        ? globalThis.String(object.walletId)
+        : isSet(object.wallet_id)
+        ? globalThis.String(object.wallet_id)
+        : "",
+      amount: isSet(object.amount) ? globalThis.String(object.amount) : "",
+      address: isSet(object.address) ? globalThis.String(object.address) : "",
+    };
+  },
+
+  toJSON(message: CreateWithdrawalRequest): unknown {
+    const obj: any = {};
+    if (message.walletId !== undefined && message.walletId !== "") {
+      obj.walletId = message.walletId;
+    }
+    if (message.amount !== undefined && message.amount !== "") {
+      obj.amount = message.amount;
+    }
+    if (message.address !== undefined && message.address !== "") {
+      obj.address = message.address;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateWithdrawalRequest>, I>>(base?: I): CreateWithdrawalRequest {
+    return CreateWithdrawalRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateWithdrawalRequest>, I>>(object: I): CreateWithdrawalRequest {
+    const message = createBaseCreateWithdrawalRequest();
+    message.walletId = object.walletId ?? "";
+    message.amount = object.amount ?? "";
+    message.address = object.address ?? "";
+    return message;
+  },
+};
+
+function createBaseCreateWithdrawalResponse(): CreateWithdrawalResponse {
+  return { withdrawal: undefined };
+}
+
+export const CreateWithdrawalResponse: MessageFns<CreateWithdrawalResponse> = {
+  encode(message: CreateWithdrawalResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.withdrawal !== undefined) {
+      Withdrawal.encode(message.withdrawal, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateWithdrawalResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateWithdrawalResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.withdrawal = Withdrawal.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateWithdrawalResponse {
+    return { withdrawal: isSet(object.withdrawal) ? Withdrawal.fromJSON(object.withdrawal) : undefined };
+  },
+
+  toJSON(message: CreateWithdrawalResponse): unknown {
+    const obj: any = {};
+    if (message.withdrawal !== undefined) {
+      obj.withdrawal = Withdrawal.toJSON(message.withdrawal);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateWithdrawalResponse>, I>>(base?: I): CreateWithdrawalResponse {
+    return CreateWithdrawalResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateWithdrawalResponse>, I>>(object: I): CreateWithdrawalResponse {
+    const message = createBaseCreateWithdrawalResponse();
+    message.withdrawal = (object.withdrawal !== undefined && object.withdrawal !== null)
+      ? Withdrawal.fromPartial(object.withdrawal)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseGetWithdrawalRequest(): GetWithdrawalRequest {
+  return { withdrawalId: "" };
+}
+
+export const GetWithdrawalRequest: MessageFns<GetWithdrawalRequest> = {
+  encode(message: GetWithdrawalRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.withdrawalId !== undefined && message.withdrawalId !== "") {
+      writer.uint32(10).string(message.withdrawalId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetWithdrawalRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetWithdrawalRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.withdrawalId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetWithdrawalRequest {
+    return {
+      withdrawalId: isSet(object.withdrawalId)
+        ? globalThis.String(object.withdrawalId)
+        : isSet(object.withdrawal_id)
+        ? globalThis.String(object.withdrawal_id)
+        : "",
+    };
+  },
+
+  toJSON(message: GetWithdrawalRequest): unknown {
+    const obj: any = {};
+    if (message.withdrawalId !== undefined && message.withdrawalId !== "") {
+      obj.withdrawalId = message.withdrawalId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetWithdrawalRequest>, I>>(base?: I): GetWithdrawalRequest {
+    return GetWithdrawalRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetWithdrawalRequest>, I>>(object: I): GetWithdrawalRequest {
+    const message = createBaseGetWithdrawalRequest();
+    message.withdrawalId = object.withdrawalId ?? "";
+    return message;
+  },
+};
+
+function createBaseGetWithdrawalResponse(): GetWithdrawalResponse {
+  return { withdrawal: undefined };
+}
+
+export const GetWithdrawalResponse: MessageFns<GetWithdrawalResponse> = {
+  encode(message: GetWithdrawalResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.withdrawal !== undefined) {
+      Withdrawal.encode(message.withdrawal, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetWithdrawalResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetWithdrawalResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.withdrawal = Withdrawal.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetWithdrawalResponse {
+    return { withdrawal: isSet(object.withdrawal) ? Withdrawal.fromJSON(object.withdrawal) : undefined };
+  },
+
+  toJSON(message: GetWithdrawalResponse): unknown {
+    const obj: any = {};
+    if (message.withdrawal !== undefined) {
+      obj.withdrawal = Withdrawal.toJSON(message.withdrawal);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetWithdrawalResponse>, I>>(base?: I): GetWithdrawalResponse {
+    return GetWithdrawalResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetWithdrawalResponse>, I>>(object: I): GetWithdrawalResponse {
+    const message = createBaseGetWithdrawalResponse();
+    message.withdrawal = (object.withdrawal !== undefined && object.withdrawal !== null)
+      ? Withdrawal.fromPartial(object.withdrawal)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseUpdateWithdrawalRequest(): UpdateWithdrawalRequest {
+  return { withdrawalId: "", status: "", txHash: "" };
+}
+
+export const UpdateWithdrawalRequest: MessageFns<UpdateWithdrawalRequest> = {
+  encode(message: UpdateWithdrawalRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.withdrawalId !== undefined && message.withdrawalId !== "") {
+      writer.uint32(10).string(message.withdrawalId);
+    }
+    if (message.status !== undefined && message.status !== "") {
+      writer.uint32(18).string(message.status);
+    }
+    if (message.txHash !== undefined && message.txHash !== "") {
+      writer.uint32(26).string(message.txHash);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateWithdrawalRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateWithdrawalRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.withdrawalId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.txHash = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateWithdrawalRequest {
+    return {
+      withdrawalId: isSet(object.withdrawalId)
+        ? globalThis.String(object.withdrawalId)
+        : isSet(object.withdrawal_id)
+        ? globalThis.String(object.withdrawal_id)
+        : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+      txHash: isSet(object.txHash)
+        ? globalThis.String(object.txHash)
+        : isSet(object.tx_hash)
+        ? globalThis.String(object.tx_hash)
+        : "",
+    };
+  },
+
+  toJSON(message: UpdateWithdrawalRequest): unknown {
+    const obj: any = {};
+    if (message.withdrawalId !== undefined && message.withdrawalId !== "") {
+      obj.withdrawalId = message.withdrawalId;
+    }
+    if (message.status !== undefined && message.status !== "") {
+      obj.status = message.status;
+    }
+    if (message.txHash !== undefined && message.txHash !== "") {
+      obj.txHash = message.txHash;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UpdateWithdrawalRequest>, I>>(base?: I): UpdateWithdrawalRequest {
+    return UpdateWithdrawalRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpdateWithdrawalRequest>, I>>(object: I): UpdateWithdrawalRequest {
+    const message = createBaseUpdateWithdrawalRequest();
+    message.withdrawalId = object.withdrawalId ?? "";
+    message.status = object.status ?? "";
+    message.txHash = object.txHash ?? "";
+    return message;
+  },
+};
+
+function createBaseUpdateWithdrawalResponse(): UpdateWithdrawalResponse {
+  return { withdrawal: undefined };
+}
+
+export const UpdateWithdrawalResponse: MessageFns<UpdateWithdrawalResponse> = {
+  encode(message: UpdateWithdrawalResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.withdrawal !== undefined) {
+      Withdrawal.encode(message.withdrawal, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateWithdrawalResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateWithdrawalResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.withdrawal = Withdrawal.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateWithdrawalResponse {
+    return { withdrawal: isSet(object.withdrawal) ? Withdrawal.fromJSON(object.withdrawal) : undefined };
+  },
+
+  toJSON(message: UpdateWithdrawalResponse): unknown {
+    const obj: any = {};
+    if (message.withdrawal !== undefined) {
+      obj.withdrawal = Withdrawal.toJSON(message.withdrawal);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UpdateWithdrawalResponse>, I>>(base?: I): UpdateWithdrawalResponse {
+    return UpdateWithdrawalResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpdateWithdrawalResponse>, I>>(object: I): UpdateWithdrawalResponse {
+    const message = createBaseUpdateWithdrawalResponse();
+    message.withdrawal = (object.withdrawal !== undefined && object.withdrawal !== null)
+      ? Withdrawal.fromPartial(object.withdrawal)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseListWithdrawalsRequest(): ListWithdrawalsRequest {
+  return { walletId: "", status: "" };
+}
+
+export const ListWithdrawalsRequest: MessageFns<ListWithdrawalsRequest> = {
+  encode(message: ListWithdrawalsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.walletId !== undefined && message.walletId !== "") {
+      writer.uint32(10).string(message.walletId);
+    }
+    if (message.status !== undefined && message.status !== "") {
+      writer.uint32(18).string(message.status);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListWithdrawalsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListWithdrawalsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.walletId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListWithdrawalsRequest {
+    return {
+      walletId: isSet(object.walletId)
+        ? globalThis.String(object.walletId)
+        : isSet(object.wallet_id)
+        ? globalThis.String(object.wallet_id)
+        : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+    };
+  },
+
+  toJSON(message: ListWithdrawalsRequest): unknown {
+    const obj: any = {};
+    if (message.walletId !== undefined && message.walletId !== "") {
+      obj.walletId = message.walletId;
+    }
+    if (message.status !== undefined && message.status !== "") {
+      obj.status = message.status;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListWithdrawalsRequest>, I>>(base?: I): ListWithdrawalsRequest {
+    return ListWithdrawalsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListWithdrawalsRequest>, I>>(object: I): ListWithdrawalsRequest {
+    const message = createBaseListWithdrawalsRequest();
+    message.walletId = object.walletId ?? "";
+    message.status = object.status ?? "";
+    return message;
+  },
+};
+
+function createBaseListWithdrawalsResponse(): ListWithdrawalsResponse {
+  return { withdrawals: [] };
+}
+
+export const ListWithdrawalsResponse: MessageFns<ListWithdrawalsResponse> = {
+  encode(message: ListWithdrawalsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.withdrawals !== undefined && message.withdrawals.length !== 0) {
+      for (const v of message.withdrawals) {
+        Withdrawal.encode(v!, writer.uint32(10).fork()).join();
+      }
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListWithdrawalsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListWithdrawalsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          const el = Withdrawal.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.withdrawals!.push(el);
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListWithdrawalsResponse {
+    return {
+      withdrawals: globalThis.Array.isArray(object?.withdrawals)
+        ? object.withdrawals.map((e: any) => Withdrawal.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: ListWithdrawalsResponse): unknown {
+    const obj: any = {};
+    if (message.withdrawals?.length) {
+      obj.withdrawals = message.withdrawals.map((e) => Withdrawal.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListWithdrawalsResponse>, I>>(base?: I): ListWithdrawalsResponse {
+    return ListWithdrawalsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListWithdrawalsResponse>, I>>(object: I): ListWithdrawalsResponse {
+    const message = createBaseListWithdrawalsResponse();
+    message.withdrawals = object.withdrawals?.map((e) => Withdrawal.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseCancelWithdrawalRequest(): CancelWithdrawalRequest {
+  return { withdrawalId: "" };
+}
+
+export const CancelWithdrawalRequest: MessageFns<CancelWithdrawalRequest> = {
+  encode(message: CancelWithdrawalRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.withdrawalId !== undefined && message.withdrawalId !== "") {
+      writer.uint32(10).string(message.withdrawalId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CancelWithdrawalRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCancelWithdrawalRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.withdrawalId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CancelWithdrawalRequest {
+    return {
+      withdrawalId: isSet(object.withdrawalId)
+        ? globalThis.String(object.withdrawalId)
+        : isSet(object.withdrawal_id)
+        ? globalThis.String(object.withdrawal_id)
+        : "",
+    };
+  },
+
+  toJSON(message: CancelWithdrawalRequest): unknown {
+    const obj: any = {};
+    if (message.withdrawalId !== undefined && message.withdrawalId !== "") {
+      obj.withdrawalId = message.withdrawalId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CancelWithdrawalRequest>, I>>(base?: I): CancelWithdrawalRequest {
+    return CancelWithdrawalRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CancelWithdrawalRequest>, I>>(object: I): CancelWithdrawalRequest {
+    const message = createBaseCancelWithdrawalRequest();
+    message.withdrawalId = object.withdrawalId ?? "";
+    return message;
+  },
+};
+
+function createBaseCancelWithdrawalResponse(): CancelWithdrawalResponse {
+  return { success: false, message: "" };
+}
+
+export const CancelWithdrawalResponse: MessageFns<CancelWithdrawalResponse> = {
+  encode(message: CancelWithdrawalResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== undefined && message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.message !== undefined && message.message !== "") {
+      writer.uint32(18).string(message.message);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CancelWithdrawalResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCancelWithdrawalResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.message = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CancelWithdrawalResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      message: isSet(object.message) ? globalThis.String(object.message) : "",
+    };
+  },
+
+  toJSON(message: CancelWithdrawalResponse): unknown {
+    const obj: any = {};
+    if (message.success !== undefined && message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.message !== undefined && message.message !== "") {
+      obj.message = message.message;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CancelWithdrawalResponse>, I>>(base?: I): CancelWithdrawalResponse {
+    return CancelWithdrawalResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CancelWithdrawalResponse>, I>>(object: I): CancelWithdrawalResponse {
+    const message = createBaseCancelWithdrawalResponse();
+    message.success = object.success ?? false;
+    message.message = object.message ?? "";
+    return message;
+  },
+};
+
+function createBaseCreateAssetRequest(): CreateAssetRequest {
+  return { symbol: "", type: "", precision: 0 };
+}
+
+export const CreateAssetRequest: MessageFns<CreateAssetRequest> = {
+  encode(message: CreateAssetRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.symbol !== undefined && message.symbol !== "") {
+      writer.uint32(10).string(message.symbol);
+    }
+    if (message.type !== undefined && message.type !== "") {
+      writer.uint32(18).string(message.type);
+    }
+    if (message.precision !== undefined && message.precision !== 0) {
+      writer.uint32(24).int32(message.precision);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateAssetRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateAssetRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.symbol = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.type = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.precision = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateAssetRequest {
+    return {
+      symbol: isSet(object.symbol) ? globalThis.String(object.symbol) : "",
+      type: isSet(object.type) ? globalThis.String(object.type) : "",
+      precision: isSet(object.precision) ? globalThis.Number(object.precision) : 0,
+    };
+  },
+
+  toJSON(message: CreateAssetRequest): unknown {
+    const obj: any = {};
+    if (message.symbol !== undefined && message.symbol !== "") {
+      obj.symbol = message.symbol;
+    }
+    if (message.type !== undefined && message.type !== "") {
+      obj.type = message.type;
+    }
+    if (message.precision !== undefined && message.precision !== 0) {
+      obj.precision = Math.round(message.precision);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateAssetRequest>, I>>(base?: I): CreateAssetRequest {
+    return CreateAssetRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateAssetRequest>, I>>(object: I): CreateAssetRequest {
+    const message = createBaseCreateAssetRequest();
+    message.symbol = object.symbol ?? "";
+    message.type = object.type ?? "";
+    message.precision = object.precision ?? 0;
+    return message;
+  },
+};
+
+function createBaseCreateAssetResponse(): CreateAssetResponse {
+  return { asset: undefined };
+}
+
+export const CreateAssetResponse: MessageFns<CreateAssetResponse> = {
+  encode(message: CreateAssetResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.asset !== undefined) {
+      Asset.encode(message.asset, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateAssetResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateAssetResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.asset = Asset.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateAssetResponse {
+    return { asset: isSet(object.asset) ? Asset.fromJSON(object.asset) : undefined };
+  },
+
+  toJSON(message: CreateAssetResponse): unknown {
+    const obj: any = {};
+    if (message.asset !== undefined) {
+      obj.asset = Asset.toJSON(message.asset);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateAssetResponse>, I>>(base?: I): CreateAssetResponse {
+    return CreateAssetResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateAssetResponse>, I>>(object: I): CreateAssetResponse {
+    const message = createBaseCreateAssetResponse();
+    message.asset = (object.asset !== undefined && object.asset !== null) ? Asset.fromPartial(object.asset) : undefined;
+    return message;
+  },
+};
+
+function createBaseCreateInstrumentRequest(): CreateInstrumentRequest {
+  return { symbol: "", type: "", baseAssetId: "", quoteAssetId: "" };
+}
+
+export const CreateInstrumentRequest: MessageFns<CreateInstrumentRequest> = {
+  encode(message: CreateInstrumentRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.symbol !== undefined && message.symbol !== "") {
+      writer.uint32(10).string(message.symbol);
+    }
+    if (message.type !== undefined && message.type !== "") {
+      writer.uint32(18).string(message.type);
+    }
+    if (message.baseAssetId !== undefined && message.baseAssetId !== "") {
+      writer.uint32(26).string(message.baseAssetId);
+    }
+    if (message.quoteAssetId !== undefined && message.quoteAssetId !== "") {
+      writer.uint32(34).string(message.quoteAssetId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateInstrumentRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateInstrumentRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.symbol = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.type = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.baseAssetId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.quoteAssetId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateInstrumentRequest {
+    return {
+      symbol: isSet(object.symbol) ? globalThis.String(object.symbol) : "",
+      type: isSet(object.type) ? globalThis.String(object.type) : "",
+      baseAssetId: isSet(object.baseAssetId)
+        ? globalThis.String(object.baseAssetId)
+        : isSet(object.base_asset_id)
+        ? globalThis.String(object.base_asset_id)
+        : "",
+      quoteAssetId: isSet(object.quoteAssetId)
+        ? globalThis.String(object.quoteAssetId)
+        : isSet(object.quote_asset_id)
+        ? globalThis.String(object.quote_asset_id)
+        : "",
+    };
+  },
+
+  toJSON(message: CreateInstrumentRequest): unknown {
+    const obj: any = {};
+    if (message.symbol !== undefined && message.symbol !== "") {
+      obj.symbol = message.symbol;
+    }
+    if (message.type !== undefined && message.type !== "") {
+      obj.type = message.type;
+    }
+    if (message.baseAssetId !== undefined && message.baseAssetId !== "") {
+      obj.baseAssetId = message.baseAssetId;
+    }
+    if (message.quoteAssetId !== undefined && message.quoteAssetId !== "") {
+      obj.quoteAssetId = message.quoteAssetId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateInstrumentRequest>, I>>(base?: I): CreateInstrumentRequest {
+    return CreateInstrumentRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateInstrumentRequest>, I>>(object: I): CreateInstrumentRequest {
+    const message = createBaseCreateInstrumentRequest();
+    message.symbol = object.symbol ?? "";
+    message.type = object.type ?? "";
+    message.baseAssetId = object.baseAssetId ?? "";
+    message.quoteAssetId = object.quoteAssetId ?? "";
+    return message;
+  },
+};
+
+function createBaseCreateInstrumentResponse(): CreateInstrumentResponse {
+  return { instrument: undefined };
+}
+
+export const CreateInstrumentResponse: MessageFns<CreateInstrumentResponse> = {
+  encode(message: CreateInstrumentResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.instrument !== undefined) {
+      Instrument.encode(message.instrument, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateInstrumentResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateInstrumentResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.instrument = Instrument.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateInstrumentResponse {
+    return { instrument: isSet(object.instrument) ? Instrument.fromJSON(object.instrument) : undefined };
+  },
+
+  toJSON(message: CreateInstrumentResponse): unknown {
+    const obj: any = {};
+    if (message.instrument !== undefined) {
+      obj.instrument = Instrument.toJSON(message.instrument);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateInstrumentResponse>, I>>(base?: I): CreateInstrumentResponse {
+    return CreateInstrumentResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateInstrumentResponse>, I>>(object: I): CreateInstrumentResponse {
+    const message = createBaseCreateInstrumentResponse();
+    message.instrument = (object.instrument !== undefined && object.instrument !== null)
+      ? Instrument.fromPartial(object.instrument)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseGetSystemAccountRequest(): GetSystemAccountRequest {
+  return { type: "" };
+}
+
+export const GetSystemAccountRequest: MessageFns<GetSystemAccountRequest> = {
+  encode(message: GetSystemAccountRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.type !== undefined && message.type !== "") {
+      writer.uint32(10).string(message.type);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetSystemAccountRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetSystemAccountRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.type = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetSystemAccountRequest {
+    return { type: isSet(object.type) ? globalThis.String(object.type) : "" };
+  },
+
+  toJSON(message: GetSystemAccountRequest): unknown {
+    const obj: any = {};
+    if (message.type !== undefined && message.type !== "") {
+      obj.type = message.type;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetSystemAccountRequest>, I>>(base?: I): GetSystemAccountRequest {
+    return GetSystemAccountRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetSystemAccountRequest>, I>>(object: I): GetSystemAccountRequest {
+    const message = createBaseGetSystemAccountRequest();
+    message.type = object.type ?? "";
+    return message;
+  },
+};
+
+function createBaseGetSystemAccountResponse(): GetSystemAccountResponse {
+  return { account: undefined };
+}
+
+export const GetSystemAccountResponse: MessageFns<GetSystemAccountResponse> = {
+  encode(message: GetSystemAccountResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.account !== undefined) {
+      SystemAccount.encode(message.account, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetSystemAccountResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetSystemAccountResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.account = SystemAccount.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetSystemAccountResponse {
+    return { account: isSet(object.account) ? SystemAccount.fromJSON(object.account) : undefined };
+  },
+
+  toJSON(message: GetSystemAccountResponse): unknown {
+    const obj: any = {};
+    if (message.account !== undefined) {
+      obj.account = SystemAccount.toJSON(message.account);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetSystemAccountResponse>, I>>(base?: I): GetSystemAccountResponse {
+    return GetSystemAccountResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetSystemAccountResponse>, I>>(object: I): GetSystemAccountResponse {
+    const message = createBaseGetSystemAccountResponse();
+    message.account = (object.account !== undefined && object.account !== null)
+      ? SystemAccount.fromPartial(object.account)
+      : undefined;
+    return message;
+  },
+};
+
 export type LedgerServiceService = typeof LedgerServiceService;
 export const LedgerServiceService = {
+  /** Order Management */
   recordOrder: {
     path: "/ledger.LedgerService/RecordOrder",
     requestStream: false,
@@ -197,13 +4962,362 @@ export const LedgerServiceService = {
     responseSerialize: (value: RecordOrderResponse): Buffer => Buffer.from(RecordOrderResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): RecordOrderResponse => RecordOrderResponse.decode(value),
   },
+  cancelOrder: {
+    path: "/ledger.LedgerService/CancelOrder",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CancelOrderRequest): Buffer => Buffer.from(CancelOrderRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CancelOrderRequest => CancelOrderRequest.decode(value),
+    responseSerialize: (value: CancelOrderResponse): Buffer => Buffer.from(CancelOrderResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CancelOrderResponse => CancelOrderResponse.decode(value),
+  },
+  deleteOrder: {
+    path: "/ledger.LedgerService/DeleteOrder",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: DeleteOrderRequest): Buffer => Buffer.from(DeleteOrderRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): DeleteOrderRequest => DeleteOrderRequest.decode(value),
+    responseSerialize: (value: DeleteOrderResponse): Buffer => Buffer.from(DeleteOrderResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): DeleteOrderResponse => DeleteOrderResponse.decode(value),
+  },
+  getOpenOrders: {
+    path: "/ledger.LedgerService/GetOpenOrders",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetOpenOrdersRequest): Buffer => Buffer.from(GetOpenOrdersRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetOpenOrdersRequest => GetOpenOrdersRequest.decode(value),
+    responseSerialize: (value: GetOpenOrdersResponse): Buffer =>
+      Buffer.from(GetOpenOrdersResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetOpenOrdersResponse => GetOpenOrdersResponse.decode(value),
+  },
+  recordTrade: {
+    path: "/ledger.LedgerService/RecordTrade",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: RecordTradeRequest): Buffer => Buffer.from(RecordTradeRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): RecordTradeRequest => RecordTradeRequest.decode(value),
+    responseSerialize: (value: RecordTradeResponse): Buffer => Buffer.from(RecordTradeResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): RecordTradeResponse => RecordTradeResponse.decode(value),
+  },
+  /** User Management */
+  createUser: {
+    path: "/ledger.LedgerService/CreateUser",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateUserRequest): Buffer => Buffer.from(CreateUserRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateUserRequest => CreateUserRequest.decode(value),
+    responseSerialize: (value: CreateUserResponse): Buffer => Buffer.from(CreateUserResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CreateUserResponse => CreateUserResponse.decode(value),
+  },
+  getUser: {
+    path: "/ledger.LedgerService/GetUser",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetUserRequest): Buffer => Buffer.from(GetUserRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetUserRequest => GetUserRequest.decode(value),
+    responseSerialize: (value: GetUserResponse): Buffer => Buffer.from(GetUserResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetUserResponse => GetUserResponse.decode(value),
+  },
+  updateUser: {
+    path: "/ledger.LedgerService/UpdateUser",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: UpdateUserRequest): Buffer => Buffer.from(UpdateUserRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): UpdateUserRequest => UpdateUserRequest.decode(value),
+    responseSerialize: (value: UpdateUserResponse): Buffer => Buffer.from(UpdateUserResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): UpdateUserResponse => UpdateUserResponse.decode(value),
+  },
+  deleteUser: {
+    path: "/ledger.LedgerService/DeleteUser",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: DeleteUserRequest): Buffer => Buffer.from(DeleteUserRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): DeleteUserRequest => DeleteUserRequest.decode(value),
+    responseSerialize: (value: DeleteUserResponse): Buffer => Buffer.from(DeleteUserResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): DeleteUserResponse => DeleteUserResponse.decode(value),
+  },
+  /** Account Management */
+  createAccount: {
+    path: "/ledger.LedgerService/CreateAccount",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateAccountRequest): Buffer => Buffer.from(CreateAccountRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateAccountRequest => CreateAccountRequest.decode(value),
+    responseSerialize: (value: CreateAccountResponse): Buffer =>
+      Buffer.from(CreateAccountResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CreateAccountResponse => CreateAccountResponse.decode(value),
+  },
+  getAccount: {
+    path: "/ledger.LedgerService/GetAccount",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetAccountRequest): Buffer => Buffer.from(GetAccountRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetAccountRequest => GetAccountRequest.decode(value),
+    responseSerialize: (value: GetAccountResponse): Buffer => Buffer.from(GetAccountResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetAccountResponse => GetAccountResponse.decode(value),
+  },
+  updateAccount: {
+    path: "/ledger.LedgerService/UpdateAccount",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: UpdateAccountRequest): Buffer => Buffer.from(UpdateAccountRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): UpdateAccountRequest => UpdateAccountRequest.decode(value),
+    responseSerialize: (value: UpdateAccountResponse): Buffer =>
+      Buffer.from(UpdateAccountResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): UpdateAccountResponse => UpdateAccountResponse.decode(value),
+  },
+  deleteAccount: {
+    path: "/ledger.LedgerService/DeleteAccount",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: DeleteAccountRequest): Buffer => Buffer.from(DeleteAccountRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): DeleteAccountRequest => DeleteAccountRequest.decode(value),
+    responseSerialize: (value: DeleteAccountResponse): Buffer =>
+      Buffer.from(DeleteAccountResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): DeleteAccountResponse => DeleteAccountResponse.decode(value),
+  },
+  listAccounts: {
+    path: "/ledger.LedgerService/ListAccounts",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListAccountsRequest): Buffer => Buffer.from(ListAccountsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListAccountsRequest => ListAccountsRequest.decode(value),
+    responseSerialize: (value: ListAccountsResponse): Buffer =>
+      Buffer.from(ListAccountsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListAccountsResponse => ListAccountsResponse.decode(value),
+  },
+  /** Wallet Management */
+  createWallet: {
+    path: "/ledger.LedgerService/CreateWallet",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateWalletRequest): Buffer => Buffer.from(CreateWalletRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateWalletRequest => CreateWalletRequest.decode(value),
+    responseSerialize: (value: CreateWalletResponse): Buffer =>
+      Buffer.from(CreateWalletResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CreateWalletResponse => CreateWalletResponse.decode(value),
+  },
+  getWallet: {
+    path: "/ledger.LedgerService/GetWallet",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetWalletRequest): Buffer => Buffer.from(GetWalletRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetWalletRequest => GetWalletRequest.decode(value),
+    responseSerialize: (value: GetWalletResponse): Buffer => Buffer.from(GetWalletResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetWalletResponse => GetWalletResponse.decode(value),
+  },
+  updateWallet: {
+    path: "/ledger.LedgerService/UpdateWallet",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: UpdateWalletRequest): Buffer => Buffer.from(UpdateWalletRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): UpdateWalletRequest => UpdateWalletRequest.decode(value),
+    responseSerialize: (value: UpdateWalletResponse): Buffer =>
+      Buffer.from(UpdateWalletResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): UpdateWalletResponse => UpdateWalletResponse.decode(value),
+  },
+  deleteWallet: {
+    path: "/ledger.LedgerService/DeleteWallet",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: DeleteWalletRequest): Buffer => Buffer.from(DeleteWalletRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): DeleteWalletRequest => DeleteWalletRequest.decode(value),
+    responseSerialize: (value: DeleteWalletResponse): Buffer =>
+      Buffer.from(DeleteWalletResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): DeleteWalletResponse => DeleteWalletResponse.decode(value),
+  },
+  listWallets: {
+    path: "/ledger.LedgerService/ListWallets",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListWalletsRequest): Buffer => Buffer.from(ListWalletsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListWalletsRequest => ListWalletsRequest.decode(value),
+    responseSerialize: (value: ListWalletsResponse): Buffer => Buffer.from(ListWalletsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListWalletsResponse => ListWalletsResponse.decode(value),
+  },
+  /** Fund Management */
+  createDeposit: {
+    path: "/ledger.LedgerService/CreateDeposit",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateDepositRequest): Buffer => Buffer.from(CreateDepositRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateDepositRequest => CreateDepositRequest.decode(value),
+    responseSerialize: (value: CreateDepositResponse): Buffer =>
+      Buffer.from(CreateDepositResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CreateDepositResponse => CreateDepositResponse.decode(value),
+  },
+  getDeposit: {
+    path: "/ledger.LedgerService/GetDeposit",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetDepositRequest): Buffer => Buffer.from(GetDepositRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetDepositRequest => GetDepositRequest.decode(value),
+    responseSerialize: (value: GetDepositResponse): Buffer => Buffer.from(GetDepositResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetDepositResponse => GetDepositResponse.decode(value),
+  },
+  updateDeposit: {
+    path: "/ledger.LedgerService/UpdateDeposit",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: UpdateDepositRequest): Buffer => Buffer.from(UpdateDepositRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): UpdateDepositRequest => UpdateDepositRequest.decode(value),
+    responseSerialize: (value: UpdateDepositResponse): Buffer =>
+      Buffer.from(UpdateDepositResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): UpdateDepositResponse => UpdateDepositResponse.decode(value),
+  },
+  cancelDeposit: {
+    path: "/ledger.LedgerService/CancelDeposit",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CancelDepositRequest): Buffer => Buffer.from(CancelDepositRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CancelDepositRequest => CancelDepositRequest.decode(value),
+    responseSerialize: (value: CancelDepositResponse): Buffer =>
+      Buffer.from(CancelDepositResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CancelDepositResponse => CancelDepositResponse.decode(value),
+  },
+  listDeposits: {
+    path: "/ledger.LedgerService/ListDeposits",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListDepositsRequest): Buffer => Buffer.from(ListDepositsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListDepositsRequest => ListDepositsRequest.decode(value),
+    responseSerialize: (value: ListDepositsResponse): Buffer =>
+      Buffer.from(ListDepositsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListDepositsResponse => ListDepositsResponse.decode(value),
+  },
+  createWithdrawal: {
+    path: "/ledger.LedgerService/CreateWithdrawal",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateWithdrawalRequest): Buffer =>
+      Buffer.from(CreateWithdrawalRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateWithdrawalRequest => CreateWithdrawalRequest.decode(value),
+    responseSerialize: (value: CreateWithdrawalResponse): Buffer =>
+      Buffer.from(CreateWithdrawalResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CreateWithdrawalResponse => CreateWithdrawalResponse.decode(value),
+  },
+  getWithdrawal: {
+    path: "/ledger.LedgerService/GetWithdrawal",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetWithdrawalRequest): Buffer => Buffer.from(GetWithdrawalRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetWithdrawalRequest => GetWithdrawalRequest.decode(value),
+    responseSerialize: (value: GetWithdrawalResponse): Buffer =>
+      Buffer.from(GetWithdrawalResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetWithdrawalResponse => GetWithdrawalResponse.decode(value),
+  },
+  updateWithdrawal: {
+    path: "/ledger.LedgerService/UpdateWithdrawal",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: UpdateWithdrawalRequest): Buffer =>
+      Buffer.from(UpdateWithdrawalRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): UpdateWithdrawalRequest => UpdateWithdrawalRequest.decode(value),
+    responseSerialize: (value: UpdateWithdrawalResponse): Buffer =>
+      Buffer.from(UpdateWithdrawalResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): UpdateWithdrawalResponse => UpdateWithdrawalResponse.decode(value),
+  },
+  cancelWithdrawal: {
+    path: "/ledger.LedgerService/CancelWithdrawal",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CancelWithdrawalRequest): Buffer =>
+      Buffer.from(CancelWithdrawalRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CancelWithdrawalRequest => CancelWithdrawalRequest.decode(value),
+    responseSerialize: (value: CancelWithdrawalResponse): Buffer =>
+      Buffer.from(CancelWithdrawalResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CancelWithdrawalResponse => CancelWithdrawalResponse.decode(value),
+  },
+  listWithdrawals: {
+    path: "/ledger.LedgerService/ListWithdrawals",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListWithdrawalsRequest): Buffer =>
+      Buffer.from(ListWithdrawalsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListWithdrawalsRequest => ListWithdrawalsRequest.decode(value),
+    responseSerialize: (value: ListWithdrawalsResponse): Buffer =>
+      Buffer.from(ListWithdrawalsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListWithdrawalsResponse => ListWithdrawalsResponse.decode(value),
+  },
+  /** Asset & Instrument (Read-only usually, but maybe admin creates them) */
+  createAsset: {
+    path: "/ledger.LedgerService/CreateAsset",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateAssetRequest): Buffer => Buffer.from(CreateAssetRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateAssetRequest => CreateAssetRequest.decode(value),
+    responseSerialize: (value: CreateAssetResponse): Buffer => Buffer.from(CreateAssetResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CreateAssetResponse => CreateAssetResponse.decode(value),
+  },
+  createInstrument: {
+    path: "/ledger.LedgerService/CreateInstrument",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateInstrumentRequest): Buffer =>
+      Buffer.from(CreateInstrumentRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateInstrumentRequest => CreateInstrumentRequest.decode(value),
+    responseSerialize: (value: CreateInstrumentResponse): Buffer =>
+      Buffer.from(CreateInstrumentResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CreateInstrumentResponse => CreateInstrumentResponse.decode(value),
+  },
+  /** System */
+  getSystemAccount: {
+    path: "/ledger.LedgerService/GetSystemAccount",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetSystemAccountRequest): Buffer =>
+      Buffer.from(GetSystemAccountRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetSystemAccountRequest => GetSystemAccountRequest.decode(value),
+    responseSerialize: (value: GetSystemAccountResponse): Buffer =>
+      Buffer.from(GetSystemAccountResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetSystemAccountResponse => GetSystemAccountResponse.decode(value),
+  },
 } as const;
 
 export interface LedgerServiceServer extends UntypedServiceImplementation {
+  /** Order Management */
   recordOrder: handleUnaryCall<RecordOrderRequest, RecordOrderResponse>;
+  cancelOrder: handleUnaryCall<CancelOrderRequest, CancelOrderResponse>;
+  deleteOrder: handleUnaryCall<DeleteOrderRequest, DeleteOrderResponse>;
+  getOpenOrders: handleUnaryCall<GetOpenOrdersRequest, GetOpenOrdersResponse>;
+  recordTrade: handleUnaryCall<RecordTradeRequest, RecordTradeResponse>;
+  /** User Management */
+  createUser: handleUnaryCall<CreateUserRequest, CreateUserResponse>;
+  getUser: handleUnaryCall<GetUserRequest, GetUserResponse>;
+  updateUser: handleUnaryCall<UpdateUserRequest, UpdateUserResponse>;
+  deleteUser: handleUnaryCall<DeleteUserRequest, DeleteUserResponse>;
+  /** Account Management */
+  createAccount: handleUnaryCall<CreateAccountRequest, CreateAccountResponse>;
+  getAccount: handleUnaryCall<GetAccountRequest, GetAccountResponse>;
+  updateAccount: handleUnaryCall<UpdateAccountRequest, UpdateAccountResponse>;
+  deleteAccount: handleUnaryCall<DeleteAccountRequest, DeleteAccountResponse>;
+  listAccounts: handleUnaryCall<ListAccountsRequest, ListAccountsResponse>;
+  /** Wallet Management */
+  createWallet: handleUnaryCall<CreateWalletRequest, CreateWalletResponse>;
+  getWallet: handleUnaryCall<GetWalletRequest, GetWalletResponse>;
+  updateWallet: handleUnaryCall<UpdateWalletRequest, UpdateWalletResponse>;
+  deleteWallet: handleUnaryCall<DeleteWalletRequest, DeleteWalletResponse>;
+  listWallets: handleUnaryCall<ListWalletsRequest, ListWalletsResponse>;
+  /** Fund Management */
+  createDeposit: handleUnaryCall<CreateDepositRequest, CreateDepositResponse>;
+  getDeposit: handleUnaryCall<GetDepositRequest, GetDepositResponse>;
+  updateDeposit: handleUnaryCall<UpdateDepositRequest, UpdateDepositResponse>;
+  cancelDeposit: handleUnaryCall<CancelDepositRequest, CancelDepositResponse>;
+  listDeposits: handleUnaryCall<ListDepositsRequest, ListDepositsResponse>;
+  createWithdrawal: handleUnaryCall<CreateWithdrawalRequest, CreateWithdrawalResponse>;
+  getWithdrawal: handleUnaryCall<GetWithdrawalRequest, GetWithdrawalResponse>;
+  updateWithdrawal: handleUnaryCall<UpdateWithdrawalRequest, UpdateWithdrawalResponse>;
+  cancelWithdrawal: handleUnaryCall<CancelWithdrawalRequest, CancelWithdrawalResponse>;
+  listWithdrawals: handleUnaryCall<ListWithdrawalsRequest, ListWithdrawalsResponse>;
+  /** Asset & Instrument (Read-only usually, but maybe admin creates them) */
+  createAsset: handleUnaryCall<CreateAssetRequest, CreateAssetResponse>;
+  createInstrument: handleUnaryCall<CreateInstrumentRequest, CreateInstrumentResponse>;
+  /** System */
+  getSystemAccount: handleUnaryCall<GetSystemAccountRequest, GetSystemAccountResponse>;
 }
 
 export interface LedgerServiceClient extends Client {
+  /** Order Management */
   recordOrder(
     request: RecordOrderRequest,
     callback: (error: ServiceError | null, response: RecordOrderResponse) => void,
@@ -218,6 +5332,477 @@ export interface LedgerServiceClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: RecordOrderResponse) => void,
+  ): ClientUnaryCall;
+  cancelOrder(
+    request: CancelOrderRequest,
+    callback: (error: ServiceError | null, response: CancelOrderResponse) => void,
+  ): ClientUnaryCall;
+  cancelOrder(
+    request: CancelOrderRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CancelOrderResponse) => void,
+  ): ClientUnaryCall;
+  cancelOrder(
+    request: CancelOrderRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CancelOrderResponse) => void,
+  ): ClientUnaryCall;
+  deleteOrder(
+    request: DeleteOrderRequest,
+    callback: (error: ServiceError | null, response: DeleteOrderResponse) => void,
+  ): ClientUnaryCall;
+  deleteOrder(
+    request: DeleteOrderRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: DeleteOrderResponse) => void,
+  ): ClientUnaryCall;
+  deleteOrder(
+    request: DeleteOrderRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: DeleteOrderResponse) => void,
+  ): ClientUnaryCall;
+  getOpenOrders(
+    request: GetOpenOrdersRequest,
+    callback: (error: ServiceError | null, response: GetOpenOrdersResponse) => void,
+  ): ClientUnaryCall;
+  getOpenOrders(
+    request: GetOpenOrdersRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetOpenOrdersResponse) => void,
+  ): ClientUnaryCall;
+  getOpenOrders(
+    request: GetOpenOrdersRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetOpenOrdersResponse) => void,
+  ): ClientUnaryCall;
+  recordTrade(
+    request: RecordTradeRequest,
+    callback: (error: ServiceError | null, response: RecordTradeResponse) => void,
+  ): ClientUnaryCall;
+  recordTrade(
+    request: RecordTradeRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: RecordTradeResponse) => void,
+  ): ClientUnaryCall;
+  recordTrade(
+    request: RecordTradeRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: RecordTradeResponse) => void,
+  ): ClientUnaryCall;
+  /** User Management */
+  createUser(
+    request: CreateUserRequest,
+    callback: (error: ServiceError | null, response: CreateUserResponse) => void,
+  ): ClientUnaryCall;
+  createUser(
+    request: CreateUserRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CreateUserResponse) => void,
+  ): ClientUnaryCall;
+  createUser(
+    request: CreateUserRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CreateUserResponse) => void,
+  ): ClientUnaryCall;
+  getUser(
+    request: GetUserRequest,
+    callback: (error: ServiceError | null, response: GetUserResponse) => void,
+  ): ClientUnaryCall;
+  getUser(
+    request: GetUserRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetUserResponse) => void,
+  ): ClientUnaryCall;
+  getUser(
+    request: GetUserRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetUserResponse) => void,
+  ): ClientUnaryCall;
+  updateUser(
+    request: UpdateUserRequest,
+    callback: (error: ServiceError | null, response: UpdateUserResponse) => void,
+  ): ClientUnaryCall;
+  updateUser(
+    request: UpdateUserRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: UpdateUserResponse) => void,
+  ): ClientUnaryCall;
+  updateUser(
+    request: UpdateUserRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: UpdateUserResponse) => void,
+  ): ClientUnaryCall;
+  deleteUser(
+    request: DeleteUserRequest,
+    callback: (error: ServiceError | null, response: DeleteUserResponse) => void,
+  ): ClientUnaryCall;
+  deleteUser(
+    request: DeleteUserRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: DeleteUserResponse) => void,
+  ): ClientUnaryCall;
+  deleteUser(
+    request: DeleteUserRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: DeleteUserResponse) => void,
+  ): ClientUnaryCall;
+  /** Account Management */
+  createAccount(
+    request: CreateAccountRequest,
+    callback: (error: ServiceError | null, response: CreateAccountResponse) => void,
+  ): ClientUnaryCall;
+  createAccount(
+    request: CreateAccountRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CreateAccountResponse) => void,
+  ): ClientUnaryCall;
+  createAccount(
+    request: CreateAccountRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CreateAccountResponse) => void,
+  ): ClientUnaryCall;
+  getAccount(
+    request: GetAccountRequest,
+    callback: (error: ServiceError | null, response: GetAccountResponse) => void,
+  ): ClientUnaryCall;
+  getAccount(
+    request: GetAccountRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetAccountResponse) => void,
+  ): ClientUnaryCall;
+  getAccount(
+    request: GetAccountRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetAccountResponse) => void,
+  ): ClientUnaryCall;
+  updateAccount(
+    request: UpdateAccountRequest,
+    callback: (error: ServiceError | null, response: UpdateAccountResponse) => void,
+  ): ClientUnaryCall;
+  updateAccount(
+    request: UpdateAccountRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: UpdateAccountResponse) => void,
+  ): ClientUnaryCall;
+  updateAccount(
+    request: UpdateAccountRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: UpdateAccountResponse) => void,
+  ): ClientUnaryCall;
+  deleteAccount(
+    request: DeleteAccountRequest,
+    callback: (error: ServiceError | null, response: DeleteAccountResponse) => void,
+  ): ClientUnaryCall;
+  deleteAccount(
+    request: DeleteAccountRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: DeleteAccountResponse) => void,
+  ): ClientUnaryCall;
+  deleteAccount(
+    request: DeleteAccountRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: DeleteAccountResponse) => void,
+  ): ClientUnaryCall;
+  listAccounts(
+    request: ListAccountsRequest,
+    callback: (error: ServiceError | null, response: ListAccountsResponse) => void,
+  ): ClientUnaryCall;
+  listAccounts(
+    request: ListAccountsRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: ListAccountsResponse) => void,
+  ): ClientUnaryCall;
+  listAccounts(
+    request: ListAccountsRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: ListAccountsResponse) => void,
+  ): ClientUnaryCall;
+  /** Wallet Management */
+  createWallet(
+    request: CreateWalletRequest,
+    callback: (error: ServiceError | null, response: CreateWalletResponse) => void,
+  ): ClientUnaryCall;
+  createWallet(
+    request: CreateWalletRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CreateWalletResponse) => void,
+  ): ClientUnaryCall;
+  createWallet(
+    request: CreateWalletRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CreateWalletResponse) => void,
+  ): ClientUnaryCall;
+  getWallet(
+    request: GetWalletRequest,
+    callback: (error: ServiceError | null, response: GetWalletResponse) => void,
+  ): ClientUnaryCall;
+  getWallet(
+    request: GetWalletRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetWalletResponse) => void,
+  ): ClientUnaryCall;
+  getWallet(
+    request: GetWalletRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetWalletResponse) => void,
+  ): ClientUnaryCall;
+  updateWallet(
+    request: UpdateWalletRequest,
+    callback: (error: ServiceError | null, response: UpdateWalletResponse) => void,
+  ): ClientUnaryCall;
+  updateWallet(
+    request: UpdateWalletRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: UpdateWalletResponse) => void,
+  ): ClientUnaryCall;
+  updateWallet(
+    request: UpdateWalletRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: UpdateWalletResponse) => void,
+  ): ClientUnaryCall;
+  deleteWallet(
+    request: DeleteWalletRequest,
+    callback: (error: ServiceError | null, response: DeleteWalletResponse) => void,
+  ): ClientUnaryCall;
+  deleteWallet(
+    request: DeleteWalletRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: DeleteWalletResponse) => void,
+  ): ClientUnaryCall;
+  deleteWallet(
+    request: DeleteWalletRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: DeleteWalletResponse) => void,
+  ): ClientUnaryCall;
+  listWallets(
+    request: ListWalletsRequest,
+    callback: (error: ServiceError | null, response: ListWalletsResponse) => void,
+  ): ClientUnaryCall;
+  listWallets(
+    request: ListWalletsRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: ListWalletsResponse) => void,
+  ): ClientUnaryCall;
+  listWallets(
+    request: ListWalletsRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: ListWalletsResponse) => void,
+  ): ClientUnaryCall;
+  /** Fund Management */
+  createDeposit(
+    request: CreateDepositRequest,
+    callback: (error: ServiceError | null, response: CreateDepositResponse) => void,
+  ): ClientUnaryCall;
+  createDeposit(
+    request: CreateDepositRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CreateDepositResponse) => void,
+  ): ClientUnaryCall;
+  createDeposit(
+    request: CreateDepositRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CreateDepositResponse) => void,
+  ): ClientUnaryCall;
+  getDeposit(
+    request: GetDepositRequest,
+    callback: (error: ServiceError | null, response: GetDepositResponse) => void,
+  ): ClientUnaryCall;
+  getDeposit(
+    request: GetDepositRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetDepositResponse) => void,
+  ): ClientUnaryCall;
+  getDeposit(
+    request: GetDepositRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetDepositResponse) => void,
+  ): ClientUnaryCall;
+  updateDeposit(
+    request: UpdateDepositRequest,
+    callback: (error: ServiceError | null, response: UpdateDepositResponse) => void,
+  ): ClientUnaryCall;
+  updateDeposit(
+    request: UpdateDepositRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: UpdateDepositResponse) => void,
+  ): ClientUnaryCall;
+  updateDeposit(
+    request: UpdateDepositRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: UpdateDepositResponse) => void,
+  ): ClientUnaryCall;
+  cancelDeposit(
+    request: CancelDepositRequest,
+    callback: (error: ServiceError | null, response: CancelDepositResponse) => void,
+  ): ClientUnaryCall;
+  cancelDeposit(
+    request: CancelDepositRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CancelDepositResponse) => void,
+  ): ClientUnaryCall;
+  cancelDeposit(
+    request: CancelDepositRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CancelDepositResponse) => void,
+  ): ClientUnaryCall;
+  listDeposits(
+    request: ListDepositsRequest,
+    callback: (error: ServiceError | null, response: ListDepositsResponse) => void,
+  ): ClientUnaryCall;
+  listDeposits(
+    request: ListDepositsRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: ListDepositsResponse) => void,
+  ): ClientUnaryCall;
+  listDeposits(
+    request: ListDepositsRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: ListDepositsResponse) => void,
+  ): ClientUnaryCall;
+  createWithdrawal(
+    request: CreateWithdrawalRequest,
+    callback: (error: ServiceError | null, response: CreateWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  createWithdrawal(
+    request: CreateWithdrawalRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CreateWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  createWithdrawal(
+    request: CreateWithdrawalRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CreateWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  getWithdrawal(
+    request: GetWithdrawalRequest,
+    callback: (error: ServiceError | null, response: GetWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  getWithdrawal(
+    request: GetWithdrawalRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  getWithdrawal(
+    request: GetWithdrawalRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  updateWithdrawal(
+    request: UpdateWithdrawalRequest,
+    callback: (error: ServiceError | null, response: UpdateWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  updateWithdrawal(
+    request: UpdateWithdrawalRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: UpdateWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  updateWithdrawal(
+    request: UpdateWithdrawalRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: UpdateWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  cancelWithdrawal(
+    request: CancelWithdrawalRequest,
+    callback: (error: ServiceError | null, response: CancelWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  cancelWithdrawal(
+    request: CancelWithdrawalRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CancelWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  cancelWithdrawal(
+    request: CancelWithdrawalRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CancelWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  listWithdrawals(
+    request: ListWithdrawalsRequest,
+    callback: (error: ServiceError | null, response: ListWithdrawalsResponse) => void,
+  ): ClientUnaryCall;
+  listWithdrawals(
+    request: ListWithdrawalsRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: ListWithdrawalsResponse) => void,
+  ): ClientUnaryCall;
+  listWithdrawals(
+    request: ListWithdrawalsRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: ListWithdrawalsResponse) => void,
+  ): ClientUnaryCall;
+  /** Asset & Instrument (Read-only usually, but maybe admin creates them) */
+  createAsset(
+    request: CreateAssetRequest,
+    callback: (error: ServiceError | null, response: CreateAssetResponse) => void,
+  ): ClientUnaryCall;
+  createAsset(
+    request: CreateAssetRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CreateAssetResponse) => void,
+  ): ClientUnaryCall;
+  createAsset(
+    request: CreateAssetRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CreateAssetResponse) => void,
+  ): ClientUnaryCall;
+  createInstrument(
+    request: CreateInstrumentRequest,
+    callback: (error: ServiceError | null, response: CreateInstrumentResponse) => void,
+  ): ClientUnaryCall;
+  createInstrument(
+    request: CreateInstrumentRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CreateInstrumentResponse) => void,
+  ): ClientUnaryCall;
+  createInstrument(
+    request: CreateInstrumentRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CreateInstrumentResponse) => void,
+  ): ClientUnaryCall;
+  /** System */
+  getSystemAccount(
+    request: GetSystemAccountRequest,
+    callback: (error: ServiceError | null, response: GetSystemAccountResponse) => void,
+  ): ClientUnaryCall;
+  getSystemAccount(
+    request: GetSystemAccountRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetSystemAccountResponse) => void,
+  ): ClientUnaryCall;
+  getSystemAccount(
+    request: GetSystemAccountRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetSystemAccountResponse) => void,
   ): ClientUnaryCall;
 }
 

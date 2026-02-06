@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package common;
+
+option go_package = "github.com/open-exchange/matching_engine/proto/common";
+
+message FeeSchedule {
+  string id = 1;
+  string tenant_id = 2;
+  
+  string scope = 3; // e.g. "global", "user", "vip"
+  int32 maker_fee_bps = 4;
+  int32 taker_fee_bps = 5;
+  string min_fee_amount = 6; // string for precision if needed, Prisma said Int? but fees usually have decimals
+  
+  int64 effective_from = 7;
+  int64 effective_to = 8;
+  
+  string tier = 9;
+  string account_id = 10;
+  string instrument_id = 11;
+  
+  string meta = 12; // JSON string
+  
+  int64 created_at = 13;
+  int64 updated_at = 14;
+}

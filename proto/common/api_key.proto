@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package common;
+
+option go_package = "github.com/open-exchange/matching_engine/proto/common";
+
+message ApiKey {
+  string id = 1;
+  string tenant_id = 2;
+  
+  string name = 3;
+  string key_prefix = 4;
+  repeated string scopes = 5;
+  
+  int64 expires_at = 6;
+  int64 disabled_at = 7;
+  
+  string membership_id = 8;
+  
+  int64 created_at = 9;
+  int64 updated_at = 10;
+}

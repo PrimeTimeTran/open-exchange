@@ -3,12 +3,70 @@ syntax = "proto3";
 package ledger;
 
 import "common/order.proto";
+import "common/user.proto";
+import "common/account.proto";
+import "common/wallet.proto";
+import "common/deposit.proto";
+import "common/withdrawal.proto";
+import "common/asset.proto";
+import "common/instrument.proto";
+import "common/trade.proto";
+import "common/fee_schedule.proto";
+import "common/balance_snapshot.proto";
+import "common/system_account.proto";
 
 option go_package = "github.com/open-exchange/matching_engine/proto/ledger";
 
 service LedgerService {
+  // Order Management
   rpc RecordOrder(RecordOrderRequest) returns (RecordOrderResponse);
+  rpc CancelOrder(CancelOrderRequest) returns (CancelOrderResponse);
+  rpc DeleteOrder(DeleteOrderRequest) returns (DeleteOrderResponse);
+  rpc GetOpenOrders(GetOpenOrdersRequest) returns (GetOpenOrdersResponse);
+  rpc RecordTrade(RecordTradeRequest) returns (RecordTradeResponse);
+  
+  // User Management
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
+  
+  // Account Management
+  rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse);
+  rpc GetAccount(GetAccountRequest) returns (GetAccountResponse);
+  rpc UpdateAccount(UpdateAccountRequest) returns (UpdateAccountResponse);
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
+  rpc ListAccounts(ListAccountsRequest) returns (ListAccountsResponse);
+  
+  // Wallet Management
+  rpc CreateWallet(CreateWalletRequest) returns (CreateWalletResponse);
+  rpc GetWallet(GetWalletRequest) returns (GetWalletResponse);
+  rpc UpdateWallet(UpdateWalletRequest) returns (UpdateWalletResponse);
+  rpc DeleteWallet(DeleteWalletRequest) returns (DeleteWalletResponse);
+  rpc ListWallets(ListWalletsRequest) returns (ListWalletsResponse);
+  
+  // Fund Management
+  rpc CreateDeposit(CreateDepositRequest) returns (CreateDepositResponse);
+  rpc GetDeposit(GetDepositRequest) returns (GetDepositResponse);
+  rpc UpdateDeposit(UpdateDepositRequest) returns (UpdateDepositResponse);
+  rpc CancelDeposit(CancelDepositRequest) returns (CancelDepositResponse);
+  rpc ListDeposits(ListDepositsRequest) returns (ListDepositsResponse);
+
+  rpc CreateWithdrawal(CreateWithdrawalRequest) returns (CreateWithdrawalResponse);
+  rpc GetWithdrawal(GetWithdrawalRequest) returns (GetWithdrawalResponse);
+  rpc UpdateWithdrawal(UpdateWithdrawalRequest) returns (UpdateWithdrawalResponse);
+  rpc CancelWithdrawal(CancelWithdrawalRequest) returns (CancelWithdrawalResponse);
+  rpc ListWithdrawals(ListWithdrawalsRequest) returns (ListWithdrawalsResponse);
+  
+  // Asset & Instrument (Read-only usually, but maybe admin creates them)
+  rpc CreateAsset(CreateAssetRequest) returns (CreateAssetResponse);
+  rpc CreateInstrument(CreateInstrumentRequest) returns (CreateInstrumentResponse);
+
+  // System
+  rpc GetSystemAccount(GetSystemAccountRequest) returns (GetSystemAccountResponse);
 }
+
+// --- Order Messages ---
 
 message RecordOrderRequest {
   common.Order order = 1;
@@ -19,3 +77,304 @@ message RecordOrderResponse {
   bool success = 2;
   string message = 3;
 }
+
+message CancelOrderRequest {
+  string order_id = 1;
+}
+
+message CancelOrderResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message DeleteOrderRequest {
+  string order_id = 1;
+}
+
+message DeleteOrderResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message GetOpenOrdersRequest {
+  string instrument_id = 1; // Optional: Fetch for all if empty
+}
+
+message GetOpenOrdersResponse {
+  repeated common.Order orders = 1;
+}
+
+message RecordTradeRequest {
+  string maker_order_id = 1;
+  string taker_order_id = 2;
+  string price = 3;
+  string quantity = 4;
+  int64 timestamp = 5;
+  string instrument_id = 6;
+}
+
+message RecordTradeResponse {
+  string transaction_id = 1;
+  bool success = 2;
+}
+
+// --- User Messages ---
+
+message CreateUserRequest {
+  string email = 1;
+  string password = 2; // Should be hashed before storage or sent securely
+  string first_name = 3;
+  string last_name = 4;
+}
+
+message CreateUserResponse {
+  common.User user = 1;
+}
+
+message GetUserRequest {
+  string user_id = 1;
+}
+
+message GetUserResponse {
+  common.User user = 1;
+}
+
+message UpdateUserRequest {
+  common.User user = 1; // Send full object or fields to update? Usually partial update needs mask or specific fields. For simplicity, full object replacement or specific fields.
+  // Proto best practice for partial updates is a FieldMask, but for now let's assume update fields provided in the User object.
+}
+
+message UpdateUserResponse {
+  common.User user = 1;
+}
+
+message DeleteUserRequest {
+  string user_id = 1;
+}
+
+message DeleteUserResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// --- Account Messages ---
+
+message CreateAccountRequest {
+  string user_id = 1;
+  string type = 2;
+}
+
+message CreateAccountResponse {
+  common.Account account = 1;
+}
+
+message GetAccountRequest {
+  string account_id = 1;
+}
+
+message GetAccountResponse {
+  common.Account account = 1;
+}
+
+message UpdateAccountRequest {
+  string account_id = 1;
+  string status = 2; // e.g. suspend
+  string type = 3;
+}
+
+message UpdateAccountResponse {
+  common.Account account = 1;
+}
+
+message ListAccountsRequest {
+  string user_id = 1;
+}
+
+message ListAccountsResponse {
+  repeated common.Account accounts = 1;
+}
+
+message DeleteAccountRequest {
+  string account_id = 1;
+}
+
+message DeleteAccountResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// --- Wallet Messages ---
+
+message CreateWalletRequest {
+  string account_id = 1;
+  string asset_id = 2;
+}
+
+message CreateWalletResponse {
+  common.Wallet wallet = 1;
+}
+
+message GetWalletRequest {
+  string wallet_id = 1;
+}
+
+message GetWalletResponse {
+  common.Wallet wallet = 1;
+}
+
+message UpdateWalletRequest {
+  string wallet_id = 1;
+  string status = 2; // e.g. freeze
+}
+
+message UpdateWalletResponse {
+  common.Wallet wallet = 1;
+}
+
+message ListWalletsRequest {
+  string account_id = 1;
+}
+
+message ListWalletsResponse {
+  repeated common.Wallet wallets = 1;
+}
+
+message DeleteWalletRequest {
+  string wallet_id = 1;
+}
+
+message DeleteWalletResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// --- Fund Messages ---
+
+message CreateDepositRequest {
+  string wallet_id = 1;
+  string amount = 2;
+  string transaction_ref = 3; 
+}
+
+message CreateDepositResponse {
+  common.Deposit deposit = 1; 
+}
+
+message GetDepositRequest {
+  string deposit_id = 1;
+}
+
+message GetDepositResponse {
+  common.Deposit deposit = 1;
+}
+
+message UpdateDepositRequest {
+  string deposit_id = 1;
+  string status = 2;
+  int32 confirmations = 3;
+}
+
+message UpdateDepositResponse {
+  common.Deposit deposit = 1;
+}
+
+message ListDepositsRequest {
+  string wallet_id = 1; // Optional filter
+  string status = 2;    // Optional filter
+}
+
+message ListDepositsResponse {
+  repeated common.Deposit deposits = 1;
+}
+
+message CancelDepositRequest {
+  string deposit_id = 1;
+}
+
+message CancelDepositResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message CreateWithdrawalRequest {
+  string wallet_id = 1;
+  string amount = 2;
+  string address = 3;
+}
+
+message CreateWithdrawalResponse {
+  common.Withdrawal withdrawal = 1; 
+}
+
+message GetWithdrawalRequest {
+  string withdrawal_id = 1;
+}
+
+message GetWithdrawalResponse {
+  common.Withdrawal withdrawal = 1;
+}
+
+message UpdateWithdrawalRequest {
+  string withdrawal_id = 1;
+  string status = 2;
+  string tx_hash = 3;
+}
+
+message UpdateWithdrawalResponse {
+  common.Withdrawal withdrawal = 1;
+}
+
+message ListWithdrawalsRequest {
+  string wallet_id = 1; // Optional filter
+  string status = 2;    // Optional filter
+}
+
+message ListWithdrawalsResponse {
+  repeated common.Withdrawal withdrawals = 1;
+}
+
+message CancelWithdrawalRequest {
+  string withdrawal_id = 1;
+}
+
+message CancelWithdrawalResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+
+// --- Asset & Instrument Messages ---
+
+message CreateAssetRequest {
+  string symbol = 1;
+  string type = 2;
+  int32 precision = 3;
+}
+
+message CreateAssetResponse {
+  common.Asset asset = 1;
+}
+
+message CreateInstrumentRequest {
+  string symbol = 1;
+  string type = 2;
+  string base_asset_id = 3;
+  string quote_asset_id = 4;
+}
+
+message CreateInstrumentResponse {
+  common.Instrument instrument = 1;
+}
+
+// --- System Messages ---
+
+message GetSystemAccountRequest {
+  string type = 1;
+}
+
+message GetSystemAccountResponse {
+  common.SystemAccount account = 1;
+}
+
+
+

@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package common;
+
+option go_package = "github.com/open-exchange/matching_engine/proto/common";
+
+message LedgerEntry {
+  string id = 1;
+  string tenant_id = 2;
+  string event_id = 3;
+  string account_id = 4;
+  
+  string amount = 5; // Positive or negative
+  string meta = 6; // JSON string
+  
+  int64 created_at = 7;
+  int64 updated_at = 8;
+}

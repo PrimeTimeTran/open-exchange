@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package common;
+
+option go_package = "github.com/open-exchange/matching_engine/proto/common";
+
+message Withdrawal {
+  string id = 1;
+  string tenant_id = 2;
+  string account_id = 3;
+  string asset_id = 4;
+  string wallet_id = 5;
+  
+  string amount = 6;
+  string fee = 7;
+  string status = 8;
+  
+  string destination_address = 9;
+  string destination_tag = 10;
+  string chain = 11;
+  string tx_hash = 12;
+  string failure_reason = 13;
+  
+  string requested_by = 14;
+  string approved_by = 15;
+  
+  int64 requested_at = 16;
+  int64 approved_at = 17;
+  int64 broadcast_at = 18;
+  int64 confirmed_at = 19;
+  
+  int32 confirmations = 20;
+  string meta = 21; // JSON string
+  
+  int64 created_at = 22;
+  int64 updated_at = 23;
+}

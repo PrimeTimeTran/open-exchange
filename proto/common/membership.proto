@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package common;
+
+option go_package = "github.com/open-exchange/matching_engine/proto/common";
+
+message Membership {
+  string id = 1;
+  string tenant_id = 2;
+  string user_id = 3;
+  
+  string first_name = 4;
+  string last_name = 5;
+  string full_name = 6;
+  string avatars = 7; // JSON string
+  repeated string roles = 8;
+  string status = 9;
+  
+  int64 created_at = 10;
+  int64 updated_at = 11;
+}

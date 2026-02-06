@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package common;
+
+import "common/order.proto"; // For OrderSide if needed, though Trade in schema links to Order
+
+option go_package = "github.com/open-exchange/matching_engine/proto/common";
+
+message Trade {
+  string id = 1;
+  string tenant_id = 2;
+  string instrument_id = 3;
+  
+  string buy_order_id = 4;
+  string sell_order_id = 5;
+  
+  string price = 6;
+  string quantity = 7;
+  
+  string meta = 8; // JSON string
+  
+  int64 created_at = 9;
+  int64 updated_at = 10;
+}

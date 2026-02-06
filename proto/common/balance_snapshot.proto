@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package common;
+
+option go_package = "github.com/open-exchange/matching_engine/proto/common";
+
+message BalanceSnapshot {
+  string id = 1;
+  string tenant_id = 2;
+  
+  string account_id = 3;
+  string wallet_id = 4;
+  string asset_id = 5;
+  
+  string available = 6;
+  string locked = 7;
+  string total = 8;
+  
+  int64 snapshot_at = 9;
+  
+  string meta = 10; // JSON string
+  
+  int64 created_at = 11;
+  int64 updated_at = 12;
+}
