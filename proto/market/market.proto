@@ -10,6 +10,9 @@ service MarketService {
   
   // Gets the latest snapshot for a symbol
   rpc GetLatestPrice (GetLatestPriceRequest) returns (PriceUpdate);
+
+  // Gets historical market data for a symbol
+  rpc GetMarketData (GetMarketDataRequest) returns (GetMarketDataResponse);
 }
 
 message SubscribePricesRequest {
@@ -18,6 +21,26 @@ message SubscribePricesRequest {
 
 message GetLatestPriceRequest {
   string symbol = 1;
+}
+
+message GetMarketDataRequest {
+  string symbol = 1;
+  string interval = 2; // 1d, 1h, etc.
+  int64 start_time = 3;
+  int64 end_time = 4;
+}
+
+message Candle {
+  int64 timestamp = 1;
+  double open = 2;
+  double high = 3;
+  double low = 4;
+  double close = 5;
+  double volume = 6;
+}
+
+message GetMarketDataResponse {
+  repeated Candle candles = 1;
 }
 
 message PriceUpdate {

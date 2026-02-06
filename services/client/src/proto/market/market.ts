@@ -31,6 +31,29 @@ export interface GetLatestPriceRequest {
   symbol?: string | undefined;
 }
 
+export interface GetMarketDataRequest {
+  symbol?:
+    | string
+    | undefined;
+  /** 1d, 1h, etc. */
+  interval?: string | undefined;
+  startTime?: string | undefined;
+  endTime?: string | undefined;
+}
+
+export interface Candle {
+  timestamp?: string | undefined;
+  open?: number | undefined;
+  high?: number | undefined;
+  low?: number | undefined;
+  close?: number | undefined;
+  volume?: number | undefined;
+}
+
+export interface GetMarketDataResponse {
+  candles?: Candle[] | undefined;
+}
+
 export interface PriceUpdate {
   symbol?: string | undefined;
   price?: string | undefined;
@@ -151,6 +174,327 @@ export const GetLatestPriceRequest: MessageFns<GetLatestPriceRequest> = {
   fromPartial<I extends Exact<DeepPartial<GetLatestPriceRequest>, I>>(object: I): GetLatestPriceRequest {
     const message = createBaseGetLatestPriceRequest();
     message.symbol = object.symbol ?? "";
+    return message;
+  },
+};
+
+function createBaseGetMarketDataRequest(): GetMarketDataRequest {
+  return { symbol: "", interval: "", startTime: "0", endTime: "0" };
+}
+
+export const GetMarketDataRequest: MessageFns<GetMarketDataRequest> = {
+  encode(message: GetMarketDataRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.symbol !== undefined && message.symbol !== "") {
+      writer.uint32(10).string(message.symbol);
+    }
+    if (message.interval !== undefined && message.interval !== "") {
+      writer.uint32(18).string(message.interval);
+    }
+    if (message.startTime !== undefined && message.startTime !== "0") {
+      writer.uint32(24).int64(message.startTime);
+    }
+    if (message.endTime !== undefined && message.endTime !== "0") {
+      writer.uint32(32).int64(message.endTime);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetMarketDataRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetMarketDataRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.symbol = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.interval = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.startTime = reader.int64().toString();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.endTime = reader.int64().toString();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetMarketDataRequest {
+    return {
+      symbol: isSet(object.symbol) ? globalThis.String(object.symbol) : "",
+      interval: isSet(object.interval) ? globalThis.String(object.interval) : "",
+      startTime: isSet(object.startTime)
+        ? globalThis.String(object.startTime)
+        : isSet(object.start_time)
+        ? globalThis.String(object.start_time)
+        : "0",
+      endTime: isSet(object.endTime)
+        ? globalThis.String(object.endTime)
+        : isSet(object.end_time)
+        ? globalThis.String(object.end_time)
+        : "0",
+    };
+  },
+
+  toJSON(message: GetMarketDataRequest): unknown {
+    const obj: any = {};
+    if (message.symbol !== undefined && message.symbol !== "") {
+      obj.symbol = message.symbol;
+    }
+    if (message.interval !== undefined && message.interval !== "") {
+      obj.interval = message.interval;
+    }
+    if (message.startTime !== undefined && message.startTime !== "0") {
+      obj.startTime = message.startTime;
+    }
+    if (message.endTime !== undefined && message.endTime !== "0") {
+      obj.endTime = message.endTime;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetMarketDataRequest>, I>>(base?: I): GetMarketDataRequest {
+    return GetMarketDataRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetMarketDataRequest>, I>>(object: I): GetMarketDataRequest {
+    const message = createBaseGetMarketDataRequest();
+    message.symbol = object.symbol ?? "";
+    message.interval = object.interval ?? "";
+    message.startTime = object.startTime ?? "0";
+    message.endTime = object.endTime ?? "0";
+    return message;
+  },
+};
+
+function createBaseCandle(): Candle {
+  return { timestamp: "0", open: 0, high: 0, low: 0, close: 0, volume: 0 };
+}
+
+export const Candle: MessageFns<Candle> = {
+  encode(message: Candle, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.timestamp !== undefined && message.timestamp !== "0") {
+      writer.uint32(8).int64(message.timestamp);
+    }
+    if (message.open !== undefined && message.open !== 0) {
+      writer.uint32(17).double(message.open);
+    }
+    if (message.high !== undefined && message.high !== 0) {
+      writer.uint32(25).double(message.high);
+    }
+    if (message.low !== undefined && message.low !== 0) {
+      writer.uint32(33).double(message.low);
+    }
+    if (message.close !== undefined && message.close !== 0) {
+      writer.uint32(41).double(message.close);
+    }
+    if (message.volume !== undefined && message.volume !== 0) {
+      writer.uint32(49).double(message.volume);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): Candle {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCandle();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.timestamp = reader.int64().toString();
+          continue;
+        }
+        case 2: {
+          if (tag !== 17) {
+            break;
+          }
+
+          message.open = reader.double();
+          continue;
+        }
+        case 3: {
+          if (tag !== 25) {
+            break;
+          }
+
+          message.high = reader.double();
+          continue;
+        }
+        case 4: {
+          if (tag !== 33) {
+            break;
+          }
+
+          message.low = reader.double();
+          continue;
+        }
+        case 5: {
+          if (tag !== 41) {
+            break;
+          }
+
+          message.close = reader.double();
+          continue;
+        }
+        case 6: {
+          if (tag !== 49) {
+            break;
+          }
+
+          message.volume = reader.double();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Candle {
+    return {
+      timestamp: isSet(object.timestamp) ? globalThis.String(object.timestamp) : "0",
+      open: isSet(object.open) ? globalThis.Number(object.open) : 0,
+      high: isSet(object.high) ? globalThis.Number(object.high) : 0,
+      low: isSet(object.low) ? globalThis.Number(object.low) : 0,
+      close: isSet(object.close) ? globalThis.Number(object.close) : 0,
+      volume: isSet(object.volume) ? globalThis.Number(object.volume) : 0,
+    };
+  },
+
+  toJSON(message: Candle): unknown {
+    const obj: any = {};
+    if (message.timestamp !== undefined && message.timestamp !== "0") {
+      obj.timestamp = message.timestamp;
+    }
+    if (message.open !== undefined && message.open !== 0) {
+      obj.open = message.open;
+    }
+    if (message.high !== undefined && message.high !== 0) {
+      obj.high = message.high;
+    }
+    if (message.low !== undefined && message.low !== 0) {
+      obj.low = message.low;
+    }
+    if (message.close !== undefined && message.close !== 0) {
+      obj.close = message.close;
+    }
+    if (message.volume !== undefined && message.volume !== 0) {
+      obj.volume = message.volume;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Candle>, I>>(base?: I): Candle {
+    return Candle.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<Candle>, I>>(object: I): Candle {
+    const message = createBaseCandle();
+    message.timestamp = object.timestamp ?? "0";
+    message.open = object.open ?? 0;
+    message.high = object.high ?? 0;
+    message.low = object.low ?? 0;
+    message.close = object.close ?? 0;
+    message.volume = object.volume ?? 0;
+    return message;
+  },
+};
+
+function createBaseGetMarketDataResponse(): GetMarketDataResponse {
+  return { candles: [] };
+}
+
+export const GetMarketDataResponse: MessageFns<GetMarketDataResponse> = {
+  encode(message: GetMarketDataResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.candles !== undefined && message.candles.length !== 0) {
+      for (const v of message.candles) {
+        Candle.encode(v!, writer.uint32(10).fork()).join();
+      }
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetMarketDataResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetMarketDataResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          const el = Candle.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.candles!.push(el);
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetMarketDataResponse {
+    return {
+      candles: globalThis.Array.isArray(object?.candles) ? object.candles.map((e: any) => Candle.fromJSON(e)) : [],
+    };
+  },
+
+  toJSON(message: GetMarketDataResponse): unknown {
+    const obj: any = {};
+    if (message.candles?.length) {
+      obj.candles = message.candles.map((e) => Candle.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetMarketDataResponse>, I>>(base?: I): GetMarketDataResponse {
+    return GetMarketDataResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetMarketDataResponse>, I>>(object: I): GetMarketDataResponse {
+    const message = createBaseGetMarketDataResponse();
+    message.candles = object.candles?.map((e) => Candle.fromPartial(e)) || [];
     return message;
   },
 };
@@ -311,6 +655,17 @@ export const MarketServiceService = {
     responseSerialize: (value: PriceUpdate): Buffer => Buffer.from(PriceUpdate.encode(value).finish()),
     responseDeserialize: (value: Buffer): PriceUpdate => PriceUpdate.decode(value),
   },
+  /** Gets historical market data for a symbol */
+  getMarketData: {
+    path: "/market.MarketService/GetMarketData",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetMarketDataRequest): Buffer => Buffer.from(GetMarketDataRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetMarketDataRequest => GetMarketDataRequest.decode(value),
+    responseSerialize: (value: GetMarketDataResponse): Buffer =>
+      Buffer.from(GetMarketDataResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetMarketDataResponse => GetMarketDataResponse.decode(value),
+  },
 } as const;
 
 export interface MarketServiceServer extends UntypedServiceImplementation {
@@ -318,6 +673,8 @@ export interface MarketServiceServer extends UntypedServiceImplementation {
   subscribePrices: handleServerStreamingCall<SubscribePricesRequest, PriceUpdate>;
   /** Gets the latest snapshot for a symbol */
   getLatestPrice: handleUnaryCall<GetLatestPriceRequest, PriceUpdate>;
+  /** Gets historical market data for a symbol */
+  getMarketData: handleUnaryCall<GetMarketDataRequest, GetMarketDataResponse>;
 }
 
 export interface MarketServiceClient extends Client {
@@ -343,6 +700,22 @@ export interface MarketServiceClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: PriceUpdate) => void,
+  ): ClientUnaryCall;
+  /** Gets historical market data for a symbol */
+  getMarketData(
+    request: GetMarketDataRequest,
+    callback: (error: ServiceError | null, response: GetMarketDataResponse) => void,
+  ): ClientUnaryCall;
+  getMarketData(
+    request: GetMarketDataRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetMarketDataResponse) => void,
+  ): ClientUnaryCall;
+  getMarketData(
+    request: GetMarketDataRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetMarketDataResponse) => void,
   ): ClientUnaryCall;
 }
 

@@ -14,9 +14,13 @@ COPY . .
 # Build the server
 RUN go build -o server_bin ./cmd/server
 
+# Build the backfill tool
+RUN go build -o backfill_bin ./cmd/backfill
+
 FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/server_bin .
+COPY --from=builder /app/backfill_bin .
 
 EXPOSE 50053
 

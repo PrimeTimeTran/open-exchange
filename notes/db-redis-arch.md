@@ -1,8 +1,3 @@
-Great question — this is the _real_ “Postgres-at-scale” stuff people only learn after something hurts 😄
-I’ll go point-by-point and tie each one back to your **candles workload**, not generic DB theory.
-
----
-
 # First: what **VACUUM** actually is (in plain English)
 
 Postgres **never deletes or updates rows in place**.

@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion7
 const (
 	MarketService_SubscribePrices_FullMethodName = "/market.MarketService/SubscribePrices"
 	MarketService_GetLatestPrice_FullMethodName  = "/market.MarketService/GetLatestPrice"
+	MarketService_GetMarketData_FullMethodName   = "/market.MarketService/GetMarketData"
 )
 
 // MarketServiceClient is the client API for MarketService service.
@@ -31,6 +32,8 @@ type MarketServiceClient interface {
 	SubscribePrices(ctx context.Context, in *SubscribePricesRequest, opts ...grpc.CallOption) (MarketService_SubscribePricesClient, error)
 	// Gets the latest snapshot for a symbol
 	GetLatestPrice(ctx context.Context, in *GetLatestPriceRequest, opts ...grpc.CallOption) (*PriceUpdate, error)
+	// Gets historical market data for a symbol
+	GetMarketData(ctx context.Context, in *GetMarketDataRequest, opts ...grpc.CallOption) (*GetMarketDataResponse, error)
 }
 
 type marketServiceClient struct {
@@ -82,6 +85,15 @@ func (c *marketServiceClient) GetLatestPrice(ctx context.Context, in *GetLatestP
 	return out, nil
 }
 
+func (c *marketServiceClient) GetMarketData(ctx context.Context, in *GetMarketDataRequest, opts ...grpc.CallOption) (*GetMarketDataResponse, error) {
+	out := new(GetMarketDataResponse)
+	err := c.cc.Invoke(ctx, MarketService_GetMarketData_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MarketServiceServer is the server API for MarketService service.
 // All implementations must embed UnimplementedMarketServiceServer
 // for forward compatibility
@@ -90,6 +102,8 @@ type MarketServiceServer interface {
 	SubscribePrices(*SubscribePricesRequest, MarketService_SubscribePricesServer) error
 	// Gets the latest snapshot for a symbol
 	GetLatestPrice(context.Context, *GetLatestPriceRequest) (*PriceUpdate, error)
+	// Gets historical market data for a symbol
+	GetMarketData(context.Context, *GetMarketDataRequest) (*GetMarketDataResponse, error)
 	mustEmbedUnimplementedMarketServiceServer()
 }
 
@@ -102,6 +116,9 @@ func (UnimplementedMarketServiceServer) SubscribePrices(*SubscribePricesRequest,
 }
 func (UnimplementedMarketServiceServer) GetLatestPrice(context.Context, *GetLatestPriceRequest) (*PriceUpdate, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLatestPrice not implemented")
+}
+func (UnimplementedMarketServiceServer) GetMarketData(context.Context, *GetMarketDataRequest) (*GetMarketDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMarketData not implemented")
 }
 func (UnimplementedMarketServiceServer) mustEmbedUnimplementedMarketServiceServer() {}
 
@@ -155,6 +172,24 @@ func _MarketService_GetLatestPrice_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MarketService_GetMarketData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMarketDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MarketServiceServer).GetMarketData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MarketService_GetMarketData_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MarketServiceServer).GetMarketData(ctx, req.(*GetMarketDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MarketService_ServiceDesc is the grpc.ServiceDesc for MarketService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -165,6 +200,10 @@ var MarketService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetLatestPrice",
 			Handler:    _MarketService_GetLatestPrice_Handler,
+		},
+		{
+			MethodName: "GetMarketData",
+			Handler:    _MarketService_GetMarketData_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

@@ -14,6 +14,7 @@ services:
       - '3000:3000'
     environment:
       - MATCHING_ENGINE_URL=matching:50051
+      - MARKET_SERVICE_URL=market:50053
       # Use host.docker.internal to access localhost on the host machine (macOS/Windows)
       # You may need to update 'user:password' and 'crypto' to match your local credentials
       - DATABASE_URL=postgresql://postgres@host.docker.internal:5432/scaffoldhub-localhost-app?schema=public
@@ -63,6 +64,17 @@ services:
       - '50053:50053'
     environment:
       - PORT=50053
+      - REDIS_URL=redis://redis:6379
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:
 
   # db:
   #   image: postgres:15-alpine
