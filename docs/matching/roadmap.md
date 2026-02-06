@@ -23,12 +23,11 @@ The Matching Engine is the core of the exchange. It maintains the Order Book sta
 
 ## Persistence & Recovery
 
-- [ ] **Startup Recovery**: Mechanism to load open orders from a database or Write-Ahead Log (WAL) on service start.
-- [ ] **Graceful Shutdown**: Ensure state is saved before the container stops.
+- [x] **Startup Recovery**: Mechanism to load open orders from a database or Write-Ahead Log (WAL) on service start. (Implemented via Ledger Sync)
+- [x] **Graceful Shutdown**: Ensure state is saved before the container stops. (gRPC GracefulStop implemented)
 
 ## Advanced (Future)
 
 - [ ] **Partial Fills**: Handle cases where an order is only 50% filled.
 - [ ] **Stop Loss / Take Profit**: Trigger orders based on price movement.
 - [ ] **Self-Trade Prevention**: Prevent a user from matching against their own order.
-

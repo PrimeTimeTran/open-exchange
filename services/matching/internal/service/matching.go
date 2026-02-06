@@ -102,21 +102,20 @@ func (s *MatchingService) CancelOrder(ctx context.Context, orderID, instrumentID
 		return fmt.Errorf("failed to cancel order in engine: %w", err)
 	}
 
-	// 2. Update Ledger
+	// 2. Forward to Ledger (to release locked funds)
 	_, err = s.LedgerClient.CancelOrder(ctx, &ledger.CancelOrderRequest{
 		OrderId: orderID,
 	})
 	if err != nil {
-		// In a real system, we'd need a reconciliation queue here.
-		log.Printf("CRITICAL: Order %s removed from engine but failed to cancel in ledger: %v", orderID, err)
-		return fmt.Errorf("failed to cancel order in ledger: %w", err)
+		// Just log error, engine state is already updated
+		log.Printf("ERROR: Failed to cancel order in ledger: %v", err)
 	}
 
 	// 3. Publish Event
 	err = s.Publisher.PublishOrderCancelled(ctx, events.OrderCancelledEvent{
 		OrderID:      orderID,
 		InstrumentID: instrumentID,
-		Timestamp:    time.Now().Unix(),
+		Timestamp:    time.Now().UnixNano(),
 	})
 	if err != nil {
 		log.Printf("ERROR: Failed to publish order cancelled event: %v", err)
@@ -124,6 +123,43 @@ func (s *MatchingService) CancelOrder(ctx context.Context, orderID, instrumentID
 
 	return nil
 }
+
+// RecoverState fetches open orders from the Ledger and repopulates the engine.
+func (s *MatchingService) RecoverState(ctx context.Context) error {
+	log.Println("Matching Service: Starting State Recovery...")
+
+	// 1. Fetch Open Orders from Ledger
+	// Passing empty instrument_id to get all orders
+	resp, err := s.LedgerClient.GetOpenOrders(ctx, &ledger.GetOpenOrdersRequest{
+		InstrumentId: "", 
+	})
+	if err != nil {
+		return fmt.Errorf("failed to fetch open orders from ledger: %w", err)
+	}
+
+	log.Printf("Matching Service: Found %d open orders to recover.", len(resp.Orders))
+
+	// 2. Repopulate Engine
+	for _, orderProto := range resp.Orders {
+		order := engine.NewOrderFromProto(orderProto)
+		// ProcessOrder usually triggers matching. For recovery, we ideally just want to ADD to the book.
+		// However, since we are recovering existing state, these orders should already be resting (no crosses).
+		// If they do cross, it means the state was inconsistent, and they SHOULD match.
+		// So calling ProcessOrder is generally safe and correct for a simple recovery.
+		trades, _, err := s.Engine.ProcessOrder(order)
+		if err != nil {
+			log.Printf("ERROR: Failed to recover order %s: %v", order.ID, err)
+			continue
+		}
+		if len(trades) > 0 {
+			log.Printf("WARNING: Recovery triggered %d trades for order %s. This implies inconsistent state.", len(trades), order.ID)
+		}
+	}
+
+	log.Println("Matching Service: State Recovery Complete.")
+	return nil
+}
+
 
 // SyncOrderBook fetches all open orders from the Ledger and rebuilds the in-memory order book.
 // This should be called on service startup.

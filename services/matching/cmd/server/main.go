@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
 	"net"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -68,6 +71,13 @@ func main() {
 
 	svc := service.NewMatchingService(eng, ledgerClient, publisher)
 
+	// 2.5 Startup Recovery
+	// We do this in a goroutine or before serving. Before serving is safer to ensure state is consistent.
+	ctx := context.Background()
+	if err := svc.RecoverState(ctx); err != nil {
+		log.Printf("WARNING: Failed to recover state from Ledger: %v. Starting with empty order book.", err)
+	}
+
 	// 3. Start Matching Engine Server
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
@@ -86,7 +96,21 @@ func main() {
 	// Start HTTP Health Check Server
 	go system.StartHealthServer(":8080")
 
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
-	}
+	// 4. Graceful Shutdown
+	go func() {
+		if err := s.Serve(lis); err != nil {
+			log.Fatalf("failed to serve: %v", err)
+		}
+	}()
+
+	// Wait for interrupt signal to gracefully shutdown the server with
+	// a timeout of 5 seconds.
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutting down server...")
+
+	s.GracefulStop()
+	log.Println("Server exiting")
 }
+
