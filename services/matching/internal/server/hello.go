@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/crypto-exchange/matching_engine/proto/helloworld"
+	"github.com/open-exchange/matching_engine/proto/helloworld"
 )
 
 type GreeterServer struct {

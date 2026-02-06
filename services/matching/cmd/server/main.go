@@ -10,13 +10,13 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/crypto-exchange/matching_engine/internal/engine"
-	"github.com/crypto-exchange/matching_engine/internal/server"
-	"github.com/crypto-exchange/matching_engine/internal/service"
-	"github.com/crypto-exchange/matching_engine/internal/system"
-	"github.com/crypto-exchange/matching_engine/proto/helloworld"
-	ledger "github.com/crypto-exchange/matching_engine/proto/ledger"
-	pb "github.com/crypto-exchange/matching_engine/proto/matching"
+	"github.com/open-exchange/matching_engine/internal/engine"
+	"github.com/open-exchange/matching_engine/internal/server"
+	"github.com/open-exchange/matching_engine/internal/service"
+	"github.com/open-exchange/matching_engine/internal/system"
+	"github.com/open-exchange/matching_engine/proto/helloworld"
+	ledger "github.com/open-exchange/matching_engine/proto/ledger"
+	pb "github.com/open-exchange/matching_engine/proto/matching"
 )
 
 var (

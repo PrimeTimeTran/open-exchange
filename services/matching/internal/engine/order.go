@@ -4,7 +4,7 @@ import (
 	"log"
 	"strconv"
 
-	common "github.com/crypto-exchange/matching_engine/proto/common"
+	common "github.com/open-exchange/matching_engine/proto/common"
 )
 
 type Order struct {

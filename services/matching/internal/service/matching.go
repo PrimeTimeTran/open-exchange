@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/crypto-exchange/matching_engine/internal/engine"
-	common "github.com/crypto-exchange/matching_engine/proto/common"
-	ledger "github.com/crypto-exchange/matching_engine/proto/ledger"
+	"github.com/open-exchange/matching_engine/internal/engine"
+	common "github.com/open-exchange/matching_engine/proto/common"
+	ledger "github.com/open-exchange/matching_engine/proto/ledger"
 )
 
 type MatchingService struct {

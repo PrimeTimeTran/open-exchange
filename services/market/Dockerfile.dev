@@ -1,0 +1,15 @@
+FROM golang:1.24-alpine
+
+WORKDIR /app
+
+# Install air for hot reload and protoc
+# Using curl to install air binary directly instead of go install to avoid go version mismatch
+RUN apk add --no-cache protobuf-dev protoc curl && \
+    curl -sSfL https://raw.githubusercontent.com/air-verse/air/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+CMD ["air", "-c", ".air.toml"]

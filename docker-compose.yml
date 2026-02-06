@@ -52,6 +52,18 @@ services:
       # - DATABASE_URL=postgres://user:password@host.docker.internal:5432/crypto
       - RUST_LOG=info
 
+  market:
+    build:
+      context: ./services/market
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./services/market:/app
+      - /app/tmp
+    ports:
+      - '50053:50053'
+    environment:
+      - PORT=50053
+
   # db:
   #   image: postgres:15-alpine
   #   environment:

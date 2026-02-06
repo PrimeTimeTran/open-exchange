@@ -10,6 +10,11 @@
     "**/.symlinks": true,
     "**/.plugin_symlinks": true,
     "**/package-lock.json": true,
-    "node_modules": true,
+    "node_modules": true
+  },
+  "search.exclude": {
+    "services/admin/src/proto": true,
+    "services/matching/proto": true,
+    "services/market/proto": true
   }
 }

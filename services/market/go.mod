@@ -1,8 +1,10 @@
-module github.com/open-exchange/matching_engine
+module github.com/open-exchange/market
 
 go 1.24.0
 
-toolchain go1.24.12
+toolchain go1.24.13
+
+replace github.com/open-exchange/matching_engine => ../matching
 
 require (
 	google.golang.org/grpc v1.78.0

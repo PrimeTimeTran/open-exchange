@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 
-	"github.com/crypto-exchange/matching_engine/internal/service"
-	pb "github.com/crypto-exchange/matching_engine/proto/matching"
+	"github.com/open-exchange/matching_engine/internal/service"
+	pb "github.com/open-exchange/matching_engine/proto/matching"
 )
 
 type MatchingServer struct {

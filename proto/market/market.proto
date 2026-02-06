@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package market;
+
+option go_package = "github.com/open-exchange/market/proto/market";
+
+service MarketService {
+  // Streams real-time price updates for a given symbol
+  rpc SubscribePrices (SubscribePricesRequest) returns (stream PriceUpdate);
+  
+  // Gets the latest snapshot for a symbol
+  rpc GetLatestPrice (GetLatestPriceRequest) returns (PriceUpdate);
+}
+
+message SubscribePricesRequest {
+  string symbol = 1;
+}
+
+message GetLatestPriceRequest {
+  string symbol = 1;
+}
+
+message PriceUpdate {
+  string symbol = 1;
+  string price = 2;
+  int64 timestamp = 3;
+  double change_24h = 4;
+  double volume_24h = 5;
+}

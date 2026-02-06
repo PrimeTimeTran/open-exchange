@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package common;
 
-option go_package = "github.com/crypto-exchange/matching_engine/proto/common";
+option go_package = "github.com/open-exchange/matching_engine/proto/common";
 
 enum OrderSide {
   ORDER_SIDE_UNSPECIFIED = 0;
