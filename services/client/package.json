@@ -1,5 +1,5 @@
 {
-  "name": "project",
+  "name": "Open Exchange",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -34,6 +34,9 @@
     "@aws-sdk/s3-request-presigner": "^3.436.0",
     "@aws-sdk/signature-v4-crt": "^3.433.0",
     "@bufbuild/protobuf": "^2.11.0",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@google-cloud/storage": "^7.4.0",
     "@grpc/grpc-js": "^1.14.3",
     "@grpc/proto-loader": "^0.8.0",

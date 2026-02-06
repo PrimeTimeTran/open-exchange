@@ -4,7 +4,7 @@ import React from 'react';
 import { ChartHeader } from '@/components/charts/chart-header';
 import { PriceChart } from '@/components/charts/price-chart';
 import { TimeRangeSelector } from '@/components/charts/time-range-selector';
-import { NewsSection } from './news-section';
+import { NewsSection } from '@/components/news/news-section';
 import { WatchlistSidebar } from './watchlist-sidebar';
 import { PriceUpdate } from 'src/proto/market/market';
 import { ChartDataPoint, useMarketChart } from 'src/hooks/use-market-chart';

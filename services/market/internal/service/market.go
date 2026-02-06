@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/open-exchange/market/internal/backfill"
 	"github.com/open-exchange/market/internal/store"
 	pb "github.com/open-exchange/market/proto/market"
 )
@@ -25,13 +26,26 @@ func NewMarketServer(s *store.Store) *MarketServer {
 func (s *MarketServer) GetLatestPrice(ctx context.Context, req *pb.GetLatestPriceRequest) (*pb.PriceUpdate, error) {
 	// Normalize symbol: BTC_USD -> BTCUSDT
 	symbol := strings.ReplaceAll(req.Symbol, "_", "")
-	if symbol == "BTCUSD" {
-		symbol = "BTCUSDT" // Common mapping for crypto
+	if strings.HasSuffix(symbol, "USD") && !strings.HasSuffix(symbol, "USDT") {
+		symbol = symbol + "T" // Common mapping for crypto (BTCUSD -> BTCUSDT)
 	}
 
 	// Try to get from Redis
 	if s.store != nil {
 		candle, err := s.store.GetLatestCandle(ctx, symbol, "1d")
+		if err != nil {
+			// Attempt backfill if missing
+			fmt.Printf("Backfilling latest data for %s\n", symbol)
+			newCandles, bfErr := backfill.FetchBinanceHistory(symbol, "1d", 100)
+			if bfErr == nil && len(newCandles) > 0 {
+				s.store.SaveCandles(ctx, symbol, "1d", newCandles)
+				// Use the last candle from backfill
+				last := newCandles[len(newCandles)-1]
+				candle = &last
+				err = nil
+			}
+		}
+
 		if err == nil {
 			return &pb.PriceUpdate{
 				Symbol:    req.Symbol,
@@ -55,8 +69,8 @@ func (s *MarketServer) GetLatestPrice(ctx context.Context, req *pb.GetLatestPric
 
 func (s *MarketServer) GetMarketData(ctx context.Context, req *pb.GetMarketDataRequest) (*pb.GetMarketDataResponse, error) {
 	symbol := strings.ReplaceAll(req.Symbol, "_", "")
-	if symbol == "BTCUSD" {
-		symbol = "BTCUSDT"
+	if strings.HasSuffix(symbol, "USD") && !strings.HasSuffix(symbol, "USDT") {
+		symbol = symbol + "T"
 	}
 
 	// Default interval 1d if not provided
@@ -72,6 +86,17 @@ func (s *MarketServer) GetMarketData(ctx context.Context, req *pb.GetMarketDataR
 	candles, err := s.store.GetCandles(ctx, symbol, interval, req.StartTime, req.EndTime)
 	if err != nil {
 		return nil, err
+	}
+
+	// If no candles found in store, attempt backfill
+	if len(candles) == 0 {
+		fmt.Printf("Backfilling data for %s %s\n", symbol, interval)
+		newCandles, err := backfill.FetchBinanceHistory(symbol, interval, 500)
+		if err == nil && len(newCandles) > 0 {
+			s.store.SaveCandles(ctx, symbol, interval, newCandles)
+			// Re-query store to respect time range
+			candles, _ = s.store.GetCandles(ctx, symbol, interval, req.StartTime, req.EndTime)
+		}
 	}
 
 	var pbCandles []*pb.Candle

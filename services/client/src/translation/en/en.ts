@@ -1,5 +1,5 @@
 const dictionary = {
-  projectName: 'Project',
+  projectName: 'Open Exchange',
 
   shared: {
     showArchived: 'Show Archived?',
