@@ -41,7 +41,7 @@ export async function chatFindController(
     },
     include: {
       messages: true,
-      chatees: true,
+      chaters: true,
       createdByMembership: true,
       updatedByMembership: true,
       archivedByMembership: true,

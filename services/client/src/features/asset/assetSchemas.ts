@@ -22,7 +22,7 @@ export const assetFindSchema = z.object({
 export const assetFilterFormSchema = z
   .object({
     symbol: z.string(),
-    type: z.nativeEnum(assetEnumerators.type).nullable().optional(),
+    klass: z.nativeEnum(assetEnumerators.klass).nullable().optional(),
     precisionRange: z.array(z.coerce.number()).max(2),
     isFractional: z.string().nullable().optional(),
     decimalsRange: z.array(z.coerce.number()).max(2),
@@ -79,11 +79,11 @@ export const assetAutocompleteOutputSchema = z.object({
 
 export const assetCreateInputSchema = z.object({
   symbol: z.string().trim().min(1),
-  type: z.nativeEnum(assetEnumerators.type).nullable().optional(),
+  klass: z.nativeEnum(assetEnumerators.klass).nullable().optional(),
   precision: numberOptionalCoerceSchema(z.number().int().nullable().optional()),
   isFractional: z.boolean().default(false),
-  meta: jsonSchema.optional(),
   decimals: numberOptionalCoerceSchema(z.number().int().nullable().optional()),
+  meta: jsonSchema.optional(),
   importHash: z.string().optional(),
 });
 
@@ -93,11 +93,11 @@ export const assetImportInputSchema =
 export const assetImportFileSchema = z
   .object({
     symbol: z.string(),
-    type: z.string(),
+    klass: z.string(),
     precision: z.string(),
     isFractional: z.string().transform((val) => val === 'true' || val === 'TRUE'),
-    meta: z.string(),
     decimals: z.string(),
+    meta: z.string(),
   })
   .partial();
 

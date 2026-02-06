@@ -15,8 +15,8 @@ import FileListItem from 'src/features/file/components/FileListItem';
 import { ImagesInput } from 'src/features/file/components/ImagesInput';
 import { chatLabel } from 'src/features/chat/chatLabel';
 import { ChatLink } from 'src/features/chat/components/ChatLink';
-import { chateeLabel } from 'src/features/chatee/chateeLabel';
-import { ChateeLink } from 'src/features/chatee/components/ChateeLink';
+import { chaterLabel } from 'src/features/chater/chaterLabel';
+import { ChaterLink } from 'src/features/chater/components/ChaterLink';
 import { membershipLabel } from 'src/features/membership/membershipLabel';
 import { MembershipLink } from 'src/features/membership/components/MembershipLink';
 import { messageLabel } from 'src/features/message/messageLabel';
@@ -149,15 +149,15 @@ export function MessageView({
             </div>
           </div>
         )}
-        {message.chatee != null && (
+        {message.chater != null && (
           <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
             <div className="font-semibold">
-              {dictionary.message.fields.chatee}
+              {dictionary.message.fields.chater}
             </div>
             <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
-              <ChateeLink chatee={message.chatee} context={context} />
+              <ChaterLink chater={message.chater} context={context} />
               <CopyToClipboardButton
-                text={chateeLabel(message.chatee, context.dictionary)}
+                text={chaterLabel(message.chater, context.dictionary)}
                 dictionary={context.dictionary}
               />
             </div>

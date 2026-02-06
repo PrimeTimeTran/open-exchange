@@ -77,11 +77,16 @@ async function main() {
 
   // 3. Create Assets
   const assetsData = [
-    { symbol: 'USD', name: 'US Dollar', type: 'fiat', decimals: 2 },
-    { symbol: 'BTC', name: 'Bitcoin', type: 'crypto', decimals: 8 },
-    { symbol: 'ETH', name: 'Ethereum', type: 'crypto', decimals: 18 },
-    { symbol: 'AAPL', name: 'Apple Inc.', type: 'stock', decimals: 2 },
-    { symbol: 'SPY', name: 'SPDR S&P 500 ETF Trust', type: 'etf', decimals: 2 },
+    { symbol: 'USD', name: 'US Dollar', klass: 'fiat', decimals: 2 },
+    { symbol: 'BTC', name: 'Bitcoin', klass: 'crypto', decimals: 8 },
+    { symbol: 'ETH', name: 'Ethereum', klass: 'crypto', decimals: 18 },
+    { symbol: 'AAPL', name: 'Apple Inc.', klass: 'stock', decimals: 2 },
+    {
+      symbol: 'SPY',
+      name: 'SPDR S&P 500 ETF Trust',
+      klass: 'etf',
+      decimals: 2,
+    },
   ];
 
   const assetsMap = new Map();
@@ -103,7 +108,7 @@ async function main() {
         data: {
           tenantId,
           symbol: assetData.symbol,
-          type: assetData.type,
+          klass: assetData.klass,
           decimals: assetData.decimals,
           // meta: { name: assetData.name },
           createdByMembershipId: membership.id,

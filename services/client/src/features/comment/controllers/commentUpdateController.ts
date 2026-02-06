@@ -57,9 +57,9 @@ export async function commentUpdateController(
     },
     data: {
       body: data.body,
-      meta: data.meta,
       type: data.type,
       images: data.images,
+      meta: data.meta,
       user: prismaRelationship.connectOrDisconnectOne(data.user),
     },
   });

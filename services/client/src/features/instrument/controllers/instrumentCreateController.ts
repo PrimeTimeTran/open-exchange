@@ -56,10 +56,10 @@ export async function instrumentCreate(body: unknown, context: AppContext) {
 
   let instrument = await prisma.instrument.create({
     data: {
-      type: data.type,
-      meta: data.meta,
-      status: data.status,
       symbol: data.symbol,
+      type: data.type,
+      status: data.status,
+      meta: data.meta,
       underlyingAsset: prismaRelationship.connectOne(data.underlyingAsset),
       quoteAsset: prismaRelationship.connectOne(data.quoteAsset),
       importHash: data.importHash,

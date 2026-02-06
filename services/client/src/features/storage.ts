@@ -23,12 +23,18 @@ import { postStorage } from 'src/features/post/postStorage';
 import { commentStorage } from 'src/features/comment/commentStorage';
 import { articleStorage } from 'src/features/article/articleStorage';
 import { chatStorage } from 'src/features/chat/chatStorage';
-import { chateeStorage } from 'src/features/chatee/chateeStorage';
+import { chaterStorage } from 'src/features/chater/chaterStorage';
 import { messageStorage } from 'src/features/message/messageStorage';
 import { feeScheduleStorage } from 'src/features/feeSchedule/feeScheduleStorage';
 import { balanceSnapshotStorage } from 'src/features/balanceSnapshot/balanceSnapshotStorage';
 import { systemAccountStorage } from 'src/features/systemAccount/systemAccountStorage';
 import { feedbackStorage } from 'src/features/feedback/feedbackStorage';
+import { jobStorage } from 'src/features/job/jobStorage';
+import { listingStorage } from 'src/features/listing/listingStorage';
+import { referralStorage } from 'src/features/referral/referralStorage';
+import { notificationStorage } from 'src/features/notification/notificationStorage';
+import { userNotificationStorage } from 'src/features/userNotification/userNotificationStorage';
+import { candidateStorage } from 'src/features/candidate/candidateStorage';
 
 export interface StorageConfig {
   id: string;
@@ -54,10 +60,16 @@ export const storage = {
   ...commentStorage,
   ...articleStorage,
   ...chatStorage,
-  ...chateeStorage,
+  ...chaterStorage,
   ...messageStorage,
   ...feeScheduleStorage,
   ...balanceSnapshotStorage,
   ...systemAccountStorage,
   ...feedbackStorage,
+  ...jobStorage,
+  ...listingStorage,
+  ...referralStorage,
+  ...notificationStorage,
+  ...userNotificationStorage,
+  ...candidateStorage,
 };

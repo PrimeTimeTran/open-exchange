@@ -9,9 +9,11 @@ use crate::domain::wallets::WalletService;
 use crate::domain::deposits::DepositService;
 use crate::domain::withdrawals::WithdrawalService;
 use crate::domain::assets::AssetService;
+use sqlx::PgPool;
 
 #[derive(Debug, Default)]
 pub struct LedgerImpl {
+    db_pool: Option<PgPool>, // Optional for now to keep Default deriving working until full refactor
     order_service: OrderService,
     user_service: UserService,
     account_service: AccountService,
@@ -22,8 +24,9 @@ pub struct LedgerImpl {
 }
 
 impl LedgerImpl {
-    pub fn new() -> Self {
+    pub fn new(db_pool: PgPool) -> Self {
         Self {
+            db_pool: Some(db_pool),
             order_service: OrderService::new(),
             user_service: UserService::new(),
             account_service: AccountService::new(),

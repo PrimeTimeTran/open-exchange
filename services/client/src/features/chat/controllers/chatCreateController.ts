@@ -51,7 +51,7 @@ export async function chatCreate(body: unknown, context: AppContext) {
     },
     include: {
       messages: true,
-      chatees: true,
+      chaters: true,
       createdByMembership: true,
       updatedByMembership: true,
       archivedByMembership: true,

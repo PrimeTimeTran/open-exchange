@@ -1,9 +1,9 @@
 export const assetEnumerators = {
-  type: {
-    crypto: 'crypto',
-    fiat: 'fiat',
+  klass: {
     equity: 'equity',
-    option: 'option',
-    future: 'future',
+    debt: 'debt',
+    commodity: 'commodity',
+    currency: 'currency',
+    crypto: 'crypto',
   },
 };

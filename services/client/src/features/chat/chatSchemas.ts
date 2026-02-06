@@ -7,7 +7,7 @@ import { fileUploadedSchema } from 'src/features/file/fileSchemas';
 import { jsonSchema } from 'src/shared/schemas/jsonSchema';
 import { objectToUuidSchema, objectToUuidSchemaOptional } from 'src/shared/schemas/objectToUuidSchema';
 import { Message } from '@prisma/client';
-import { Chatee } from '@prisma/client';
+import { Chater } from '@prisma/client';
 
 extendZodWithOpenApi(z);
 
@@ -98,7 +98,7 @@ export const chatUpdateBodyInputSchema =
 
 export interface ChatWithRelationships extends Chat {
   messages?: Message[];
-  chatees?: Chatee[];
+  chaters?: Chater[];
   createdByMembership?: Membership;
   updatedByMembership?: Membership;
   archivedByMembership?: Membership;

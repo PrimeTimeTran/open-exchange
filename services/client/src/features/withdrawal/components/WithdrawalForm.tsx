@@ -28,7 +28,7 @@ import { useSetUnsavedChanges } from 'src/shared/components/unsavedChanges/Unsav
 import { Input } from 'src/shared/components/ui/input';
 import { withdrawalEnumerators } from 'src/features/withdrawal/withdrawalEnumerators';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
-import SelectInput from 'src/shared/components/form/SelectInput';
+import { RadioGroup, RadioGroupItem } from 'src/shared/components/ui/radio-group';
 import DateTimePickerInput from 'src/shared/components/form/DateTimePickerInput';
 import { Textarea } from 'src/shared/components/ui/textarea';
 import { AccountAutocompleteInput } from 'src/features/account/components/AccountAutocompleteInput';
@@ -194,40 +194,61 @@ export function WithdrawalForm({
               />
             </div>
           <div className="grid max-w-lg gap-1">
-          <FormField
-            control={form.control}
-            name="status"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{dictionary.withdrawal.fields.status}</FormLabel>
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel>{dictionary.withdrawal.fields.status}</FormLabel>
 
-                <SelectInput
-                  options={Object.keys(withdrawalEnumerators.status).map(
-                    (value) => ({
-                      value,
-                      label: enumeratorLabel(
-                        dictionary.withdrawal.enumerators.status,
-                        value,
-                      ),
-                    }),
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      value={field.value || ''}
+                      className="flex flex-col space-y-1"
+                      disabled={mutation.isPending || mutation.isSuccess}
+                    >
+                      {Object.keys(withdrawalEnumerators.status).map(
+                        (status) => (
+                          <FormItem
+                            key={status}
+                            className="flex items-center space-x-3 space-y-0"
+                          >
+                            <FormControl>
+                              <RadioGroupItem value={status} />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              {enumeratorLabel(
+                                dictionary.withdrawal.enumerators.status,
+                                status,
+                              )}
+                            </FormLabel>
+                          </FormItem>
+                        ),
+                      )}
+                    </RadioGroup>
+                  </FormControl>
+
+                  {Boolean(field.value) && (
+                    <button
+                      type="button"
+                      className="mt-2 text-sm text-muted-foreground underline"
+                      onClick={() => field.onChange(null)}
+                    >
+                      {dictionary.shared.clear}
+                    </button>
                   )}
-                  dictionary={dictionary}
-                  isClearable={true}
-                  disabled={mutation.isPending || mutation.isSuccess}
-                  onChange={field.onChange}
-                  value={field.value}
-                />
 
-                {dictionary.withdrawal.hints.status ? (
-                  <FormDescription>
-                    {dictionary.withdrawal.hints.status}
-                  </FormDescription>
-                ) : null}
+                  {dictionary.withdrawal.hints.status ? (
+                    <FormDescription>
+                      {dictionary.withdrawal.hints.status}
+                    </FormDescription>
+                  ) : null}
 
-                <FormMessage data-testid="status-error" />
-              </FormItem>
-            )}
-          />
+                  <FormMessage data-testid="status-error" />
+                </FormItem>
+              )}
+            />
           </div>
           <div className="grid max-w-lg gap-1">
             <FormField

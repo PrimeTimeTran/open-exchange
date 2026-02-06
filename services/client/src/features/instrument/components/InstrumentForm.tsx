@@ -25,11 +25,12 @@ import { getZodErrorMap } from 'src/translation/getZodErrorMap';
 import { z } from 'zod';
 import { instrumentCreateInputSchema } from 'src/features/instrument/instrumentSchemas';
 import { useSetUnsavedChanges } from 'src/shared/components/unsavedChanges/UnsavedChangesProvider';
+import { Input } from 'src/shared/components/ui/input';
 import { instrumentEnumerators } from 'src/features/instrument/instrumentEnumerators';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
+import { RadioGroup, RadioGroupItem } from 'src/shared/components/ui/radio-group';
 import SelectInput from 'src/shared/components/form/SelectInput';
 import { Textarea } from 'src/shared/components/ui/textarea';
-import { Input } from 'src/shared/components/ui/input';
 import { AssetAutocompleteInput } from 'src/features/asset/components/AssetAutocompleteInput';
 
 export function InstrumentForm({
@@ -130,7 +131,7 @@ export function InstrumentForm({
               name="symbol"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
+                  <FormLabel className="required">
                     {dictionary.instrument.fields.symbol}
                   </FormLabel>
 
@@ -152,40 +153,61 @@ export function InstrumentForm({
             />
           </div>
           <div className="grid max-w-lg gap-1">
-          <FormField
-            control={form.control}
-            name="type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{dictionary.instrument.fields.type}</FormLabel>
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel>{dictionary.instrument.fields.type}</FormLabel>
 
-                <SelectInput
-                  options={Object.keys(instrumentEnumerators.type).map(
-                    (value) => ({
-                      value,
-                      label: enumeratorLabel(
-                        dictionary.instrument.enumerators.type,
-                        value,
-                      ),
-                    }),
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      value={field.value || ''}
+                      className="flex flex-col space-y-1"
+                      disabled={mutation.isPending || mutation.isSuccess}
+                    >
+                      {Object.keys(instrumentEnumerators.type).map(
+                        (type) => (
+                          <FormItem
+                            key={type}
+                            className="flex items-center space-x-3 space-y-0"
+                          >
+                            <FormControl>
+                              <RadioGroupItem value={type} />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              {enumeratorLabel(
+                                dictionary.instrument.enumerators.type,
+                                type,
+                              )}
+                            </FormLabel>
+                          </FormItem>
+                        ),
+                      )}
+                    </RadioGroup>
+                  </FormControl>
+
+                  {Boolean(field.value) && (
+                    <button
+                      type="button"
+                      className="mt-2 text-sm text-muted-foreground underline"
+                      onClick={() => field.onChange(null)}
+                    >
+                      {dictionary.shared.clear}
+                    </button>
                   )}
-                  dictionary={dictionary}
-                  isClearable={true}
-                  disabled={mutation.isPending || mutation.isSuccess}
-                  onChange={field.onChange}
-                  value={field.value}
-                />
 
-                {dictionary.instrument.hints.type ? (
-                  <FormDescription>
-                    {dictionary.instrument.hints.type}
-                  </FormDescription>
-                ) : null}
+                  {dictionary.instrument.hints.type ? (
+                    <FormDescription>
+                      {dictionary.instrument.hints.type}
+                    </FormDescription>
+                  ) : null}
 
-                <FormMessage data-testid="type-error" />
-              </FormItem>
-            )}
-          />
+                  <FormMessage data-testid="type-error" />
+                </FormItem>
+              )}
+            />
           </div>
           <div className="grid max-w-lg gap-1">
           <FormField

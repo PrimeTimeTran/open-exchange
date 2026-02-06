@@ -13,9 +13,9 @@ export function assetExporterMapper(
     return {
       id: asset.id,
       symbol: asset.symbol,
-      type: enumeratorLabel(
-        context.dictionary.asset.enumerators.type,
-        asset.type,
+      klass: enumeratorLabel(
+        context.dictionary.asset.enumerators.klass,
+        asset.klass,
       ),
       precision: asset.precision?.toString(),
       isFractional: asset.isFractional

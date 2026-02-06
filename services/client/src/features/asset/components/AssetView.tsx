@@ -100,22 +100,22 @@ export function AssetView({
             </div>
           </div>
         )}
-        {asset.type != null && (
+        {asset.klass != null && (
           <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
             <div className="font-semibold">
-              {dictionary.asset.fields.type}
+              {dictionary.asset.fields.klass}
             </div>
             <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
               <span>
                 {enumeratorLabel(
-                  dictionary.asset.enumerators.type,
-                  asset.type,
+                  dictionary.asset.enumerators.klass,
+                  asset.klass,
                 )}
               </span>
               <CopyToClipboardButton
                 text={enumeratorLabel(
-                  dictionary.asset.enumerators.type,
-                  asset.type,
+                  dictionary.asset.enumerators.klass,
+                  asset.klass,
                 )}
                 dictionary={context.dictionary}
               />

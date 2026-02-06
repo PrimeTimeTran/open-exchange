@@ -28,7 +28,7 @@ import { useSetUnsavedChanges } from 'src/shared/components/unsavedChanges/Unsav
 import { Input } from 'src/shared/components/ui/input';
 import { assetEnumerators } from 'src/features/asset/assetEnumerators';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
-import SelectInput from 'src/shared/components/form/SelectInput';
+import { RadioGroup, RadioGroupItem } from 'src/shared/components/ui/radio-group';
 import { Switch } from 'src/shared/components/ui/switch';
 import { Textarea } from 'src/shared/components/ui/textarea';
 
@@ -54,7 +54,7 @@ export function AssetForm({
 
   const [initialValues] = React.useState({
     symbol: asset?.symbol || '',
-    type: asset?.type || null,
+    klass: asset?.klass || null,
     precision: asset?.precision || '',
     isFractional: asset?.isFractional || false,
     decimals: asset?.decimals || '',
@@ -152,40 +152,61 @@ export function AssetForm({
             />
           </div>
           <div className="grid max-w-lg gap-1">
-          <FormField
-            control={form.control}
-            name="type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{dictionary.asset.fields.type}</FormLabel>
+            <FormField
+              control={form.control}
+              name="klass"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel>{dictionary.asset.fields.klass}</FormLabel>
 
-                <SelectInput
-                  options={Object.keys(assetEnumerators.type).map(
-                    (value) => ({
-                      value,
-                      label: enumeratorLabel(
-                        dictionary.asset.enumerators.type,
-                        value,
-                      ),
-                    }),
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      value={field.value || ''}
+                      className="flex flex-col space-y-1"
+                      disabled={mutation.isPending || mutation.isSuccess}
+                    >
+                      {Object.keys(assetEnumerators.klass).map(
+                        (klass) => (
+                          <FormItem
+                            key={klass}
+                            className="flex items-center space-x-3 space-y-0"
+                          >
+                            <FormControl>
+                              <RadioGroupItem value={klass} />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              {enumeratorLabel(
+                                dictionary.asset.enumerators.klass,
+                                klass,
+                              )}
+                            </FormLabel>
+                          </FormItem>
+                        ),
+                      )}
+                    </RadioGroup>
+                  </FormControl>
+
+                  {Boolean(field.value) && (
+                    <button
+                      type="button"
+                      className="mt-2 text-sm text-muted-foreground underline"
+                      onClick={() => field.onChange(null)}
+                    >
+                      {dictionary.shared.clear}
+                    </button>
                   )}
-                  dictionary={dictionary}
-                  isClearable={true}
-                  disabled={mutation.isPending || mutation.isSuccess}
-                  onChange={field.onChange}
-                  value={field.value}
-                />
 
-                {dictionary.asset.hints.type ? (
-                  <FormDescription>
-                    {dictionary.asset.hints.type}
-                  </FormDescription>
-                ) : null}
+                  {dictionary.asset.hints.klass ? (
+                    <FormDescription>
+                      {dictionary.asset.hints.klass}
+                    </FormDescription>
+                  ) : null}
 
-                <FormMessage data-testid="type-error" />
-              </FormItem>
-            )}
-          />
+                  <FormMessage data-testid="klass-error" />
+                </FormItem>
+              )}
+            />
           </div>
           <div className="grid max-w-lg gap-1">
               <FormField

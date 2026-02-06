@@ -45,6 +45,12 @@ export async function instrumentFindManyController(
     whereAnd.push({ archivedAt: null });
   }
 
+  if (filter?.symbol != null) {
+    whereAnd.push({
+      symbol: { contains: filter?.symbol, mode: 'insensitive' },
+    });
+  }
+
   if (filter?.type != null) {
     whereAnd.push({
       type: filter?.type,
@@ -54,12 +60,6 @@ export async function instrumentFindManyController(
   if (filter?.status != null) {
     whereAnd.push({
       status: filter?.status,
-    });
-  }
-
-  if (filter?.symbol != null) {
-    whereAnd.push({
-      symbol: { contains: filter?.symbol, mode: 'insensitive' },
     });
   }
 

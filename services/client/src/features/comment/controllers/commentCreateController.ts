@@ -44,9 +44,9 @@ export async function commentCreate(body: unknown, context: AppContext) {
   let comment = await prisma.comment.create({
     data: {
       body: data.body,
-      meta: data.meta,
       type: data.type,
       images: data.images,
+      meta: data.meta,
       user: prismaRelationship.connectOneOrThrow(data.user),
       importHash: data.importHash,
     },

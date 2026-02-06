@@ -76,7 +76,7 @@ export async function instrumentAutocompleteController(
   return instruments.map((instrument) => {
     return {
       id: instrument.id,
-      symbol: String(instrument.symbol),
+    symbol: String(instrument.symbol),
     };
   });
 }

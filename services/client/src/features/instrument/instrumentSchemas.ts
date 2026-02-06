@@ -5,10 +5,7 @@ import { orderBySchema } from 'src/shared/schemas/orderBySchema';
 import { z } from 'zod';
 import { instrumentEnumerators } from 'src/features/instrument/instrumentEnumerators';
 import { jsonSchema } from 'src/shared/schemas/jsonSchema';
-import {
-  objectToUuidSchema,
-  objectToUuidSchemaOptional,
-} from 'src/shared/schemas/objectToUuidSchema';
+import { objectToUuidSchema, objectToUuidSchemaOptional } from 'src/shared/schemas/objectToUuidSchema';
 import { Asset } from '@prisma/client';
 import { Order } from '@prisma/client';
 import { Trade } from '@prisma/client';
@@ -21,23 +18,27 @@ export const instrumentFindSchema = z.object({
 
 export const instrumentFilterFormSchema = z
   .object({
+    symbol: z.string(),
     type: z.nativeEnum(instrumentEnumerators.type).nullable().optional(),
     status: z.nativeEnum(instrumentEnumerators.status).nullable().optional(),
-    symbol: z.string(),
     archived: z
-      .any()
-      .transform((val) =>
-        val != null && val !== ''
-          ? val === 'true' || val === true
-            ? true
-            : null
-          : null,
-      ),
+    .any()
+    .transform((val) =>
+      val != null && val !== ''
+        ? val === 'true' || val === true
+          ? true
+          : null
+        : null,
+    ),
   })
   .partial();
 
 export const instrumentFilterInputSchema = instrumentFilterFormSchema
-  .merge(z.object({}))
+  .merge(
+    z.object({
+
+    }),
+  )
   .partial();
 
 export const instrumentFindManyInputSchema = z.object({
@@ -63,7 +64,7 @@ export const instrumentAutocompleteInputSchema = z.object({
   search: z.string().trim().optional(),
   exclude: z.array(z.string().uuid()).optional(),
   take: z.coerce.number().optional(),
-  orderBy: orderBySchema.default({ id: 'asc' }),
+  orderBy: orderBySchema.default({ symbol: 'asc' }),
 });
 
 export const instrumentAutocompleteOutputSchema = z.object({
@@ -72,10 +73,10 @@ export const instrumentAutocompleteOutputSchema = z.object({
 });
 
 export const instrumentCreateInputSchema = z.object({
+  symbol: z.string().trim().min(1),
   type: z.nativeEnum(instrumentEnumerators.type).nullable().optional(),
-  meta: jsonSchema.optional(),
   status: z.nativeEnum(instrumentEnumerators.status).nullable().optional(),
-  symbol: z.string().trim().nullable().optional(),
+  meta: jsonSchema.optional(),
   underlyingAsset: objectToUuidSchemaOptional,
   quoteAsset: objectToUuidSchemaOptional,
   importHash: z.string().optional(),
@@ -86,10 +87,10 @@ export const instrumentImportInputSchema =
 
 export const instrumentImportFileSchema = z
   .object({
-    type: z.string(),
-    meta: z.string(),
-    status: z.string(),
     symbol: z.string(),
+    type: z.string(),
+    status: z.string(),
+    meta: z.string(),
     underlyingAsset: z.string(),
     quoteAsset: z.string(),
   })

@@ -51,9 +51,9 @@ export async function assetFindManyController(
     });
   }
 
-  if (filter?.type != null) {
+  if (filter?.klass != null) {
     whereAnd.push({
-      type: filter?.type,
+      klass: filter?.klass,
     });
   }
 

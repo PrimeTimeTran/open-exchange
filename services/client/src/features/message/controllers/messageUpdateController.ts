@@ -62,7 +62,7 @@ export async function messageUpdateController(
       type: data.type,
       meta: data.meta,
       chat: prismaRelationship.connectOrDisconnectOne(data.chat),
-      chatee: prismaRelationship.connectOrDisconnectOne(data.chatee),
+      chater: prismaRelationship.connectOrDisconnectOne(data.chater),
       sender: prismaRelationship.connectOrDisconnectOne(data.sender),
     },
   });
@@ -76,7 +76,7 @@ export async function messageUpdateController(
     },
     include: {
       chat: true,
-      chatee: true,
+      chater: true,
       sender: true,
       createdByMembership: true,
       updatedByMembership: true,

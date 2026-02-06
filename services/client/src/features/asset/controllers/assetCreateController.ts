@@ -56,11 +56,11 @@ export async function assetCreate(body: unknown, context: AppContext) {
   let asset = await prisma.asset.create({
     data: {
       symbol: data.symbol,
-      type: data.type,
+      klass: data.klass,
       precision: data.precision,
       isFractional: data.isFractional,
-      meta: data.meta,
       decimals: data.decimals,
+      meta: data.meta,
       importHash: data.importHash,
     },
     include: {

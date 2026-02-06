@@ -94,14 +94,14 @@ export default function AssetList({ context }: { context: AppContext }) {
       ),
     },
     {
-      accessorKey: 'type',
+      accessorKey: 'klass',
       meta: {
-        title: dictionary.asset.fields.type,
+        title: dictionary.asset.fields.klass,
       },
       cell: ({ row }) => {
         return enumeratorLabel(
-          dictionary.asset.enumerators.type,
-          row.getValue('type'),
+          dictionary.asset.enumerators.klass,
+          row.getValue('klass'),
         );
       },
     },

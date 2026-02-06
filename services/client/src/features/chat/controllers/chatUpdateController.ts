@@ -72,7 +72,7 @@ export async function chatUpdateController(
     },
     include: {
       messages: true,
-      chatees: true,
+      chaters: true,
       createdByMembership: true,
       updatedByMembership: true,
       archivedByMembership: true,

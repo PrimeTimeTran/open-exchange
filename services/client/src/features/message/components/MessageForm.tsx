@@ -31,7 +31,7 @@ import { storage } from 'src/features/storage';
 import { ImagesInput } from 'src/features/file/components/ImagesInput';
 import TagsInput from 'src/shared/components/form/TagsInput';
 import { ChatAutocompleteInput } from 'src/features/chat/components/ChatAutocompleteInput';
-import { ChateeAutocompleteInput } from 'src/features/chatee/components/ChateeAutocompleteInput';
+import { ChaterAutocompleteInput } from 'src/features/chater/components/ChaterAutocompleteInput';
 import { MembershipAutocompleteInput } from 'src/features/membership/components/MembershipAutocompleteInput';
 
 export function MessageForm({
@@ -60,7 +60,7 @@ export function MessageForm({
     images: message?.images || [],
     type: message?.type || [],
     chat: message?.chat || null,
-    chatee: message?.chatee || null,
+    chater: message?.chater || null,
     sender: message?.sender || null,
     meta: message?.meta?.toString() || '',
   });
@@ -275,12 +275,12 @@ export function MessageForm({
           <div className="grid max-w-lg gap-1">
             <FormField
               control={form.control}
-              name="chatee"
+              name="chater"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{dictionary.message.fields.chatee}</FormLabel>
+                  <FormLabel>{dictionary.message.fields.chater}</FormLabel>
 
-                  <ChateeAutocompleteInput
+                  <ChaterAutocompleteInput
                     context={context}
                     onChange={field.onChange}
                     value={field.value}
@@ -289,13 +289,13 @@ export function MessageForm({
                     mode="memory"
                   />
 
-                  {dictionary.message.hints.chatee ? (
+                  {dictionary.message.hints.chater ? (
                     <FormDescription>
-                      {dictionary.message.hints.chatee}
+                      {dictionary.message.hints.chater}
                     </FormDescription>
                   ) : null}
 
-                  <FormMessage data-testid="chatee-error" />
+                  <FormMessage data-testid="chater-error" />
                 </FormItem>
               )}
             />

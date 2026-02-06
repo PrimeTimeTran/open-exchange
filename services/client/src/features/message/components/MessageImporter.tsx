@@ -17,7 +17,7 @@ export function MessageImporter({ context }: { context: AppContext }) {
         'images',
         'type',
         'chat',
-        'chatee',
+        'chater',
         'sender',
         'meta',
       ]}

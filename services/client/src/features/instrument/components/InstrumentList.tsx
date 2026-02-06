@@ -81,6 +81,17 @@ export default function InstrumentList({ context }: { context: AppContext }) {
       meta: {
         title: dictionary.instrument.fields.symbol,
       },
+      cell: ({ getValue, row }) => (
+        <span className="whitespace-nowrap">
+          <Link
+            className="text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400"
+            href={`/instrument/${row?.original?.id}`}
+            prefetch={false}
+          >
+            {instrumentLabel(row?.original, context.dictionary)}
+          </Link>
+        </span>
+      ),
     },
     {
       accessorKey: 'type',

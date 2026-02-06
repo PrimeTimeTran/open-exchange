@@ -69,10 +69,10 @@ export async function instrumentUpdateController(
       },
     },
     data: {
-      type: data.type,
-      meta: data.meta,
-      status: data.status,
       symbol: data.symbol,
+      type: data.type,
+      status: data.status,
+      meta: data.meta,
       underlyingAsset: prismaRelationship.connectOrDisconnectOne(data.underlyingAsset),
       quoteAsset: prismaRelationship.connectOrDisconnectOne(data.quoteAsset),
     },

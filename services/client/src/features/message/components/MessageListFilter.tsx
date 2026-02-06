@@ -28,7 +28,7 @@ const emptyValues = {
   body: '',
   type: [],
   chat: null,
-  chatee: null,
+  chater: null,
   sender: null,
   archived: false,
 };

@@ -45,10 +45,10 @@ export async function articleCreate(body: unknown, context: AppContext) {
     data: {
       title: data.title,
       body: data.body,
-      meta: data.meta,
       type: data.type,
       images: data.images,
       files: data.files,
+      meta: data.meta,
       user: prismaRelationship.connectOne(data.user),
       importHash: data.importHash,
     },

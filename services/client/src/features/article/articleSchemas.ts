@@ -3,8 +3,8 @@ import { Article, Membership } from '@prisma/client';
 import { importerInputSchema } from 'src/shared/schemas/importerSchemas';
 import { orderBySchema } from 'src/shared/schemas/orderBySchema';
 import { z } from 'zod';
-import { jsonSchema } from 'src/shared/schemas/jsonSchema';
 import { fileUploadedSchema } from 'src/features/file/fileSchemas';
+import { jsonSchema } from 'src/shared/schemas/jsonSchema';
 import { objectToUuidSchema, objectToUuidSchemaOptional } from 'src/shared/schemas/objectToUuidSchema';
 
 extendZodWithOpenApi(z);
@@ -72,10 +72,10 @@ export const articleAutocompleteOutputSchema = z.object({
 export const articleCreateInputSchema = z.object({
   title: z.string().trim().nullable().optional(),
   body: z.string().trim().nullable().optional(),
-  meta: jsonSchema.optional(),
   type: z.array(z.string()).optional(),
   images: z.array(fileUploadedSchema).optional(),
   files: z.array(fileUploadedSchema).optional(),
+  meta: jsonSchema.optional(),
   user: objectToUuidSchemaOptional,
   importHash: z.string().optional(),
 });
@@ -87,10 +87,10 @@ export const articleImportFileSchema = z
   .object({
     title: z.string(),
     body: z.string(),
-    meta: z.string(),
     type: z.string().transform((val) => val?.split(' ')?.filter(Boolean) || []),
     images: z.string().transform((val) => val?.split(' ')?.filter(Boolean) || []),
     files: z.string().transform((val) => val?.split(' ')?.filter(Boolean) || []),
+    meta: z.string(),
     user: z.string(),
   })
   .partial();

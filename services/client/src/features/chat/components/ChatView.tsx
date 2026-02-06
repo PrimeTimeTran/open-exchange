@@ -14,8 +14,8 @@ import { formatDatetime } from 'src/shared/lib/formatDateTime';
 import { ImagesInput } from 'src/features/file/components/ImagesInput';
 import { messageLabel } from 'src/features/message/messageLabel';
 import { MessageLink } from 'src/features/message/components/MessageLink';
-import { chateeLabel } from 'src/features/chatee/chateeLabel';
-import { ChateeLink } from 'src/features/chatee/components/ChateeLink';
+import { chaterLabel } from 'src/features/chater/chaterLabel';
+import { ChaterLink } from 'src/features/chater/components/ChaterLink';
 import { chatLabel } from 'src/features/chat/chatLabel';
 import { MembershipLink } from 'src/features/membership/components/MembershipLink';
 import { membershipLabel } from 'src/features/membership/membershipLabel';
@@ -152,21 +152,21 @@ export function ChatView({
             })}
           </div>
         </div>): null}
-        {chat.chatees?.length ? (<div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
+        {chat.chaters?.length ? (<div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
           <div className="font-semibold">
-            {dictionary.chat.fields.chatees}
+            {dictionary.chat.fields.chaters}
           </div>
           <div className="col-span-2 flex flex-col gap-1">
-            {chat.chatees?.map((item) => {
+            {chat.chaters?.map((item) => {
               return (
                 <div key={item?.id} className="flex items-center gap-4">
-                  <ChateeLink
-                    chatee={item}
+                  <ChaterLink
+                    chater={item}
                     context={context}
                     className="whitespace-nowrap"
                   />
                   <CopyToClipboardButton
-                    text={chateeLabel(item, context.dictionary)}
+                    text={chaterLabel(item, context.dictionary)}
                     dictionary={context.dictionary}
                   />
                 </div>

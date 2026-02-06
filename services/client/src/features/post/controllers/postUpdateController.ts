@@ -58,10 +58,10 @@ export async function postUpdateController(
     data: {
       title: data.title,
       body: data.body,
-      meta: data.meta,
       files: data.files,
       images: data.images,
       type: data.type,
+      meta: data.meta,
       user: prismaRelationship.connectOrDisconnectOne(data.user),
     },
   });

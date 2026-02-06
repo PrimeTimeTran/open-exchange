@@ -27,9 +27,9 @@ import SelectInput from 'src/shared/components/form/SelectInput';
 import { Switch } from 'src/shared/components/ui/switch';
 
 const emptyValues = {
+  symbol: '',
   type: null,
   status: null,
-  symbol: '',
   underlyingAsset: null,
   quoteAsset: null,
   archived: false,
@@ -50,6 +50,9 @@ function InstrumentListFilter({
   z.setErrorMap(getZodErrorMap(locale));
 
   const previewRenders = {
+    symbol: {
+      label: dictionary.instrument.fields.symbol,
+    },
     type: {
       label: dictionary.instrument.fields.type,
       render: dataTableFilterRenders(context).enumerator(
@@ -61,9 +64,6 @@ function InstrumentListFilter({
       render: dataTableFilterRenders(context).enumerator(
         dictionary.instrument.enumerators.status,
       ),
-    },
-    symbol: {
-      label: dictionary.instrument.fields.symbol,
     },
     archived: {
       label: dictionary.shared.showArchived,

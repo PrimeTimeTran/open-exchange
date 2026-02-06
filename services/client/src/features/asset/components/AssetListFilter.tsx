@@ -29,7 +29,7 @@ import { Switch } from 'src/shared/components/ui/switch';
 
 const emptyValues = {
   symbol: '',
-  type: null,
+  klass: null,
   precisionRange: [],
   isFractional: '',
   decimalsRange: [],
@@ -54,10 +54,10 @@ function AssetListFilter({
     symbol: {
       label: dictionary.asset.fields.symbol,
     },
-    type: {
-      label: dictionary.asset.fields.type,
+    klass: {
+      label: dictionary.asset.fields.klass,
       render: dataTableFilterRenders(context).enumerator(
-        dictionary.asset.enumerators.type,
+        dictionary.asset.enumerators.klass,
       ),
     },
     precisionRange: {
@@ -147,16 +147,16 @@ function AssetListFilter({
 
               <FormField
                 control={form.control}
-                name="type"
+                name="klass"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{dictionary.asset.fields.type}</FormLabel>
+                    <FormLabel>{dictionary.asset.fields.klass}</FormLabel>
                     <SelectInput
-                      options={Object.keys(assetEnumerators.type).map(
+                      options={Object.keys(assetEnumerators.klass).map(
                         (value) => ({
                           value,
                           label: enumeratorLabel(
-                            dictionary.asset.enumerators.type,
+                            dictionary.asset.enumerators.klass,
                             value,
                           ),
                         }),

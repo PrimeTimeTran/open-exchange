@@ -1,5 +1,7 @@
 const dictionary = {
-  projectName: 'Open Exchange',
+  
+
+  projectName: 'Project',
 
   shared: {
     showArchived: 'Show Archived?',
@@ -735,7 +737,9 @@ const dictionary = {
       snapshots: '',
     },
 
-    enumerators: {},
+    enumerators: {
+
+    },
   },
 
   deposit: {
@@ -1102,7 +1106,7 @@ const dictionary = {
       quantity: '',
       quantityFilled: '',
       status: '',
-      timeInFore: '',
+      timeInFore: 'good_til_cancelled, immediate_or_cancel, fill_or_kill, day_order',
       meta: '',
       account: '',
       instrument: '',
@@ -1133,10 +1137,10 @@ const dictionary = {
       },
 
       timeInFore: {
-        gtc: 'Good Til Cancelled (GTC)',
-        ioc: 'Immediate Or Cancel (IOC)',
-        fok: 'Fill Or Kill (FOK)',
-        day: 'Day Order (DAY)',
+        gtc: 'Gtc',
+        ioc: 'Ioc',
+        fok: 'Fok',
+        day: 'Day',
       },
     },
   },
@@ -1218,11 +1222,11 @@ const dictionary = {
 
     fields: {
       symbol: 'Symbol',
-      type: 'Type',
+      klass: 'Klass',
       precision: 'Precision',
       isFractional: 'IsFractional',
-      meta: 'Meta',
       decimals: 'Decimals',
+      meta: 'Meta',
       baseInstruments: 'BaseInstruments',
       quoteInstruments: 'QuoteInstruments',
       wallets: 'Wallets',
@@ -1239,11 +1243,11 @@ const dictionary = {
 
     hints: {
       symbol: '',
-      type: '',
+      klass: '',
       precision: '',
       isFractional: '',
-      meta: '',
       decimals: '',
+      meta: '',
       baseInstruments: '',
       quoteInstruments: '',
       wallets: '',
@@ -1253,12 +1257,12 @@ const dictionary = {
     },
 
     enumerators: {
-      type: {
-        crypto: 'Crypto',
-        fiat: 'Fiat',
+      klass: {
         equity: 'Equity',
-        option: 'Option',
-        future: 'Future',
+        debt: 'Debt',
+        commodity: 'Commodity',
+        currency: 'Currency',
+        crypto: 'Crypto',
       },
     },
   },
@@ -1339,10 +1343,10 @@ const dictionary = {
     },
 
     fields: {
-      type: 'Type',
-      meta: 'Meta',
-      status: 'Status',
       symbol: 'Symbol',
+      type: 'Type',
+      status: 'Status',
+      meta: 'Meta',
       underlyingAsset: 'UnderlyingAsset',
       quoteAsset: 'QuoteAsset',
       orders: 'Orders',
@@ -1356,10 +1360,10 @@ const dictionary = {
     },
 
     hints: {
-      type: '',
-      meta: '',
-      status: '',
       symbol: '',
+      type: '',
+      status: '',
+      meta: '',
       underlyingAsset: '',
       quoteAsset: '',
       orders: '',
@@ -1606,7 +1610,9 @@ const dictionary = {
       event: '',
     },
 
-    enumerators: {},
+    enumerators: {
+
+    },
   },
 
   trade: {
@@ -1710,7 +1716,9 @@ const dictionary = {
       fills: '',
     },
 
-    enumerators: {},
+    enumerators: {
+
+    },
   },
 
   fill: {
@@ -1898,10 +1906,10 @@ const dictionary = {
     fields: {
       title: 'Title',
       body: 'Body',
-      meta: 'Meta',
       files: 'Files',
       images: 'Images',
       type: 'Type',
+      meta: 'Meta',
       user: 'User',
       createdByMembership: 'Created By',
       updatedByMembership: 'Updated By',
@@ -1914,14 +1922,16 @@ const dictionary = {
     hints: {
       title: '',
       body: '',
-      meta: '',
       files: '',
       images: '',
       type: '',
+      meta: '',
       user: '',
     },
 
-    enumerators: {},
+    enumerators: {
+
+    },
   },
 
   comment: {
@@ -2001,9 +2011,9 @@ const dictionary = {
 
     fields: {
       body: 'Body',
-      meta: 'Meta',
       type: 'Type',
       images: 'Images',
+      meta: 'Meta',
       user: 'User',
       createdByMembership: 'Created By',
       updatedByMembership: 'Updated By',
@@ -2015,13 +2025,15 @@ const dictionary = {
 
     hints: {
       body: '',
-      meta: '',
       type: '',
       images: '',
+      meta: '',
       user: '',
     },
 
-    enumerators: {},
+    enumerators: {
+
+    },
   },
 
   article: {
@@ -2102,10 +2114,10 @@ const dictionary = {
     fields: {
       title: 'Title',
       body: 'Body',
-      meta: 'Meta',
       type: 'Type',
       images: 'Images',
       files: 'Files',
+      meta: 'Meta',
       user: 'User',
       createdByMembership: 'Created By',
       updatedByMembership: 'Updated By',
@@ -2118,14 +2130,16 @@ const dictionary = {
     hints: {
       title: '',
       body: '',
-      meta: '',
       type: '',
       images: '',
       files: '',
+      meta: '',
       user: '',
     },
 
-    enumerators: {},
+    enumerators: {
+
+    },
   },
 
   chat: {
@@ -2209,7 +2223,7 @@ const dictionary = {
       meta: 'Meta',
       active: 'Active',
       messages: 'Messages',
-      chatees: 'Chatees',
+      chaters: 'Chaters',
       createdByMembership: 'Created By',
       updatedByMembership: 'Updated By',
       archivedByMembership: 'Archived By',
@@ -2224,85 +2238,87 @@ const dictionary = {
       meta: '',
       active: '',
       messages: '',
-      chatees: '',
+      chaters: '',
     },
 
-    enumerators: {},
+    enumerators: {
+
+    },
   },
 
-  chatee: {
-    label: 'Chatee',
+  chater: {
+    label: 'Chater',
 
     dashboardCard: {
-      title: 'Chatees',
+      title: 'Chaters',
     },
 
     list: {
-      menu: 'Chatees',
-      title: 'Chatees',
-      noResults: 'No chatees found.',
+      menu: 'Chaters',
+      title: 'Chaters',
+      noResults: 'No chaters found.',
     },
 
     export: {
-      success: 'Chatees successfully exported',
+      success: 'Chaters successfully exported',
     },
 
     new: {
-      menu: 'New Chatee',
-      title: 'New Chatee',
-      success: 'Chatee successfully created',
+      menu: 'New Chater',
+      title: 'New Chater',
+      success: 'Chater successfully created',
     },
 
     view: {
-      title: 'View Chatee',
+      title: 'View Chater',
     },
 
     edit: {
-      menu: 'Edit Chatee',
-      title: 'Edit Chatee',
-      success: 'Chatee successfully updated',
+      menu: 'Edit Chater',
+      title: 'Edit Chater',
+      success: 'Chater successfully updated',
     },
 
     restore: {
-      success: 'Chatee successfully restored',
-      noSelection: 'You must select at least one chatee to restore.',
-      confirmTitle: 'Restore Chatee?',
+      success: 'Chater successfully restored',
+      noSelection: 'You must select at least one chater to restore.',
+      confirmTitle: 'Restore Chater?',
     },
 
     restoreMany: {
-      success: 'Chatee(s) successfully restored',
-      noSelection: 'You must select at least one chatee to restore.',
-      confirmTitle: 'Restore Chatee(s)?',
+      success: 'Chater(s) successfully restored',
+      noSelection: 'You must select at least one chater to restore.',
+      confirmTitle: 'Restore Chater(s)?',
       confirmDescription:
-        'Are you sure you want to restore the {0} selected chatee(s)?',
+        'Are you sure you want to restore the {0} selected chater(s)?',
     },
 
     archiveMany: {
-      success: 'Chatee(s) successfully archived',
-      noSelection: 'You must select at least one chatee to archive.',
-      confirmTitle: 'Archive Chatee(s)?',
+      success: 'Chater(s) successfully archived',
+      noSelection: 'You must select at least one chater to archive.',
+      confirmTitle: 'Archive Chater(s)?',
       confirmDescription:
-        'Are you sure you want to archive the {0} selected chatee(s)?',
+        'Are you sure you want to archive the {0} selected chater(s)?',
     },
 
     archive: {
-      success: 'Chatee successfully archived',
-      noSelection: 'You must select at least one chatee to archive.',
-      confirmTitle: 'Archive Chatee?',
+      success: 'Chater successfully archived',
+      noSelection: 'You must select at least one chater to archive.',
+      confirmTitle: 'Archive Chater?',
     },
 
     destroyMany: {
-      success: 'Chatee(s) successfully deleted',
-      noSelection: 'You must select at least one chatee to delete.',
-      confirmTitle: 'Delete Chatee(s)?',
+      success: 'Chater(s) successfully deleted',
+      noSelection: 'You must select at least one chater to delete.',
+      confirmTitle: 'Delete Chater(s)?',
       confirmDescription:
-        'Are you sure you want to delete the {0} selected chatee(s)?',
+        'Are you sure you want to delete the {0} selected chater(s)?',
     },
 
     destroy: {
-      success: 'Chatee successfully deleted',
-      noSelection: 'You must select at least one chatee to delete.',
-      confirmTitle: 'Delete Chatee?',
+      success: 'Chater successfully deleted',
+      noSelection: 'You must select at least one chater to delete.',
+      confirmTitle: 'Delete Chater?',
     },
 
     fields: {
@@ -2423,7 +2439,7 @@ const dictionary = {
       type: 'Type',
       meta: 'Meta',
       chat: 'Chat',
-      chatee: 'Chatee',
+      chater: 'Chater',
       sender: 'Sender',
       createdByMembership: 'Created By',
       updatedByMembership: 'Updated By',
@@ -2440,11 +2456,13 @@ const dictionary = {
       type: '',
       meta: '',
       chat: '',
-      chatee: '',
+      chater: '',
       sender: '',
     },
 
-    enumerators: {},
+    enumerators: {
+
+    },
   },
 
   feeSchedule: {
@@ -2553,6 +2571,7 @@ const dictionary = {
       accountId: '',
       instrumentId: '',
       meta: '',
+
     },
 
     enumerators: {
@@ -2669,7 +2688,9 @@ const dictionary = {
       asset: '',
     },
 
-    enumerators: {},
+    enumerators: {
+
+    },
   },
 
   systemAccount: {
@@ -2768,6 +2789,7 @@ const dictionary = {
       description: '',
       isActive: '',
       meta: '',
+
     },
 
     enumerators: {
@@ -2894,6 +2916,792 @@ const dictionary = {
         rejected: 'Rejected',
         pending: 'Pending',
       },
+    },
+  },
+
+  job: {
+    label: 'Job',
+
+    dashboardCard: {
+      title: 'Jobs',
+    },
+
+    list: {
+      menu: 'Jobs',
+      title: 'Jobs',
+      noResults: 'No jobs found.',
+    },
+
+    export: {
+      success: 'Jobs successfully exported',
+    },
+
+    new: {
+      menu: 'New Job',
+      title: 'New Job',
+      success: 'Job successfully created',
+    },
+
+    view: {
+      title: 'View Job',
+    },
+
+    edit: {
+      menu: 'Edit Job',
+      title: 'Edit Job',
+      success: 'Job successfully updated',
+    },
+
+    restore: {
+      success: 'Job successfully restored',
+      noSelection: 'You must select at least one job to restore.',
+      confirmTitle: 'Restore Job?',
+    },
+
+    restoreMany: {
+      success: 'Job(s) successfully restored',
+      noSelection: 'You must select at least one job to restore.',
+      confirmTitle: 'Restore Job(s)?',
+      confirmDescription:
+        'Are you sure you want to restore the {0} selected job(s)?',
+    },
+
+    archiveMany: {
+      success: 'Job(s) successfully archived',
+      noSelection: 'You must select at least one job to archive.',
+      confirmTitle: 'Archive Job(s)?',
+      confirmDescription:
+        'Are you sure you want to archive the {0} selected job(s)?',
+    },
+
+    archive: {
+      success: 'Job successfully archived',
+      noSelection: 'You must select at least one job to archive.',
+      confirmTitle: 'Archive Job?',
+    },
+
+    destroyMany: {
+      success: 'Job(s) successfully deleted',
+      noSelection: 'You must select at least one job to delete.',
+      confirmTitle: 'Delete Job(s)?',
+      confirmDescription:
+        'Are you sure you want to delete the {0} selected job(s)?',
+    },
+
+    destroy: {
+      success: 'Job successfully deleted',
+      noSelection: 'You must select at least one job to delete.',
+      confirmTitle: 'Delete Job?',
+    },
+
+    fields: {
+      title: 'Title',
+      team: 'Team',
+      location: 'Location',
+      type: 'Type',
+      remote: 'Remote',
+      description: 'Description',
+      requirements: 'Requirements',
+      responsibilities: 'Responsibilities',
+      quantity: 'Quantity',
+      salaryLow: 'SalaryLow',
+      salaryHigh: 'SalaryHigh',
+      status: 'Status',
+      seniority: 'Seniority',
+      currency: 'Currency',
+      meta: 'Meta',
+
+      createdByMembership: 'Created By',
+      updatedByMembership: 'Updated By',
+      archivedByMembership: 'Archived By',
+      createdAt: 'Created at',
+      updatedAt: 'Updated at',
+      archivedAt: 'Archived at',
+    },
+
+    hints: {
+      title: '',
+      team: '',
+      location: '',
+      type: '',
+      remote: '',
+      description: '',
+      requirements: '',
+      responsibilities: '',
+      quantity: '',
+      salaryLow: '',
+      salaryHigh: '',
+      status: '',
+      seniority: '',
+      currency: '',
+      meta: '',
+
+    },
+
+    enumerators: {
+      type: {
+        full_time: 'Full_time',
+        part_time: 'Part_time',
+        contract: 'Contract',
+        internship: 'Internship',
+      },
+
+      status: {
+        draft: 'Draft',
+        published: 'Published',
+        paused: 'Paused',
+        closed: 'Closed',
+      },
+
+      seniority: {
+        intern: 'Intern',
+        junior: 'Junior',
+        mid: 'Mid',
+        senior: 'Senior',
+        staff: 'Staff',
+        founding: 'Founding',
+      },
+    },
+  },
+
+  listing: {
+    label: 'Listing',
+
+    dashboardCard: {
+      title: 'Listings',
+    },
+
+    list: {
+      menu: 'Listings',
+      title: 'Listings',
+      noResults: 'No listings found.',
+    },
+
+    export: {
+      success: 'Listings successfully exported',
+    },
+
+    new: {
+      menu: 'New Listing',
+      title: 'New Listing',
+      success: 'Listing successfully created',
+    },
+
+    view: {
+      title: 'View Listing',
+    },
+
+    edit: {
+      menu: 'Edit Listing',
+      title: 'Edit Listing',
+      success: 'Listing successfully updated',
+    },
+
+    restore: {
+      success: 'Listing successfully restored',
+      noSelection: 'You must select at least one listing to restore.',
+      confirmTitle: 'Restore Listing?',
+    },
+
+    restoreMany: {
+      success: 'Listing(s) successfully restored',
+      noSelection: 'You must select at least one listing to restore.',
+      confirmTitle: 'Restore Listing(s)?',
+      confirmDescription:
+        'Are you sure you want to restore the {0} selected listing(s)?',
+    },
+
+    archiveMany: {
+      success: 'Listing(s) successfully archived',
+      noSelection: 'You must select at least one listing to archive.',
+      confirmTitle: 'Archive Listing(s)?',
+      confirmDescription:
+        'Are you sure you want to archive the {0} selected listing(s)?',
+    },
+
+    archive: {
+      success: 'Listing successfully archived',
+      noSelection: 'You must select at least one listing to archive.',
+      confirmTitle: 'Archive Listing?',
+    },
+
+    destroyMany: {
+      success: 'Listing(s) successfully deleted',
+      noSelection: 'You must select at least one listing to delete.',
+      confirmTitle: 'Delete Listing(s)?',
+      confirmDescription:
+        'Are you sure you want to delete the {0} selected listing(s)?',
+    },
+
+    destroy: {
+      success: 'Listing successfully deleted',
+      noSelection: 'You must select at least one listing to delete.',
+      confirmTitle: 'Delete Listing?',
+    },
+
+    fields: {
+      companyName: 'CompanyName',
+      legalName: 'LegalName',
+      jurisdiction: 'Jurisdiction',
+      incorporationDate: 'IncorporationDate',
+      website: 'Website',
+      assetSymbol: 'AssetSymbol',
+      assetClass: 'AssetClass',
+      status: 'Status',
+      submittedAt: 'SubmittedAt',
+      decisionAt: 'DecisionAt',
+      kycCompleted: 'KycCompleted',
+      docsSubmitted: 'DocsSubmitted',
+      riskDisclosureUrl: 'RiskDisclosureUrl',
+      primaryContactName: 'PrimaryContactName',
+      primaryContactEmail: 'PrimaryContactEmail',
+      reviewedBy: 'ReviewedBy',
+      notes: 'Notes',
+      meta: 'Meta',
+
+      createdByMembership: 'Created By',
+      updatedByMembership: 'Updated By',
+      archivedByMembership: 'Archived By',
+      createdAt: 'Created at',
+      updatedAt: 'Updated at',
+      archivedAt: 'Archived at',
+    },
+
+    hints: {
+      companyName: '',
+      legalName: '',
+      jurisdiction: '',
+      incorporationDate: '',
+      website: '',
+      assetSymbol: '',
+      assetClass: '',
+      status: '',
+      submittedAt: '',
+      decisionAt: '',
+      kycCompleted: '',
+      docsSubmitted: '',
+      riskDisclosureUrl: '',
+      primaryContactName: '',
+      primaryContactEmail: '',
+      reviewedBy: '',
+      notes: '',
+      meta: '',
+
+    },
+
+    enumerators: {
+      assetClass: {
+        equity: 'Equity',
+        crypto: 'Crypto',
+      },
+
+      status: {
+        applied: 'Applied',
+        under_review: 'Under_review',
+        approved: 'Approved',
+        rejected: 'Rejected',
+        listed: 'Listed',
+      },
+    },
+  },
+
+  referral: {
+    label: 'Referral',
+
+    dashboardCard: {
+      title: 'Referrals',
+    },
+
+    list: {
+      menu: 'Referrals',
+      title: 'Referrals',
+      noResults: 'No referrals found.',
+    },
+
+    export: {
+      success: 'Referrals successfully exported',
+    },
+
+    new: {
+      menu: 'New Referral',
+      title: 'New Referral',
+      success: 'Referral successfully created',
+    },
+
+    view: {
+      title: 'View Referral',
+    },
+
+    edit: {
+      menu: 'Edit Referral',
+      title: 'Edit Referral',
+      success: 'Referral successfully updated',
+    },
+
+    restore: {
+      success: 'Referral successfully restored',
+      noSelection: 'You must select at least one referral to restore.',
+      confirmTitle: 'Restore Referral?',
+    },
+
+    restoreMany: {
+      success: 'Referral(s) successfully restored',
+      noSelection: 'You must select at least one referral to restore.',
+      confirmTitle: 'Restore Referral(s)?',
+      confirmDescription:
+        'Are you sure you want to restore the {0} selected referral(s)?',
+    },
+
+    archiveMany: {
+      success: 'Referral(s) successfully archived',
+      noSelection: 'You must select at least one referral to archive.',
+      confirmTitle: 'Archive Referral(s)?',
+      confirmDescription:
+        'Are you sure you want to archive the {0} selected referral(s)?',
+    },
+
+    archive: {
+      success: 'Referral successfully archived',
+      noSelection: 'You must select at least one referral to archive.',
+      confirmTitle: 'Archive Referral?',
+    },
+
+    destroyMany: {
+      success: 'Referral(s) successfully deleted',
+      noSelection: 'You must select at least one referral to delete.',
+      confirmTitle: 'Delete Referral(s)?',
+      confirmDescription:
+        'Are you sure you want to delete the {0} selected referral(s)?',
+    },
+
+    destroy: {
+      success: 'Referral successfully deleted',
+      noSelection: 'You must select at least one referral to delete.',
+      confirmTitle: 'Delete Referral?',
+    },
+
+    fields: {
+      referrerUserId: 'ReferrerUserId',
+      referredUserId: 'ReferredUserId',
+      referralCode: 'ReferralCode',
+      source: 'Source',
+      status: 'Status',
+      rewardType: 'RewardType',
+      rewardAmount: 'RewardAmount',
+      rewardCurrency: 'RewardCurrency',
+      rewardedAt: 'RewardedAt',
+      meta: 'Meta',
+
+      createdByMembership: 'Created By',
+      updatedByMembership: 'Updated By',
+      archivedByMembership: 'Archived By',
+      createdAt: 'Created at',
+      updatedAt: 'Updated at',
+      archivedAt: 'Archived at',
+    },
+
+    hints: {
+      referrerUserId: '',
+      referredUserId: '',
+      referralCode: '',
+      source: '',
+      status: '',
+      rewardType: '',
+      rewardAmount: '',
+      rewardCurrency: '',
+      rewardedAt: '',
+      meta: '',
+
+    },
+
+    enumerators: {
+      source: {
+        link: 'Link',
+        email: 'Email',
+        promo: 'Promo',
+        manual: 'Manual',
+      },
+
+      status: {
+        pending: 'Pending',
+        activated: 'Activated',
+        rewarded: 'Rewarded',
+        expired: 'Expired',
+      },
+
+      rewardType: {
+        fee_rebate: 'Fee_rebate',
+        credit: 'Credit',
+        token: 'Token',
+      },
+    },
+  },
+
+  notification: {
+    label: 'Notification',
+
+    dashboardCard: {
+      title: 'Notifications',
+    },
+
+    list: {
+      menu: 'Notifications',
+      title: 'Notifications',
+      noResults: 'No notifications found.',
+    },
+
+    export: {
+      success: 'Notifications successfully exported',
+    },
+
+    new: {
+      menu: 'New Notification',
+      title: 'New Notification',
+      success: 'Notification successfully created',
+    },
+
+    view: {
+      title: 'View Notification',
+    },
+
+    edit: {
+      menu: 'Edit Notification',
+      title: 'Edit Notification',
+      success: 'Notification successfully updated',
+    },
+
+    restore: {
+      success: 'Notification successfully restored',
+      noSelection: 'You must select at least one notification to restore.',
+      confirmTitle: 'Restore Notification?',
+    },
+
+    restoreMany: {
+      success: 'Notification(s) successfully restored',
+      noSelection: 'You must select at least one notification to restore.',
+      confirmTitle: 'Restore Notification(s)?',
+      confirmDescription:
+        'Are you sure you want to restore the {0} selected notification(s)?',
+    },
+
+    archiveMany: {
+      success: 'Notification(s) successfully archived',
+      noSelection: 'You must select at least one notification to archive.',
+      confirmTitle: 'Archive Notification(s)?',
+      confirmDescription:
+        'Are you sure you want to archive the {0} selected notification(s)?',
+    },
+
+    archive: {
+      success: 'Notification successfully archived',
+      noSelection: 'You must select at least one notification to archive.',
+      confirmTitle: 'Archive Notification?',
+    },
+
+    destroyMany: {
+      success: 'Notification(s) successfully deleted',
+      noSelection: 'You must select at least one notification to delete.',
+      confirmTitle: 'Delete Notification(s)?',
+      confirmDescription:
+        'Are you sure you want to delete the {0} selected notification(s)?',
+    },
+
+    destroy: {
+      success: 'Notification successfully deleted',
+      noSelection: 'You must select at least one notification to delete.',
+      confirmTitle: 'Delete Notification?',
+    },
+
+    fields: {
+      type: 'Type',
+      severity: 'Severity',
+      title: 'Title',
+      body: 'Body',
+      actionUrl: 'ActionUrl',
+      scope: 'Scope',
+      targetUserId: 'TargetUserId',
+      targetSegment: 'TargetSegment',
+      persistent: 'Persistent',
+      dismissible: 'Dismissible',
+      requiresAck: 'RequiresAck',
+      meta: 'Meta',
+      userNotifications: 'UserNotifications',
+      createdByMembership: 'Created By',
+      updatedByMembership: 'Updated By',
+      archivedByMembership: 'Archived By',
+      createdAt: 'Created at',
+      updatedAt: 'Updated at',
+      archivedAt: 'Archived at',
+    },
+
+    hints: {
+      type: '',
+      severity: '',
+      title: '',
+      body: '',
+      actionUrl: '',
+      scope: '',
+      targetUserId: '',
+      targetSegment: '',
+      persistent: '',
+      dismissible: '',
+      requiresAck: '',
+      meta: '',
+      userNotifications: '',
+    },
+
+    enumerators: {
+      type: {
+        system: 'System',
+        security: 'Security',
+        marketing: 'Marketing',
+        trading: 'Trading',
+        compliance: 'Compliance',
+      },
+
+      severity: {
+        info: 'Info',
+        warning: 'Warning',
+        critical: 'Critical',
+      },
+
+      scope: {
+        global: 'Global',
+        user: 'User',
+        segment: 'Segment',
+      },
+    },
+  },
+
+  userNotification: {
+    label: 'UserNotification',
+
+    dashboardCard: {
+      title: 'UserNotifications',
+    },
+
+    list: {
+      menu: 'UserNotifications',
+      title: 'UserNotifications',
+      noResults: 'No usernotifications found.',
+    },
+
+    export: {
+      success: 'UserNotifications successfully exported',
+    },
+
+    new: {
+      menu: 'New UserNotification',
+      title: 'New UserNotification',
+      success: 'UserNotification successfully created',
+    },
+
+    view: {
+      title: 'View UserNotification',
+    },
+
+    edit: {
+      menu: 'Edit UserNotification',
+      title: 'Edit UserNotification',
+      success: 'UserNotification successfully updated',
+    },
+
+    restore: {
+      success: 'UserNotification successfully restored',
+      noSelection: 'You must select at least one usernotification to restore.',
+      confirmTitle: 'Restore UserNotification?',
+    },
+
+    restoreMany: {
+      success: 'UserNotification(s) successfully restored',
+      noSelection: 'You must select at least one usernotification to restore.',
+      confirmTitle: 'Restore UserNotification(s)?',
+      confirmDescription:
+        'Are you sure you want to restore the {0} selected usernotification(s)?',
+    },
+
+    archiveMany: {
+      success: 'UserNotification(s) successfully archived',
+      noSelection: 'You must select at least one usernotification to archive.',
+      confirmTitle: 'Archive UserNotification(s)?',
+      confirmDescription:
+        'Are you sure you want to archive the {0} selected usernotification(s)?',
+    },
+
+    archive: {
+      success: 'UserNotification successfully archived',
+      noSelection: 'You must select at least one usernotification to archive.',
+      confirmTitle: 'Archive UserNotification?',
+    },
+
+    destroyMany: {
+      success: 'UserNotification(s) successfully deleted',
+      noSelection: 'You must select at least one usernotification to delete.',
+      confirmTitle: 'Delete UserNotification(s)?',
+      confirmDescription:
+        'Are you sure you want to delete the {0} selected usernotification(s)?',
+    },
+
+    destroy: {
+      success: 'UserNotification successfully deleted',
+      noSelection: 'You must select at least one usernotification to delete.',
+      confirmTitle: 'Delete UserNotification?',
+    },
+
+    fields: {
+      readAt: 'ReadAt',
+      dismissedAt: 'DismissedAt',
+      acknowledgedAt: 'AcknowledgedAt',
+      deliveryChannel: 'DeliveryChannel',
+      deliveredAt: 'DeliveredAt',
+      meta: 'Meta',
+      notification: 'Notification',
+      user: 'User',
+      createdByMembership: 'Created By',
+      updatedByMembership: 'Updated By',
+      archivedByMembership: 'Archived By',
+      createdAt: 'Created at',
+      updatedAt: 'Updated at',
+      archivedAt: 'Archived at',
+    },
+
+    hints: {
+      readAt: '',
+      dismissedAt: '',
+      acknowledgedAt: '',
+      deliveryChannel: '',
+      deliveredAt: '',
+      meta: '',
+      notification: '',
+      user: '',
+    },
+
+    enumerators: {
+      deliveryChannel: {
+        in_app: 'In_app',
+        email: 'Email',
+        push: 'Push',
+      },
+    },
+  },
+
+  candidate: {
+    label: 'Candidate',
+
+    dashboardCard: {
+      title: 'Candidates',
+    },
+
+    list: {
+      menu: 'Candidates',
+      title: 'Candidates',
+      noResults: 'No candidates found.',
+    },
+
+    export: {
+      success: 'Candidates successfully exported',
+    },
+
+    new: {
+      menu: 'New Candidate',
+      title: 'New Candidate',
+      success: 'Candidate successfully created',
+    },
+
+    view: {
+      title: 'View Candidate',
+    },
+
+    edit: {
+      menu: 'Edit Candidate',
+      title: 'Edit Candidate',
+      success: 'Candidate successfully updated',
+    },
+
+    restore: {
+      success: 'Candidate successfully restored',
+      noSelection: 'You must select at least one candidate to restore.',
+      confirmTitle: 'Restore Candidate?',
+    },
+
+    restoreMany: {
+      success: 'Candidate(s) successfully restored',
+      noSelection: 'You must select at least one candidate to restore.',
+      confirmTitle: 'Restore Candidate(s)?',
+      confirmDescription:
+        'Are you sure you want to restore the {0} selected candidate(s)?',
+    },
+
+    archiveMany: {
+      success: 'Candidate(s) successfully archived',
+      noSelection: 'You must select at least one candidate to archive.',
+      confirmTitle: 'Archive Candidate(s)?',
+      confirmDescription:
+        'Are you sure you want to archive the {0} selected candidate(s)?',
+    },
+
+    archive: {
+      success: 'Candidate successfully archived',
+      noSelection: 'You must select at least one candidate to archive.',
+      confirmTitle: 'Archive Candidate?',
+    },
+
+    destroyMany: {
+      success: 'Candidate(s) successfully deleted',
+      noSelection: 'You must select at least one candidate to delete.',
+      confirmTitle: 'Delete Candidate(s)?',
+      confirmDescription:
+        'Are you sure you want to delete the {0} selected candidate(s)?',
+    },
+
+    destroy: {
+      success: 'Candidate successfully deleted',
+      noSelection: 'You must select at least one candidate to delete.',
+      confirmTitle: 'Delete Candidate?',
+    },
+
+    fields: {
+      firstName: 'FirstName',
+      lastName: 'LastName',
+      preferredName: 'PreferredName',
+      email: 'Email',
+      phone: 'Phone',
+      country: 'Country',
+      timezone: 'Timezone',
+      linkedinUrl: 'LinkedinUrl',
+      githubUrl: 'GithubUrl',
+      portfolioUrl: 'PortfolioUrl',
+      resumeUrl: 'ResumeUrl',
+      resume: 'Resume',
+      meta: 'Meta',
+
+      createdByMembership: 'Created By',
+      updatedByMembership: 'Updated By',
+      archivedByMembership: 'Archived By',
+      createdAt: 'Created at',
+      updatedAt: 'Updated at',
+      archivedAt: 'Archived at',
+    },
+
+    hints: {
+      firstName: '',
+      lastName: '',
+      preferredName: '',
+      email: '',
+      phone: '',
+      country: '',
+      timezone: '',
+      linkedinUrl: '',
+      githubUrl: '',
+      portfolioUrl: '',
+      resumeUrl: '',
+      resume: '',
+      meta: '',
+
+    },
+
+    enumerators: {
+
     },
   },
 

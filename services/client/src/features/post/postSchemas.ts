@@ -3,8 +3,8 @@ import { Post, Membership } from '@prisma/client';
 import { importerInputSchema } from 'src/shared/schemas/importerSchemas';
 import { orderBySchema } from 'src/shared/schemas/orderBySchema';
 import { z } from 'zod';
-import { jsonSchema } from 'src/shared/schemas/jsonSchema';
 import { fileUploadedSchema } from 'src/features/file/fileSchemas';
+import { jsonSchema } from 'src/shared/schemas/jsonSchema';
 import { objectToUuidSchema, objectToUuidSchemaOptional } from 'src/shared/schemas/objectToUuidSchema';
 
 extendZodWithOpenApi(z);
@@ -72,10 +72,10 @@ export const postAutocompleteOutputSchema = z.object({
 export const postCreateInputSchema = z.object({
   title: z.string().trim().nullable().optional(),
   body: z.string().trim().nullable().optional(),
-  meta: jsonSchema.optional(),
   files: z.array(fileUploadedSchema).optional(),
   images: z.array(fileUploadedSchema).optional(),
   type: z.array(z.string()).optional(),
+  meta: jsonSchema.optional(),
   user: objectToUuidSchema,
   importHash: z.string().optional(),
 });
@@ -87,10 +87,10 @@ export const postImportFileSchema = z
   .object({
     title: z.string(),
     body: z.string(),
-    meta: z.string(),
     files: z.string().transform((val) => val?.split(' ')?.filter(Boolean) || []),
     images: z.string().transform((val) => val?.split(' ')?.filter(Boolean) || []),
     type: z.string().transform((val) => val?.split(' ')?.filter(Boolean) || []),
+    meta: z.string(),
     user: z.string(),
   })
   .partial();

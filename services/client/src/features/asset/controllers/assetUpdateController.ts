@@ -69,11 +69,11 @@ export async function assetUpdateController(
     },
     data: {
       symbol: data.symbol,
-      type: data.type,
+      klass: data.klass,
       precision: data.precision,
       isFractional: data.isFractional,
-      meta: data.meta,
       decimals: data.decimals,
+      meta: data.meta,
     },
   });
 

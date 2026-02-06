@@ -16,12 +16,18 @@ import { postPermissions } from 'src/features/post/postPermissions';
 import { commentPermissions } from 'src/features/comment/commentPermissions';
 import { articlePermissions } from 'src/features/article/articlePermissions';
 import { chatPermissions } from 'src/features/chat/chatPermissions';
-import { chateePermissions } from 'src/features/chatee/chateePermissions';
+import { chaterPermissions } from 'src/features/chater/chaterPermissions';
 import { messagePermissions } from 'src/features/message/messagePermissions';
 import { feeSchedulePermissions } from 'src/features/feeSchedule/feeSchedulePermissions';
 import { balanceSnapshotPermissions } from 'src/features/balanceSnapshot/balanceSnapshotPermissions';
 import { systemAccountPermissions } from 'src/features/systemAccount/systemAccountPermissions';
 import { feedbackPermissions } from 'src/features/feedback/feedbackPermissions';
+import { jobPermissions } from 'src/features/job/jobPermissions';
+import { listingPermissions } from 'src/features/listing/listingPermissions';
+import { referralPermissions } from 'src/features/referral/referralPermissions';
+import { notificationPermissions } from 'src/features/notification/notificationPermissions';
+import { userNotificationPermissions } from 'src/features/userNotification/userNotificationPermissions';
+import { candidatePermissions } from 'src/features/candidate/candidatePermissions';
 import { membershipPermissions } from 'src/features/membership/membershipPermissions';
 import { subscriptionPermissions } from 'src/features/subscription/subscriptionPermissions';
 import { tenantPermissions } from 'src/features/tenant/tenantPermissions';
@@ -53,12 +59,18 @@ export const permissions = {
   ...commentPermissions,
   ...articlePermissions,
   ...chatPermissions,
-  ...chateePermissions,
+  ...chaterPermissions,
   ...messagePermissions,
   ...feeSchedulePermissions,
   ...balanceSnapshotPermissions,
   ...systemAccountPermissions,
   ...feedbackPermissions,
+  ...jobPermissions,
+  ...listingPermissions,
+  ...referralPermissions,
+  ...notificationPermissions,
+  ...userNotificationPermissions,
+  ...candidatePermissions,
 } as const satisfies { [key: string]: Permission };
 
 export function availablePermissions(roles: Array<string>) {

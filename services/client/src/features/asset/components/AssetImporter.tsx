@@ -13,7 +13,7 @@ export function AssetImporter({ context }: { context: AppContext }) {
     <Importer
       keys={[
         'symbol',
-        'type',
+        'klass',
         'precision',
         'isFractional',
         'decimals',
