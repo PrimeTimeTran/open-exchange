@@ -316,7 +316,7 @@ export interface CancelWithdrawalResponse {
 
 export interface CreateAssetRequest {
   symbol?: string | undefined;
-  type?: string | undefined;
+  klass?: string | undefined;
   precision?: number | undefined;
 }
 
@@ -4507,7 +4507,7 @@ export const CancelWithdrawalResponse: MessageFns<CancelWithdrawalResponse> = {
 };
 
 function createBaseCreateAssetRequest(): CreateAssetRequest {
-  return { symbol: "", type: "", precision: 0 };
+  return { symbol: "", klass: "", precision: 0 };
 }
 
 export const CreateAssetRequest: MessageFns<CreateAssetRequest> = {
@@ -4515,8 +4515,8 @@ export const CreateAssetRequest: MessageFns<CreateAssetRequest> = {
     if (message.symbol !== undefined && message.symbol !== "") {
       writer.uint32(10).string(message.symbol);
     }
-    if (message.type !== undefined && message.type !== "") {
-      writer.uint32(18).string(message.type);
+    if (message.klass !== undefined && message.klass !== "") {
+      writer.uint32(18).string(message.klass);
     }
     if (message.precision !== undefined && message.precision !== 0) {
       writer.uint32(24).int32(message.precision);
@@ -4544,7 +4544,7 @@ export const CreateAssetRequest: MessageFns<CreateAssetRequest> = {
             break;
           }
 
-          message.type = reader.string();
+          message.klass = reader.string();
           continue;
         }
         case 3: {
@@ -4567,7 +4567,7 @@ export const CreateAssetRequest: MessageFns<CreateAssetRequest> = {
   fromJSON(object: any): CreateAssetRequest {
     return {
       symbol: isSet(object.symbol) ? globalThis.String(object.symbol) : "",
-      type: isSet(object.type) ? globalThis.String(object.type) : "",
+      klass: isSet(object.klass) ? globalThis.String(object.klass) : "",
       precision: isSet(object.precision) ? globalThis.Number(object.precision) : 0,
     };
   },
@@ -4577,8 +4577,8 @@ export const CreateAssetRequest: MessageFns<CreateAssetRequest> = {
     if (message.symbol !== undefined && message.symbol !== "") {
       obj.symbol = message.symbol;
     }
-    if (message.type !== undefined && message.type !== "") {
-      obj.type = message.type;
+    if (message.klass !== undefined && message.klass !== "") {
+      obj.klass = message.klass;
     }
     if (message.precision !== undefined && message.precision !== 0) {
       obj.precision = Math.round(message.precision);
@@ -4592,7 +4592,7 @@ export const CreateAssetRequest: MessageFns<CreateAssetRequest> = {
   fromPartial<I extends Exact<DeepPartial<CreateAssetRequest>, I>>(object: I): CreateAssetRequest {
     const message = createBaseCreateAssetRequest();
     message.symbol = object.symbol ?? "";
-    message.type = object.type ?? "";
+    message.klass = object.klass ?? "";
     message.precision = object.precision ?? 0;
     return message;
   },

@@ -505,7 +505,7 @@ impl LedgerService for LedgerImpl {
         
         let asset = self.asset_service.create_new_asset(
             req.symbol,
-            req.r#type,
+            req.klass,
             req.precision,
         );
 

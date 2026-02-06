@@ -16,7 +16,7 @@ export interface Asset {
     | string
     | undefined;
   /** e.g., "crypto", "fiat" */
-  type?: string | undefined;
+  klass?: string | undefined;
   precision?: number | undefined;
   isFractional?: boolean | undefined;
   decimals?:
@@ -33,7 +33,7 @@ function createBaseAsset(): Asset {
     id: "",
     tenantId: "",
     symbol: "",
-    type: "",
+    klass: "",
     precision: 0,
     isFractional: false,
     decimals: 0,
@@ -54,8 +54,8 @@ export const Asset: MessageFns<Asset> = {
     if (message.symbol !== undefined && message.symbol !== "") {
       writer.uint32(26).string(message.symbol);
     }
-    if (message.type !== undefined && message.type !== "") {
-      writer.uint32(34).string(message.type);
+    if (message.klass !== undefined && message.klass !== "") {
+      writer.uint32(34).string(message.klass);
     }
     if (message.precision !== undefined && message.precision !== 0) {
       writer.uint32(40).int32(message.precision);
@@ -114,7 +114,7 @@ export const Asset: MessageFns<Asset> = {
             break;
           }
 
-          message.type = reader.string();
+          message.klass = reader.string();
           continue;
         }
         case 5: {
@@ -183,7 +183,7 @@ export const Asset: MessageFns<Asset> = {
         ? globalThis.String(object.tenant_id)
         : "",
       symbol: isSet(object.symbol) ? globalThis.String(object.symbol) : "",
-      type: isSet(object.type) ? globalThis.String(object.type) : "",
+      klass: isSet(object.klass) ? globalThis.String(object.klass) : "",
       precision: isSet(object.precision) ? globalThis.Number(object.precision) : 0,
       isFractional: isSet(object.isFractional)
         ? globalThis.Boolean(object.isFractional)
@@ -216,8 +216,8 @@ export const Asset: MessageFns<Asset> = {
     if (message.symbol !== undefined && message.symbol !== "") {
       obj.symbol = message.symbol;
     }
-    if (message.type !== undefined && message.type !== "") {
-      obj.type = message.type;
+    if (message.klass !== undefined && message.klass !== "") {
+      obj.klass = message.klass;
     }
     if (message.precision !== undefined && message.precision !== 0) {
       obj.precision = Math.round(message.precision);
@@ -248,7 +248,7 @@ export const Asset: MessageFns<Asset> = {
     message.id = object.id ?? "";
     message.tenantId = object.tenantId ?? "";
     message.symbol = object.symbol ?? "";
-    message.type = object.type ?? "";
+    message.klass = object.klass ?? "";
     message.precision = object.precision ?? 0;
     message.isFractional = object.isFractional ?? false;
     message.decimals = object.decimals ?? 0;

@@ -22,7 +22,7 @@ impl AssetService {
             id: Uuid::new_v4().to_string(),
             tenant_id: "default".to_string(),
             symbol,
-            r#type: asset_type,
+            klass: asset_type,
             precision,
             is_fractional: true,
             decimals: precision,

@@ -8,7 +8,7 @@ message Asset {
   string id = 1;
   string tenant_id = 2;
   string symbol = 3;
-  string type = 4; // e.g., "crypto", "fiat"
+  string klass = 4; // e.g., "crypto", "fiat"
   
   int32 precision = 5;
   bool is_fractional = 6;

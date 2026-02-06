@@ -347,7 +347,7 @@ message CancelWithdrawalResponse {
 
 message CreateAssetRequest {
   string symbol = 1;
-  string type = 2;
+  string klass = 2;
   int32 precision = 3;
 }
 
