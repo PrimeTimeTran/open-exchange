@@ -4,7 +4,7 @@
 # Protocol Buffer Generation Script
 # ==========================================
 # This script generates code from .proto files for:
-# 1. Admin Service (TypeScript)
+# 1. CLIENT Service (TypeScript)
 # 2. Matching Engine (Go)
 # 3. Market Data Service (Go)
 # 4. Ledger Service (Rust - Handled via cargo build)
@@ -14,7 +14,7 @@
 # Configuration
 # ------------------------------------------
 PROTO_DIR="./proto"
-ADMIN_OUT_DIR="./services/admin/src/proto"
+CLIENT_OUT_DIR="./services/client/src/proto"
 MATCHING_OUT_DIR="./services/matching/proto"
 MARKET_OUT_DIR="./services/market/proto"
 
@@ -22,20 +22,20 @@ MARKET_OUT_DIR="./services/market/proto"
 PROTOC_GEN_TS="./node_modules/.bin/protoc-gen-ts_proto"
 
 # Create output directories if they don't exist
-mkdir -p "$ADMIN_OUT_DIR"
+mkdir -p "$CLIENT_OUT_DIR"
 mkdir -p "$MATCHING_OUT_DIR"
 mkdir -p "$MARKET_OUT_DIR"
 
 echo "🚀 Starting Proto Generation..."
 
 # ------------------------------------------
-# 1. Admin Service (TypeScript)
+# 1. CLIENT Service (TypeScript)
 # ------------------------------------------
-echo "📦 [Admin] Generating TypeScript code..."
-# Generates TS types for all protos to ensure the Admin UI can interact with all services
+echo "📦 [Client] Generating TypeScript code..."
+# Generates TS types for all protos to ensure the CLIENT UI can interact with all services
 find "$PROTO_DIR" -name "*.proto" | xargs protoc \
   --plugin="protoc-gen-ts_proto=${PROTOC_GEN_TS}" \
-  --ts_proto_out="${ADMIN_OUT_DIR}" \
+  --ts_proto_out="${CLIENT_OUT_DIR}" \
   --ts_proto_opt=esModuleInterop=true \
   --ts_proto_opt=forceLong=string \
   --ts_proto_opt=useOptionals=all \

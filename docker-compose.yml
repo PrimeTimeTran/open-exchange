@@ -1,12 +1,12 @@
 version: '3.8'
 
 services:
-  admin:
+  client:
     build:
-      context: ./services/admin
+      context: ./services/client
       dockerfile: Dockerfile.dev
     volumes:
-      - ./services/admin:/app
+      - ./services/client:/app
       - /app/node_modules
       - /app/.next
       - ./proto:/app/proto
