@@ -18,7 +18,7 @@ export function menus(context: AppContext) {
   menus.push({
     id: 'dashboard',
     label: context.dictionary.shared.dashboard,
-    href: `/`,
+    href: `/admin`,
     Icon: FaChartPie,
     isExact: true,
   });
@@ -27,7 +27,7 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'auditLog',
       label: context.dictionary.auditLog.list.menu,
-      href: `/audit-log`,
+      href: `/admin/audit-log`,
       Icon: LuHistory,
     });
   }
@@ -36,10 +36,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'membership',
       label: context.dictionary.membership.list.menu,
-      href: `/membership`,
+      href: `/admin/membership`,
       Icon: LuUsers,
       createHref: hasPermission(permissions.membershipCreate, context)
-        ? '/membership/new'
+        ? '/admin/membership/new'
         : undefined,
     });
   }
@@ -48,10 +48,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'account',
       label: context.dictionary.account.list.menu,
-      href: `/account`,
+      href: `/admin/account`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.accountCreate, context)
-        ? `/account/new`
+        ? `/admin/account/new`
         : undefined,
     });
   }
@@ -59,10 +59,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'deposit',
       label: context.dictionary.deposit.list.menu,
-      href: `/deposit`,
+      href: `/admin/deposit`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.depositCreate, context)
-        ? `/deposit/new`
+        ? `/admin/deposit/new`
         : undefined,
     });
   }
@@ -70,10 +70,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'withdrawal',
       label: context.dictionary.withdrawal.list.menu,
-      href: `/withdrawal`,
+      href: `/admin/withdrawal`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.withdrawalCreate, context)
-        ? `/withdrawal/new`
+        ? `/admin/withdrawal/new`
         : undefined,
     });
   }
@@ -81,10 +81,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'wallet',
       label: context.dictionary.wallet.list.menu,
-      href: `/wallet`,
+      href: `/admin/wallet`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.walletCreate, context)
-        ? `/wallet/new`
+        ? `/admin/wallet/new`
         : undefined,
     });
   }
@@ -92,10 +92,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'order',
       label: context.dictionary.order.list.menu,
-      href: `/order`,
+      href: `/admin/order`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.orderCreate, context)
-        ? `/order/new`
+        ? `/admin/order/new`
         : undefined,
     });
   }
@@ -103,10 +103,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'fill',
       label: context.dictionary.fill.list.menu,
-      href: `/fill`,
+      href: `/admin/fill`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.fillCreate, context)
-        ? `/fill/new`
+        ? `/admin/fill/new`
         : undefined,
     });
   }
@@ -114,10 +114,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'trade',
       label: context.dictionary.trade.list.menu,
-      href: `/trade`,
+      href: `/admin/trade`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.tradeCreate, context)
-        ? `/trade/new`
+        ? `/admin/trade/new`
         : undefined,
     });
   }
@@ -125,10 +125,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'asset',
       label: context.dictionary.asset.list.menu,
-      href: `/asset`,
+      href: `/admin/asset`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.assetCreate, context)
-        ? `/asset/new`
+        ? `/admin/asset/new`
         : undefined,
     });
   }
@@ -136,10 +136,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'instrument',
       label: context.dictionary.instrument.list.menu,
-      href: `/instrument`,
+      href: `/admin/instrument`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.instrumentCreate, context)
-        ? `/instrument/new`
+        ? `/admin/instrument/new`
         : undefined,
     });
   }
@@ -147,10 +147,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'feeSchedule',
       label: context.dictionary.feeSchedule.list.menu,
-      href: `/fee-schedule`,
+      href: `/admin/fee-schedule`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.feeScheduleCreate, context)
-        ? `/fee-schedule/new`
+        ? `/admin/fee-schedule/new`
         : undefined,
     });
   }
@@ -158,10 +158,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'balanceSnapshot',
       label: context.dictionary.balanceSnapshot.list.menu,
-      href: `/balance-snapshot`,
+      href: `/admin/balance-snapshot`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.balanceSnapshotCreate, context)
-        ? `/balance-snapshot/new`
+        ? `/admin/balance-snapshot/new`
         : undefined,
     });
   }
@@ -169,10 +169,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'systemAccount',
       label: context.dictionary.systemAccount.list.menu,
-      href: `/system-account`,
+      href: `/admin/system-account`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.systemAccountCreate, context)
-        ? `/system-account/new`
+        ? `/admin/system-account/new`
         : undefined,
     });
   }
@@ -180,10 +180,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'referral',
       label: context.dictionary.referral.list.menu,
-      href: `/referral`,
+      href: `/admin/referral`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.referralCreate, context)
-        ? `/referral/new`
+        ? `/admin/referral/new`
         : undefined,
     });
   }
@@ -191,10 +191,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'listing',
       label: context.dictionary.listing.list.menu,
-      href: `/listing`,
+      href: `/admin/listing`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.listingCreate, context)
-        ? `/listing/new`
+        ? `/admin/listing/new`
         : undefined,
     });
   }
@@ -202,10 +202,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'feedback',
       label: context.dictionary.feedback.list.menu,
-      href: `/feedback`,
+      href: `/admin/feedback`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.feedbackCreate, context)
-        ? `/feedback/new`
+        ? `/admin/feedback/new`
         : undefined,
     });
   }
@@ -213,10 +213,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'marketMaker',
       label: context.dictionary.marketMaker.list.menu,
-      href: `/market-maker`,
+      href: `/admin/market-maker`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.marketMakerCreate, context)
-        ? `/market-maker/new`
+        ? `/admin/market-maker/new`
         : undefined,
     });
   }
@@ -224,10 +224,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'ledgerEvent',
       label: context.dictionary.ledgerEvent.list.menu,
-      href: `/ledger-event`,
+      href: `/admin/ledger-event`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.ledgerEventCreate, context)
-        ? `/ledger-event/new`
+        ? `/admin/ledger-event/new`
         : undefined,
     });
   }
@@ -235,10 +235,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'ledgerEntry',
       label: context.dictionary.ledgerEntry.list.menu,
-      href: `/ledger-entry`,
+      href: `/admin/ledger-entry`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.ledgerEntryCreate, context)
-        ? `/ledger-entry/new`
+        ? `/admin/ledger-entry/new`
         : undefined,
     });
   }
@@ -246,10 +246,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'article',
       label: context.dictionary.article.list.menu,
-      href: `/article`,
+      href: `/admin/article`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.articleCreate, context)
-        ? `/article/new`
+        ? `/admin/article/new`
         : undefined,
     });
   }
@@ -257,10 +257,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'post',
       label: context.dictionary.post.list.menu,
-      href: `/post`,
+      href: `/admin/post`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.postCreate, context)
-        ? `/post/new`
+        ? `/admin/post/new`
         : undefined,
     });
   }
@@ -268,10 +268,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'comment',
       label: context.dictionary.comment.list.menu,
-      href: `/comment`,
+      href: `/admin/comment`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.commentCreate, context)
-        ? `/comment/new`
+        ? `/admin/comment/new`
         : undefined,
     });
   }
@@ -279,10 +279,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'chat',
       label: context.dictionary.chat.list.menu,
-      href: `/chat`,
+      href: `/admin/chat`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.chatCreate, context)
-        ? `/chat/new`
+        ? `/admin/chat/new`
         : undefined,
     });
   }
@@ -290,10 +290,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'chater',
       label: context.dictionary.chater.list.menu,
-      href: `/chater`,
+      href: `/admin/chater`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.chaterCreate, context)
-        ? `/chater/new`
+        ? `/admin/chater/new`
         : undefined,
     });
   }
@@ -301,10 +301,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'message',
       label: context.dictionary.message.list.menu,
-      href: `/message`,
+      href: `/admin/message`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.messageCreate, context)
-        ? `/message/new`
+        ? `/admin/message/new`
         : undefined,
     });
   }
@@ -312,10 +312,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'notification',
       label: context.dictionary.notification.list.menu,
-      href: `/notification`,
+      href: `/admin/notification`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.notificationCreate, context)
-        ? `/notification/new`
+        ? `/admin/notification/new`
         : undefined,
     });
   }
@@ -323,10 +323,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'userNotification',
       label: context.dictionary.userNotification.list.menu,
-      href: `/user-notification`,
+      href: `/admin/user-notification`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.userNotificationCreate, context)
-        ? `/user-notification/new`
+        ? `/admin/user-notification/new`
         : undefined,
     });
   }
@@ -334,10 +334,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'job',
       label: context.dictionary.job.list.menu,
-      href: `/job`,
+      href: `/admin/job`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.jobCreate, context)
-        ? `/job/new`
+        ? `/admin/job/new`
         : undefined,
     });
   }
@@ -345,10 +345,10 @@ export function menus(context: AppContext) {
     menus.push({
       id: 'candidate',
       label: context.dictionary.candidate.list.menu,
-      href: `/candidate`,
+      href: `/admin/candidate`,
       Icon: LuLayoutGrid,
       createHref: hasPermission(permissions.candidateCreate, context)
-        ? `/candidate/new`
+        ? `/admin/candidate/new`
         : undefined,
     });
   }
