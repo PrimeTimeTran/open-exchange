@@ -12,7 +12,7 @@ export function AssetNewButton({ context }: { context: AppContext }) {
 
   return (
     <Button asChild>
-      <Link href="/asset/new" prefetch={false}>
+      <Link href="/admin/asset/new" prefetch={false}>
         <LuPlus className="mr-2 h-4 w-4" /> {context.dictionary.asset.new.menu}
       </Link>
     </Button>

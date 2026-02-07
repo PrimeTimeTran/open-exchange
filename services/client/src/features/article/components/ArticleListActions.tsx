@@ -5,7 +5,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Table } from '@tanstack/react-table';
 import Link from 'next/link';
 import { useState } from 'react';
-import { FaPlus, FaRegFileExcel, FaTrashAlt, FaUndo, FaArchive } from 'react-icons/fa';
+import {
+  FaPlus,
+  FaRegFileExcel,
+  FaTrashAlt,
+  FaUndo,
+  FaArchive,
+} from 'react-icons/fa';
 import { LuLoader2 } from 'react-icons/lu';
 import { MdUpload } from 'react-icons/md';
 import { RxDotsHorizontal } from 'react-icons/rx';
@@ -56,7 +62,10 @@ export default function ArticleListActions({
   const [restoreManyDialogOpen, setRestoreManyDialogOpen] = useState(false);
   const [archiveManyDialogOpen, setArchiveManyDialogOpen] = useState(false);
 
-  const hasPermissionToCreate = hasPermission(permissions.articleCreate, context);
+  const hasPermissionToCreate = hasPermission(
+    permissions.articleCreate,
+    context,
+  );
 
   const hasPermissionToDestroy = hasPermission(
     permissions.articleDestroy,
@@ -73,7 +82,10 @@ export default function ArticleListActions({
     context,
   );
 
-  const hasPermissionToImport = hasPermission(permissions.articleImport, context);
+  const hasPermissionToImport = hasPermission(
+    permissions.articleImport,
+    context,
+  );
 
   const exportMutation = useMutation({
     mutationFn: () => {
@@ -186,7 +198,11 @@ export default function ArticleListActions({
 
   const selectedCount = table.getFilteredSelectedRowModel().rows.length;
 
-  const isLoading = destroyMutation.isPending || exportMutation.isPending || archiveMutation.isPending || restoreMutation.isPending;
+  const isLoading =
+    destroyMutation.isPending ||
+    exportMutation.isPending ||
+    archiveMutation.isPending ||
+    restoreMutation.isPending;
 
   return (
     <>
@@ -262,7 +278,7 @@ export default function ArticleListActions({
           className="ml-auto flex h-8 whitespace-nowrap"
           asChild
         >
-          <Link href={`/article/new`} prefetch={false}>
+          <Link href={`/admin/article/new`} prefetch={false}>
             <FaPlus className="mr-2 h-4 w-4" />
             <span>{dictionary.shared.new}</span>
           </Link>

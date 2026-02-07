@@ -5,7 +5,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Table } from '@tanstack/react-table';
 import Link from 'next/link';
 import { useState } from 'react';
-import { FaPlus, FaRegFileExcel, FaTrashAlt, FaUndo, FaArchive } from 'react-icons/fa';
+import {
+  FaPlus,
+  FaRegFileExcel,
+  FaTrashAlt,
+  FaUndo,
+  FaArchive,
+} from 'react-icons/fa';
 import { LuLoader2 } from 'react-icons/lu';
 import { MdUpload } from 'react-icons/md';
 import { RxDotsHorizontal } from 'react-icons/rx';
@@ -56,7 +62,10 @@ export default function BalanceSnapshotListActions({
   const [restoreManyDialogOpen, setRestoreManyDialogOpen] = useState(false);
   const [archiveManyDialogOpen, setArchiveManyDialogOpen] = useState(false);
 
-  const hasPermissionToCreate = hasPermission(permissions.balanceSnapshotCreate, context);
+  const hasPermissionToCreate = hasPermission(
+    permissions.balanceSnapshotCreate,
+    context,
+  );
 
   const hasPermissionToDestroy = hasPermission(
     permissions.balanceSnapshotDestroy,
@@ -73,7 +82,10 @@ export default function BalanceSnapshotListActions({
     context,
   );
 
-  const hasPermissionToImport = hasPermission(permissions.balanceSnapshotImport, context);
+  const hasPermissionToImport = hasPermission(
+    permissions.balanceSnapshotImport,
+    context,
+  );
 
   const exportMutation = useMutation({
     mutationFn: () => {
@@ -106,7 +118,9 @@ export default function BalanceSnapshotListActions({
       const ids = model.rows.map((r) => r.original.id);
 
       if (!ids.length) {
-        throw new Error(context.dictionary.balanceSnapshot.destroyMany.noSelection);
+        throw new Error(
+          context.dictionary.balanceSnapshot.destroyMany.noSelection,
+        );
       }
 
       return balanceSnapshotDestroyManyApiCall(ids);
@@ -134,7 +148,9 @@ export default function BalanceSnapshotListActions({
       const ids = model.rows.map((r) => r.original.id);
 
       if (!ids.length) {
-        throw new Error(context.dictionary.balanceSnapshot.archiveMany.noSelection);
+        throw new Error(
+          context.dictionary.balanceSnapshot.archiveMany.noSelection,
+        );
       }
 
       return balanceSnapshotArchiveManyApiCall(ids);
@@ -162,7 +178,9 @@ export default function BalanceSnapshotListActions({
       const ids = model.rows.map((r) => r.original.id);
 
       if (!ids.length) {
-        throw new Error(context.dictionary.balanceSnapshot.restoreMany.noSelection);
+        throw new Error(
+          context.dictionary.balanceSnapshot.restoreMany.noSelection,
+        );
       }
 
       return balanceSnapshotRestoreManyApiCall(ids);
@@ -186,7 +204,11 @@ export default function BalanceSnapshotListActions({
 
   const selectedCount = table.getFilteredSelectedRowModel().rows.length;
 
-  const isLoading = destroyMutation.isPending || exportMutation.isPending || archiveMutation.isPending || restoreMutation.isPending;
+  const isLoading =
+    destroyMutation.isPending ||
+    exportMutation.isPending ||
+    archiveMutation.isPending ||
+    restoreMutation.isPending;
 
   return (
     <>
@@ -262,7 +284,7 @@ export default function BalanceSnapshotListActions({
           className="ml-auto flex h-8 whitespace-nowrap"
           asChild
         >
-          <Link href={`/balance-snapshot/new`} prefetch={false}>
+          <Link href={`/admin/balance-snapshot/new`} prefetch={false}>
             <FaPlus className="mr-2 h-4 w-4" />
             <span>{dictionary.shared.new}</span>
           </Link>

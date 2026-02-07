@@ -38,7 +38,7 @@ export default function ApiKeyListActions({
 
   return (
     <Button size="sm" className="ml-auto flex h-8" asChild>
-      <Link href={`/api-key/new`} prefetch={false}>
+      <Link href={`/admin/api-key/new`} prefetch={false}>
         <FaPlus className="mr-2 h-4 w-4" />
         {dictionary.shared.new}
       </Link>

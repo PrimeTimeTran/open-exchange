@@ -262,7 +262,7 @@ export default function ListingListActions({
           className="ml-auto flex h-8 whitespace-nowrap"
           asChild
         >
-          <Link href={`/listing/new`} prefetch={false}>
+          <Link href={`/admin/listing/new`} prefetch={false}>
             <FaPlus className="mr-2 h-4 w-4" />
             <span>{dictionary.shared.new}</span>
           </Link>

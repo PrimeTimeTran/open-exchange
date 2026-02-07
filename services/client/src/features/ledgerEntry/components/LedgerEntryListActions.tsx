@@ -262,7 +262,7 @@ export default function LedgerEntryListActions({
           className="ml-auto flex h-8 whitespace-nowrap"
           asChild
         >
-          <Link href={`/ledger-entry/new`} prefetch={false}>
+          <Link href={`/admin/ledger-entry/new`} prefetch={false}>
             <FaPlus className="mr-2 h-4 w-4" />
             <span>{dictionary.shared.new}</span>
           </Link>

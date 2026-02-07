@@ -262,7 +262,7 @@ export default function FillListActions({
           className="ml-auto flex h-8 whitespace-nowrap"
           asChild
         >
-          <Link href={`/fill/new`} prefetch={false}>
+          <Link href={`/admin/fill/new`} prefetch={false}>
             <FaPlus className="mr-2 h-4 w-4" />
             <span>{dictionary.shared.new}</span>
           </Link>
