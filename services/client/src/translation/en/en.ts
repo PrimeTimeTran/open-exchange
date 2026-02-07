@@ -1,8 +1,5 @@
 const dictionary = {
-  
-
-  projectName: 'Project',
-
+  projectName: 'Open Exchange',
   shared: {
     showArchived: 'Show Archived?',
     archive: 'Archive',
@@ -998,9 +995,7 @@ const dictionary = {
       snapshots: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   order: {
@@ -1106,7 +1101,8 @@ const dictionary = {
       quantity: '',
       quantityFilled: '',
       status: '',
-      timeInFore: 'good_til_cancelled, immediate_or_cancel, fill_or_kill, day_order',
+      timeInFore:
+        'good_til_cancelled, immediate_or_cancel, fill_or_kill, day_order',
       meta: '',
       account: '',
       instrument: '',
@@ -1353,9 +1349,7 @@ const dictionary = {
       fills: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   asset: {
@@ -1705,7 +1699,6 @@ const dictionary = {
       accountId: '',
       instrumentId: '',
       meta: '',
-
     },
 
     enumerators: {
@@ -1822,9 +1815,7 @@ const dictionary = {
       asset: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   systemAccount: {
@@ -1923,7 +1914,6 @@ const dictionary = {
       description: '',
       isActive: '',
       meta: '',
-
     },
 
     enumerators: {
@@ -2042,7 +2032,6 @@ const dictionary = {
       rewardCurrency: '',
       rewardedAt: '',
       meta: '',
-
     },
 
     enumerators: {
@@ -2190,7 +2179,6 @@ const dictionary = {
       reviewedBy: '',
       notes: '',
       meta: '',
-
     },
 
     enumerators: {
@@ -2458,7 +2446,6 @@ const dictionary = {
       auditLog: '',
       notesInternal: '',
       specialOrderTypes: '',
-
     },
 
     enumerators: {
@@ -2725,9 +2712,7 @@ const dictionary = {
       event: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   article: {
@@ -2831,9 +2816,7 @@ const dictionary = {
       user: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   post: {
@@ -2937,9 +2920,7 @@ const dictionary = {
       user: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   comment: {
@@ -3039,9 +3020,7 @@ const dictionary = {
       user: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   chat: {
@@ -3143,9 +3122,7 @@ const dictionary = {
       chaters: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   chater: {
@@ -3362,9 +3339,7 @@ const dictionary = {
       sender: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   notification: {
@@ -3731,7 +3706,6 @@ const dictionary = {
       seniority: '',
       currency: '',
       meta: '',
-
     },
 
     enumerators: {
@@ -3872,12 +3846,9 @@ const dictionary = {
       resumeUrl: '',
       resume: '',
       meta: '',
-
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   auditLog: {

@@ -3,19 +3,12 @@
 import * as React from 'react';
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 
-export function ThemeProvider({
+export function PublicThemeProvider({
   children,
   ...props
 }: React.ComponentProps<typeof NextThemesProvider>) {
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
+  // For public pages, we don’t gate mount or localStorage
+  // We just use a default theme, optionally enable system
+  // Everything renders immediately, so SSR matches
   return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
 }

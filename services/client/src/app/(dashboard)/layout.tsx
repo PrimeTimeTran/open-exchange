@@ -35,7 +35,8 @@ export default async function DashboardLayout({
     <ThemeProvider
       enableSystem
       attribute="class"
-      defaultTheme="system"
+      defaultTheme="dark"
+      // defaultTheme="system"
       disableTransitionOnChange
     >
       <DesignSystemProvider>
