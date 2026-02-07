@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 import Link from 'next/link';
 import {
@@ -495,9 +493,7 @@ api.start()`}
       </section>
 
       {/* CTA Section */}
-      <section
-        className="py-32 text-center text-on-surface-variant"
-      >
+      <section className="py-32 text-center text-on-surface-variant">
         <div className="container mx-auto px-6 space-y-8 relative z-10 pointer-events-none">
           <h2 className="text-4xl md:text-6xl font-bold tracking-tight">
             Ready to dive in?

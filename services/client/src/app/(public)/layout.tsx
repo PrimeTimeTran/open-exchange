@@ -43,7 +43,7 @@ export default async function PublicLayout({
           Todo:
           Fix Hydration error warning.
         */}
-        <PublicNavbar currentUser={context.currentUser} />
+        {/* <PublicNavbar currentUser={context.currentUser} /> */}
         <main>{children}</main>
         <Footer />
       </PublicDesignSystem>

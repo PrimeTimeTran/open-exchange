@@ -5,6 +5,8 @@ import { permissions } from 'src/features/permissions';
 import { hasPermission } from 'src/features/security';
 import { AppContext } from 'src/shared/controller/appContext';
 
+
+
 export function menus(context: AppContext) {
   const menus: Array<{
     id: string;
@@ -352,6 +354,5 @@ export function menus(context: AppContext) {
         : undefined,
     });
   }
-
   return menus;
 }

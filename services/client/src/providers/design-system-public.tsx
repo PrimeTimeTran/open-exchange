@@ -1,17 +1,9 @@
 // src/providers/design-system-public.tsx
-'use client'; // <- THIS IS CRITICAL
+'use client';
 
-import { createContext, useContext } from 'react';
+import { useContext } from 'react';
 import { generateTheme, applyTheme } from '@/utils/color';
-
-type DesignSystemContextType = {
-  currentSeed: string | null;
-  setCurrentSeed: (seed: string | null) => void;
-};
-
-export const DesignSystemContext = createContext<
-  DesignSystemContextType | undefined
->(undefined);
+import { DesignSystemContext, DesignSystemContextType } from './design-system';
 
 export function PublicDesignSystem({
   children,
@@ -20,7 +12,7 @@ export function PublicDesignSystem({
   children: React.ReactNode;
   defaultSeed?: string | null;
 }) {
-  // SSR-safe: only applies default theme
+  // Provide defaults for public pages
   return (
     <DesignSystemContext.Provider
       value={{ currentSeed: defaultSeed, setCurrentSeed: () => {} }}

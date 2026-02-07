@@ -4,14 +4,15 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
 import { generateTheme, applyTheme } from '@/utils/color';
 
-type DesignSystemContextType = {
+export type DesignSystemContextType = {
   currentSeed: string | null;
   setCurrentSeed: (seed: string | null) => void;
 };
 
-const DesignSystemContext = createContext<DesignSystemContextType | undefined>(
-  undefined,
-);
+// ✅ Export the context object so it can be reused by PublicDesignSystem
+export const DesignSystemContext = createContext<
+  DesignSystemContextType | undefined
+>(undefined);
 
 export function DesignSystemProvider({
   children,

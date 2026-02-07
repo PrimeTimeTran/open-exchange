@@ -18,9 +18,11 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-8">
           {/* Brand Column */}
           <div className="space-y-4">
-            <h3 className="text-xl font-bold tracking-tight text-primary">
-              Open Exchange
-            </h3>
+            <Link href="/home" className="inline-block">
+              <h3 className="text-xl font-bold tracking-tight text-primary hover:text-primary/80 transition-colors">
+                Open Exchange
+              </h3>
+            </Link>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
               The next-generation trading platform for stocks, crypto, futures,
               and options. Secure, fast, and built for everyone.
