@@ -1,5 +1,7 @@
 // components/ui/button.tsx
 import * as React from 'react';
+import { Slot } from '@radix-ui/react-slot';
+
 import { cn } from '@/lib/utils';
 
 type ButtonVariant =
@@ -39,16 +41,19 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
+  asChild?: boolean;
 }
 
 export function Button({
   className,
   variant = 'primary',
   size = 'md',
+  asChild = false,
   ...props
 }: ButtonProps) {
+  const Comp = asChild ? Slot : 'button';
   return (
-    <button
+    <Comp
       className={cn(base, variants[variant], sizes[size], className)}
       {...props}
     />
