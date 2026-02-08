@@ -198,9 +198,11 @@ func TestMatchingServer_CancelOrder_NotFound(t *testing.T) {
 
 	ctx := context.Background()
 
-	// Note: The service checks the Engine FIRST. If the order isn't in memory, it returns error immediately.
-	// So we DO NOT expect a Ledger call here.
-	// mockLedger.On("CancelOrder", ...).Return(...) <- REMOVED
+	// Update: The service now calls Ledger FIRST.
+	// We expect the Ledger to be called. We can mock it to succeed, so we hit the Engine error.
+	mockLedger.On("CancelOrder", mock.Anything, mock.MatchedBy(func(req *ledger.CancelOrderRequest) bool {
+		return req.OrderId == "ghost_order"
+	})).Return(&ledger.CancelOrderResponse{Success: true}, nil)
 
 	req := &pb.CancelOrderRequest{
 		OrderId:      "ghost_order",
@@ -211,7 +213,7 @@ func TestMatchingServer_CancelOrder_NotFound(t *testing.T) {
 	// Assertions
 	assert.NoError(t, err)
 	assert.False(t, resp.Success)
-	// It might fail because orderbook doesn't exist or order doesn't exist. Both are valid "Not Found" scenarios.
+	// It should fail because the engine returns "order not found"
 	assert.Contains(t, resp.ErrorMessage, "failed to cancel order")
 	
 	mockLedger.AssertExpectations(t)

@@ -48,9 +48,35 @@ func (s *MatchingService) PlaceOrder(ctx context.Context, order *common.Order) (
 
 	// 2. Process in Engine
 	internalOrder := engine.NewOrderFromProto(order)
-	trades, bookEvents, err := s.Engine.ProcessOrder(internalOrder)
+	trades, bookEvents, err := s.Engine.ProcessOrder(internalOrder, func(trade engine.Trade) error {
+		// Validate/Record trade with Ledger BEFORE committing to engine
+		log.Printf("Validating trade with Ledger: %v", trade)
+		_, err := s.LedgerClient.RecordTrade(ctx, &ledger.RecordTradeRequest{
+			MakerOrderId: trade.MakerOrderID,
+			TakerOrderId: trade.TakerOrderID,
+			Price:        fmt.Sprintf("%f", trade.Price),
+			Quantity:     fmt.Sprintf("%f", trade.Quantity),
+			Timestamp:    trade.Timestamp,
+			InstrumentId: order.InstrumentId,
+		})
+		if err != nil {
+			log.Printf("ERROR: Failed to record trade in ledger: %v. Aborting match.", err)
+			return err
+		}
+		return nil
+	})
 	if err != nil {
-		return "", fmt.Errorf("failed to process order in engine: %w", err)
+		// If it's a ledger error during matching, we still might have partial trades returned.
+		log.Printf("ProcessOrder finished with error (likely ledger rejection): %v", err)
+		log.Printf("DEBUG: len(trades)=%d err=%v", len(trades), err)
+		
+		// If no trades were generated, it means the order failed completely (validation or first match rejection).
+		if len(trades) == 0 {
+			return "", err
+		}
+		
+		// If trades > 0, we had partial fills but stopped due to error.
+		// We log the error but return success with the OrderID, as the order is now effectively placed (partially filled).
 	}
 
 	// 3. Broadcast Order Book Events
@@ -61,22 +87,11 @@ func (s *MatchingService) PlaceOrder(ctx context.Context, order *common.Order) (
 		}
 	}
 
-	// 4. Handle Trades (Log for now)
+	// 4. Handle Trades (Log and Publish)
 	log.Printf("Order Processed. Trades generated: %d", len(trades))
 	for _, trade := range trades {
 		log.Printf("Trade: %v", trade)
-		_, err := s.LedgerClient.RecordTrade(ctx, &ledger.RecordTradeRequest{
-			MakerOrderId: trade.MakerOrderID,
-			TakerOrderId: trade.TakerOrderID,
-			Price:        fmt.Sprintf("%f", trade.Price),
-			Quantity:     fmt.Sprintf("%f", trade.Quantity),
-			Timestamp:    trade.Timestamp,
-			InstrumentId: order.InstrumentId,
-		})
-		if err != nil {
-			log.Printf("ERROR: Failed to record trade in ledger: %v", err)
-			// TODO: Retry logic or robust error handling
-		}
+		// Trade already recorded in Ledger via callback.
 
 		// 5. Broadcast Trade Event
 		err = s.Publisher.PublishTrade(ctx, events.TradeEvent{
@@ -97,18 +112,23 @@ func (s *MatchingService) PlaceOrder(ctx context.Context, order *common.Order) (
 
 func (s *MatchingService) CancelOrder(ctx context.Context, orderID, instrumentID string) error {
 	// 1. Remove from Engine
-	_, err := s.Engine.CancelOrder(instrumentID, orderID)
-	if err != nil {
-		return fmt.Errorf("failed to cancel order in engine: %w", err)
-	}
-
-	// 2. Forward to Ledger (to release locked funds)
-	_, err = s.LedgerClient.CancelOrder(ctx, &ledger.CancelOrderRequest{
+	// 1. Forward to Ledger (to release locked funds)
+	resp, err := s.LedgerClient.CancelOrder(ctx, &ledger.CancelOrderRequest{
 		OrderId: orderID,
 	})
 	if err != nil {
-		// Just log error, engine state is already updated
-		log.Printf("ERROR: Failed to cancel order in ledger: %v", err)
+		return fmt.Errorf("failed to cancel order in ledger: %w", err)
+	}
+	if !resp.Success {
+		return fmt.Errorf("ledger refused to cancel order: %s", resp.Message)
+	}
+
+	// 2. Remove from Engine
+	_, err = s.Engine.CancelOrder(instrumentID, orderID)
+	if err != nil {
+		// Ledger cancelled but Engine failed. This is a critical state inconsistency.
+		log.Printf("CRITICAL: Failed to cancel order in engine after ledger success: %v", err)
+		return fmt.Errorf("failed to cancel order in engine: %w", err)
 	}
 
 	// 3. Publish Event
@@ -146,7 +166,7 @@ func (s *MatchingService) RecoverState(ctx context.Context) error {
 		// However, since we are recovering existing state, these orders should already be resting (no crosses).
 		// If they do cross, it means the state was inconsistent, and they SHOULD match.
 		// So calling ProcessOrder is generally safe and correct for a simple recovery.
-		trades, _, err := s.Engine.ProcessOrder(order)
+		trades, _, err := s.Engine.ProcessOrder(order, nil)
 		if err != nil {
 			log.Printf("ERROR: Failed to recover order %s: %v", order.ID, err)
 			continue
@@ -178,7 +198,7 @@ func (s *MatchingService) SyncOrderBook(ctx context.Context) error {
 		
 		// Process the order. Since these are existing open orders, they should simply sit in the book.
 		// If they generate trades, it implies the persisted state had matching orders that weren't executed.
-		trades, _, err := s.Engine.ProcessOrder(order)
+		trades, _, err := s.Engine.ProcessOrder(order, nil)
 		if err != nil {
 			log.Printf("Error restoring order %s: %v", order.ID, err)
 			continue

@@ -1,7 +1,6 @@
 use tonic::{Request, Response, Status};
 use crate::proto::ledger::ledger_service_server::LedgerService;
 use crate::proto::ledger::*;
-use crate::proto::common;
 use crate::domain::orders::OrderService;
 use crate::domain::users::UserService;
 use crate::domain::accounts::AccountService;
@@ -259,7 +258,7 @@ impl LedgerService for LedgerImpl {
         &self,
         request: Request<ListAccountsRequest>,
     ) -> Result<Response<ListAccountsResponse>, Status> {
-        let req = request.into_inner();
+        let _req = request.into_inner();
         let accounts = self.account_service.list_accounts(""); // Listing all for now or empty filter
         Ok(Response::new(ListAccountsResponse {
             accounts,

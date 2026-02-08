@@ -35,30 +35,31 @@ func NewOrderBook(instrumentID string) *OrderBook {
 
 // ProcessOrder handles an incoming order: matches it against the book or adds it.
 // Returns a list of generated trades and the updated order.
-func (ob *OrderBook) ProcessOrder(order *Order) ([]Trade, []events.OrderBookEvent, error) {
+func (ob *OrderBook) ProcessOrder(order *Order, onMatch func(Trade) error) ([]Trade, []events.OrderBookEvent, error) {
 	ob.mu.Lock()
 	defer ob.mu.Unlock()
 
 	trades := []Trade{}
 	bookEvents := []events.OrderBookEvent{}
+	var err error
 
 	if order.Type == common.OrderType_ORDER_TYPE_MARKET {
 		// Market Order
 		if order.Side == common.OrderSide_ORDER_SIDE_BUY {
-			trades, bookEvents = ob.matchMarketBuy(order)
+			trades, bookEvents, err = ob.matchMarketBuy(order, onMatch)
 		} else {
-			trades, bookEvents = ob.matchMarketSell(order)
+			trades, bookEvents, err = ob.matchMarketSell(order, onMatch)
 		}
 	} else {
 		// Limit Order
 		if order.Side == common.OrderSide_ORDER_SIDE_BUY {
-			trades, bookEvents = ob.matchLimitBuy(order)
+			trades, bookEvents, err = ob.matchLimitBuy(order, onMatch)
 		} else {
-			trades, bookEvents = ob.matchLimitSell(order)
+			trades, bookEvents, err = ob.matchLimitSell(order, onMatch)
 		}
 	}
 
-	return trades, bookEvents, nil
+	return trades, bookEvents, err
 }
 
 // CancelOrder removes an order from the order book by its ID.
@@ -88,7 +89,7 @@ func (ob *OrderBook) CancelOrder(orderID string) *Order {
 	return nil
 }
 
-func (ob *OrderBook) matchLimitBuy(order *Order) ([]Trade, []events.OrderBookEvent) {
+func (ob *OrderBook) matchLimitBuy(order *Order, onMatch func(Trade) error) ([]Trade, []events.OrderBookEvent, error) {
 	trades := []Trade{}
 	bookEvents := []events.OrderBookEvent{}
 
@@ -100,13 +101,21 @@ func (ob *OrderBook) matchLimitBuy(order *Order) ([]Trade, []events.OrderBookEve
 		tradePrice := bestAsk.Price
 		tradeQty := min(order.Remaining(), bestAsk.Remaining())
 		
-		trades = append(trades, Trade{
+		trade := Trade{
 			MakerOrderID: bestAsk.ID,
 			TakerOrderID: order.ID,
 			Price:        tradePrice,
 			Quantity:     tradeQty,
 			Timestamp:    time.Now().Unix(),
-		})
+		}
+
+		if onMatch != nil {
+			if err := onMatch(trade); err != nil {
+				break
+			}
+		}
+
+		trades = append(trades, trade)
 		
 		order.QuantityFilled += tradeQty
 		bestAsk.QuantityFilled += tradeQty
@@ -149,10 +158,10 @@ func (ob *OrderBook) matchLimitBuy(order *Order) ([]Trade, []events.OrderBookEve
 		})
 	}
 
-	return trades, bookEvents
+	return trades, bookEvents, nil
 }
 
-func (ob *OrderBook) matchLimitSell(order *Order) ([]Trade, []events.OrderBookEvent) {
+func (ob *OrderBook) matchLimitSell(order *Order, onMatch func(Trade) error) ([]Trade, []events.OrderBookEvent, error) {
 	trades := []Trade{}
 	bookEvents := []events.OrderBookEvent{}
 
@@ -164,13 +173,22 @@ func (ob *OrderBook) matchLimitSell(order *Order) ([]Trade, []events.OrderBookEv
 		tradePrice := bestBid.Price
 		tradeQty := min(order.Remaining(), bestBid.Remaining())
 		
-		trades = append(trades, Trade{
+		trade := Trade{
 			MakerOrderID: bestBid.ID,
 			TakerOrderID: order.ID,
 			Price:        tradePrice,
 			Quantity:     tradeQty,
 			Timestamp:    time.Now().Unix(),
-		})
+		}
+
+		if onMatch != nil {
+			if err := onMatch(trade); err != nil {
+				// Stop matching if callback fails
+				return trades, bookEvents, err
+			}
+		}
+
+		trades = append(trades, trade)
 		
 		order.QuantityFilled += tradeQty
 		bestBid.QuantityFilled += tradeQty
@@ -213,10 +231,10 @@ func (ob *OrderBook) matchLimitSell(order *Order) ([]Trade, []events.OrderBookEv
 		})
 	}
 
-	return trades, bookEvents
+	return trades, bookEvents, nil
 }
 
-func (ob *OrderBook) matchMarketBuy(order *Order) ([]Trade, []events.OrderBookEvent) {
+func (ob *OrderBook) matchMarketBuy(order *Order, onMatch func(Trade) error) ([]Trade, []events.OrderBookEvent, error) {
 	trades := []Trade{}
 	bookEvents := []events.OrderBookEvent{}
 	
@@ -227,13 +245,22 @@ func (ob *OrderBook) matchMarketBuy(order *Order) ([]Trade, []events.OrderBookEv
 		tradePrice := bestAsk.Price
 		tradeQty := min(order.Remaining(), bestAsk.Remaining())
 		
-		trades = append(trades, Trade{
+		trade := Trade{
 			MakerOrderID: bestAsk.ID,
 			TakerOrderID: order.ID,
 			Price:        tradePrice,
 			Quantity:     tradeQty,
 			Timestamp:    time.Now().Unix(),
-		})
+		}
+
+		if onMatch != nil {
+			if err := onMatch(trade); err != nil {
+				// Stop matching if callback fails
+				return trades, bookEvents, err
+			}
+		}
+
+		trades = append(trades, trade)
 		
 		order.QuantityFilled += tradeQty
 		bestAsk.QuantityFilled += tradeQty
@@ -262,10 +289,10 @@ func (ob *OrderBook) matchMarketBuy(order *Order) ([]Trade, []events.OrderBookEv
 		}
 	}
 	
-	return trades, bookEvents
+	return trades, bookEvents, nil
 }
 
-func (ob *OrderBook) matchMarketSell(order *Order) ([]Trade, []events.OrderBookEvent) {
+func (ob *OrderBook) matchMarketSell(order *Order, onMatch func(Trade) error) ([]Trade, []events.OrderBookEvent, error) {
 	trades := []Trade{}
 	bookEvents := []events.OrderBookEvent{}
 	
@@ -276,13 +303,22 @@ func (ob *OrderBook) matchMarketSell(order *Order) ([]Trade, []events.OrderBookE
 		tradePrice := bestBid.Price
 		tradeQty := min(order.Remaining(), bestBid.Remaining())
 		
-		trades = append(trades, Trade{
+		trade := Trade{
 			MakerOrderID: bestBid.ID,
 			TakerOrderID: order.ID,
 			Price:        tradePrice,
 			Quantity:     tradeQty,
 			Timestamp:    time.Now().Unix(),
-		})
+		}
+
+		if onMatch != nil {
+			if err := onMatch(trade); err != nil {
+				// Stop matching if callback fails
+				return trades, bookEvents, err
+			}
+		}
+
+		trades = append(trades, trade)
 		
 		order.QuantityFilled += tradeQty
 		bestBid.QuantityFilled += tradeQty
@@ -311,7 +347,7 @@ func (ob *OrderBook) matchMarketSell(order *Order) ([]Trade, []events.OrderBookE
 		}
 	}
 	
-	return trades, bookEvents
+	return trades, bookEvents, nil
 }
 
 func (ob *OrderBook) addBid(order *Order) {

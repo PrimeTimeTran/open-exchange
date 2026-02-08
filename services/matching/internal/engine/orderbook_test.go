@@ -25,11 +25,11 @@ func TestLimitOrder_MatchBuy(t *testing.T) {
 
 	// Setup: Add a sell order (Ask)
 	askOrder := createOrder("ask1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0)
-	ob.ProcessOrder(askOrder)
+	ob.ProcessOrder(askOrder, nil)
 
 	// Action: Add a matching buy order
 	buyOrder := createOrder("buy1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 5.0)
-	trades, _, _ := ob.ProcessOrder(buyOrder)
+	trades, _, _ := ob.ProcessOrder(buyOrder, nil)
 
 	// Assert
 	assert.Len(t, trades, 1)
@@ -49,11 +49,11 @@ func TestLimitOrder_MatchSell(t *testing.T) {
 
 	// Setup: Add a buy order (Bid)
 	bidOrder := createOrder("bid1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0)
-	ob.ProcessOrder(bidOrder)
+	ob.ProcessOrder(bidOrder, nil)
 
 	// Action: Add a matching sell order
 	sellOrder := createOrder("sell1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 5.0)
-	trades, _, _ := ob.ProcessOrder(sellOrder)
+	trades, _, _ := ob.ProcessOrder(sellOrder, nil)
 
 	// Assert
 	assert.Len(t, trades, 1)
@@ -73,7 +73,7 @@ func TestLimitOrder_NoMatch_AddToBook(t *testing.T) {
 
 	// Action: Add a buy order (Bid)
 	bidOrder := createOrder("bid1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 99.0, 10.0)
-	trades, _, _ := ob.ProcessOrder(bidOrder)
+	trades, _, _ := ob.ProcessOrder(bidOrder, nil)
 
 	// Assert
 	assert.Empty(t, trades)
@@ -82,7 +82,7 @@ func TestLimitOrder_NoMatch_AddToBook(t *testing.T) {
 
 	// Action: Add a sell order (Ask) higher than bid
 	askOrder := createOrder("ask1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 101.0, 10.0)
-	trades2, _, _ := ob.ProcessOrder(askOrder)
+	trades2, _, _ := ob.ProcessOrder(askOrder, nil)
 
 	// Assert
 	assert.Empty(t, trades2)
@@ -95,7 +95,7 @@ func TestOrderBook_CancelOrder(t *testing.T) {
 
 	// Add Order
 	order := createOrder("bid1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0)
-	ob.ProcessOrder(order)
+	ob.ProcessOrder(order, nil)
 
 	// Assert it's there
 	assert.Len(t, ob.Bids, 1)
@@ -115,9 +115,9 @@ func TestOrderBook_Sorting(t *testing.T) {
 	ob := NewOrderBook("BTC-USD")
 
 	// Add Bids: 100, 102, 101
-	ob.ProcessOrder(createOrder("bid1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0))
-	ob.ProcessOrder(createOrder("bid2", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 102.0, 10.0))
-	ob.ProcessOrder(createOrder("bid3", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 101.0, 10.0))
+	ob.ProcessOrder(createOrder("bid1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0), nil)
+	ob.ProcessOrder(createOrder("bid2", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 102.0, 10.0), nil)
+	ob.ProcessOrder(createOrder("bid3", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 101.0, 10.0), nil)
 
 	// Expected Bids Order: 102, 101, 100 (DESC)
 	assert.Len(t, ob.Bids, 3)
@@ -126,9 +126,9 @@ func TestOrderBook_Sorting(t *testing.T) {
 	assert.Equal(t, 100.0, ob.Bids[2].Price)
 
 	// Add Asks: 105, 103, 104
-	ob.ProcessOrder(createOrder("ask1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 105.0, 10.0))
-	ob.ProcessOrder(createOrder("ask2", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 103.0, 10.0))
-	ob.ProcessOrder(createOrder("ask3", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 104.0, 10.0))
+	ob.ProcessOrder(createOrder("ask1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 105.0, 10.0), nil)
+	ob.ProcessOrder(createOrder("ask2", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 103.0, 10.0), nil)
+	ob.ProcessOrder(createOrder("ask3", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 104.0, 10.0), nil)
 
 	// Expected Asks Order: 103, 104, 105 (ASC)
 	assert.Len(t, ob.Asks, 3)
@@ -141,12 +141,12 @@ func TestMarketOrder_Match(t *testing.T) {
 	ob := NewOrderBook("BTC-USD")
 
 	// Setup: Add asks at different prices
-	ob.ProcessOrder(createOrder("ask1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 5.0))
-	ob.ProcessOrder(createOrder("ask2", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 101.0, 5.0))
+	ob.ProcessOrder(createOrder("ask1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 5.0), nil)
+	ob.ProcessOrder(createOrder("ask2", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 101.0, 5.0), nil)
 
 	// Action: Market Buy for 8.0 units
 	marketBuy := createOrder("buy1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_MARKET, 0, 8.0)
-	trades, _, _ := ob.ProcessOrder(marketBuy)
+	trades, _, _ := ob.ProcessOrder(marketBuy, nil)
 
 	// Assert
 	assert.Len(t, trades, 2)

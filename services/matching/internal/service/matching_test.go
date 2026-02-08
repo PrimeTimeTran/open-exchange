@@ -169,7 +169,7 @@ func TestPlaceOrder_WithMatch(t *testing.T) {
 		Price:        "50000",
 		Quantity:     "1.0",
 		InstrumentId: "BTC-USD",
-	}))
+	}), nil)
 
 	// New Buy Order that matches
 	order := &common.Order{
@@ -228,7 +228,7 @@ func TestCancelOrder(t *testing.T) {
 		Price:        "50000",
 		Quantity:     "1.0",
 		InstrumentId: "BTC-USD",
-	}))
+	}), nil)
 
 	// Expectations
 	mockLedger.On("CancelOrder", mock.Anything, mock.MatchedBy(func(req *ledger.CancelOrderRequest) bool {

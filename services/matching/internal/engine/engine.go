@@ -28,7 +28,7 @@ func (e *Engine) GetOrderBook(instrumentID string) *OrderBook {
 	return e.OrderBooks[instrumentID]
 }
 
-func (e *Engine) ProcessOrder(order *Order) ([]Trade, []events.OrderBookEvent, error) {
+func (e *Engine) ProcessOrder(order *Order, onMatch func(Trade) error) ([]Trade, []events.OrderBookEvent, error) {
 	if order.InstrumentID == "" {
 		return nil, nil, fmt.Errorf("instrument ID is required")
 	}
@@ -43,7 +43,7 @@ func (e *Engine) ProcessOrder(order *Order) ([]Trade, []events.OrderBookEvent, e
 	// Given the code structure, I'll assume sequential processing for now or add a mutex to OrderBook if needed.
 	// For this scaffold, I'll rely on the fact that we are just implementing the logic.
 	
-	return ob.ProcessOrder(order)
+	return ob.ProcessOrder(order, onMatch)
 }
 
 func (e *Engine) CancelOrder(instrumentID, orderID string) (*Order, error) {
