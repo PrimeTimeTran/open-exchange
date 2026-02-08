@@ -99,8 +99,8 @@ function mapOrderToProto(order: any) {
     accountId: order.accountId ?? '',
     instrumentId: order.instrumentId ?? '',
     meta: order.meta ? JSON.stringify(order.meta) : '',
-    createdAt: BigInt(order.createdAt.getTime()),
-    updatedAt: BigInt(order.updatedAt.getTime()),
+    createdAt: order.createdAt.getTime().toString(),
+    updatedAt: order.updatedAt.getTime().toString(),
   };
 }
 
