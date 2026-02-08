@@ -28,7 +28,7 @@ export function BalanceSnapshotLink({
 
   return (
     <Link
-      href={`/balance-snapshot/${balanceSnapshot.id}`}
+      href={`/admin/balance-snapshot/${balanceSnapshot.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

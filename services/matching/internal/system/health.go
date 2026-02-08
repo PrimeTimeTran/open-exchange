@@ -10,11 +10,11 @@ import (
 func StartHealthServer(port string) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
-"status":      "ok",
-"environment": os.Getenv("APP_ENV"),
-"envVars":     os.Environ(),
+			"status":      "ok",
+			"environment": os.Getenv("APP_ENV"),
+			"envVars":     os.Environ(),
 		})
 	})
 

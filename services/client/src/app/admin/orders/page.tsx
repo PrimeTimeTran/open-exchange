@@ -26,11 +26,11 @@ export default async function OrdersPage({
   }
 
   return (
-    <div className="p-8">
+    <div className="p-8 bg-background min-h-screen text-foreground">
       <h1 className="text-2xl font-bold mb-6">Order Book: {instrumentId}</h1>
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded relative mb-4">
           <strong className="font-bold">Error: </strong>
           <span className="block sm:inline">{error}</span>
         </div>
@@ -41,12 +41,12 @@ export default async function OrdersPage({
           type="text"
           name="instrument_id"
           defaultValue={instrumentId}
-          className="border p-2 rounded w-64 text-black"
+          className="border border-input bg-background p-2 rounded w-64 text-foreground placeholder:text-muted-foreground"
           placeholder="Instrument ID (e.g. BTC-USD)"
         />
         <button
           type="submit"
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-2 px-4 rounded"
         >
           Load
         </button>
@@ -54,13 +54,13 @@ export default async function OrdersPage({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* BIDS */}
-        <div className="border rounded shadow-sm">
-          <h2 className="bg-green-100 p-4 text-green-800 font-bold border-b">
+        <div className="border border-border rounded shadow-sm bg-card text-card-foreground">
+          <h2 className="bg-muted/50 p-4 font-bold border-b border-border">
             Bids (Buy)
           </h2>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="bg-gray-50">
+              <thead className="bg-muted/50">
                 <tr>
                   <th className="px-4 py-2 text-left">Price</th>
                   <th className="px-4 py-2 text-right">Qty</th>
@@ -71,24 +71,30 @@ export default async function OrdersPage({
               <tbody>
                 {orderBook?.bids?.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="p-4 text-center text-gray-500">
+                    <td
+                      colSpan={4}
+                      className="p-4 text-center text-muted-foreground"
+                    >
                       No bids
                     </td>
                   </tr>
                 ) : (
                   orderBook?.bids?.map((order) => (
-                    <tr key={order.id} className="border-b hover:bg-gray-50">
+                    <tr
+                      key={order.id}
+                      className="border-b border-border hover:bg-muted/50"
+                    >
                       <td className="px-4 py-2 font-mono text-green-600">
                         {order.price}
                       </td>
-                      <td className="px-4 py-2 text-right font-mono text-gray-500">
+                      <td className="px-4 py-2 text-right font-mono text-muted-foreground">
                         {order.quantity || '0'}
                       </td>
-                      <td className="px-4 py-2 text-right font-mono text-gray-500">
+                      <td className="px-4 py-2 text-right font-mono text-muted-foreground">
                         {order.quantityFilled || '0'}
                       </td>
                       <td
-                        className="px-4 py-2 text-right text-xs text-gray-400 font-mono truncate max-w-[100px]"
+                        className="px-4 py-2 text-right text-xs text-muted-foreground/80 font-mono truncate max-w-[100px]"
                         title={order.id}
                       >
                         {order.id}
@@ -102,13 +108,13 @@ export default async function OrdersPage({
         </div>
 
         {/* ASKS */}
-        <div className="border rounded shadow-sm">
-          <h2 className="bg-red-100 p-4 text-red-800 font-bold border-b">
+        <div className="border border-border rounded shadow-sm bg-card text-card-foreground">
+          <h2 className="bg-muted/50 p-4 font-bold border-b border-border">
             Asks (Sell)
           </h2>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="bg-gray-50">
+              <thead className="bg-muted/50">
                 <tr>
                   <th className="px-4 py-2 text-left">Price</th>
                   <th className="px-4 py-2 text-right">Qty</th>
@@ -119,24 +125,30 @@ export default async function OrdersPage({
               <tbody>
                 {orderBook?.asks?.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="p-4 text-center text-gray-500">
+                    <td
+                      colSpan={4}
+                      className="p-4 text-center text-muted-foreground"
+                    >
                       No asks
                     </td>
                   </tr>
                 ) : (
                   orderBook?.asks?.map((order) => (
-                    <tr key={order.id} className="border-b hover:bg-gray-50">
-                      <td className="px-4 py-2 font-mono text-red-600">
+                    <tr
+                      key={order.id}
+                      className="border-b border-border hover:bg-muted/50"
+                    >
+                      <td className="px-4 py-2 font-mono text-destructive">
                         {order.price}
                       </td>
-                      <td className="px-4 py-2 text-right font-mono">
+                      <td className="px-4 py-2 text-right font-mono text-muted-foreground">
                         {order.quantity}
                       </td>
-                      <td className="px-4 py-2 text-right font-mono text-gray-500">
+                      <td className="px-4 py-2 text-right font-mono text-muted-foreground">
                         {order.quantityFilled || '0'}
                       </td>
                       <td
-                        className="px-4 py-2 text-right text-xs text-gray-400 font-mono truncate max-w-[100px]"
+                        className="px-4 py-2 text-right text-xs text-muted-foreground/80 font-mono truncate max-w-[100px]"
                         title={order.id}
                       >
                         {order.id}

@@ -70,51 +70,6 @@ func (m *MockLedgerClient) CancelOrder(ctx context.Context, in *ledger.CancelOrd
 	return args.Get(0).(*ledger.CancelOrderResponse), args.Error(1)
 }
 
-func TestSyncOrderBook(t *testing.T) {
-	// Setup
-	eng := engine.NewEngine()
-	mockLedger := new(MockLedgerClient)
-	mockPublisher := new(MockPublisher)
-	svc := NewMatchingService(eng, mockLedger, mockPublisher)
-
-	// Mock Data: 2 existing orders
-	existingOrders := []*common.Order{
-		{
-			Id:           "order1",
-			Side:         common.OrderSide_ORDER_SIDE_BUY,
-			Type:         common.OrderType_ORDER_TYPE_LIMIT,
-			Price:        "50000",
-			Quantity:     "1.0",
-			InstrumentId: "BTC-USD",
-		},
-		{
-			Id:           "order2",
-			Side:         common.OrderSide_ORDER_SIDE_SELL,
-			Type:         common.OrderType_ORDER_TYPE_LIMIT,
-			Price:        "60000",
-			Quantity:     "2.0",
-			InstrumentId: "BTC-USD",
-		},
-	}
-
-	// Expectations
-	mockLedger.On("GetOpenOrders", mock.Anything, mock.Anything, mock.Anything).Return(&ledger.GetOpenOrdersResponse{
-		Orders: existingOrders,
-	}, nil)
-
-	// Execute
-	err := svc.SyncOrderBook(context.Background())
-
-	// Assert
-	assert.NoError(t, err)
-	
-	// Verify Engine State
-	book := eng.GetOrderBook("BTC-USD")
-	assert.Len(t, book.Bids, 1)
-	assert.Equal(t, "order1", book.Bids[0].ID)
-	assert.Len(t, book.Asks, 1)
-	assert.Equal(t, "order2", book.Asks[0].ID)
-}
 
 func TestPlaceOrder(t *testing.T) {
 	// Setup
@@ -253,4 +208,73 @@ func TestCancelOrder(t *testing.T) {
 
 	mockLedger.AssertExpectations(t)
 	mockPublisher.AssertExpectations(t)
+}
+
+func TestRecoverState(t *testing.T) {
+	// Setup
+	eng := engine.NewEngine()
+	mockLedger := new(MockLedgerClient)
+	mockPublisher := new(MockPublisher)
+	svc := NewMatchingService(eng, mockLedger, mockPublisher)
+
+	// Mock Data: 2 existing orders
+	existingOrders := []*common.Order{
+		{
+			Id:           "order1",
+			Side:         common.OrderSide_ORDER_SIDE_BUY,
+			Type:         common.OrderType_ORDER_TYPE_LIMIT,
+			Price:        "50000",
+			Quantity:     "1.0",
+			InstrumentId: "BTC-USD",
+		},
+		{
+			Id:           "order2",
+			Side:         common.OrderSide_ORDER_SIDE_SELL,
+			Type:         common.OrderType_ORDER_TYPE_LIMIT,
+			Price:        "60000",
+			Quantity:     "2.0",
+			InstrumentId: "BTC-USD",
+		},
+	}
+
+	// Expectations
+	// RecoverState passes explicit empty string for InstrumentId
+	mockLedger.On("GetOpenOrders", mock.Anything, &ledger.GetOpenOrdersRequest{
+		InstrumentId: "",
+	}, mock.Anything).Return(&ledger.GetOpenOrdersResponse{
+		Orders: existingOrders,
+	}, nil)
+
+	// Execute
+	err := svc.RecoverState(context.Background())
+
+	// Assert
+	assert.NoError(t, err)
+	
+	// Verify Engine State
+	book := eng.GetOrderBook("BTC-USD")
+	assert.Len(t, book.Bids, 1)
+	assert.Equal(t, "order1", book.Bids[0].ID)
+	assert.Len(t, book.Asks, 1)
+	assert.Equal(t, "order2", book.Asks[0].ID)
+	
+	mockLedger.AssertExpectations(t)
+}
+
+func TestRecoverState_LedgerError(t *testing.T) {
+	// Setup
+	eng := engine.NewEngine()
+	mockLedger := new(MockLedgerClient)
+	mockPublisher := new(MockPublisher)
+	svc := NewMatchingService(eng, mockLedger, mockPublisher)
+
+	// Expectations
+	mockLedger.On("GetOpenOrders", mock.Anything, mock.Anything, mock.Anything).Return(nil, assert.AnError)
+
+	// Execute
+	err := svc.RecoverState(context.Background())
+
+	// Assert
+	assert.Error(t, err)
+	mockLedger.AssertExpectations(t)
 }
