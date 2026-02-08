@@ -12,6 +12,7 @@ target
 **/.env.local
 admin_leg
 notes
+notes/scratchpad
 
 docs/generate/source
 docs/generate/source.zip

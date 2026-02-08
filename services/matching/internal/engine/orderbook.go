@@ -315,29 +315,54 @@ func (ob *OrderBook) matchMarketSell(order *Order) ([]Trade, []events.OrderBookE
 }
 
 func (ob *OrderBook) addBid(order *Order) {
-	// Insert into Bids (Sorted DESC by Price)
+	// Insert into Bids (Sorted DESC by Price, then ASC by Timestamp)
 	index := sort.Search(len(ob.Bids), func(i int) bool {
-		return ob.Bids[i].Price < order.Price // Condition for DESC sort with sort.Search is tricky, usually better to iterate or use custom compare
+		if ob.Bids[i].Price < order.Price {
+			return true
+		}
+		if ob.Bids[i].Price == order.Price {
+			return ob.Bids[i].Timestamp > order.Timestamp
+		}
+		return false
 	})
 	
-	// sort.Search uses binary search to find the smallest index i where f(i) is true.
-	// For DESC sort: 100, 99, 98. Insert 99.5.
-	// We want to find the first element where Price < order.Price.
-	// 100 < 99.5 (False). 99 < 99.5 (True). Index is 1. Correct.
+	// We want to find the first element where (Current < New).
+	// Sorted: 100(t=100), 100(t=200), 99(t=150). Insert 100(t=150).
+	// i=0: 100 < 100 (False). 100 == 100. 100(Cur) > 150(New)? False.
+	// i=1: 100 < 100 (False). 100 == 100. 200(Cur) > 150(New)? True. -> Insert Here.
+	// Result: 100(t=100), 100(t=150), 100(t=200), 99. Correct.
 	
 	ob.Bids = insert(ob.Bids, index, order)
 	log.Printf("Added to Bids: %v @ %v", order.Quantity, order.Price)
 }
 
 func (ob *OrderBook) addAsk(order *Order) {
-	// Insert into Asks (Sorted ASC by Price)
+	// Insert into Asks (Sorted ASC by Price, then ASC by Timestamp)
 	index := sort.Search(len(ob.Asks), func(i int) bool {
-		return ob.Asks[i].Price >= order.Price
+		if ob.Asks[i].Price > order.Price {
+			return true
+		}
+		if ob.Asks[i].Price == order.Price {
+			return ob.Asks[i].Timestamp > order.Timestamp
+		}
+		return false
 	})
 	
-	// For ASC sort: 98, 99, 100. Insert 99.5.
-	// We want first element where Price >= order.Price.
-	// 98 >= 99.5 (False). 99 >= 99.5 (False). 100 >= 99.5 (True). Index is 2. Correct.
+	// If search didn't find strictly greater (or older), it returns length.
+	// But sort.Search uses binary search which assumes sorted input.
+	// Let's refine the logic to simply find insertion point for:
+	// Price ASC, Timestamp ASC.
+	
+	// We want the first element where (Current > New).
+	// Comparison:
+	// If Current.Price > New.Price: True (Insert Here)
+	// If Current.Price < New.Price: False (Keep Looking)
+	// If Current.Price == New.Price:
+	//    If Current.Time > New.Time: True (Insert Here, New is older/smaller time)
+	//    If Current.Time < New.Time: False (Keep Looking, New is newer/larger time)
+	
+	// Wait, Timestamp: Older (smaller int) comes FIRST.
+	// So we want sorted by Timestamp ASC.
 	
 	ob.Asks = insert(ob.Asks, index, order)
 	log.Printf("Added to Asks: %v @ %v", order.Quantity, order.Price)

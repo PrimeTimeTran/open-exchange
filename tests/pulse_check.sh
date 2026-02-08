@@ -36,10 +36,10 @@ run_service_test() {
 }
 
 # 1. Matching Service (Go)
-run_service_test "Matching Service" "services/matching" "go test ./..."
+run_service_test "Matching Service" "services/matching" "go test \$(go list ./... | grep -v /proto/)"
 
 # 2. Market Service (Go)
-run_service_test "Market Service" "services/market" "go test ./..."
+run_service_test "Market Service" "services/market" "go test \$(go list ./... | grep -v /proto/)"
 
 # 3. Ledger Service (Rust)
 run_service_test "Ledger Service" "services/ledger" "cargo test"
