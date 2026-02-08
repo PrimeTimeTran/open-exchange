@@ -6,7 +6,6 @@ import { validateHasPermission } from 'src/features/security';
 import { prismaAuth } from 'src/prisma';
 import { AppContext } from 'src/shared/controller/appContext';
 
-
 export const systemAccountCreateApiDoc: RouteConfig = {
   method: 'post',
   path: '/api/system-account',
@@ -36,29 +35,31 @@ export async function systemAccountCreateController(
 
 export async function systemAccountCreate(body: unknown, context: AppContext) {
   const data = systemAccountCreateInputSchema.parse(body);
-
   const prisma = prismaAuth(context);
+  // let systemAccount = await prisma.systemAccount.create({
+  //   data: {
+  //     account: {
+  //       create: {
+  //         type: 'system',
+  //         name: data.name,
+  //         status: 'active',
+  //       },
+  //     },
+  //     type: data.type,
+  //     name: data.name,
+  //     description: data.description,
+  //     isActive: data.isActive,
+  //     meta: data.meta,
+  //     importHash: data.importHash,
+  //   },
+  //   include: {
+  //     createdByMembership: true,
+  //     updatedByMembership: true,
+  //     archivedByMembership: true,
+  //   },
+  // });
 
+  // systemAccount = await filePopulateDownloadUrlInTree(systemAccount);
 
-
-  let systemAccount = await prisma.systemAccount.create({
-    data: {
-      type: data.type,
-      name: data.name,
-      description: data.description,
-      isActive: data.isActive,
-      meta: data.meta,
-      importHash: data.importHash,
-    },
-    include: {
-
-      createdByMembership: true,
-      updatedByMembership: true,
-      archivedByMembership: true,
-    },
-  });
-
-  systemAccount = await filePopulateDownloadUrlInTree(systemAccount);
-
-  return systemAccount;
+  return null;
 }
