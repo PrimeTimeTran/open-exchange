@@ -3,17 +3,23 @@ use ledger::proto::ledger::ledger_service_server::LedgerService;
 use ledger::proto::ledger::RecordOrderRequest;
 use ledger::proto::common::{Order, OrderSide, OrderType, OrderStatus, TimeInForce};
 use tonic::Request;
+use uuid::Uuid;
 
 #[tokio::test]
 async fn test_record_order_success() {
     // Use the test constructor which doesn't require a DB pool
     let service = LedgerImpl::new_test();
     
+    let order_id = Uuid::new_v4().to_string();
+    let tenant_id = Uuid::new_v4().to_string();
+    let account_id = Uuid::new_v4().to_string();
+    let instrument_id = Uuid::new_v4().to_string();
+
     let order = Order {
-        id: "order-1".to_string(),
-        tenant_id: "tenant-1".to_string(),
-        account_id: "acc-1".to_string(),
-        instrument_id: "BTC-USD".to_string(),
+        id: order_id,
+        tenant_id: tenant_id,
+        account_id: account_id,
+        instrument_id: instrument_id,
         side: OrderSide::Buy as i32,
         price: "50000".to_string(),
         quantity: "1".to_string(),
