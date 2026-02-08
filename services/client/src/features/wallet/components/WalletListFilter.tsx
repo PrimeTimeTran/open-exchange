@@ -51,15 +51,15 @@ function WalletListFilter({
   const previewRenders = {
     availableRange: {
       label: dictionary.wallet.fields.available,
-      render: dataTableFilterRenders(context).range(),
+      render: dataTableFilterRenders(context).decimalRange(),
     },
     lockedRange: {
       label: dictionary.wallet.fields.locked,
-      render: dataTableFilterRenders(context).range(),
+      render: dataTableFilterRenders(context).decimalRange(),
     },
     totalRange: {
       label: dictionary.wallet.fields.total,
-      render: dataTableFilterRenders(context).range(),
+      render: dataTableFilterRenders(context).decimalRange(),
     },
     versionRange: {
       label: dictionary.wallet.fields.version,
@@ -133,7 +133,7 @@ function WalletListFilter({
                   <FormItem>
                     <FormLabel>{dictionary.wallet.fields.available}</FormLabel>
                     <RangeInput
-                      type="number"
+                      type="text"
                       dictionary={dictionary}
                       disabled={isLoading}
                       onChange={field.onChange}
@@ -151,7 +151,7 @@ function WalletListFilter({
                   <FormItem>
                     <FormLabel>{dictionary.wallet.fields.locked}</FormLabel>
                     <RangeInput
-                      type="number"
+                      type="text"
                       dictionary={dictionary}
                       disabled={isLoading}
                       onChange={field.onChange}
@@ -169,7 +169,7 @@ function WalletListFilter({
                   <FormItem>
                     <FormLabel>{dictionary.wallet.fields.total}</FormLabel>
                     <RangeInput
-                      type="number"
+                      type="text"
                       dictionary={dictionary}
                       disabled={isLoading}
                       onChange={field.onChange}

@@ -80,7 +80,7 @@ export const depositAutocompleteOutputSchema = z.object({
 });
 
 export const depositCreateInputSchema = z.object({
-  amount: numberOptionalCoerceSchema(z.number().int().nullable().optional()),
+  amount: numberCoerceSchema(z.number().min(25).positive()),
   status: z.nativeEnum(depositEnumerators.status).nullable().optional(),
   chain: z.string().trim().nullable().optional(),
   txHash: z.string().trim().nullable().optional(),

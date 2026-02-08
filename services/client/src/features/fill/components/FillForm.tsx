@@ -130,7 +130,7 @@ export function FillForm({
             name="side"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{dictionary.fill.fields.side}</FormLabel>
+                <FormLabel className="required">{dictionary.fill.fields.side}</FormLabel>
 
                 <SelectInput
                   options={Object.keys(fillEnumerators.side).map(
@@ -166,7 +166,7 @@ export function FillForm({
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
+                    <FormLabel className="required">
                       {dictionary.fill.fields.price}
                     </FormLabel>
 
@@ -192,7 +192,7 @@ export function FillForm({
                 name="quantity"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
+                    <FormLabel className="required">
                       {dictionary.fill.fields.quantity}
                     </FormLabel>
 

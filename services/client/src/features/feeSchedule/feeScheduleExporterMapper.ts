@@ -18,7 +18,7 @@ export function feeScheduleExporterMapper(
       ),
       makerFeeBps: feeSchedule.makerFeeBps?.toString(),
       takerFeeBps: feeSchedule.takerFeeBps?.toString(),
-      minFeeAmount: feeSchedule.minFeeAmount?.toString(),
+      minFeeAmount: formatDecimal(feeSchedule.minFeeAmount?.toString(), context.locale),
       effectiveFrom: feeSchedule.effectiveFrom ? String(feeSchedule.effectiveFrom) : undefined,
       effectiveTo: feeSchedule.effectiveTo ? String(feeSchedule.effectiveTo) : undefined,
       tier: feeSchedule.tier,

@@ -56,7 +56,7 @@ export function FeeScheduleForm({
     scope: feeSchedule?.scope || null,
     makerFeeBps: feeSchedule?.makerFeeBps || '',
     takerFeeBps: feeSchedule?.takerFeeBps || '',
-    minFeeAmount: feeSchedule?.minFeeAmount || '',
+    minFeeAmount: feeSchedule?.minFeeAmount ? Number(feeSchedule?.minFeeAmount) : '',
     effectiveFrom: feeSchedule?.effectiveFrom || '',
     effectiveTo: feeSchedule?.effectiveTo || '',
     tier: feeSchedule?.tier || '',
@@ -229,7 +229,6 @@ export function FeeScheduleForm({
                     </FormLabel>
 
                     <Input
-                      type="number"
                       disabled={mutation.isPending || mutation.isSuccess}
                       {...field}
                     />

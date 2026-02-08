@@ -60,7 +60,7 @@ export function ReferralForm({
     source: referral?.source || null,
     status: referral?.status || null,
     rewardType: referral?.rewardType || null,
-    rewardAmount: referral?.rewardAmount || '',
+    rewardAmount: referral?.rewardAmount ? Number(referral?.rewardAmount) : '',
     rewardCurrency: referral?.rewardCurrency || '',
     rewardedAt: referral?.rewardedAt || '',
     meta: referral?.meta?.toString() || '',
@@ -369,7 +369,6 @@ export function ReferralForm({
                     </FormLabel>
 
                     <Input
-                      type="number"
                       disabled={mutation.isPending || mutation.isSuccess}
                       {...field}
                     />

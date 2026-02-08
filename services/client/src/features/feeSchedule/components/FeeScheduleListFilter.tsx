@@ -72,7 +72,7 @@ function FeeScheduleListFilter({
     },
     minFeeAmountRange: {
       label: dictionary.feeSchedule.fields.minFeeAmount,
-      render: dataTableFilterRenders(context).range(),
+      render: dataTableFilterRenders(context).decimalRange(),
     },
     effectiveFromRange: {
       label: dictionary.feeSchedule.fields.effectiveFrom,
@@ -222,7 +222,7 @@ function FeeScheduleListFilter({
                   <FormItem>
                     <FormLabel>{dictionary.feeSchedule.fields.minFeeAmount}</FormLabel>
                     <RangeInput
-                      type="number"
+                      type="text"
                       dictionary={dictionary}
                       disabled={isLoading}
                       onChange={field.onChange}

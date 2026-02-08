@@ -5,13 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Table } from '@tanstack/react-table';
 import Link from 'next/link';
 import { useState } from 'react';
-import {
-  FaPlus,
-  FaRegFileExcel,
-  FaTrashAlt,
-  FaUndo,
-  FaArchive,
-} from 'react-icons/fa';
+import { FaPlus, FaRegFileExcel, FaTrashAlt, FaUndo, FaArchive } from 'react-icons/fa';
 import { LuLoader2 } from 'react-icons/lu';
 import { MdUpload } from 'react-icons/md';
 import { RxDotsHorizontal } from 'react-icons/rx';
@@ -192,11 +186,7 @@ export default function AssetListActions({
 
   const selectedCount = table.getFilteredSelectedRowModel().rows.length;
 
-  const isLoading =
-    destroyMutation.isPending ||
-    exportMutation.isPending ||
-    archiveMutation.isPending ||
-    restoreMutation.isPending;
+  const isLoading = destroyMutation.isPending || exportMutation.isPending || archiveMutation.isPending || restoreMutation.isPending;
 
   return (
     <>

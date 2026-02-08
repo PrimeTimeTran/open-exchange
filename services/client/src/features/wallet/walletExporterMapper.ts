@@ -12,9 +12,9 @@ export function walletExporterMapper(
   return wallets.map((wallet) => {
     return {
       id: wallet.id,
-      available: wallet.available?.toString(),
-      locked: wallet.locked?.toString(),
-      total: wallet.total?.toString(),
+      available: formatDecimal(wallet.available?.toString(), context.locale),
+      locked: formatDecimal(wallet.locked?.toString(), context.locale),
+      total: formatDecimal(wallet.total?.toString(), context.locale),
       version: wallet.version?.toString(),
       meta: wallet.meta?.toString(),
       createdByMembership: membershipLabel(wallet.createdByMembership, context.dictionary),

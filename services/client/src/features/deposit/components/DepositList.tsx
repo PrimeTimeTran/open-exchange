@@ -31,6 +31,7 @@ import { Checkbox } from 'src/shared/components/ui/checkbox';
 import { AppContext } from 'src/shared/controller/appContext';
 import { DepositNewButton } from 'src/features/deposit/components/DepositNewButton';
 import { z } from 'zod';
+import { formatDecimal } from 'src/shared/lib/formatDecimal';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
 import { formatDatetime } from 'src/shared/lib/formatDateTime';
 import { depositLabel } from 'src/features/deposit/depositLabel';
@@ -86,7 +87,7 @@ export default function DepositList({ context }: { context: AppContext }) {
       cell: ({ getValue }) => {
         return (
           <div className="whitespace-nowrap text-right">
-            {getValue() as string}
+            {formatDecimal(getValue() as string, context.locale)}
           </div>
         );
       },

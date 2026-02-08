@@ -12,7 +12,7 @@ export function depositExporterMapper(
   return deposits.map((deposit) => {
     return {
       id: deposit.id,
-      amount: deposit.amount?.toString(),
+      amount: formatDecimal(deposit.amount?.toString(), context.locale),
       status: enumeratorLabel(
         context.dictionary.deposit.enumerators.status,
         deposit.status,

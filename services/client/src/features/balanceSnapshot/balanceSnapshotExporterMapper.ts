@@ -12,9 +12,9 @@ export function balanceSnapshotExporterMapper(
   return balanceSnapshots.map((balanceSnapshot) => {
     return {
       id: balanceSnapshot.id,
-      available: balanceSnapshot.available?.toString(),
-      locked: balanceSnapshot.locked?.toString(),
-      total: balanceSnapshot.total?.toString(),
+      available: formatDecimal(balanceSnapshot.available?.toString(), context.locale),
+      locked: formatDecimal(balanceSnapshot.locked?.toString(), context.locale),
+      total: formatDecimal(balanceSnapshot.total?.toString(), context.locale),
       snapshotAt: balanceSnapshot.snapshotAt ? String(balanceSnapshot.snapshotAt) : undefined,
       meta: balanceSnapshot.meta?.toString(),
       createdByMembership: membershipLabel(balanceSnapshot.createdByMembership, context.dictionary),

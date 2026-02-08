@@ -11,6 +11,7 @@ import { CopyToClipboardButton } from 'src/shared/components/CopyToClipboardButt
 import { toast } from 'src/shared/components/ui/use-toast';
 import { AppContext } from 'src/shared/controller/appContext';
 import { formatDatetime } from 'src/shared/lib/formatDateTime';
+import { formatDecimal } from 'src/shared/lib/formatDecimal';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
 import { accountLabel } from 'src/features/account/accountLabel';
 import { AccountLink } from 'src/features/account/components/AccountLink';
@@ -86,9 +87,14 @@ export function WithdrawalView({
               {dictionary.withdrawal.fields.amount}
             </div>
             <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
-              <span>{withdrawal.amount}</span>
+              <span>
+                {formatDecimal(withdrawal.amount?.toString(), context.locale)}
+              </span>
               <CopyToClipboardButton
-                text={withdrawal.amount.toString()}
+                text={formatDecimal(
+                  withdrawal.amount?.toString(),
+                  context.locale
+                )}
                 dictionary={context.dictionary}
               />
             </div>
@@ -100,9 +106,14 @@ export function WithdrawalView({
               {dictionary.withdrawal.fields.fee}
             </div>
             <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
-              <span>{withdrawal.fee}</span>
+              <span>
+                {formatDecimal(withdrawal.fee?.toString(), context.locale)}
+              </span>
               <CopyToClipboardButton
-                text={withdrawal.fee.toString()}
+                text={formatDecimal(
+                  withdrawal.fee?.toString(),
+                  context.locale
+                )}
                 dictionary={context.dictionary}
               />
             </div>

@@ -66,6 +66,7 @@ export async function marketMakerCreate(body: unknown, context: AppContext) {
       auditLog: data.auditLog,
       notesInternal: data.notesInternal,
       specialOrderTypes: data.specialOrderTypes,
+      minFeeAmount: data.minFeeAmount,
       importHash: data.importHash,
     },
     include: {

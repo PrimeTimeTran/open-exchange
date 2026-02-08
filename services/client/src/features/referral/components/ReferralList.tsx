@@ -32,6 +32,7 @@ import { AppContext } from 'src/shared/controller/appContext';
 import { ReferralNewButton } from 'src/features/referral/components/ReferralNewButton';
 import { z } from 'zod';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
+import { formatDecimal } from 'src/shared/lib/formatDecimal';
 import { formatDatetime } from 'src/shared/lib/formatDateTime';
 import { referralLabel } from 'src/features/referral/referralLabel';
 import { Referral } from '@prisma/client';
@@ -140,7 +141,7 @@ export default function ReferralList({ context }: { context: AppContext }) {
       cell: ({ getValue }) => {
         return (
           <div className="whitespace-nowrap text-right">
-            {getValue() as string}
+            {formatDecimal(getValue() as string, context.locale)}
           </div>
         );
       },

@@ -79,6 +79,7 @@ export async function marketMakerUpdateController(
       auditLog: data.auditLog,
       notesInternal: data.notesInternal,
       specialOrderTypes: data.specialOrderTypes,
+      minFeeAmount: data.minFeeAmount,
     },
   });
 

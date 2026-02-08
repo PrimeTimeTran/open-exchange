@@ -73,9 +73,9 @@ export const walletAutocompleteOutputSchema = z.object({
 });
 
 export const walletCreateInputSchema = z.object({
-  available: numberOptionalCoerceSchema(z.number().int().nullable().optional()),
-  locked: numberOptionalCoerceSchema(z.number().int().nullable().optional()),
-  total: numberOptionalCoerceSchema(z.number().int().nullable().optional()),
+  available: numberOptionalCoerceSchema(z.number().nullable().optional()),
+  locked: numberOptionalCoerceSchema(z.number().nullable().optional()),
+  total: numberOptionalCoerceSchema(z.number().nullable().optional()),
   version: numberOptionalCoerceSchema(z.number().int().nullable().optional()),
   meta: jsonSchema.optional(),
   user: objectToUuidSchemaOptional,

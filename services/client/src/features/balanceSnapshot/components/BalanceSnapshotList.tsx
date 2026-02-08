@@ -31,6 +31,7 @@ import { Checkbox } from 'src/shared/components/ui/checkbox';
 import { AppContext } from 'src/shared/controller/appContext';
 import { BalanceSnapshotNewButton } from 'src/features/balanceSnapshot/components/BalanceSnapshotNewButton';
 import { z } from 'zod';
+import { formatDecimal } from 'src/shared/lib/formatDecimal';
 import { formatDatetime } from 'src/shared/lib/formatDateTime';
 import { balanceSnapshotLabel } from 'src/features/balanceSnapshot/balanceSnapshotLabel';
 import { BalanceSnapshot } from '@prisma/client';
@@ -85,7 +86,7 @@ export default function BalanceSnapshotList({ context }: { context: AppContext }
       cell: ({ getValue }) => {
         return (
           <div className="whitespace-nowrap text-right">
-            {getValue() as string}
+            {formatDecimal(getValue() as string, context.locale)}
           </div>
         );
       },
@@ -99,7 +100,7 @@ export default function BalanceSnapshotList({ context }: { context: AppContext }
       cell: ({ getValue }) => {
         return (
           <div className="whitespace-nowrap text-right">
-            {getValue() as string}
+            {formatDecimal(getValue() as string, context.locale)}
           </div>
         );
       },
@@ -113,7 +114,7 @@ export default function BalanceSnapshotList({ context }: { context: AppContext }
       cell: ({ getValue }) => {
         return (
           <div className="whitespace-nowrap text-right">
-            {getValue() as string}
+            {formatDecimal(getValue() as string, context.locale)}
           </div>
         );
       },

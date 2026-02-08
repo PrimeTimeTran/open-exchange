@@ -33,6 +33,7 @@ import { MarketMakerNewButton } from 'src/features/marketMaker/components/Market
 import { z } from 'zod';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
 import { formatDatetime } from 'src/shared/lib/formatDateTime';
+import { formatDecimal } from 'src/shared/lib/formatDecimal';
 import { marketMakerLabel } from 'src/features/marketMaker/marketMakerLabel';
 import { MarketMaker } from '@prisma/client';
 
@@ -335,6 +336,20 @@ export default function MarketMakerList({ context }: { context: AppContext }) {
         return enumeratorLabel(
           dictionary.marketMaker.enumerators.specialOrderTypes,
           row.getValue('specialOrderTypes'),
+        );
+      },
+    },
+    {
+      accessorKey: 'minFeeAmount',
+      meta: {
+        title: dictionary.marketMaker.fields.minFeeAmount,
+      },
+      header: dataTableHeader('right', dictionary),
+      cell: ({ getValue }) => {
+        return (
+          <div className="whitespace-nowrap text-right">
+            {formatDecimal(getValue() as string, context.locale)}
+          </div>
         );
       },
     },

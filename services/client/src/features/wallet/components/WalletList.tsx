@@ -31,6 +31,7 @@ import { Checkbox } from 'src/shared/components/ui/checkbox';
 import { AppContext } from 'src/shared/controller/appContext';
 import { WalletNewButton } from 'src/features/wallet/components/WalletNewButton';
 import { z } from 'zod';
+import { formatDecimal } from 'src/shared/lib/formatDecimal';
 import { walletLabel } from 'src/features/wallet/walletLabel';
 import { Wallet } from '@prisma/client';
 
@@ -84,7 +85,7 @@ export default function WalletList({ context }: { context: AppContext }) {
       cell: ({ getValue }) => {
         return (
           <div className="whitespace-nowrap text-right">
-            {getValue() as string}
+            {formatDecimal(getValue() as string, context.locale)}
           </div>
         );
       },
@@ -98,7 +99,7 @@ export default function WalletList({ context }: { context: AppContext }) {
       cell: ({ getValue }) => {
         return (
           <div className="whitespace-nowrap text-right">
-            {getValue() as string}
+            {formatDecimal(getValue() as string, context.locale)}
           </div>
         );
       },
@@ -112,7 +113,7 @@ export default function WalletList({ context }: { context: AppContext }) {
       cell: ({ getValue }) => {
         return (
           <div className="whitespace-nowrap text-right">
-            {getValue() as string}
+            {formatDecimal(getValue() as string, context.locale)}
           </div>
         );
       },

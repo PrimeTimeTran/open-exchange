@@ -85,7 +85,7 @@ function ReferralListFilter({
     },
     rewardAmountRange: {
       label: dictionary.referral.fields.rewardAmount,
-      render: dataTableFilterRenders(context).range(),
+      render: dataTableFilterRenders(context).decimalRange(),
     },
     rewardCurrency: {
       label: dictionary.referral.fields.rewardCurrency,
@@ -279,7 +279,7 @@ function ReferralListFilter({
                   <FormItem>
                     <FormLabel>{dictionary.referral.fields.rewardAmount}</FormLabel>
                     <RangeInput
-                      type="number"
+                      type="text"
                       dictionary={dictionary}
                       disabled={isLoading}
                       onChange={field.onChange}

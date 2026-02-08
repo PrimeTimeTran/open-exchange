@@ -51,6 +51,7 @@ const emptyValues = {
   obligationViolationCountRange: [],
   notesInternal: '',
   specialOrderTypes: null,
+  minFeeAmountRange: [],
   archived: false,
 };
 
@@ -157,6 +158,10 @@ function MarketMakerListFilter({
       render: dataTableFilterRenders(context).enumerator(
         dictionary.marketMaker.enumerators.specialOrderTypes,
       ),
+    },
+    minFeeAmountRange: {
+      label: dictionary.marketMaker.fields.minFeeAmount,
+      render: dataTableFilterRenders(context).decimalRange(),
     },
     archived: {
       label: dictionary.shared.showArchived,
@@ -642,6 +647,24 @@ function MarketMakerListFilter({
                       )}
                       dictionary={dictionary}
                       isClearable={true}
+                      disabled={isLoading}
+                      onChange={field.onChange}
+                      value={field.value}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="minFeeAmountRange"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{dictionary.marketMaker.fields.minFeeAmount}</FormLabel>
+                    <RangeInput
+                      type="text"
+                      dictionary={dictionary}
                       disabled={isLoading}
                       onChange={field.onChange}
                       value={field.value}

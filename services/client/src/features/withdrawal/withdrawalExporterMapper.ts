@@ -12,8 +12,8 @@ export function withdrawalExporterMapper(
   return withdrawals.map((withdrawal) => {
     return {
       id: withdrawal.id,
-      amount: withdrawal.amount?.toString(),
-      fee: withdrawal.fee?.toString(),
+      amount: formatDecimal(withdrawal.amount?.toString(), context.locale),
+      fee: formatDecimal(withdrawal.fee?.toString(), context.locale),
       status: enumeratorLabel(
         context.dictionary.withdrawal.enumerators.status,
         withdrawal.status,

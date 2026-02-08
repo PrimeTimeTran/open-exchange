@@ -27,7 +27,7 @@ export function referralExporterMapper(
         context.dictionary.referral.enumerators.rewardType,
         referral.rewardType,
       ),
-      rewardAmount: referral.rewardAmount?.toString(),
+      rewardAmount: formatDecimal(referral.rewardAmount?.toString(), context.locale),
       rewardCurrency: referral.rewardCurrency,
       rewardedAt: referral.rewardedAt ? String(referral.rewardedAt) : undefined,
       meta: referral.meta?.toString(),

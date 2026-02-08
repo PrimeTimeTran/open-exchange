@@ -11,6 +11,7 @@ import { CopyToClipboardButton } from 'src/shared/components/CopyToClipboardButt
 import { toast } from 'src/shared/components/ui/use-toast';
 import { AppContext } from 'src/shared/controller/appContext';
 import { formatDatetime } from 'src/shared/lib/formatDateTime';
+import { formatDecimal } from 'src/shared/lib/formatDecimal';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
 import { accountLabel } from 'src/features/account/accountLabel';
 import { AccountLink } from 'src/features/account/components/AccountLink';
@@ -86,9 +87,14 @@ export function DepositView({
               {dictionary.deposit.fields.amount}
             </div>
             <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
-              <span>{deposit.amount}</span>
+              <span>
+                {formatDecimal(deposit.amount?.toString(), context.locale)}
+              </span>
               <CopyToClipboardButton
-                text={deposit.amount.toString()}
+                text={formatDecimal(
+                  deposit.amount?.toString(),
+                  context.locale
+                )}
                 dictionary={context.dictionary}
               />
             </div>

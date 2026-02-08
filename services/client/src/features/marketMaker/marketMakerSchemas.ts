@@ -38,6 +38,7 @@ export const marketMakerFilterFormSchema = z
     obligationViolationCountRange: z.array(z.coerce.number()).max(2),
     notesInternal: z.string(),
     specialOrderTypes: z.nativeEnum(marketMakerEnumerators.specialOrderTypes).nullable().optional(),
+    minFeeAmountRange: z.array(z.coerce.number()).max(2),
     archived: z
     .any()
     .transform((val) =>
@@ -115,6 +116,7 @@ export const marketMakerCreateInputSchema = z.object({
   auditLog: jsonSchema.optional(),
   notesInternal: z.string().trim().nullable().optional(),
   specialOrderTypes: z.nativeEnum(marketMakerEnumerators.specialOrderTypes).nullable().optional(),
+  minFeeAmount: numberOptionalCoerceSchema(z.number().nullable().optional()),
   importHash: z.string().optional(),
 });
 
@@ -146,6 +148,7 @@ export const marketMakerImportFileSchema = z
     auditLog: z.string(),
     notesInternal: z.string(),
     specialOrderTypes: z.string(),
+    minFeeAmount: z.string(),
   })
   .partial();
 

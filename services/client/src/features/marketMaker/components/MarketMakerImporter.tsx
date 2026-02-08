@@ -35,6 +35,7 @@ export function MarketMakerImporter({ context }: { context: AppContext }) {
         'auditLog',
         'notesInternal',
         'specialOrderTypes',
+        'minFeeAmount',
       ]}
       labels={context.dictionary.marketMaker.fields}
       context={context}

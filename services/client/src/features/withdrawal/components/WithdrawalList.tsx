@@ -31,6 +31,7 @@ import { Checkbox } from 'src/shared/components/ui/checkbox';
 import { AppContext } from 'src/shared/controller/appContext';
 import { WithdrawalNewButton } from 'src/features/withdrawal/components/WithdrawalNewButton';
 import { z } from 'zod';
+import { formatDecimal } from 'src/shared/lib/formatDecimal';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
 import { formatDatetime } from 'src/shared/lib/formatDateTime';
 import { withdrawalLabel } from 'src/features/withdrawal/withdrawalLabel';
@@ -86,7 +87,7 @@ export default function WithdrawalList({ context }: { context: AppContext }) {
       cell: ({ getValue }) => {
         return (
           <div className="whitespace-nowrap text-right">
-            {getValue() as string}
+            {formatDecimal(getValue() as string, context.locale)}
           </div>
         );
       },
@@ -100,7 +101,7 @@ export default function WithdrawalList({ context }: { context: AppContext }) {
       cell: ({ getValue }) => {
         return (
           <div className="whitespace-nowrap text-right">
-            {getValue() as string}
+            {formatDecimal(getValue() as string, context.locale)}
           </div>
         );
       },

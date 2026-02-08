@@ -302,6 +302,23 @@ export async function marketMakerFindManyController(
     });
   }
 
+  if (filter?.minFeeAmountRange?.length) {
+    const start = filter.minFeeAmountRange?.[0];
+    const end = filter.minFeeAmountRange?.[1];
+
+    if (start != null) {
+      whereAnd.push({
+        minFeeAmount: { gte: start },
+      });
+    }
+
+    if (end != null) {
+      whereAnd.push({
+        minFeeAmount: { lte: end },
+      });
+    }
+  }
+
   const prisma = prismaAuth(context);
 
   let marketMakers = await prisma.marketMaker.findMany({

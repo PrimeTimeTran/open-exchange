@@ -53,9 +53,9 @@ export function BalanceSnapshotForm({
   const isEditing = Boolean(balanceSnapshot?.id);
 
   const [initialValues] = React.useState({
-    available: balanceSnapshot?.available || '',
-    locked: balanceSnapshot?.locked || '',
-    total: balanceSnapshot?.total || '',
+    available: balanceSnapshot?.available ? Number(balanceSnapshot?.available) : '',
+    locked: balanceSnapshot?.locked ? Number(balanceSnapshot?.locked) : '',
+    total: balanceSnapshot?.total ? Number(balanceSnapshot?.total) : '',
     snapshotAt: balanceSnapshot?.snapshotAt || '',
     account: balanceSnapshot?.account || null,
     wallet: balanceSnapshot?.wallet || null,
@@ -137,7 +137,6 @@ export function BalanceSnapshotForm({
                     </FormLabel>
 
                     <Input
-                      type="number"
                       disabled={mutation.isPending || mutation.isSuccess}
                       autoFocus
           {...field}
@@ -165,7 +164,6 @@ export function BalanceSnapshotForm({
                     </FormLabel>
 
                     <Input
-                      type="number"
                       disabled={mutation.isPending || mutation.isSuccess}
                       {...field}
                     />
@@ -192,7 +190,6 @@ export function BalanceSnapshotForm({
                     </FormLabel>
 
                     <Input
-                      type="number"
                       disabled={mutation.isPending || mutation.isSuccess}
                       {...field}
                     />

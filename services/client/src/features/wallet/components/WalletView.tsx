@@ -11,6 +11,7 @@ import { CopyToClipboardButton } from 'src/shared/components/CopyToClipboardButt
 import { toast } from 'src/shared/components/ui/use-toast';
 import { AppContext } from 'src/shared/controller/appContext';
 import { formatDatetime } from 'src/shared/lib/formatDateTime';
+import { formatDecimal } from 'src/shared/lib/formatDecimal';
 import { membershipLabel } from 'src/features/membership/membershipLabel';
 import { MembershipLink } from 'src/features/membership/components/MembershipLink';
 import { assetLabel } from 'src/features/asset/assetLabel';
@@ -87,9 +88,14 @@ export function WalletView({
               {dictionary.wallet.fields.available}
             </div>
             <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
-              <span>{wallet.available}</span>
+              <span>
+                {formatDecimal(wallet.available?.toString(), context.locale)}
+              </span>
               <CopyToClipboardButton
-                text={wallet.available.toString()}
+                text={formatDecimal(
+                  wallet.available?.toString(),
+                  context.locale
+                )}
                 dictionary={context.dictionary}
               />
             </div>
@@ -101,9 +107,14 @@ export function WalletView({
               {dictionary.wallet.fields.locked}
             </div>
             <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
-              <span>{wallet.locked}</span>
+              <span>
+                {formatDecimal(wallet.locked?.toString(), context.locale)}
+              </span>
               <CopyToClipboardButton
-                text={wallet.locked.toString()}
+                text={formatDecimal(
+                  wallet.locked?.toString(),
+                  context.locale
+                )}
                 dictionary={context.dictionary}
               />
             </div>
@@ -115,9 +126,14 @@ export function WalletView({
               {dictionary.wallet.fields.total}
             </div>
             <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
-              <span>{wallet.total}</span>
+              <span>
+                {formatDecimal(wallet.total?.toString(), context.locale)}
+              </span>
               <CopyToClipboardButton
-                text={wallet.total.toString()}
+                text={formatDecimal(
+                  wallet.total?.toString(),
+                  context.locale
+                )}
                 dictionary={context.dictionary}
               />
             </div>

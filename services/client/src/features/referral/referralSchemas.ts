@@ -82,7 +82,7 @@ export const referralCreateInputSchema = z.object({
   source: z.nativeEnum(referralEnumerators.source).nullable().optional(),
   status: z.nativeEnum(referralEnumerators.status).nullable().optional(),
   rewardType: z.nativeEnum(referralEnumerators.rewardType).nullable().optional(),
-  rewardAmount: numberOptionalCoerceSchema(z.number().int().nullable().optional()),
+  rewardAmount: numberOptionalCoerceSchema(z.number().nullable().optional()),
   rewardCurrency: z.string().trim().nullable().optional(),
   rewardedAt: dateTimeOptionalSchema,
   meta: jsonSchema.optional(),

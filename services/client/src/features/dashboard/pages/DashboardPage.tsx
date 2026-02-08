@@ -2,8 +2,8 @@ import { cookies } from 'next/headers';
 import { AuditLogActivityChartCard } from 'src/features/auditLog/components/AuditLogActivityChartCard';
 import { AuditLogActivityListCard } from 'src/features/auditLog/components/AuditLogActivityListCard';
 import { AccountDashboardCard } from 'src/features/account/components/AccountDashboardCard';
-import { WalletDashboardCard } from 'src/features/wallet/components/WalletDashboardCard';
 import { DepositDashboardCard } from 'src/features/deposit/components/DepositDashboardCard';
+import { WithdrawalDashboardCard } from 'src/features/withdrawal/components/WithdrawalDashboardCard';
 import { MembershipDashboardCard } from 'src/features/membership/components/MembershipDashboardCard';
 import { appContextForReact } from 'src/shared/controller/appContext';
 
@@ -16,8 +16,8 @@ export default async function DashboardPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <MembershipDashboardCard context={context} />
           <AccountDashboardCard context={context} />
-          <WalletDashboardCard context={context} />
           <DepositDashboardCard context={context} />
+          <WithdrawalDashboardCard context={context} />
         </div>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <AuditLogActivityChartCard context={context} />

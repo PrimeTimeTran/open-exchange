@@ -55,7 +55,7 @@ export function DepositForm({
   const isEditing = Boolean(deposit?.id);
 
   const [initialValues] = React.useState({
-    amount: deposit?.amount || '',
+    amount: deposit?.amount ? Number(deposit?.amount) : '',
     status: deposit?.status || null,
     chain: deposit?.chain || '',
     txHash: deposit?.txHash || '',
@@ -139,12 +139,11 @@ export function DepositForm({
                 name="amount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
+                    <FormLabel className="required">
                       {dictionary.deposit.fields.amount}
                     </FormLabel>
 
                     <Input
-                      type="number"
                       disabled={mutation.isPending || mutation.isSuccess}
                       autoFocus
           {...field}

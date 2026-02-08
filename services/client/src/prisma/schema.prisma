@@ -360,8 +360,6 @@ model Account {
 
   snapshots BalanceSnapshot[] @relation("account_snapshots")
 
-
-
   @@unique([id, tenantId])
 }
 
@@ -382,7 +380,7 @@ model Deposit {
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
 
-  amount Int?
+  amount Decimal @db.Decimal(72, 0)
   status String?
   chain String?
   txHash String?
@@ -421,8 +419,8 @@ model Withdrawal {
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
 
-  amount Int?
-  fee Int?
+  amount Decimal @db.Decimal(72, 0)
+  fee Decimal? @db.Decimal(72, 0)
   status String?
   destinationAddress String?
   destinationTag String?
@@ -465,9 +463,9 @@ model Wallet {
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
 
-  available Int?
-  locked Int?
-  total Int?
+  available Decimal? @db.Decimal(72, 0)
+  locked Decimal? @db.Decimal(72, 0)
+  total Decimal? @db.Decimal(72, 0)
   version Int?
   meta Json?
   userId String? @db.Uuid
@@ -505,9 +503,9 @@ model Order {
 
   side String?
   type String?
-  price Decimal?
-  quantity Decimal?
-  quantityFilled Decimal?
+  price Decimal? @db.Decimal(72, 0)
+  quantity Decimal? @db.Decimal(72, 0)
+  quantityFilled Decimal? @db.Decimal(72, 0)
   status String?
   timeInFore String?
   meta Json?
@@ -543,10 +541,10 @@ model Fill {
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
 
-  side String?
-  price Decimal?
-  quantity Decimal?
-  fee Decimal?
+  side String
+  price Decimal @db.Decimal(72, 0)
+  quantity Decimal @db.Decimal(72, 0)
+  fee Decimal? @db.Decimal(72, 0)
   meta Json?
   tradeId String? @db.Uuid
   trade Trade? @relation("fills_trade", fields: [tradeId], references: [id])
@@ -573,8 +571,8 @@ model Trade {
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
 
-  price Decimal?
-  quantity Decimal?
+  price Decimal? @db.Decimal(72, 0)
+  quantity Decimal? @db.Decimal(72, 0)
   meta Json?
   buyOrderId Order[] @relation("buyOrderId_buys")
 
@@ -686,7 +684,7 @@ model FeeSchedule {
   scope String?
   makerFeeBps Int?
   takerFeeBps Int?
-  minFeeAmount Int?
+  minFeeAmount Decimal? @db.Decimal(72, 0)
   effectiveFrom DateTime? @db.Timestamptz(3)
   effectiveTo DateTime? @db.Timestamptz(3)
   tier String?
@@ -716,9 +714,9 @@ model BalanceSnapshot {
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
 
-  available Int?
-  locked Int?
-  total Int?
+  available Decimal? @db.Decimal(72, 0)
+  locked Decimal? @db.Decimal(72, 0)
+  total Decimal? @db.Decimal(72, 0)
   snapshotAt DateTime? @db.Timestamptz(3)
   meta Json?
   accountId String? @db.Uuid
@@ -736,7 +734,8 @@ model BalanceSnapshot {
 }
 
 model SystemAccount {
-  id                    String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                    String      @id @db.Uuid
+  account               Account     @relation("account_systemAccount", fields: [id], references: [id], onDelete: Cascade)
   tenantId              String      @default(dbgenerated("NULLIF((current_setting('app.current_tenant_id'::text)), '')::uuid")) @db.Uuid
   tenant                Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   createdAt             DateTime    @default(now()) @db.Timestamptz(3)
@@ -786,7 +785,7 @@ model Referral {
   source String?
   status String?
   rewardType String?
-  rewardAmount Int?
+  rewardAmount Decimal? @db.Decimal(72, 0)
   rewardCurrency String?
   rewardedAt DateTime? @db.Timestamptz(3)
   meta Json?
@@ -908,6 +907,7 @@ model MarketMaker {
   auditLog Json?
   notesInternal String?
   specialOrderTypes String?
+  minFeeAmount Decimal? @db.Decimal(72, 0)
 
 
 
@@ -961,7 +961,7 @@ model LedgerEntry {
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
 
-  amount Decimal?
+  amount Decimal? @db.Decimal(72, 0)
   accountId String?
   meta Json?
   eventId String? @db.Uuid

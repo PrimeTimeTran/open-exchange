@@ -12,6 +12,7 @@ import { toast } from 'src/shared/components/ui/use-toast';
 import { AppContext } from 'src/shared/controller/appContext';
 import { formatDatetime } from 'src/shared/lib/formatDateTime';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
+import { formatDecimal } from 'src/shared/lib/formatDecimal';
 import { marketMakerLabel } from 'src/features/marketMaker/marketMakerLabel';
 import { MembershipLink } from 'src/features/membership/components/MembershipLink';
 import { membershipLabel } from 'src/features/membership/membershipLabel';
@@ -428,6 +429,25 @@ export function MarketMakerView({
                 text={enumeratorLabel(
                   dictionary.marketMaker.enumerators.specialOrderTypes,
                   marketMaker.specialOrderTypes,
+                )}
+                dictionary={context.dictionary}
+              />
+            </div>
+          </div>
+        )}
+        {marketMaker.minFeeAmount != null && (
+          <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
+            <div className="font-semibold">
+              {dictionary.marketMaker.fields.minFeeAmount}
+            </div>
+            <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
+              <span>
+                {formatDecimal(marketMaker.minFeeAmount?.toString(), context.locale)}
+              </span>
+              <CopyToClipboardButton
+                text={formatDecimal(
+                  marketMaker.minFeeAmount?.toString(),
+                  context.locale
                 )}
                 dictionary={context.dictionary}
               />

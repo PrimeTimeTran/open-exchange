@@ -74,9 +74,9 @@ export const balanceSnapshotAutocompleteOutputSchema = z.object({
 });
 
 export const balanceSnapshotCreateInputSchema = z.object({
-  available: numberOptionalCoerceSchema(z.number().int().nullable().optional()),
-  locked: numberOptionalCoerceSchema(z.number().int().nullable().optional()),
-  total: numberOptionalCoerceSchema(z.number().int().nullable().optional()),
+  available: numberOptionalCoerceSchema(z.number().nullable().optional()),
+  locked: numberOptionalCoerceSchema(z.number().nullable().optional()),
+  total: numberOptionalCoerceSchema(z.number().nullable().optional()),
   snapshotAt: dateTimeOptionalSchema,
   meta: jsonSchema.optional(),
   account: objectToUuidSchemaOptional,

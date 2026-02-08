@@ -61,7 +61,7 @@ function DepositListFilter({
   const previewRenders = {
     amountRange: {
       label: dictionary.deposit.fields.amount,
-      render: dataTableFilterRenders(context).range(),
+      render: dataTableFilterRenders(context).decimalRange(),
     },
     status: {
       label: dictionary.deposit.fields.status,
@@ -166,7 +166,7 @@ function DepositListFilter({
                   <FormItem>
                     <FormLabel>{dictionary.deposit.fields.amount}</FormLabel>
                     <RangeInput
-                      type="number"
+                      type="text"
                       dictionary={dictionary}
                       disabled={isLoading}
                       onChange={field.onChange}

@@ -5,13 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Table } from '@tanstack/react-table';
 import Link from 'next/link';
 import { useState } from 'react';
-import {
-  FaPlus,
-  FaRegFileExcel,
-  FaTrashAlt,
-  FaUndo,
-  FaArchive,
-} from 'react-icons/fa';
+import { FaPlus, FaRegFileExcel, FaTrashAlt, FaUndo, FaArchive } from 'react-icons/fa';
 import { LuLoader2 } from 'react-icons/lu';
 import { MdUpload } from 'react-icons/md';
 import { RxDotsHorizontal } from 'react-icons/rx';
@@ -62,10 +56,7 @@ export default function ChaterListActions({
   const [restoreManyDialogOpen, setRestoreManyDialogOpen] = useState(false);
   const [archiveManyDialogOpen, setArchiveManyDialogOpen] = useState(false);
 
-  const hasPermissionToCreate = hasPermission(
-    permissions.chaterCreate,
-    context,
-  );
+  const hasPermissionToCreate = hasPermission(permissions.chaterCreate, context);
 
   const hasPermissionToDestroy = hasPermission(
     permissions.chaterDestroy,
@@ -82,10 +73,7 @@ export default function ChaterListActions({
     context,
   );
 
-  const hasPermissionToImport = hasPermission(
-    permissions.chaterImport,
-    context,
-  );
+  const hasPermissionToImport = hasPermission(permissions.chaterImport, context);
 
   const exportMutation = useMutation({
     mutationFn: () => {
@@ -198,11 +186,7 @@ export default function ChaterListActions({
 
   const selectedCount = table.getFilteredSelectedRowModel().rows.length;
 
-  const isLoading =
-    destroyMutation.isPending ||
-    exportMutation.isPending ||
-    archiveMutation.isPending ||
-    restoreMutation.isPending;
+  const isLoading = destroyMutation.isPending || exportMutation.isPending || archiveMutation.isPending || restoreMutation.isPending;
 
   return (
     <>
@@ -278,7 +262,7 @@ export default function ChaterListActions({
           className="ml-auto flex h-8 whitespace-nowrap"
           asChild
         >
-          <Link href={`/admin/chater/new`} prefetch={false}>
+          <Link href={`/chater/new`} prefetch={false}>
             <FaPlus className="mr-2 h-4 w-4" />
             <span>{dictionary.shared.new}</span>
           </Link>

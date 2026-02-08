@@ -58,9 +58,9 @@ export function OrderForm({
     instrument: order?.instrument || null,
     side: order?.side || null,
     type: order?.type || null,
-    price: order?.price ? Number(order?.price) : 100,
-    quantity: order?.quantity ? Number(order?.quantity) : 1,
-    quantityFilled: order?.quantityFilled ? Number(order?.quantityFilled) : 1,
+    price: order?.price ? Number(order?.price) : '',
+    quantity: order?.quantity ? Number(order?.quantity) : '',
+    quantityFilled: order?.quantityFilled ? Number(order?.quantityFilled) : '',
     status: order?.status || null,
     timeInFore: order?.timeInFore || null,
     meta: order?.meta?.toString() || '',
@@ -186,222 +186,226 @@ export function OrderForm({
             />
           </div>
           <div className="grid max-w-lg gap-1">
-            <FormField
-              control={form.control}
-              name="side"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{dictionary.order.fields.side}</FormLabel>
+          <FormField
+            control={form.control}
+            name="side"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{dictionary.order.fields.side}</FormLabel>
 
-                  <SelectInput
-                    options={Object.keys(orderEnumerators.side).map(
-                      (value) => ({
+                <SelectInput
+                  options={Object.keys(orderEnumerators.side).map(
+                    (value) => ({
+                      value,
+                      label: enumeratorLabel(
+                        dictionary.order.enumerators.side,
                         value,
-                        label: enumeratorLabel(
-                          dictionary.order.enumerators.side,
-                          value,
-                        ),
-                      }),
-                    )}
-                    dictionary={dictionary}
-                    isClearable={true}
-                    disabled={mutation.isPending || mutation.isSuccess}
-                    onChange={field.onChange}
-                    value={field.value}
-                  />
+                      ),
+                    }),
+                  )}
+                  dictionary={dictionary}
+                  isClearable={true}
+                  disabled={mutation.isPending || mutation.isSuccess}
+                  onChange={field.onChange}
+                  value={field.value}
+                />
 
-                  {dictionary.order.hints.side ? (
-                    <FormDescription>
-                      {dictionary.order.hints.side}
-                    </FormDescription>
-                  ) : null}
+                {dictionary.order.hints.side ? (
+                  <FormDescription>
+                    {dictionary.order.hints.side}
+                  </FormDescription>
+                ) : null}
 
-                  <FormMessage data-testid="side-error" />
-                </FormItem>
-              )}
-            />
+                <FormMessage data-testid="side-error" />
+              </FormItem>
+            )}
+          />
           </div>
           <div className="grid max-w-lg gap-1">
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{dictionary.order.fields.type}</FormLabel>
+          <FormField
+            control={form.control}
+            name="type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{dictionary.order.fields.type}</FormLabel>
 
-                  <SelectInput
-                    options={Object.keys(orderEnumerators.type).map(
-                      (value) => ({
+                <SelectInput
+                  options={Object.keys(orderEnumerators.type).map(
+                    (value) => ({
+                      value,
+                      label: enumeratorLabel(
+                        dictionary.order.enumerators.type,
                         value,
-                        label: enumeratorLabel(
-                          dictionary.order.enumerators.type,
-                          value,
-                        ),
-                      }),
-                    )}
-                    dictionary={dictionary}
-                    isClearable={true}
-                    disabled={mutation.isPending || mutation.isSuccess}
-                    onChange={field.onChange}
-                    value={field.value}
-                  />
+                      ),
+                    }),
+                  )}
+                  dictionary={dictionary}
+                  isClearable={true}
+                  disabled={mutation.isPending || mutation.isSuccess}
+                  onChange={field.onChange}
+                  value={field.value}
+                />
 
-                  {dictionary.order.hints.type ? (
-                    <FormDescription>
-                      {dictionary.order.hints.type}
-                    </FormDescription>
-                  ) : null}
+                {dictionary.order.hints.type ? (
+                  <FormDescription>
+                    {dictionary.order.hints.type}
+                  </FormDescription>
+                ) : null}
 
-                  <FormMessage data-testid="type-error" />
-                </FormItem>
-              )}
-            />
+                <FormMessage data-testid="type-error" />
+              </FormItem>
+            )}
+          />
           </div>
           <div className="grid max-w-lg gap-1">
-            <FormField
-              control={form.control}
-              name="price"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{dictionary.order.fields.price}</FormLabel>
+              <FormField
+                control={form.control}
+                name="price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {dictionary.order.fields.price}
+                    </FormLabel>
 
-                  <Input
-                    disabled={mutation.isPending || mutation.isSuccess}
-                    {...field}
-                  />
+                    <Input
+                      disabled={mutation.isPending || mutation.isSuccess}
+                      {...field}
+                    />
 
-                  {dictionary.order.hints.price ? (
-                    <FormDescription>
-                      {dictionary.order.hints.price}
-                    </FormDescription>
-                  ) : null}
+                    {dictionary.order.hints.price ? (
+                      <FormDescription>
+                        {dictionary.order.hints.price}
+                      </FormDescription>
+                    ) : null}
 
-                  <FormMessage data-testid="price-error" />
-                </FormItem>
-              )}
-            />
-          </div>
+                    <FormMessage data-testid="price-error" />
+                  </FormItem>
+                )}
+              />
+            </div>
           <div className="grid max-w-lg gap-1">
-            <FormField
-              control={form.control}
-              name="quantity"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{dictionary.order.fields.quantity}</FormLabel>
+              <FormField
+                control={form.control}
+                name="quantity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {dictionary.order.fields.quantity}
+                    </FormLabel>
 
-                  <Input
-                    disabled={mutation.isPending || mutation.isSuccess}
-                    {...field}
-                  />
+                    <Input
+                      disabled={mutation.isPending || mutation.isSuccess}
+                      {...field}
+                    />
 
-                  {dictionary.order.hints.quantity ? (
-                    <FormDescription>
-                      {dictionary.order.hints.quantity}
-                    </FormDescription>
-                  ) : null}
+                    {dictionary.order.hints.quantity ? (
+                      <FormDescription>
+                        {dictionary.order.hints.quantity}
+                      </FormDescription>
+                    ) : null}
 
-                  <FormMessage data-testid="quantity-error" />
-                </FormItem>
-              )}
-            />
-          </div>
+                    <FormMessage data-testid="quantity-error" />
+                  </FormItem>
+                )}
+              />
+            </div>
           <div className="grid max-w-lg gap-1">
-            <FormField
-              control={form.control}
-              name="quantityFilled"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {dictionary.order.fields.quantityFilled}
-                  </FormLabel>
+              <FormField
+                control={form.control}
+                name="quantityFilled"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {dictionary.order.fields.quantityFilled}
+                    </FormLabel>
 
-                  <Input
-                    disabled={mutation.isPending || mutation.isSuccess}
-                    {...field}
-                  />
+                    <Input
+                      disabled={mutation.isPending || mutation.isSuccess}
+                      {...field}
+                    />
 
-                  {dictionary.order.hints.quantityFilled ? (
-                    <FormDescription>
-                      {dictionary.order.hints.quantityFilled}
-                    </FormDescription>
-                  ) : null}
+                    {dictionary.order.hints.quantityFilled ? (
+                      <FormDescription>
+                        {dictionary.order.hints.quantityFilled}
+                      </FormDescription>
+                    ) : null}
 
-                  <FormMessage data-testid="quantityFilled-error" />
-                </FormItem>
-              )}
-            />
-          </div>
+                    <FormMessage data-testid="quantityFilled-error" />
+                  </FormItem>
+                )}
+              />
+            </div>
           <div className="grid max-w-lg gap-1">
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{dictionary.order.fields.status}</FormLabel>
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{dictionary.order.fields.status}</FormLabel>
 
-                  <SelectInput
-                    options={Object.keys(orderEnumerators.status).map(
-                      (value) => ({
+                <SelectInput
+                  options={Object.keys(orderEnumerators.status).map(
+                    (value) => ({
+                      value,
+                      label: enumeratorLabel(
+                        dictionary.order.enumerators.status,
                         value,
-                        label: enumeratorLabel(
-                          dictionary.order.enumerators.status,
-                          value,
-                        ),
-                      }),
-                    )}
-                    dictionary={dictionary}
-                    isClearable={true}
-                    disabled={mutation.isPending || mutation.isSuccess}
-                    onChange={field.onChange}
-                    value={field.value}
-                  />
+                      ),
+                    }),
+                  )}
+                  dictionary={dictionary}
+                  isClearable={true}
+                  disabled={mutation.isPending || mutation.isSuccess}
+                  onChange={field.onChange}
+                  value={field.value}
+                />
 
-                  {dictionary.order.hints.status ? (
-                    <FormDescription>
-                      {dictionary.order.hints.status}
-                    </FormDescription>
-                  ) : null}
+                {dictionary.order.hints.status ? (
+                  <FormDescription>
+                    {dictionary.order.hints.status}
+                  </FormDescription>
+                ) : null}
 
-                  <FormMessage data-testid="status-error" />
-                </FormItem>
-              )}
-            />
+                <FormMessage data-testid="status-error" />
+              </FormItem>
+            )}
+          />
           </div>
           <div className="grid max-w-lg gap-1">
-            <FormField
-              control={form.control}
-              name="timeInFore"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{dictionary.order.fields.timeInFore}</FormLabel>
+          <FormField
+            control={form.control}
+            name="timeInFore"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{dictionary.order.fields.timeInFore}</FormLabel>
 
-                  <SelectInput
-                    options={Object.keys(orderEnumerators.timeInFore).map(
-                      (value) => ({
+                <SelectInput
+                  options={Object.keys(orderEnumerators.timeInFore).map(
+                    (value) => ({
+                      value,
+                      label: enumeratorLabel(
+                        dictionary.order.enumerators.timeInFore,
                         value,
-                        label: enumeratorLabel(
-                          dictionary.order.enumerators.timeInFore,
-                          value,
-                        ),
-                      }),
-                    )}
-                    dictionary={dictionary}
-                    isClearable={true}
-                    disabled={mutation.isPending || mutation.isSuccess}
-                    onChange={field.onChange}
-                    value={field.value}
-                  />
+                      ),
+                    }),
+                  )}
+                  dictionary={dictionary}
+                  isClearable={true}
+                  disabled={mutation.isPending || mutation.isSuccess}
+                  onChange={field.onChange}
+                  value={field.value}
+                />
 
-                  {dictionary.order.hints.timeInFore ? (
-                    <FormDescription>
-                      {dictionary.order.hints.timeInFore}
-                    </FormDescription>
-                  ) : null}
+                {dictionary.order.hints.timeInFore ? (
+                  <FormDescription>
+                    {dictionary.order.hints.timeInFore}
+                  </FormDescription>
+                ) : null}
 
-                  <FormMessage data-testid="timeInFore-error" />
-                </FormItem>
-              )}
-            />
+                <FormMessage data-testid="timeInFore-error" />
+              </FormItem>
+            )}
+          />
           </div>
           <div className="grid max-w-lg gap-1">
             <FormField
@@ -409,7 +413,9 @@ export function OrderForm({
               name="meta"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{dictionary.order.fields.meta}</FormLabel>
+                  <FormLabel>
+                    {dictionary.order.fields.meta}
+                  </FormLabel>
 
                   <Textarea
                     disabled={mutation.isPending || mutation.isSuccess}

@@ -52,15 +52,15 @@ function BalanceSnapshotListFilter({
   const previewRenders = {
     availableRange: {
       label: dictionary.balanceSnapshot.fields.available,
-      render: dataTableFilterRenders(context).range(),
+      render: dataTableFilterRenders(context).decimalRange(),
     },
     lockedRange: {
       label: dictionary.balanceSnapshot.fields.locked,
-      render: dataTableFilterRenders(context).range(),
+      render: dataTableFilterRenders(context).decimalRange(),
     },
     totalRange: {
       label: dictionary.balanceSnapshot.fields.total,
-      render: dataTableFilterRenders(context).range(),
+      render: dataTableFilterRenders(context).decimalRange(),
     },
     snapshotAtRange: {
       label: dictionary.balanceSnapshot.fields.snapshotAt,
@@ -134,7 +134,7 @@ function BalanceSnapshotListFilter({
                   <FormItem>
                     <FormLabel>{dictionary.balanceSnapshot.fields.available}</FormLabel>
                     <RangeInput
-                      type="number"
+                      type="text"
                       dictionary={dictionary}
                       disabled={isLoading}
                       onChange={field.onChange}
@@ -152,7 +152,7 @@ function BalanceSnapshotListFilter({
                   <FormItem>
                     <FormLabel>{dictionary.balanceSnapshot.fields.locked}</FormLabel>
                     <RangeInput
-                      type="number"
+                      type="text"
                       dictionary={dictionary}
                       disabled={isLoading}
                       onChange={field.onChange}
@@ -170,7 +170,7 @@ function BalanceSnapshotListFilter({
                   <FormItem>
                     <FormLabel>{dictionary.balanceSnapshot.fields.total}</FormLabel>
                     <RangeInput
-                      type="number"
+                      type="text"
                       dictionary={dictionary}
                       disabled={isLoading}
                       onChange={field.onChange}

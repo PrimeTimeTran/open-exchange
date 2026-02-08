@@ -78,6 +78,7 @@ export function MarketMakerForm({
     auditLog: marketMaker?.auditLog?.toString() || '',
     notesInternal: marketMaker?.notesInternal || '',
     specialOrderTypes: marketMaker?.specialOrderTypes || null,
+    minFeeAmount: marketMaker?.minFeeAmount ? Number(marketMaker?.minFeeAmount) : '',
   });
 
   const form = useForm({
@@ -841,6 +842,32 @@ export function MarketMakerForm({
             )}
           />
           </div>
+          <div className="grid max-w-lg gap-1">
+              <FormField
+                control={form.control}
+                name="minFeeAmount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {dictionary.marketMaker.fields.minFeeAmount}
+                    </FormLabel>
+
+                    <Input
+                      disabled={mutation.isPending || mutation.isSuccess}
+                      {...field}
+                    />
+
+                    {dictionary.marketMaker.hints.minFeeAmount ? (
+                      <FormDescription>
+                        {dictionary.marketMaker.hints.minFeeAmount}
+                      </FormDescription>
+                    ) : null}
+
+                    <FormMessage data-testid="minFeeAmount-error" />
+                  </FormItem>
+                )}
+              />
+            </div>
 
           <div className="flex gap-2">
             <Button

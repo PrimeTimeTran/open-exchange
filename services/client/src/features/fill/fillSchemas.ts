@@ -72,9 +72,9 @@ export const fillAutocompleteOutputSchema = z.object({
 });
 
 export const fillCreateInputSchema = z.object({
-  side: z.nativeEnum(fillEnumerators.side).nullable().optional(),
-  price: numberOptionalCoerceSchema(z.number().nullable().optional()),
-  quantity: numberOptionalCoerceSchema(z.number().nullable().optional()),
+  side: z.nativeEnum(fillEnumerators.side),
+  price: numberCoerceSchema(z.number()),
+  quantity: numberCoerceSchema(z.number()),
   fee: numberOptionalCoerceSchema(z.number().nullable().optional()),
   meta: jsonSchema.optional(),
   trade: objectToUuidSchemaOptional,

@@ -66,11 +66,11 @@ function WithdrawalListFilter({
   const previewRenders = {
     amountRange: {
       label: dictionary.withdrawal.fields.amount,
-      render: dataTableFilterRenders(context).range(),
+      render: dataTableFilterRenders(context).decimalRange(),
     },
     feeRange: {
       label: dictionary.withdrawal.fields.fee,
-      render: dataTableFilterRenders(context).range(),
+      render: dataTableFilterRenders(context).decimalRange(),
     },
     status: {
       label: dictionary.withdrawal.fields.status,
@@ -187,7 +187,7 @@ function WithdrawalListFilter({
                   <FormItem>
                     <FormLabel>{dictionary.withdrawal.fields.amount}</FormLabel>
                     <RangeInput
-                      type="number"
+                      type="text"
                       dictionary={dictionary}
                       disabled={isLoading}
                       onChange={field.onChange}
@@ -205,7 +205,7 @@ function WithdrawalListFilter({
                   <FormItem>
                     <FormLabel>{dictionary.withdrawal.fields.fee}</FormLabel>
                     <RangeInput
-                      type="number"
+                      type="text"
                       dictionary={dictionary}
                       disabled={isLoading}
                       onChange={field.onChange}

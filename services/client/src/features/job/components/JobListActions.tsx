@@ -262,7 +262,7 @@ export default function JobListActions({
           className="ml-auto flex h-8 whitespace-nowrap"
           asChild
         >
-          <Link href={`/admin/job/new`} prefetch={false}>
+          <Link href={`/job/new`} prefetch={false}>
             <FaPlus className="mr-2 h-4 w-4" />
             <span>{dictionary.shared.new}</span>
           </Link>

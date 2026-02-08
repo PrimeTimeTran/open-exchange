@@ -55,8 +55,8 @@ export function WithdrawalForm({
   const isEditing = Boolean(withdrawal?.id);
 
   const [initialValues] = React.useState({
-    amount: withdrawal?.amount || '',
-    fee: withdrawal?.fee || '',
+    amount: withdrawal?.amount ? Number(withdrawal?.amount) : '',
+    fee: withdrawal?.fee ? Number(withdrawal?.fee) : '',
     status: withdrawal?.status || null,
     destinationAddress: withdrawal?.destinationAddress || '',
     destinationTag: withdrawal?.destinationTag || '',
@@ -144,12 +144,11 @@ export function WithdrawalForm({
                 name="amount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
+                    <FormLabel className="required">
                       {dictionary.withdrawal.fields.amount}
                     </FormLabel>
 
                     <Input
-                      type="number"
                       disabled={mutation.isPending || mutation.isSuccess}
                       autoFocus
           {...field}
@@ -177,7 +176,6 @@ export function WithdrawalForm({
                     </FormLabel>
 
                     <Input
-                      type="number"
                       disabled={mutation.isPending || mutation.isSuccess}
                       {...field}
                     />

@@ -50,6 +50,7 @@ export function marketMakerExporterMapper(
         context.dictionary.marketMaker.enumerators.specialOrderTypes,
         marketMaker.specialOrderTypes,
       ),
+      minFeeAmount: formatDecimal(marketMaker.minFeeAmount?.toString(), context.locale),
       createdByMembership: membershipLabel(marketMaker.createdByMembership, context.dictionary),
       createdAt: String(marketMaker.createdAt),
       updatedByMembership: membershipLabel(marketMaker.createdByMembership, context.dictionary),

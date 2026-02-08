@@ -32,6 +32,7 @@ import { AppContext } from 'src/shared/controller/appContext';
 import { FeeScheduleNewButton } from 'src/features/feeSchedule/components/FeeScheduleNewButton';
 import { z } from 'zod';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
+import { formatDecimal } from 'src/shared/lib/formatDecimal';
 import { formatDatetime } from 'src/shared/lib/formatDateTime';
 import { feeScheduleLabel } from 'src/features/feeSchedule/feeScheduleLabel';
 import { FeeSchedule } from '@prisma/client';
@@ -126,7 +127,7 @@ export default function FeeScheduleList({ context }: { context: AppContext }) {
       cell: ({ getValue }) => {
         return (
           <div className="whitespace-nowrap text-right">
-            {getValue() as string}
+            {formatDecimal(getValue() as string, context.locale)}
           </div>
         );
       },

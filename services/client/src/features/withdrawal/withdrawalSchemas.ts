@@ -85,8 +85,8 @@ export const withdrawalAutocompleteOutputSchema = z.object({
 });
 
 export const withdrawalCreateInputSchema = z.object({
-  amount: numberOptionalCoerceSchema(z.number().int().nullable().optional()),
-  fee: numberOptionalCoerceSchema(z.number().int().nullable().optional()),
+  amount: numberCoerceSchema(z.number().min(25).positive()),
+  fee: numberOptionalCoerceSchema(z.number().nullable().optional()),
   status: z.nativeEnum(withdrawalEnumerators.status).nullable().optional(),
   destinationAddress: z.string().trim().nullable().optional(),
   destinationTag: z.string().trim().nullable().optional(),

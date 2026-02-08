@@ -12,6 +12,7 @@ import { toast } from 'src/shared/components/ui/use-toast';
 import { AppContext } from 'src/shared/controller/appContext';
 import { formatDatetime } from 'src/shared/lib/formatDateTime';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
+import { formatDecimal } from 'src/shared/lib/formatDecimal';
 import { feeScheduleLabel } from 'src/features/feeSchedule/feeScheduleLabel';
 import { MembershipLink } from 'src/features/membership/components/MembershipLink';
 import { membershipLabel } from 'src/features/membership/membershipLabel';
@@ -132,9 +133,14 @@ export function FeeScheduleView({
               {dictionary.feeSchedule.fields.minFeeAmount}
             </div>
             <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
-              <span>{feeSchedule.minFeeAmount}</span>
+              <span>
+                {formatDecimal(feeSchedule.minFeeAmount?.toString(), context.locale)}
+              </span>
               <CopyToClipboardButton
-                text={feeSchedule.minFeeAmount.toString()}
+                text={formatDecimal(
+                  feeSchedule.minFeeAmount?.toString(),
+                  context.locale
+                )}
                 dictionary={context.dictionary}
               />
             </div>

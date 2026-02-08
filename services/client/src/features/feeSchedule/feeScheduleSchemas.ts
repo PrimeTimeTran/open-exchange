@@ -79,7 +79,7 @@ export const feeScheduleCreateInputSchema = z.object({
   scope: z.nativeEnum(feeScheduleEnumerators.scope).nullable().optional(),
   makerFeeBps: numberOptionalCoerceSchema(z.number().int().nullable().optional()),
   takerFeeBps: numberOptionalCoerceSchema(z.number().int().nullable().optional()),
-  minFeeAmount: numberOptionalCoerceSchema(z.number().int().nullable().optional()),
+  minFeeAmount: numberOptionalCoerceSchema(z.number().nullable().optional()),
   effectiveFrom: dateTimeOptionalSchema,
   effectiveTo: dateTimeOptionalSchema,
   tier: z.string().trim().nullable().optional(),

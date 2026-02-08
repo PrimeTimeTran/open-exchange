@@ -11,6 +11,7 @@ import { CopyToClipboardButton } from 'src/shared/components/CopyToClipboardButt
 import { toast } from 'src/shared/components/ui/use-toast';
 import { AppContext } from 'src/shared/controller/appContext';
 import { formatDatetime } from 'src/shared/lib/formatDateTime';
+import { formatDecimal } from 'src/shared/lib/formatDecimal';
 import { accountLabel } from 'src/features/account/accountLabel';
 import { AccountLink } from 'src/features/account/components/AccountLink';
 import { walletLabel } from 'src/features/wallet/walletLabel';
@@ -87,9 +88,14 @@ export function BalanceSnapshotView({
               {dictionary.balanceSnapshot.fields.available}
             </div>
             <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
-              <span>{balanceSnapshot.available}</span>
+              <span>
+                {formatDecimal(balanceSnapshot.available?.toString(), context.locale)}
+              </span>
               <CopyToClipboardButton
-                text={balanceSnapshot.available.toString()}
+                text={formatDecimal(
+                  balanceSnapshot.available?.toString(),
+                  context.locale
+                )}
                 dictionary={context.dictionary}
               />
             </div>
@@ -101,9 +107,14 @@ export function BalanceSnapshotView({
               {dictionary.balanceSnapshot.fields.locked}
             </div>
             <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
-              <span>{balanceSnapshot.locked}</span>
+              <span>
+                {formatDecimal(balanceSnapshot.locked?.toString(), context.locale)}
+              </span>
               <CopyToClipboardButton
-                text={balanceSnapshot.locked.toString()}
+                text={formatDecimal(
+                  balanceSnapshot.locked?.toString(),
+                  context.locale
+                )}
                 dictionary={context.dictionary}
               />
             </div>
@@ -115,9 +126,14 @@ export function BalanceSnapshotView({
               {dictionary.balanceSnapshot.fields.total}
             </div>
             <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
-              <span>{balanceSnapshot.total}</span>
+              <span>
+                {formatDecimal(balanceSnapshot.total?.toString(), context.locale)}
+              </span>
               <CopyToClipboardButton
-                text={balanceSnapshot.total.toString()}
+                text={formatDecimal(
+                  balanceSnapshot.total?.toString(),
+                  context.locale
+                )}
                 dictionary={context.dictionary}
               />
             </div>
