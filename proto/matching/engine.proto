@@ -9,6 +9,17 @@ option go_package = "github.com/open-exchange/matching_engine/proto/matching";
 service MatchingEngine {
   rpc PlaceOrder(PlaceOrderRequest) returns (PlaceOrderResponse);
   rpc CancelOrder(CancelOrderRequest) returns (CancelOrderResponse);
+  rpc GetOrderBook(GetOrderBookRequest) returns (GetOrderBookResponse);
+}
+
+message GetOrderBookRequest {
+  string instrument_id = 1;
+}
+
+message GetOrderBookResponse {
+  string instrument_id = 1;
+  repeated common.Order bids = 2;
+  repeated common.Order asks = 3;
 }
 
 message PlaceOrderRequest {

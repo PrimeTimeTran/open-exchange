@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"log"
 
 	"github.com/open-exchange/matching_engine/internal/service"
 	pb "github.com/open-exchange/matching_engine/proto/matching"
@@ -45,6 +46,26 @@ func (s *MatchingServer) CancelOrder(ctx context.Context, req *pb.CancelOrderReq
 
 	return &pb.CancelOrderResponse{
 		Success: true,
+	}, nil
+}
+
+func (s *MatchingServer) GetOrderBook(ctx context.Context, req *pb.GetOrderBookRequest) (*pb.GetOrderBookResponse, error) {
+	bids, asks, err := s.Service.GetOrderBook(ctx, req.InstrumentId)
+	if err != nil {
+		// Log error but return empty book? Or return error?
+		// Engine returns error if book not found.
+		// Let's return empty if not found, or error if something else.
+		return nil, err
+	}
+
+	// log the bids and asks
+	log.Printf("[%s] Bids: %v", req.InstrumentId, bids)
+	log.Printf("[%s] Asks: %v", req.InstrumentId, asks)
+
+	return &pb.GetOrderBookResponse{
+		InstrumentId: req.InstrumentId,
+		Bids:         bids,
+		Asks:         asks,
 	}, nil
 }
 

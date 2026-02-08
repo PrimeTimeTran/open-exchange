@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	MatchingEngine_PlaceOrder_FullMethodName  = "/matching.MatchingEngine/PlaceOrder"
-	MatchingEngine_CancelOrder_FullMethodName = "/matching.MatchingEngine/CancelOrder"
+	MatchingEngine_PlaceOrder_FullMethodName   = "/matching.MatchingEngine/PlaceOrder"
+	MatchingEngine_CancelOrder_FullMethodName  = "/matching.MatchingEngine/CancelOrder"
+	MatchingEngine_GetOrderBook_FullMethodName = "/matching.MatchingEngine/GetOrderBook"
 )
 
 // MatchingEngineClient is the client API for MatchingEngine service.
@@ -29,6 +30,7 @@ const (
 type MatchingEngineClient interface {
 	PlaceOrder(ctx context.Context, in *PlaceOrderRequest, opts ...grpc.CallOption) (*PlaceOrderResponse, error)
 	CancelOrder(ctx context.Context, in *CancelOrderRequest, opts ...grpc.CallOption) (*CancelOrderResponse, error)
+	GetOrderBook(ctx context.Context, in *GetOrderBookRequest, opts ...grpc.CallOption) (*GetOrderBookResponse, error)
 }
 
 type matchingEngineClient struct {
@@ -57,12 +59,22 @@ func (c *matchingEngineClient) CancelOrder(ctx context.Context, in *CancelOrderR
 	return out, nil
 }
 
+func (c *matchingEngineClient) GetOrderBook(ctx context.Context, in *GetOrderBookRequest, opts ...grpc.CallOption) (*GetOrderBookResponse, error) {
+	out := new(GetOrderBookResponse)
+	err := c.cc.Invoke(ctx, MatchingEngine_GetOrderBook_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MatchingEngineServer is the server API for MatchingEngine service.
 // All implementations must embed UnimplementedMatchingEngineServer
 // for forward compatibility
 type MatchingEngineServer interface {
 	PlaceOrder(context.Context, *PlaceOrderRequest) (*PlaceOrderResponse, error)
 	CancelOrder(context.Context, *CancelOrderRequest) (*CancelOrderResponse, error)
+	GetOrderBook(context.Context, *GetOrderBookRequest) (*GetOrderBookResponse, error)
 	mustEmbedUnimplementedMatchingEngineServer()
 }
 
@@ -75,6 +87,9 @@ func (UnimplementedMatchingEngineServer) PlaceOrder(context.Context, *PlaceOrder
 }
 func (UnimplementedMatchingEngineServer) CancelOrder(context.Context, *CancelOrderRequest) (*CancelOrderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelOrder not implemented")
+}
+func (UnimplementedMatchingEngineServer) GetOrderBook(context.Context, *GetOrderBookRequest) (*GetOrderBookResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOrderBook not implemented")
 }
 func (UnimplementedMatchingEngineServer) mustEmbedUnimplementedMatchingEngineServer() {}
 
@@ -125,6 +140,24 @@ func _MatchingEngine_CancelOrder_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MatchingEngine_GetOrderBook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrderBookRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MatchingEngineServer).GetOrderBook(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MatchingEngine_GetOrderBook_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MatchingEngineServer).GetOrderBook(ctx, req.(*GetOrderBookRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MatchingEngine_ServiceDesc is the grpc.ServiceDesc for MatchingEngine service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -139,6 +172,10 @@ var MatchingEngine_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CancelOrder",
 			Handler:    _MatchingEngine_CancelOrder_Handler,
+		},
+		{
+			MethodName: "GetOrderBook",
+			Handler:    _MatchingEngine_GetOrderBook_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

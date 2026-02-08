@@ -22,6 +22,16 @@ import { Order } from "../common/order";
 
 export const protobufPackage = "matching";
 
+export interface GetOrderBookRequest {
+  instrumentId?: string | undefined;
+}
+
+export interface GetOrderBookResponse {
+  instrumentId?: string | undefined;
+  bids?: Order[] | undefined;
+  asks?: Order[] | undefined;
+}
+
 export interface PlaceOrderRequest {
   order?: Order | undefined;
 }
@@ -41,6 +51,176 @@ export interface CancelOrderResponse {
   success?: boolean | undefined;
   errorMessage?: string | undefined;
 }
+
+function createBaseGetOrderBookRequest(): GetOrderBookRequest {
+  return { instrumentId: "" };
+}
+
+export const GetOrderBookRequest: MessageFns<GetOrderBookRequest> = {
+  encode(message: GetOrderBookRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.instrumentId !== undefined && message.instrumentId !== "") {
+      writer.uint32(10).string(message.instrumentId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetOrderBookRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetOrderBookRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.instrumentId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetOrderBookRequest {
+    return {
+      instrumentId: isSet(object.instrumentId)
+        ? globalThis.String(object.instrumentId)
+        : isSet(object.instrument_id)
+        ? globalThis.String(object.instrument_id)
+        : "",
+    };
+  },
+
+  toJSON(message: GetOrderBookRequest): unknown {
+    const obj: any = {};
+    if (message.instrumentId !== undefined && message.instrumentId !== "") {
+      obj.instrumentId = message.instrumentId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetOrderBookRequest>, I>>(base?: I): GetOrderBookRequest {
+    return GetOrderBookRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetOrderBookRequest>, I>>(object: I): GetOrderBookRequest {
+    const message = createBaseGetOrderBookRequest();
+    message.instrumentId = object.instrumentId ?? "";
+    return message;
+  },
+};
+
+function createBaseGetOrderBookResponse(): GetOrderBookResponse {
+  return { instrumentId: "", bids: [], asks: [] };
+}
+
+export const GetOrderBookResponse: MessageFns<GetOrderBookResponse> = {
+  encode(message: GetOrderBookResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.instrumentId !== undefined && message.instrumentId !== "") {
+      writer.uint32(10).string(message.instrumentId);
+    }
+    if (message.bids !== undefined && message.bids.length !== 0) {
+      for (const v of message.bids) {
+        Order.encode(v!, writer.uint32(18).fork()).join();
+      }
+    }
+    if (message.asks !== undefined && message.asks.length !== 0) {
+      for (const v of message.asks) {
+        Order.encode(v!, writer.uint32(26).fork()).join();
+      }
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetOrderBookResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetOrderBookResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.instrumentId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          const el = Order.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.bids!.push(el);
+          }
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          const el = Order.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.asks!.push(el);
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetOrderBookResponse {
+    return {
+      instrumentId: isSet(object.instrumentId)
+        ? globalThis.String(object.instrumentId)
+        : isSet(object.instrument_id)
+        ? globalThis.String(object.instrument_id)
+        : "",
+      bids: globalThis.Array.isArray(object?.bids) ? object.bids.map((e: any) => Order.fromJSON(e)) : [],
+      asks: globalThis.Array.isArray(object?.asks) ? object.asks.map((e: any) => Order.fromJSON(e)) : [],
+    };
+  },
+
+  toJSON(message: GetOrderBookResponse): unknown {
+    const obj: any = {};
+    if (message.instrumentId !== undefined && message.instrumentId !== "") {
+      obj.instrumentId = message.instrumentId;
+    }
+    if (message.bids?.length) {
+      obj.bids = message.bids.map((e) => Order.toJSON(e));
+    }
+    if (message.asks?.length) {
+      obj.asks = message.asks.map((e) => Order.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetOrderBookResponse>, I>>(base?: I): GetOrderBookResponse {
+    return GetOrderBookResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetOrderBookResponse>, I>>(object: I): GetOrderBookResponse {
+    const message = createBaseGetOrderBookResponse();
+    message.instrumentId = object.instrumentId ?? "";
+    message.bids = object.bids?.map((e) => Order.fromPartial(e)) || [];
+    message.asks = object.asks?.map((e) => Order.fromPartial(e)) || [];
+    return message;
+  },
+};
 
 function createBasePlaceOrderRequest(): PlaceOrderRequest {
   return { order: undefined };
@@ -384,11 +564,22 @@ export const MatchingEngineService = {
     responseSerialize: (value: CancelOrderResponse): Buffer => Buffer.from(CancelOrderResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): CancelOrderResponse => CancelOrderResponse.decode(value),
   },
+  getOrderBook: {
+    path: "/matching.MatchingEngine/GetOrderBook",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetOrderBookRequest): Buffer => Buffer.from(GetOrderBookRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetOrderBookRequest => GetOrderBookRequest.decode(value),
+    responseSerialize: (value: GetOrderBookResponse): Buffer =>
+      Buffer.from(GetOrderBookResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetOrderBookResponse => GetOrderBookResponse.decode(value),
+  },
 } as const;
 
 export interface MatchingEngineServer extends UntypedServiceImplementation {
   placeOrder: handleUnaryCall<PlaceOrderRequest, PlaceOrderResponse>;
   cancelOrder: handleUnaryCall<CancelOrderRequest, CancelOrderResponse>;
+  getOrderBook: handleUnaryCall<GetOrderBookRequest, GetOrderBookResponse>;
 }
 
 export interface MatchingEngineClient extends Client {
@@ -421,6 +612,21 @@ export interface MatchingEngineClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: CancelOrderResponse) => void,
+  ): ClientUnaryCall;
+  getOrderBook(
+    request: GetOrderBookRequest,
+    callback: (error: ServiceError | null, response: GetOrderBookResponse) => void,
+  ): ClientUnaryCall;
+  getOrderBook(
+    request: GetOrderBookRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetOrderBookResponse) => void,
+  ): ClientUnaryCall;
+  getOrderBook(
+    request: GetOrderBookRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetOrderBookResponse) => void,
   ): ClientUnaryCall;
 }
 

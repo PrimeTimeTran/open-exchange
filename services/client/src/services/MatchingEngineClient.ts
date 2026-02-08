@@ -3,6 +3,8 @@ import { MatchingEngineClient } from 'src/proto/matching/engine';
 import {
   PlaceOrderRequest,
   PlaceOrderResponse,
+  GetOrderBookRequest,
+  GetOrderBookResponse,
 } from 'src/proto/matching/engine';
 
 const MATCHING_ENGINE_URL =
@@ -21,6 +23,20 @@ export const matchingEngineClient = {
   ): Promise<PlaceOrderResponse> => {
     return new Promise((resolve, reject) => {
       client.placeOrder(request, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  },
+
+  getOrderBook: async (
+    request: GetOrderBookRequest,
+  ): Promise<GetOrderBookResponse> => {
+    return new Promise((resolve, reject) => {
+      client.getOrderBook(request, (err, response) => {
         if (err) {
           reject(err);
         } else {

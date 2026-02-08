@@ -21,6 +21,116 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type GetOrderBookRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	InstrumentId string `protobuf:"bytes,1,opt,name=instrument_id,json=instrumentId,proto3" json:"instrument_id,omitempty"`
+}
+
+func (x *GetOrderBookRequest) Reset() {
+	*x = GetOrderBookRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_matching_engine_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetOrderBookRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetOrderBookRequest) ProtoMessage() {}
+
+func (x *GetOrderBookRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_matching_engine_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetOrderBookRequest.ProtoReflect.Descriptor instead.
+func (*GetOrderBookRequest) Descriptor() ([]byte, []int) {
+	return file_matching_engine_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *GetOrderBookRequest) GetInstrumentId() string {
+	if x != nil {
+		return x.InstrumentId
+	}
+	return ""
+}
+
+type GetOrderBookResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	InstrumentId string          `protobuf:"bytes,1,opt,name=instrument_id,json=instrumentId,proto3" json:"instrument_id,omitempty"`
+	Bids         []*common.Order `protobuf:"bytes,2,rep,name=bids,proto3" json:"bids,omitempty"`
+	Asks         []*common.Order `protobuf:"bytes,3,rep,name=asks,proto3" json:"asks,omitempty"`
+}
+
+func (x *GetOrderBookResponse) Reset() {
+	*x = GetOrderBookResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_matching_engine_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetOrderBookResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetOrderBookResponse) ProtoMessage() {}
+
+func (x *GetOrderBookResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_matching_engine_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetOrderBookResponse.ProtoReflect.Descriptor instead.
+func (*GetOrderBookResponse) Descriptor() ([]byte, []int) {
+	return file_matching_engine_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *GetOrderBookResponse) GetInstrumentId() string {
+	if x != nil {
+		return x.InstrumentId
+	}
+	return ""
+}
+
+func (x *GetOrderBookResponse) GetBids() []*common.Order {
+	if x != nil {
+		return x.Bids
+	}
+	return nil
+}
+
+func (x *GetOrderBookResponse) GetAsks() []*common.Order {
+	if x != nil {
+		return x.Asks
+	}
+	return nil
+}
+
 type PlaceOrderRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -32,7 +142,7 @@ type PlaceOrderRequest struct {
 func (x *PlaceOrderRequest) Reset() {
 	*x = PlaceOrderRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_matching_engine_proto_msgTypes[0]
+		mi := &file_matching_engine_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -45,7 +155,7 @@ func (x *PlaceOrderRequest) String() string {
 func (*PlaceOrderRequest) ProtoMessage() {}
 
 func (x *PlaceOrderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_matching_engine_proto_msgTypes[0]
+	mi := &file_matching_engine_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -58,7 +168,7 @@ func (x *PlaceOrderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlaceOrderRequest.ProtoReflect.Descriptor instead.
 func (*PlaceOrderRequest) Descriptor() ([]byte, []int) {
-	return file_matching_engine_proto_rawDescGZIP(), []int{0}
+	return file_matching_engine_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *PlaceOrderRequest) GetOrder() *common.Order {
@@ -81,7 +191,7 @@ type PlaceOrderResponse struct {
 func (x *PlaceOrderResponse) Reset() {
 	*x = PlaceOrderResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_matching_engine_proto_msgTypes[1]
+		mi := &file_matching_engine_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -94,7 +204,7 @@ func (x *PlaceOrderResponse) String() string {
 func (*PlaceOrderResponse) ProtoMessage() {}
 
 func (x *PlaceOrderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_matching_engine_proto_msgTypes[1]
+	mi := &file_matching_engine_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -107,7 +217,7 @@ func (x *PlaceOrderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlaceOrderResponse.ProtoReflect.Descriptor instead.
 func (*PlaceOrderResponse) Descriptor() ([]byte, []int) {
-	return file_matching_engine_proto_rawDescGZIP(), []int{1}
+	return file_matching_engine_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PlaceOrderResponse) GetOrderId() string {
@@ -143,7 +253,7 @@ type CancelOrderRequest struct {
 func (x *CancelOrderRequest) Reset() {
 	*x = CancelOrderRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_matching_engine_proto_msgTypes[2]
+		mi := &file_matching_engine_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -156,7 +266,7 @@ func (x *CancelOrderRequest) String() string {
 func (*CancelOrderRequest) ProtoMessage() {}
 
 func (x *CancelOrderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_matching_engine_proto_msgTypes[2]
+	mi := &file_matching_engine_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -169,7 +279,7 @@ func (x *CancelOrderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelOrderRequest.ProtoReflect.Descriptor instead.
 func (*CancelOrderRequest) Descriptor() ([]byte, []int) {
-	return file_matching_engine_proto_rawDescGZIP(), []int{2}
+	return file_matching_engine_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *CancelOrderRequest) GetOrderId() string {
@@ -198,7 +308,7 @@ type CancelOrderResponse struct {
 func (x *CancelOrderResponse) Reset() {
 	*x = CancelOrderResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_matching_engine_proto_msgTypes[3]
+		mi := &file_matching_engine_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -211,7 +321,7 @@ func (x *CancelOrderResponse) String() string {
 func (*CancelOrderResponse) ProtoMessage() {}
 
 func (x *CancelOrderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_matching_engine_proto_msgTypes[3]
+	mi := &file_matching_engine_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -224,7 +334,7 @@ func (x *CancelOrderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelOrderResponse.ProtoReflect.Descriptor instead.
 func (*CancelOrderResponse) Descriptor() ([]byte, []int) {
-	return file_matching_engine_proto_rawDescGZIP(), []int{3}
+	return file_matching_engine_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *CancelOrderResponse) GetSuccess() bool {
@@ -247,7 +357,19 @@ var file_matching_engine_proto_rawDesc = []byte{
 	0x0a, 0x15, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x69, 0x6e, 0x67, 0x2f, 0x65, 0x6e, 0x67, 0x69, 0x6e,
 	0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x08, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x69, 0x6e,
 	0x67, 0x1a, 0x12, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2f, 0x6f, 0x72, 0x64, 0x65, 0x72, 0x2e,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x38, 0x0a, 0x11, 0x50, 0x6c, 0x61, 0x63, 0x65, 0x4f, 0x72,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x3a, 0x0a, 0x13, 0x47, 0x65, 0x74, 0x4f, 0x72, 0x64, 0x65,
+	0x72, 0x42, 0x6f, 0x6f, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d,
+	0x69, 0x6e, 0x73, 0x74, 0x72, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x0c, 0x69, 0x6e, 0x73, 0x74, 0x72, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x49,
+	0x64, 0x22, 0x81, 0x01, 0x0a, 0x14, 0x47, 0x65, 0x74, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x42, 0x6f,
+	0x6f, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x23, 0x0a, 0x0d, 0x69, 0x6e,
+	0x73, 0x74, 0x72, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x0c, 0x69, 0x6e, 0x73, 0x74, 0x72, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x12,
+	0x21, 0x0a, 0x04, 0x62, 0x69, 0x64, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0d, 0x2e,
+	0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2e, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x52, 0x04, 0x62, 0x69,
+	0x64, 0x73, 0x12, 0x21, 0x0a, 0x04, 0x61, 0x73, 0x6b, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b,
+	0x32, 0x0d, 0x2e, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2e, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x52,
+	0x04, 0x61, 0x73, 0x6b, 0x73, 0x22, 0x38, 0x0a, 0x11, 0x50, 0x6c, 0x61, 0x63, 0x65, 0x4f, 0x72,
 	0x64, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x05, 0x6f, 0x72,
 	0x64, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0d, 0x2e, 0x63, 0x6f, 0x6d, 0x6d,
 	0x6f, 0x6e, 0x2e, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x52, 0x05, 0x6f, 0x72, 0x64, 0x65, 0x72, 0x22,
@@ -268,7 +390,7 @@ var file_matching_engine_proto_rawDesc = []byte{
 	0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x73,
 	0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x12, 0x23, 0x0a, 0x0d, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x5f,
 	0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x65,
-	0x72, 0x72, 0x6f, 0x72, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x32, 0xa5, 0x01, 0x0a, 0x0e,
+	0x72, 0x72, 0x6f, 0x72, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x32, 0xf4, 0x01, 0x0a, 0x0e,
 	0x4d, 0x61, 0x74, 0x63, 0x68, 0x69, 0x6e, 0x67, 0x45, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x12, 0x47,
 	0x0a, 0x0a, 0x50, 0x6c, 0x61, 0x63, 0x65, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x12, 0x1b, 0x2e, 0x6d,
 	0x61, 0x74, 0x63, 0x68, 0x69, 0x6e, 0x67, 0x2e, 0x50, 0x6c, 0x61, 0x63, 0x65, 0x4f, 0x72, 0x64,
@@ -279,11 +401,16 @@ var file_matching_engine_proto_rawDesc = []byte{
 	0x67, 0x2e, 0x43, 0x61, 0x6e, 0x63, 0x65, 0x6c, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x52, 0x65, 0x71,
 	0x75, 0x65, 0x73, 0x74, 0x1a, 0x1d, 0x2e, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x69, 0x6e, 0x67, 0x2e,
 	0x43, 0x61, 0x6e, 0x63, 0x65, 0x6c, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x42, 0x39, 0x5a, 0x37, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
-	0x6d, 0x2f, 0x6f, 0x70, 0x65, 0x6e, 0x2d, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x2f,
-	0x6d, 0x61, 0x74, 0x63, 0x68, 0x69, 0x6e, 0x67, 0x5f, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2f,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x69, 0x6e, 0x67, 0x62, 0x06,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6e, 0x73, 0x65, 0x12, 0x4d, 0x0a, 0x0c, 0x47, 0x65, 0x74, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x42,
+	0x6f, 0x6f, 0x6b, 0x12, 0x1d, 0x2e, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x69, 0x6e, 0x67, 0x2e, 0x47,
+	0x65, 0x74, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x42, 0x6f, 0x6f, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x1a, 0x1e, 0x2e, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x69, 0x6e, 0x67, 0x2e, 0x47, 0x65,
+	0x74, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x42, 0x6f, 0x6f, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x42, 0x39, 0x5a, 0x37, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d,
+	0x2f, 0x6f, 0x70, 0x65, 0x6e, 0x2d, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x2f, 0x6d,
+	0x61, 0x74, 0x63, 0x68, 0x69, 0x6e, 0x67, 0x5f, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2f, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x69, 0x6e, 0x67, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -298,25 +425,31 @@ func file_matching_engine_proto_rawDescGZIP() []byte {
 	return file_matching_engine_proto_rawDescData
 }
 
-var file_matching_engine_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_matching_engine_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_matching_engine_proto_goTypes = []interface{}{
-	(*PlaceOrderRequest)(nil),   // 0: matching.PlaceOrderRequest
-	(*PlaceOrderResponse)(nil),  // 1: matching.PlaceOrderResponse
-	(*CancelOrderRequest)(nil),  // 2: matching.CancelOrderRequest
-	(*CancelOrderResponse)(nil), // 3: matching.CancelOrderResponse
-	(*common.Order)(nil),        // 4: common.Order
+	(*GetOrderBookRequest)(nil),  // 0: matching.GetOrderBookRequest
+	(*GetOrderBookResponse)(nil), // 1: matching.GetOrderBookResponse
+	(*PlaceOrderRequest)(nil),    // 2: matching.PlaceOrderRequest
+	(*PlaceOrderResponse)(nil),   // 3: matching.PlaceOrderResponse
+	(*CancelOrderRequest)(nil),   // 4: matching.CancelOrderRequest
+	(*CancelOrderResponse)(nil),  // 5: matching.CancelOrderResponse
+	(*common.Order)(nil),         // 6: common.Order
 }
 var file_matching_engine_proto_depIdxs = []int32{
-	4, // 0: matching.PlaceOrderRequest.order:type_name -> common.Order
-	0, // 1: matching.MatchingEngine.PlaceOrder:input_type -> matching.PlaceOrderRequest
-	2, // 2: matching.MatchingEngine.CancelOrder:input_type -> matching.CancelOrderRequest
-	1, // 3: matching.MatchingEngine.PlaceOrder:output_type -> matching.PlaceOrderResponse
-	3, // 4: matching.MatchingEngine.CancelOrder:output_type -> matching.CancelOrderResponse
-	3, // [3:5] is the sub-list for method output_type
-	1, // [1:3] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	6, // 0: matching.GetOrderBookResponse.bids:type_name -> common.Order
+	6, // 1: matching.GetOrderBookResponse.asks:type_name -> common.Order
+	6, // 2: matching.PlaceOrderRequest.order:type_name -> common.Order
+	2, // 3: matching.MatchingEngine.PlaceOrder:input_type -> matching.PlaceOrderRequest
+	4, // 4: matching.MatchingEngine.CancelOrder:input_type -> matching.CancelOrderRequest
+	0, // 5: matching.MatchingEngine.GetOrderBook:input_type -> matching.GetOrderBookRequest
+	3, // 6: matching.MatchingEngine.PlaceOrder:output_type -> matching.PlaceOrderResponse
+	5, // 7: matching.MatchingEngine.CancelOrder:output_type -> matching.CancelOrderResponse
+	1, // 8: matching.MatchingEngine.GetOrderBook:output_type -> matching.GetOrderBookResponse
+	6, // [6:9] is the sub-list for method output_type
+	3, // [3:6] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_matching_engine_proto_init() }
@@ -326,7 +459,7 @@ func file_matching_engine_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_matching_engine_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PlaceOrderRequest); i {
+			switch v := v.(*GetOrderBookRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -338,7 +471,7 @@ func file_matching_engine_proto_init() {
 			}
 		}
 		file_matching_engine_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PlaceOrderResponse); i {
+			switch v := v.(*GetOrderBookResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -350,7 +483,7 @@ func file_matching_engine_proto_init() {
 			}
 		}
 		file_matching_engine_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CancelOrderRequest); i {
+			switch v := v.(*PlaceOrderRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -362,6 +495,30 @@ func file_matching_engine_proto_init() {
 			}
 		}
 		file_matching_engine_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PlaceOrderResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_matching_engine_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CancelOrderRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_matching_engine_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CancelOrderResponse); i {
 			case 0:
 				return &v.state
@@ -380,7 +537,7 @@ func file_matching_engine_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_matching_engine_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

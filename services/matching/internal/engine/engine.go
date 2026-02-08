@@ -66,3 +66,8 @@ func (e *Engine) CancelOrder(instrumentID, orderID string) (*Order, error) {
 
 	return cancelledOrder, nil
 }
+
+func (e *Engine) GetOrderBookSnapshot(instrumentID string) (*OrderBook, error) {
+	// Use GetOrderBook to ensure it exists
+	return e.GetOrderBook(instrumentID), nil
+}

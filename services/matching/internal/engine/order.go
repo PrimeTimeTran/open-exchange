@@ -48,6 +48,25 @@ func NewOrderFromProto(o *common.Order) *Order {
 	}
 }
 
+func (o *Order) ToProto() *common.Order {
+	if o.OriginalOrder != nil {
+		// Update volatile fields
+		o.OriginalOrder.QuantityFilled = strconv.FormatFloat(o.QuantityFilled, 'f', -1, 64)
+		return o.OriginalOrder
+	}
+	
+	return &common.Order{
+		Id:             o.ID,
+		Side:           o.Side,
+		Type:           o.Type,
+		Price:          strconv.FormatFloat(o.Price, 'f', -1, 64),
+		Quantity:       strconv.FormatFloat(o.Quantity, 'f', -1, 64),
+		QuantityFilled: strconv.FormatFloat(o.QuantityFilled, 'f', -1, 64),
+		InstrumentId:   o.InstrumentID,
+		CreatedAt:      o.Timestamp,
+	}
+}
+
 func (o *Order) Filled() bool {
 	return o.QuantityFilled >= o.Quantity
 }

@@ -26,8 +26,8 @@ pub struct LedgerImpl {
 impl LedgerImpl {
     pub fn new(db_pool: PgPool) -> Self {
         Self {
-            db_pool: Some(db_pool),
-            order_service: OrderService::new(),
+            db_pool: Some(db_pool.clone()),
+            order_service: OrderService::new(Some(db_pool)),
             user_service: UserService::new(),
             account_service: AccountService::new(),
             wallet_service: WalletService::new(),
@@ -40,7 +40,7 @@ impl LedgerImpl {
     pub fn new_test() -> Self {
         Self {
             db_pool: None,
-            order_service: OrderService::new(),
+            order_service: OrderService::new(None),
             user_service: UserService::new(),
             account_service: AccountService::new(),
             wallet_service: WalletService::new(),
@@ -61,7 +61,7 @@ impl LedgerService for LedgerImpl {
         println!("Ledger: Recording order: {:?}", req.order);
 
         if let Some(order) = req.order {
-             self.order_service.record_order(order);
+             self.order_service.record_order(order).await;
         }
 
         Ok(Response::new(RecordOrderResponse {
@@ -77,7 +77,7 @@ impl LedgerService for LedgerImpl {
     ) -> Result<Response<CancelOrderResponse>, Status> {
          let req = request.into_inner();
          
-         if self.order_service.cancel_order(&req.order_id) {
+         if self.order_service.cancel_order(&req.order_id).await {
              Ok(Response::new(CancelOrderResponse {
                  success: true,
                  message: "Order cancelled".to_string(),
@@ -101,7 +101,7 @@ impl LedgerService for LedgerImpl {
         &self,
         _request: Request<GetOpenOrdersRequest>,
     ) -> Result<Response<GetOpenOrdersResponse>, Status> {
-        let orders = self.order_service.get_open_orders();
+        let orders = self.order_service.get_open_orders().await;
         Ok(Response::new(GetOpenOrdersResponse {
             orders,
         }))

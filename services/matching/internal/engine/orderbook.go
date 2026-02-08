@@ -89,6 +89,21 @@ func (ob *OrderBook) CancelOrder(orderID string) *Order {
 	return nil
 }
 
+// GetSnapshot returns a thread-safe copy of the order book state
+func (ob *OrderBook) GetSnapshot() ([]*Order, []*Order) {
+	ob.mu.Lock()
+	defer ob.mu.Unlock()
+	
+	// Copy slices to avoid race conditions if caller modifies them
+	bidsCopy := make([]*Order, len(ob.Bids))
+	copy(bidsCopy, ob.Bids)
+	
+	asksCopy := make([]*Order, len(ob.Asks))
+	copy(asksCopy, ob.Asks)
+	
+	return bidsCopy, asksCopy
+}
+
 func (ob *OrderBook) matchLimitBuy(order *Order, onMatch func(Trade) error) ([]Trade, []events.OrderBookEvent, error) {
 	trades := []Trade{}
 	bookEvents := []events.OrderBookEvent{}
@@ -369,7 +384,7 @@ func (ob *OrderBook) addBid(order *Order) {
 	// Result: 100(t=100), 100(t=150), 100(t=200), 99. Correct.
 	
 	ob.Bids = insert(ob.Bids, index, order)
-	log.Printf("Added to Bids: %v @ %v", order.Quantity, order.Price)
+	log.Printf("[%s] Added to Bids: %v @ %v", ob.InstrumentID, order.Quantity, order.Price)
 }
 
 func (ob *OrderBook) addAsk(order *Order) {
@@ -401,7 +416,7 @@ func (ob *OrderBook) addAsk(order *Order) {
 	// So we want sorted by Timestamp ASC.
 	
 	ob.Asks = insert(ob.Asks, index, order)
-	log.Printf("Added to Asks: %v @ %v", order.Quantity, order.Price)
+	log.Printf("[%s] Added to Asks: %v @ %v", ob.InstrumentID, order.Quantity, order.Price)
 }
 
 func insert(slice []*Order, index int, value *Order) []*Order {

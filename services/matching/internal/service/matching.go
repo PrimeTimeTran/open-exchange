@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/open-exchange/matching_engine/internal/engine"
@@ -144,6 +145,31 @@ func (s *MatchingService) CancelOrder(ctx context.Context, orderID, instrumentID
 	return nil
 }
 
+func (s *MatchingService) GetOrderBook(ctx context.Context, instrumentID string) ([]*common.Order, []*common.Order, error) {
+	// 1. Get snapshot from engine
+	// Note: Engine returns internal Order structs
+	ob, err := s.Engine.GetOrderBookSnapshot(instrumentID)
+	if err != nil {
+		return nil, nil, err
+	}
+	
+	// 2. Get the actual lists safely
+	bids, asks := ob.GetSnapshot()
+	
+	// 3. Convert to Proto
+	var protoBids []*common.Order
+	for _, b := range bids {
+		protoBids = append(protoBids, b.ToProto())
+	}
+	
+	var protoAsks []*common.Order
+	for _, a := range asks {
+		protoAsks = append(protoAsks, a.ToProto())
+	}
+	
+	return protoBids, protoAsks, nil
+}
+
 // RecoverState fetches open orders from the Ledger and repopulates the engine.
 func (s *MatchingService) RecoverState(ctx context.Context) error {
 	log.Println("Matching Service: Starting State Recovery...")
@@ -161,6 +187,11 @@ func (s *MatchingService) RecoverState(ctx context.Context) error {
 
 	// 2. Repopulate Engine
 	for _, orderProto := range resp.Orders {
+		// Normalize instrument ID
+		if strings.Contains(orderProto.InstrumentId, "_") {
+			orderProto.InstrumentId = strings.ReplaceAll(orderProto.InstrumentId, "_", "-")
+		}
+		
 		order := engine.NewOrderFromProto(orderProto)
 		// ProcessOrder usually triggers matching. For recovery, we ideally just want to ADD to the book.
 		// However, since we are recovering existing state, these orders should already be resting (no crosses).
@@ -194,6 +225,10 @@ func (s *MatchingService) SyncOrderBook(ctx context.Context) error {
 
 	count := 0
 	for _, orderProto := range resp.Orders {
+		if strings.Contains(orderProto.InstrumentId, "_") {
+			orderProto.InstrumentId = strings.ReplaceAll(orderProto.InstrumentId, "_", "-")
+		}
+		
 		order := engine.NewOrderFromProto(orderProto)
 		
 		// Process the order. Since these are existing open orders, they should simply sit in the book.
