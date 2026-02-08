@@ -10,6 +10,8 @@ import {
 const MATCHING_ENGINE_URL =
   process.env.MATCHING_ENGINE_URL || 'localhost:50051';
 
+console.log('MatchingEngineClient: Connecting to', MATCHING_ENGINE_URL);
+
 // We instantiate the client once.
 // In a real app, you might want to handle connection pooling or reconnection strategies.
 const client = new MatchingEngineClient(

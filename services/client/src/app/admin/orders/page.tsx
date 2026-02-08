@@ -1,12 +1,41 @@
 import { matchingEngineClient as client } from '@/services/MatchingEngineClient';
 import { GetOrderBookResponse } from '@/proto/matching/engine';
 import { Order } from '@/proto/common/order';
+import { prisma } from '@/prisma';
 
 async function getOrderBook(
   instrumentId: string,
 ): Promise<GetOrderBookResponse> {
+  // Resolve instrument symbol to UUID if possible
+  // Check if it's already a UUID
+  const isUuid =
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+      instrumentId,
+    );
+
+  let targetInstrumentId = instrumentId;
+
+  if (!isUuid) {
+    let instrument = await prisma.instrument.findFirst({
+      where: { symbol: instrumentId },
+    });
+
+    if (!instrument) {
+      // Try replacing - with _ (e.g. BTC-USD -> BTC_USD)
+      const underscoreSymbol = instrumentId.replace(/-/g, '_');
+      instrument = await prisma.instrument.findFirst({
+        where: { symbol: underscoreSymbol },
+      });
+    }
+    if (instrument) {
+      targetInstrumentId = instrument.id;
+    } else {
+      console.warn(`Instrument not found for symbol: ${instrumentId}`);
+    }
+  }
+
   // The client wrapper now provides a promise-based getOrderBook method
-  return await client.getOrderBook({ instrumentId });
+  return await client.getOrderBook({ instrumentId: targetInstrumentId });
 }
 
 export default async function OrdersPage({
@@ -37,13 +66,15 @@ export default async function OrdersPage({
       )}
 
       <form className="mb-8 flex gap-4">
-        <input
-          type="text"
+        <select
           name="instrument_id"
           defaultValue={instrumentId}
-          className="border border-input bg-background p-2 rounded w-64 text-foreground placeholder:text-muted-foreground"
-          placeholder="Instrument ID (e.g. BTC-USD)"
-        />
+          className="border border-input bg-background p-2 rounded w-64 text-foreground"
+        >
+          <option value="BTC-USD">BTC-USD</option>
+          <option value="ETH-USD">ETH-USD</option>
+          <option value="AAPL-USD">AAPL-USD</option>
+        </select>
         <button
           type="submit"
           className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-2 px-4 rounded"

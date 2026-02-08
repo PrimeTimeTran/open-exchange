@@ -75,22 +75,17 @@ func main() {
 	// 2.5 Startup Recovery
 	// We do this in a goroutine or before serving. Before serving is safer to ensure state is consistent.
 	ctx := context.Background()
-	// Retry recovery for up to 30 seconds
-	maxRetries := 10
+	// Retry recovery indefinitely until successful
 	retryInterval := 3 * time.Second
-	for i := 0; i < maxRetries; i++ {
+	for {
 		err := svc.RecoverState(ctx)
 		if err == nil {
 			log.Printf("Successfully recovered state from Ledger.")
 			break
 		}
 		
-		log.Printf("WARNING: Failed to recover state from Ledger (Attempt %d/%d): %v", i+1, maxRetries, err)
-		if i == maxRetries-1 {
-			log.Printf("ERROR: Could not recover state after %d attempts. Starting with empty order book.", maxRetries)
-		} else {
-			time.Sleep(retryInterval)
-		}
+		log.Printf("WARNING: Failed to recover state from Ledger: %v. Retrying in %v...", err, retryInterval)
+		time.Sleep(retryInterval)
 	}
 
 	// 3. Start Matching Engine Server

@@ -28,11 +28,9 @@ struct OrderRow {
     quantity: f64,
     price: f64,
     status: String,
-    #[sqlx(rename = "filledQuantity")]
+    #[sqlx(rename = "quantityFilled")]
     filled_quantity: f64,
-    #[sqlx(rename = "averageFillPrice")]
-    average_fill_price: f64,
-    meta: serde_json::Value,
+    meta: Option<serde_json::Value>,
     #[sqlx(rename = "createdAt")]
     created_at: DateTime<Utc>,
     #[sqlx(rename = "updatedAt")]
@@ -51,8 +49,8 @@ impl From<OrderRow> for Order {
             price: row.price,
             status: row.status,
             filled_quantity: row.filled_quantity,
-            average_fill_price: row.average_fill_price,
-            meta: row.meta,
+            average_fill_price: 0.0,
+            meta: row.meta.unwrap_or(serde_json::json!({})),
             created_at: row.created_at,
             updated_at: row.updated_at,
         }
@@ -64,9 +62,9 @@ impl OrderRepository for PostgresOrderRepository {
     async fn create(&self, order: Order) -> Result<Order> {
         let rec: OrderRow = sqlx::query_as(
             r#"
-            INSERT INTO "Order" (id, "tenantId", "accountId", "instrumentId", side, quantity, price, status, "filledQuantity", "averageFillPrice", meta, "createdAt", "updatedAt")
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-            RETURNING id, "tenantId", "accountId", "instrumentId", side, quantity, price, status, "filledQuantity", "averageFillPrice", meta, "createdAt", "updatedAt"
+            INSERT INTO "Order" (id, "tenantId", "accountId", "instrumentId", side, quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt")
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            RETURNING id, "tenantId", "accountId", "instrumentId", side, CAST(quantity AS FLOAT8), CAST(price AS FLOAT8), status, CAST("quantityFilled" AS FLOAT8), meta, "createdAt", "updatedAt"
             "#
         )
         .bind(order.id)
@@ -78,7 +76,6 @@ impl OrderRepository for PostgresOrderRepository {
         .bind(order.price)
         .bind(order.status)
         .bind(order.filled_quantity)
-        .bind(order.average_fill_price)
         .bind(order.meta)
         .bind(order.created_at)
         .bind(order.updated_at)
@@ -92,7 +89,7 @@ impl OrderRepository for PostgresOrderRepository {
     async fn get(&self, id: Uuid) -> Result<Option<Order>> {
         let rec: Option<OrderRow> = sqlx::query_as(
             r#"
-            SELECT id, "tenantId", "accountId", "instrumentId", side, quantity, price, status, "filledQuantity", "averageFillPrice", meta, "createdAt", "updatedAt"
+            SELECT id, "tenantId", "accountId", "instrumentId", side, CAST(quantity AS FLOAT8), CAST(price AS FLOAT8), status, CAST("quantityFilled" AS FLOAT8), meta, "createdAt", "updatedAt"
             FROM "Order"
             WHERE id = $1
             "#
@@ -126,7 +123,7 @@ impl OrderRepository for PostgresOrderRepository {
     async fn list_open(&self) -> Result<Vec<Order>> {
         let recs: Vec<OrderRow> = sqlx::query_as(
             r#"
-            SELECT id, "tenantId", "accountId", "instrumentId", side, quantity, price, status, "filledQuantity", "averageFillPrice", meta, "createdAt", "updatedAt"
+            SELECT id, "tenantId", "accountId", "instrumentId", side, CAST(quantity AS FLOAT8), CAST(price AS FLOAT8), status, CAST("quantityFilled" AS FLOAT8), meta, "createdAt", "updatedAt"
             FROM "Order"
             WHERE status = 'new' OR status = 'partial' OR status = 'open'
             "#
