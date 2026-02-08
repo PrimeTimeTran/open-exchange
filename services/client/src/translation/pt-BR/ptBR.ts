@@ -588,8 +588,12 @@ const dictionary = {
     },
 
     fields: {
+      name: 'Name',
+      isSystem: 'IsSystem',
       type: 'Type',
       status: 'Status',
+      isInterest: 'IsInterest',
+      interestRate: 'InterestRate',
       meta: 'Meta',
       user: 'User',
       orders: 'Orders',
@@ -606,8 +610,12 @@ const dictionary = {
     },
 
     hints: {
+      name: '',
+      isSystem: '',
       type: '',
       status: '',
+      isInterest: '',
+      interestRate: '',
       meta: '',
       user: '',
       orders: '',
@@ -2427,6 +2435,7 @@ const dictionary = {
       auditLog: 'AuditLog',
       notesInternal: 'NotesInternal',
       specialOrderTypes: 'SpecialOrderTypes',
+      minFeeAmount: 'MinFeeAmount',
 
       createdByMembership: 'Criado Por',
       updatedByMembership: 'Atualizado Por',
@@ -2460,6 +2469,7 @@ const dictionary = {
       auditLog: '',
       notesInternal: '',
       specialOrderTypes: '',
+      minFeeAmount: '',
 
     },
 
@@ -3963,7 +3973,7 @@ const dictionary = {
   emails: {
     passwordResetEmail: {
       subject: `Redefina sua senha para {0}`,
-      content: `<p>Olá,</p> <p>Siga este link para redefinir a senha da sua conta {0}.</p> <p><a href="{1}">{1}</a></p> <p>Se você não solicitou a redefinição de senha, pode ignorar este e-mail.</p> <p>Obrigado,</p> <p>Equipe {0}</p>`,
+      content: `<p>Olá,</p> <p>Siga este link para redefinir a senha da sua conta {0}.</p> <p><a href="{1}">{1}</a></p> <p>Se voc�� não solicitou a redefinição de senha, pode ignorar este e-mail.</p> <p>Obrigado,</p> <p>Equipe {0}</p>`,
     },
     verifyEmailEmail: {
       subject: `Verifique seu e-mail para {0}`,

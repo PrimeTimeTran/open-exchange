@@ -12,6 +12,7 @@ import { toast } from 'src/shared/components/ui/use-toast';
 import { AppContext } from 'src/shared/controller/appContext';
 import { formatDatetime } from 'src/shared/lib/formatDateTime';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
+import { formatDecimal } from 'src/shared/lib/formatDecimal';
 import { membershipLabel } from 'src/features/membership/membershipLabel';
 import { MembershipLink } from 'src/features/membership/components/MembershipLink';
 import { orderLabel } from 'src/features/order/orderLabel';
@@ -86,6 +87,42 @@ export function AccountView({
       </div>
 
       <div className="my-6 divide-y border-t">
+        {Boolean(account.name) && (
+          <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
+            <div className="font-semibold">
+              {dictionary.account.fields.name}
+            </div>
+            <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
+              <span>{account.name}</span>
+              <CopyToClipboardButton
+                text={account.name}
+                dictionary={context.dictionary}
+              />
+            </div>
+          </div>
+        )}
+        {account.isSystem != null && (
+          <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
+            <div className="font-semibold">
+              {dictionary.account.fields.isSystem}
+            </div>
+            <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
+              <span>
+                {account.isSystem
+                  ? dictionary.shared.yes
+                  : dictionary.shared.no}
+              </span>
+              <CopyToClipboardButton
+                text={
+                  account.isSystem
+                    ? dictionary.shared.yes
+                    : dictionary.shared.no
+                }
+                dictionary={context.dictionary}
+              />
+            </div>
+          </div>
+        )}
         {account.type != null && (
           <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
             <div className="font-semibold">
@@ -124,6 +161,47 @@ export function AccountView({
                 text={enumeratorLabel(
                   dictionary.account.enumerators.status,
                   account.status,
+                )}
+                dictionary={context.dictionary}
+              />
+            </div>
+          </div>
+        )}
+        {account.isInterest != null && (
+          <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
+            <div className="font-semibold">
+              {dictionary.account.fields.isInterest}
+            </div>
+            <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
+              <span>
+                {account.isInterest
+                  ? dictionary.shared.yes
+                  : dictionary.shared.no}
+              </span>
+              <CopyToClipboardButton
+                text={
+                  account.isInterest
+                    ? dictionary.shared.yes
+                    : dictionary.shared.no
+                }
+                dictionary={context.dictionary}
+              />
+            </div>
+          </div>
+        )}
+        {account.interestRate != null && (
+          <div className="grid grid-cols-3 gap-4 py-4 text-sm lg:grid-cols-4">
+            <div className="font-semibold">
+              {dictionary.account.fields.interestRate}
+            </div>
+            <div className="col-span-2 flex items-baseline gap-4 lg:col-span-3">
+              <span>
+                {formatDecimal(account.interestRate?.toString(), context.locale)}
+              </span>
+              <CopyToClipboardButton
+                text={formatDecimal(
+                  account.interestRate?.toString(),
+                  context.locale
                 )}
                 dictionary={context.dictionary}
               />

@@ -25,6 +25,8 @@ import { getZodErrorMap } from 'src/translation/getZodErrorMap';
 import { z } from 'zod';
 import { accountCreateInputSchema } from 'src/features/account/accountSchemas';
 import { useSetUnsavedChanges } from 'src/shared/components/unsavedChanges/UnsavedChangesProvider';
+import { Input } from 'src/shared/components/ui/input';
+import { Switch } from 'src/shared/components/ui/switch';
 import { accountEnumerators } from 'src/features/account/accountEnumerators';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
 import SelectInput from 'src/shared/components/form/SelectInput';
@@ -52,8 +54,12 @@ export function AccountForm({
   const isEditing = Boolean(account?.id);
 
   const [initialValues] = React.useState({
+    name: account?.name || '',
+    isSystem: account?.isSystem || false,
     type: account?.type || null,
     status: account?.status || null,
+    isInterest: account?.isInterest || false,
+    interestRate: account?.interestRate ? Number(account?.interestRate) : '',
     user: account?.user || null,
     meta: account?.meta?.toString() || '',
   });
@@ -122,12 +128,69 @@ export function AccountForm({
       >
         <div className="grid w-full gap-8">
           <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {dictionary.account.fields.name}
+                  </FormLabel>
+
+                  <Input
+                    disabled={mutation.isPending || mutation.isSuccess}
+                    autoFocus
+          {...field}
+                  />
+
+                  {dictionary.account.hints.name ? (
+                    <FormDescription>
+                      {dictionary.account.hints.name}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="name-error" />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="isSystem"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center space-x-2">
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={mutation.isPending || mutation.isSuccess}
+                      />
+                    </FormControl>
+                    <FormLabel>
+                      {dictionary.account.fields.isSystem}
+                    </FormLabel>
+                  </div>
+
+                  {dictionary.account.hints.isSystem ? (
+                    <FormDescription>
+                      {dictionary.account.hints.isSystem}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="isSystem-error" />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid max-w-lg gap-1">
           <FormField
             control={form.control}
             name="type"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{dictionary.account.fields.type}</FormLabel>
+                <FormLabel className="required">{dictionary.account.fields.type}</FormLabel>
 
                 <SelectInput
                   options={Object.keys(accountEnumerators.type).map(
@@ -193,6 +256,62 @@ export function AccountForm({
             )}
           />
           </div>
+          <div className="grid max-w-lg gap-1">
+            <FormField
+              control={form.control}
+              name="isInterest"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center space-x-2">
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={mutation.isPending || mutation.isSuccess}
+                      />
+                    </FormControl>
+                    <FormLabel>
+                      {dictionary.account.fields.isInterest}
+                    </FormLabel>
+                  </div>
+
+                  {dictionary.account.hints.isInterest ? (
+                    <FormDescription>
+                      {dictionary.account.hints.isInterest}
+                    </FormDescription>
+                  ) : null}
+
+                  <FormMessage data-testid="isInterest-error" />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid max-w-lg gap-1">
+              <FormField
+                control={form.control}
+                name="interestRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {dictionary.account.fields.interestRate}
+                    </FormLabel>
+
+                    <Input
+                      disabled={mutation.isPending || mutation.isSuccess}
+                      {...field}
+                    />
+
+                    {dictionary.account.hints.interestRate ? (
+                      <FormDescription>
+                        {dictionary.account.hints.interestRate}
+                      </FormDescription>
+                    ) : null}
+
+                    <FormMessage data-testid="interestRate-error" />
+                  </FormItem>
+                )}
+              />
+            </div>
           <div className="grid max-w-lg gap-1">
             <FormField
               control={form.control}

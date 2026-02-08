@@ -43,8 +43,12 @@ export async function accountCreate(body: unknown, context: AppContext) {
 
   let account = await prisma.account.create({
     data: {
+      name: data.name,
+      isSystem: data.isSystem,
       type: data.type,
       status: data.status,
+      isInterest: data.isInterest,
+      interestRate: data.interestRate,
       meta: data.meta,
       user: prismaRelationship.connectOne(data.user),
       importHash: data.importHash,

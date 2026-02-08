@@ -32,6 +32,7 @@ import { AppContext } from 'src/shared/controller/appContext';
 import { AccountNewButton } from 'src/features/account/components/AccountNewButton';
 import { z } from 'zod';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
+import { formatDecimal } from 'src/shared/lib/formatDecimal';
 import { accountLabel } from 'src/features/account/accountLabel';
 import { Account } from '@prisma/client';
 
@@ -77,6 +78,23 @@ export default function AccountList({ context }: { context: AppContext }) {
       enableHiding: false,
     },
     {
+      accessorKey: 'name',
+      meta: {
+        title: dictionary.account.fields.name,
+      },
+    },
+    {
+      accessorKey: 'isSystem',
+      meta: {
+        title: dictionary.account.fields.isSystem,
+      },
+      cell: ({ row }) => {
+        return row.getValue('isSystem')
+          ? dictionary.shared.yes
+          : dictionary.shared.no;
+      },
+    },
+    {
       accessorKey: 'type',
       meta: {
         title: dictionary.account.fields.type,
@@ -97,6 +115,31 @@ export default function AccountList({ context }: { context: AppContext }) {
         return enumeratorLabel(
           dictionary.account.enumerators.status,
           row.getValue('status'),
+        );
+      },
+    },
+    {
+      accessorKey: 'isInterest',
+      meta: {
+        title: dictionary.account.fields.isInterest,
+      },
+      cell: ({ row }) => {
+        return row.getValue('isInterest')
+          ? dictionary.shared.yes
+          : dictionary.shared.no;
+      },
+    },
+    {
+      accessorKey: 'interestRate',
+      meta: {
+        title: dictionary.account.fields.interestRate,
+      },
+      header: dataTableHeader('right', dictionary),
+      cell: ({ getValue }) => {
+        return (
+          <div className="whitespace-nowrap text-right">
+            {formatDecimal(getValue() as string, context.locale)}
+          </div>
         );
       },
     },

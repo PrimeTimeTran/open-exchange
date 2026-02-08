@@ -12,8 +12,12 @@ export function AccountImporter({ context }: { context: AppContext }) {
   return (
     <Importer
       keys={[
+        'name',
+        'isSystem',
         'type',
         'status',
+        'isInterest',
+        'interestRate',
         'user',
         'meta',
       ]}

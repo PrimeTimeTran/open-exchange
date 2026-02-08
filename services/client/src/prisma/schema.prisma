@@ -344,8 +344,12 @@ model Account {
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
 
-  type String?
+  name String?
+  isSystem Boolean @default(false)
+  type String
   status String?
+  isInterest Boolean @default(false)
+  interestRate Decimal?
   meta Json?
   userId String? @db.Uuid
   user Membership? @relation("accounts_user", fields: [userId], references: [id])
@@ -735,7 +739,6 @@ model BalanceSnapshot {
 
 model SystemAccount {
   id                    String      @id @db.Uuid
-  account               Account     @relation("account_systemAccount", fields: [id], references: [id], onDelete: Cascade)
   tenantId              String      @default(dbgenerated("NULLIF((current_setting('app.current_tenant_id'::text)), '')::uuid")) @db.Uuid
   tenant                Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   createdAt             DateTime    @default(now()) @db.Timestamptz(3)

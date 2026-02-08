@@ -590,8 +590,12 @@ const dictionary = {
     },
 
     fields: {
+      name: 'Name',
+      isSystem: 'IsSystem',
       type: 'Type',
       status: 'Status',
+      isInterest: 'IsInterest',
+      interestRate: 'InterestRate',
       meta: 'Meta',
       user: 'User',
       orders: 'Orders',
@@ -608,8 +612,12 @@ const dictionary = {
     },
 
     hints: {
+      name: '',
+      isSystem: '',
       type: '',
       status: '',
+      isInterest: '',
+      interestRate: '',
       meta: '',
       user: '',
       orders: '',
@@ -2459,6 +2467,7 @@ const dictionary = {
       auditLog: 'AuditLog',
       notesInternal: 'NotesInternal',
       specialOrderTypes: 'SpecialOrderTypes',
+      minFeeAmount: 'MinFeeAmount',
 
       createdByMembership: 'Erstellt von',
       updatedByMembership: 'Aktualisiert von',
@@ -2492,6 +2501,7 @@ const dictionary = {
       auditLog: '',
       notesInternal: '',
       specialOrderTypes: '',
+      minFeeAmount: '',
 
     },
 
@@ -2599,7 +2609,7 @@ const dictionary = {
     destroyMany: {
       success: 'LedgerEvent(n) erfolgreich gelöscht',
       noSelection:
-        'Sie müssen mindestens einen ledgerevent auswählen, um ihn zu löschen.',
+        'Sie müssen mindestens einen ledgerevent auswählen, um ihn zu l��schen.',
       confirmTitle: 'LedgerEvent(n) löschen?',
       confirmDescription:
         'Sind Sie sicher, dass Sie die {0} ausgewählten ledgerevent löschen möchten?',

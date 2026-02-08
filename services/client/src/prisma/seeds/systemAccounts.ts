@@ -8,79 +8,84 @@ export async function seedSystemAccounts(
   assetsMap: Map<string, any>,
 ) {
   const systemAccounts = [
-    { name: 'btc_hot_wallet', asset: 'BTC' },
-    { name: 'eth_hot_wallet', asset: 'ETH' },
-    { name: 'openc_reserve', asset: 'OPENC' },
-    { name: 'usd_operational', asset: 'USD' },
+    { name: 'btc_hot_wallet', asset: 'BTC', type: 'custody' },
+    { name: 'eth_hot_wallet', asset: 'ETH', type: 'custody' },
+    { name: 'openc_reserve', asset: 'OPENC', type: 'cash' },
+    { name: 'usd_operational', asset: 'USD', type: 'cash' },
+    { name: 'fees_account', asset: 'USD', type: 'fees' },
+    { name: 'clearing_account', asset: 'USD', type: 'clearing' },
   ];
 
-  for (const account of systemAccounts) {
-    const existing = await prisma.systemAccount.findFirst({
+  for (const accountData of systemAccounts) {
+    // Check if account exists
+    let account = await prisma.account.findFirst({
       where: {
         tenantId,
-        name: account.name,
+        name: accountData.name,
+        isSystem: true,
       },
     });
 
-    let sysAccountRecord;
-
-    if (existing) {
-      console.log(`System Account ${account.name} already exists.`);
-      sysAccountRecord = existing;
+    if (account) {
+      console.log(`System Account ${accountData.name} already exists.`);
     } else {
-      console.log(`Creating System Account ${account.name}...`);
-      sysAccountRecord = await prisma.systemAccount.create({
+      console.log(`Creating System Account ${accountData.name}...`);
+      account = await prisma.account.create({
         data: {
-          tenantId,
-          name: account.name,
-          type: 'system',
-          isActive: true,
-          createdByMembershipId: membershipId,
-          updatedByMembershipId: membershipId,
-          createdByUserId: userId,
-          updatedByUserId: userId,
+          tenant: { connect: { id: tenantId } }, // Relation fix
+          name: accountData.name,
+          type: accountData.type,
+          status: 'active',
+          isSystem: true,
+          isInterest: false,
+          createdByMembership: { connect: { id: membershipId } }, // Relation fix
+          updatedByMembership: { connect: { id: membershipId } }, // Relation fix
+          createdByUserId: userId, // Scalar, no change needed
+          updatedByUserId: userId, // Scalar, no change needed
         },
       });
     }
 
-    // Ensure Wallet exists
-    if (assetsMap.has(account.asset)) {
-      const asset = assetsMap.get(account.asset);
+    // Ensure Wallet exists for the associated asset
+    if (assetsMap.has(accountData.asset)) {
+      const asset = assetsMap.get(accountData.asset);
+
       const existingWallet = await prisma.wallet.findFirst({
         where: {
           tenantId,
-          accountId: sysAccountRecord.id,
+          accountId: account.id,
           assetId: asset.id,
         },
       });
 
       if (!existingWallet) {
         console.log(
-          `Creating wallet for System Account ${account.name} (${account.asset})...`,
+          `Creating wallet for System Account ${accountData.name} (${accountData.asset})...`,
         );
+
         await prisma.wallet.create({
           data: {
-            tenantId,
-            accountId: sysAccountRecord.id,
-            assetId: asset.id,
-            available: 100000000, // Seed with plenty of funds
-            total: 100000000,
+            tenant: { connect: { id: tenantId } }, // Relation fix if tenant is a relation
+            account: { connect: { id: account.id } }, // Relation fix
+            asset: { connect: { id: asset.id } }, // Relation fix
+            available: 100_000_000, // Adjust for decimals if needed
+            total: 100_000_000,
             locked: 0,
             version: 1,
-            createdByMembershipId: membershipId,
-            updatedByMembershipId: membershipId,
+            createdByMembership: { connect: { id: membershipId } }, // Relation fix
+            updatedByMembership: { connect: { id: membershipId } }, // Relation fix
             createdByUserId: userId,
             updatedByUserId: userId,
           },
         });
       } else {
         console.log(
-          `Wallet for System Account ${account.name} (${account.asset}) already exists.`,
+          `Wallet for System Account ${accountData.name} (${accountData.asset}) already exists.`,
         );
       }
     } else {
       console.log(
-        `Asset ${account.asset} not found for System Account ${account.name}, skipping wallet.`,
+        `Asset ${accountData.asset} not found for System Account ${accountData.name}, skipping wallet.`,
       );
     }
   }

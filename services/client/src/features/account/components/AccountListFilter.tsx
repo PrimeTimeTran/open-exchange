@@ -20,14 +20,20 @@ import {
 import { AppContext } from 'src/shared/controller/appContext';
 import { getZodErrorMap } from 'src/translation/getZodErrorMap';
 import { z } from 'zod';
+import { Input } from 'src/shared/components/ui/input';
+import SelectInput from 'src/shared/components/form/SelectInput';
 import { accountEnumerators } from 'src/features/account/accountEnumerators';
 import { enumeratorLabel } from 'src/shared/lib/enumeratorLabel';
-import SelectInput from 'src/shared/components/form/SelectInput';
+import RangeInput from 'src/shared/components/form/RangeInput';
 import { Switch } from 'src/shared/components/ui/switch';
 
 const emptyValues = {
+  name: '',
+  isSystem: '',
   type: null,
   status: null,
+  isInterest: '',
+  interestRateRange: [],
   user: null,
   archived: false,
 };
@@ -47,6 +53,13 @@ function AccountListFilter({
   z.setErrorMap(getZodErrorMap(locale));
 
   const previewRenders = {
+    name: {
+      label: dictionary.account.fields.name,
+    },
+    isSystem: {
+      label: dictionary.account.fields.isSystem,
+      render: dataTableFilterRenders(context).boolean(),
+    },
     type: {
       label: dictionary.account.fields.type,
       render: dataTableFilterRenders(context).enumerator(
@@ -58,6 +71,14 @@ function AccountListFilter({
       render: dataTableFilterRenders(context).enumerator(
         dictionary.account.enumerators.status,
       ),
+    },
+    isInterest: {
+      label: dictionary.account.fields.isInterest,
+      render: dataTableFilterRenders(context).boolean(),
+    },
+    interestRateRange: {
+      label: dictionary.account.fields.interestRate,
+      render: dataTableFilterRenders(context).decimalRange(),
     },
     archived: {
       label: dictionary.shared.showArchived,
@@ -122,6 +143,48 @@ function AccountListFilter({
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{dictionary.account.fields.name}</FormLabel>
+                    <Input disabled={isLoading} {...field} />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="isSystem"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {dictionary.account.fields.isSystem}
+                    </FormLabel>
+                    <SelectInput
+                      options={[
+                        {
+                          label: dictionary.shared.yes,
+                          value: 'true',
+                        },
+                        {
+                          label: dictionary.shared.no,
+                          value: 'false',
+                        },
+                      ]}
+                      dictionary={dictionary}
+                      isClearable={true}
+                      disabled={isLoading}
+                      onChange={field.onChange}
+                      value={field.value}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="type"
                 render={({ field }) => (
                   <FormItem>
@@ -165,6 +228,54 @@ function AccountListFilter({
                       )}
                       dictionary={dictionary}
                       isClearable={true}
+                      disabled={isLoading}
+                      onChange={field.onChange}
+                      value={field.value}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="isInterest"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {dictionary.account.fields.isInterest}
+                    </FormLabel>
+                    <SelectInput
+                      options={[
+                        {
+                          label: dictionary.shared.yes,
+                          value: 'true',
+                        },
+                        {
+                          label: dictionary.shared.no,
+                          value: 'false',
+                        },
+                      ]}
+                      dictionary={dictionary}
+                      isClearable={true}
+                      disabled={isLoading}
+                      onChange={field.onChange}
+                      value={field.value}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="interestRateRange"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{dictionary.account.fields.interestRate}</FormLabel>
+                    <RangeInput
+                      type="text"
+                      dictionary={dictionary}
                       disabled={isLoading}
                       onChange={field.onChange}
                       value={field.value}

@@ -12,6 +12,10 @@ export function accountExporterMapper(
   return accounts.map((account) => {
     return {
       id: account.id,
+      name: account.name,
+      isSystem: account.isSystem
+        ? context.dictionary.shared.yes
+        : context.dictionary.shared.no,
       type: enumeratorLabel(
         context.dictionary.account.enumerators.type,
         account.type,
@@ -20,6 +24,10 @@ export function accountExporterMapper(
         context.dictionary.account.enumerators.status,
         account.status,
       ),
+      isInterest: account.isInterest
+        ? context.dictionary.shared.yes
+        : context.dictionary.shared.no,
+      interestRate: formatDecimal(account.interestRate?.toString(), context.locale),
       meta: account.meta?.toString(),
       createdByMembership: membershipLabel(account.createdByMembership, context.dictionary),
       createdAt: String(account.createdAt),

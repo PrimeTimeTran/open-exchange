@@ -45,6 +45,18 @@ export async function accountFindManyController(
     whereAnd.push({ archivedAt: null });
   }
 
+  if (filter?.name != null) {
+    whereAnd.push({
+      name: { contains: filter?.name, mode: 'insensitive' },
+    });
+  }
+
+  if (filter?.isSystem != null) {
+    whereAnd.push({
+      isSystem: filter.isSystem,
+    });
+  }
+
   if (filter?.type != null) {
     whereAnd.push({
       type: filter?.type,
@@ -55,6 +67,29 @@ export async function accountFindManyController(
     whereAnd.push({
       status: filter?.status,
     });
+  }
+
+  if (filter?.isInterest != null) {
+    whereAnd.push({
+      isInterest: filter.isInterest,
+    });
+  }
+
+  if (filter?.interestRateRange?.length) {
+    const start = filter.interestRateRange?.[0];
+    const end = filter.interestRateRange?.[1];
+
+    if (start != null) {
+      whereAnd.push({
+        interestRate: { gte: start },
+      });
+    }
+
+    if (end != null) {
+      whereAnd.push({
+        interestRate: { lte: end },
+      });
+    }
   }
 
   const prisma = prismaAuth(context);

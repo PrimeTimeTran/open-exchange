@@ -56,8 +56,12 @@ export async function accountUpdateController(
       },
     },
     data: {
+      name: data.name,
+      isSystem: data.isSystem,
       type: data.type,
       status: data.status,
+      isInterest: data.isInterest,
+      interestRate: data.interestRate,
       meta: data.meta,
       user: prismaRelationship.connectOrDisconnectOne(data.user),
     },

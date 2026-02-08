@@ -133,8 +133,12 @@ CREATE TABLE "Account" (
     "archivedAt" TIMESTAMPTZ(3),
     "archivedByMembershipId" UUID,
     "importHash" TEXT,
-    "type" TEXT,
+    "name" TEXT,
+    "isSystem" BOOLEAN NOT NULL DEFAULT false,
+    "type" TEXT NOT NULL,
     "status" TEXT,
+    "isInterest" BOOLEAN NOT NULL DEFAULT false,
+    "interestRate" DECIMAL(65,30),
     "meta" JSONB,
     "userId" UUID,
 
@@ -402,7 +406,7 @@ CREATE TABLE "BalanceSnapshot" (
 
 -- CreateTable
 CREATE TABLE "SystemAccount" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "id" UUID NOT NULL,
     "tenantId" UUID NOT NULL DEFAULT NULLIF((current_setting('app.current_tenant_id'::text)), '')::uuid,
     "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "createdByUserId" UUID DEFAULT NULLIF((current_setting('app.current_user_id'::text)), '')::uuid,

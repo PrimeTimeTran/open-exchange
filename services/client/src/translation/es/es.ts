@@ -588,8 +588,12 @@ const dictionary = {
     },
 
     fields: {
+      name: 'Name',
+      isSystem: 'IsSystem',
       type: 'Type',
       status: 'Status',
+      isInterest: 'IsInterest',
+      interestRate: 'InterestRate',
       meta: 'Meta',
       user: 'User',
       orders: 'Orders',
@@ -606,8 +610,12 @@ const dictionary = {
     },
 
     hints: {
+      name: '',
+      isSystem: '',
       type: '',
       status: '',
+      isInterest: '',
+      interestRate: '',
       meta: '',
       user: '',
       orders: '',
@@ -2427,6 +2435,7 @@ const dictionary = {
       auditLog: 'AuditLog',
       notesInternal: 'NotesInternal',
       specialOrderTypes: 'SpecialOrderTypes',
+      minFeeAmount: 'MinFeeAmount',
 
       createdByMembership: 'Creado por',
       updatedByMembership: 'Actualizado por',
@@ -2460,6 +2469,7 @@ const dictionary = {
       auditLog: '',
       notesInternal: '',
       specialOrderTypes: '',
+      minFeeAmount: '',
 
     },
 

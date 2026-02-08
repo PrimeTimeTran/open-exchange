@@ -262,7 +262,7 @@ export default function AccountListActions({
           className="ml-auto flex h-8 whitespace-nowrap"
           asChild
         >
-          <Link href={`/admin/account/new`} prefetch={false}>
+          <Link href={`/account/new`} prefetch={false}>
             <FaPlus className="mr-2 h-4 w-4" />
             <span>{dictionary.shared.new}</span>
           </Link>
