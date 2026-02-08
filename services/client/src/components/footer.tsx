@@ -54,7 +54,7 @@ export function Footer() {
               <FooterLink href="/markets/crypto">Cryptocurrency</FooterLink>
               <FooterLink href="/markets/futures">Futures</FooterLink>
               <FooterLink href="/markets/options">Options</FooterLink>
-              <FooterLink href="/markets/new">New Listings</FooterLink>
+              <FooterLink href="/listings">New Listings</FooterLink>
             </ul>
           </div>
 

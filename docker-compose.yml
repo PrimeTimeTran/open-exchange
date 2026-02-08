@@ -67,6 +67,21 @@ services:
       - PORT=50053
       - REDIS_URL=redis://redis:6379
 
+  chain:
+    build:
+      context: ./services/chain
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./services/chain:/app
+      - /app/node_modules
+    ports:
+      - '8545:8545' # Hardhat dev chain RPC
+      - '8546:8546' # Optional: WebSocket for chain
+    environment:
+      - NETWORK=hardhat # can use 'localhost' or a custom network name
+    command: >
+      sh -c "npx hardhat node --hostname 0.0.0.0"
+
   redis:
     image: redis:7-alpine
     ports:

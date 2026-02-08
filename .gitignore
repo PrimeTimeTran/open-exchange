@@ -5,8 +5,13 @@ target
 **/target
 */.next
 */.env
+**/.env
 */.env.test
 */.env.local
+**/.env.test
+**/.env.local
 admin_leg
 notes
 
+docs/generate/source
+docs/generate/schema.json

@@ -9,31 +9,32 @@
 
 import { membershipStorage } from 'src/features/membership/membershipStorage';
 import { accountStorage } from 'src/features/account/accountStorage';
-import { walletStorage } from 'src/features/wallet/walletStorage';
 import { depositStorage } from 'src/features/deposit/depositStorage';
 import { withdrawalStorage } from 'src/features/withdrawal/withdrawalStorage';
+import { walletStorage } from 'src/features/wallet/walletStorage';
 import { orderStorage } from 'src/features/order/orderStorage';
+import { fillStorage } from 'src/features/fill/fillStorage';
+import { tradeStorage } from 'src/features/trade/tradeStorage';
 import { assetStorage } from 'src/features/asset/assetStorage';
 import { instrumentStorage } from 'src/features/instrument/instrumentStorage';
-import { ledgerEventStorage } from 'src/features/ledgerEvent/ledgerEventStorage';
-import { ledgerEntryStorage } from 'src/features/ledgerEntry/ledgerEntryStorage';
-import { tradeStorage } from 'src/features/trade/tradeStorage';
-import { fillStorage } from 'src/features/fill/fillStorage';
-import { postStorage } from 'src/features/post/postStorage';
-import { commentStorage } from 'src/features/comment/commentStorage';
-import { articleStorage } from 'src/features/article/articleStorage';
-import { chatStorage } from 'src/features/chat/chatStorage';
-import { chaterStorage } from 'src/features/chater/chaterStorage';
-import { messageStorage } from 'src/features/message/messageStorage';
 import { feeScheduleStorage } from 'src/features/feeSchedule/feeScheduleStorage';
 import { balanceSnapshotStorage } from 'src/features/balanceSnapshot/balanceSnapshotStorage';
 import { systemAccountStorage } from 'src/features/systemAccount/systemAccountStorage';
-import { feedbackStorage } from 'src/features/feedback/feedbackStorage';
-import { jobStorage } from 'src/features/job/jobStorage';
-import { listingStorage } from 'src/features/listing/listingStorage';
 import { referralStorage } from 'src/features/referral/referralStorage';
+import { listingStorage } from 'src/features/listing/listingStorage';
+import { feedbackStorage } from 'src/features/feedback/feedbackStorage';
+import { marketMakerStorage } from 'src/features/marketMaker/marketMakerStorage';
+import { ledgerEventStorage } from 'src/features/ledgerEvent/ledgerEventStorage';
+import { ledgerEntryStorage } from 'src/features/ledgerEntry/ledgerEntryStorage';
+import { articleStorage } from 'src/features/article/articleStorage';
+import { postStorage } from 'src/features/post/postStorage';
+import { commentStorage } from 'src/features/comment/commentStorage';
+import { chatStorage } from 'src/features/chat/chatStorage';
+import { chaterStorage } from 'src/features/chater/chaterStorage';
+import { messageStorage } from 'src/features/message/messageStorage';
 import { notificationStorage } from 'src/features/notification/notificationStorage';
 import { userNotificationStorage } from 'src/features/userNotification/userNotificationStorage';
+import { jobStorage } from 'src/features/job/jobStorage';
 import { candidateStorage } from 'src/features/candidate/candidateStorage';
 
 export interface StorageConfig {
@@ -46,30 +47,31 @@ export interface StorageConfig {
 export const storage = {
   ...membershipStorage,
   ...accountStorage,
-  ...walletStorage,
   ...depositStorage,
   ...withdrawalStorage,
+  ...walletStorage,
   ...orderStorage,
+  ...fillStorage,
+  ...tradeStorage,
   ...assetStorage,
   ...instrumentStorage,
-  ...ledgerEventStorage,
-  ...ledgerEntryStorage,
-  ...tradeStorage,
-  ...fillStorage,
-  ...postStorage,
-  ...commentStorage,
-  ...articleStorage,
-  ...chatStorage,
-  ...chaterStorage,
-  ...messageStorage,
   ...feeScheduleStorage,
   ...balanceSnapshotStorage,
   ...systemAccountStorage,
-  ...feedbackStorage,
-  ...jobStorage,
-  ...listingStorage,
   ...referralStorage,
+  ...listingStorage,
+  ...feedbackStorage,
+  ...marketMakerStorage,
+  ...ledgerEventStorage,
+  ...ledgerEntryStorage,
+  ...articleStorage,
+  ...postStorage,
+  ...commentStorage,
+  ...chatStorage,
+  ...chaterStorage,
+  ...messageStorage,
   ...notificationStorage,
   ...userNotificationStorage,
+  ...jobStorage,
   ...candidateStorage,
 };

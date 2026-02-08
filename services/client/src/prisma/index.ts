@@ -16,6 +16,8 @@ if (process.env.NODE_ENV === 'production') {
   prisma = global.prisma;
 }
 
+export { prisma };
+
 /**
  * This function is used to bypass the Tenant verification via RLS (Row Level Security) in Prisma. Use when you don't need transactions.
  */
