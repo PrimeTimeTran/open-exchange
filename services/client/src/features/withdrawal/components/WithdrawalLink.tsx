@@ -20,15 +20,22 @@ export function WithdrawalLink({
     return '';
   }
 
-  const hasPermissionToRead = hasPermission(permissions.withdrawalRead, context);
+  const hasPermissionToRead = hasPermission(
+    permissions.withdrawalRead,
+    context,
+  );
 
   if (!hasPermissionToRead) {
-    return <span className={className}>{withdrawalLabel(withdrawal, context.dictionary)}</span>;
+    return (
+      <span className={className}>
+        {withdrawalLabel(withdrawal, context.dictionary)}
+      </span>
+    );
   }
 
   return (
     <Link
-      href={`/withdrawal/${withdrawal.id}`}
+      href={`/admin/withdrawal/${withdrawal.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

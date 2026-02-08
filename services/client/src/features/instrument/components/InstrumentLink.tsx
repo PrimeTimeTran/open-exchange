@@ -20,15 +20,22 @@ export function InstrumentLink({
     return '';
   }
 
-  const hasPermissionToRead = hasPermission(permissions.instrumentRead, context);
+  const hasPermissionToRead = hasPermission(
+    permissions.instrumentRead,
+    context,
+  );
 
   if (!hasPermissionToRead) {
-    return <span className={className}>{instrumentLabel(instrument, context.dictionary)}</span>;
+    return (
+      <span className={className}>
+        {instrumentLabel(instrument, context.dictionary)}
+      </span>
+    );
   }
 
   return (
     <Link
-      href={`/instrument/${instrument.id}`}
+      href={`/admin/instrument/${instrument.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

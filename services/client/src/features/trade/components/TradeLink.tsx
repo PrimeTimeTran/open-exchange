@@ -23,12 +23,14 @@ export function TradeLink({
   const hasPermissionToRead = hasPermission(permissions.tradeRead, context);
 
   if (!hasPermissionToRead) {
-    return <span className={className}>{tradeLabel(trade, context.dictionary)}</span>;
+    return (
+      <span className={className}>{tradeLabel(trade, context.dictionary)}</span>
+    );
   }
 
   return (
     <Link
-      href={`/trade/${trade.id}`}
+      href={`/admin/trade/${trade.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

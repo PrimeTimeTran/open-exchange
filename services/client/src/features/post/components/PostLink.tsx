@@ -23,12 +23,14 @@ export function PostLink({
   const hasPermissionToRead = hasPermission(permissions.postRead, context);
 
   if (!hasPermissionToRead) {
-    return <span className={className}>{postLabel(post, context.dictionary)}</span>;
+    return (
+      <span className={className}>{postLabel(post, context.dictionary)}</span>
+    );
   }
 
   return (
     <Link
-      href={`/post/${post.id}`}
+      href={`/admin/post/${post.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

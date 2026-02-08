@@ -23,12 +23,16 @@ export function DepositLink({
   const hasPermissionToRead = hasPermission(permissions.depositRead, context);
 
   if (!hasPermissionToRead) {
-    return <span className={className}>{depositLabel(deposit, context.dictionary)}</span>;
+    return (
+      <span className={className}>
+        {depositLabel(deposit, context.dictionary)}
+      </span>
+    );
   }
 
   return (
     <Link
-      href={`/deposit/${deposit.id}`}
+      href={`/admin/deposit/${deposit.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

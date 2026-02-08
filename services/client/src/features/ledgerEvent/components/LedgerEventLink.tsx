@@ -20,15 +20,22 @@ export function LedgerEventLink({
     return '';
   }
 
-  const hasPermissionToRead = hasPermission(permissions.ledgerEventRead, context);
+  const hasPermissionToRead = hasPermission(
+    permissions.ledgerEventRead,
+    context,
+  );
 
   if (!hasPermissionToRead) {
-    return <span className={className}>{ledgerEventLabel(ledgerEvent, context.dictionary)}</span>;
+    return (
+      <span className={className}>
+        {ledgerEventLabel(ledgerEvent, context.dictionary)}
+      </span>
+    );
   }
 
   return (
     <Link
-      href={`/ledger-event/${ledgerEvent.id}`}
+      href={`/admin/ledger-event/${ledgerEvent.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

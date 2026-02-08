@@ -5,9 +5,20 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { FaEdit, FaHistory, FaSearch, FaTrashAlt, FaArchive, FaUndo } from 'react-icons/fa';
+import {
+  FaEdit,
+  FaHistory,
+  FaSearch,
+  FaTrashAlt,
+  FaArchive,
+  FaUndo,
+} from 'react-icons/fa';
 import { RxDotsHorizontal } from 'react-icons/rx';
-import { marketMakerDestroyManyApiCall, marketMakerArchiveManyApiCall, marketMakerRestoreManyApiCall } from 'src/features/marketMaker/marketMakerApiCalls';
+import {
+  marketMakerDestroyManyApiCall,
+  marketMakerArchiveManyApiCall,
+  marketMakerRestoreManyApiCall,
+} from 'src/features/marketMaker/marketMakerApiCalls';
 import { permissions } from 'src/features/permissions';
 import { hasPermission } from 'src/features/security';
 import { AppContext } from 'src/shared/controller/appContext';
@@ -41,7 +52,10 @@ export function MarketMakerActions({
 
   const queryClient = useQueryClient();
 
-  const hasPermissionToEdit = hasPermission(permissions.marketMakerUpdate, context);
+  const hasPermissionToEdit = hasPermission(
+    permissions.marketMakerUpdate,
+    context,
+  );
 
   const hasPermissionToAuditLogs = hasPermission(
     auditLogPermissions.auditLogRead,
@@ -138,7 +152,13 @@ export function MarketMakerActions({
     },
   });
 
-  if (mode === 'view' && !hasPermissionToEdit && !hasPermissionToDestroy && !hasPermissionToArchive && !hasPermissionToRestore) {
+  if (
+    mode === 'view' &&
+    !hasPermissionToEdit &&
+    !hasPermissionToDestroy &&
+    !hasPermissionToArchive &&
+    !hasPermissionToRestore
+  ) {
     return null;
   }
 
@@ -168,7 +188,10 @@ export function MarketMakerActions({
         <DropdownMenuContent align="end" className="w-[160px]">
           {mode === 'table' && (
             <DropdownMenuItem asChild>
-              <Link href={`/market-maker/${marketMaker.id}`} prefetch={false}>
+              <Link
+                href={`/admin/market-maker/${marketMaker.id}`}
+                prefetch={false}
+              >
                 <FaSearch className="mr-2 h-4 w-4 text-foreground/50" />{' '}
                 {dictionary.shared.view}
               </Link>
@@ -177,7 +200,10 @@ export function MarketMakerActions({
 
           {mode === 'table' && hasPermissionToEdit && (
             <DropdownMenuItem asChild>
-              <Link href={`/market-maker/${marketMaker.id}/edit`} prefetch={false}>
+              <Link
+                href={`/admin/market-maker/${marketMaker.id}/edit`}
+                prefetch={false}
+              >
                 <FaEdit className="mr-2 h-4 w-4 text-foreground/50" />{' '}
                 {dictionary.shared.edit}
               </Link>
@@ -187,13 +213,11 @@ export function MarketMakerActions({
           {hasPermissionToAuditLogs && (
             <DropdownMenuItem asChild>
               <Link
-                href={`/audit-log?${objectToQuery(
-                  {
-                    filter: {
-                      entityId: marketMaker.id,
-                    },
+                href={`/audit-log?${objectToQuery({
+                  filter: {
+                    entityId: marketMaker.id,
                   },
-                )}`}
+                })}`}
                 prefetch={false}
               >
                 <FaHistory className="mr-2 h-4 w-4 text-foreground/50" />{' '}
@@ -236,7 +260,10 @@ export function MarketMakerActions({
 
       {mode === 'view' && hasPermissionToEdit && (
         <Button size="sm" className="ml-auto flex h-8" asChild>
-          <Link href={`/market-maker/${marketMaker.id}/edit`} prefetch={false}>
+          <Link
+            href={`/admin/market-maker/${marketMaker.id}/edit`}
+            prefetch={false}
+          >
             <FaEdit className="mr-2 h-4 w-4" /> {dictionary.shared.edit}
           </Link>
         </Button>

@@ -5,7 +5,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Table } from '@tanstack/react-table';
 import Link from 'next/link';
 import { useState } from 'react';
-import { FaPlus, FaRegFileExcel, FaTrashAlt, FaUndo, FaArchive } from 'react-icons/fa';
+import {
+  FaPlus,
+  FaRegFileExcel,
+  FaTrashAlt,
+  FaUndo,
+  FaArchive,
+} from 'react-icons/fa';
 import { LuLoader2 } from 'react-icons/lu';
 import { MdUpload } from 'react-icons/md';
 import { RxDotsHorizontal } from 'react-icons/rx';
@@ -58,20 +64,11 @@ export default function JobListActions({
 
   const hasPermissionToCreate = hasPermission(permissions.jobCreate, context);
 
-  const hasPermissionToDestroy = hasPermission(
-    permissions.jobDestroy,
-    context,
-  );
+  const hasPermissionToDestroy = hasPermission(permissions.jobDestroy, context);
 
-  const hasPermissionToArchive = hasPermission(
-    permissions.jobArchive,
-    context,
-  );
+  const hasPermissionToArchive = hasPermission(permissions.jobArchive, context);
 
-  const hasPermissionToRestore = hasPermission(
-    permissions.jobRestore,
-    context,
-  );
+  const hasPermissionToRestore = hasPermission(permissions.jobRestore, context);
 
   const hasPermissionToImport = hasPermission(permissions.jobImport, context);
 
@@ -186,7 +183,11 @@ export default function JobListActions({
 
   const selectedCount = table.getFilteredSelectedRowModel().rows.length;
 
-  const isLoading = destroyMutation.isPending || exportMutation.isPending || archiveMutation.isPending || restoreMutation.isPending;
+  const isLoading =
+    destroyMutation.isPending ||
+    exportMutation.isPending ||
+    archiveMutation.isPending ||
+    restoreMutation.isPending;
 
   return (
     <>
@@ -245,7 +246,7 @@ export default function JobListActions({
           </DropdownMenuItem>
           {hasPermissionToImport && (
             <DropdownMenuItem asChild>
-              <Link href={`/job/importer`} prefetch={false}>
+              <Link href={`/admin/job/importer`} prefetch={false}>
                 <MdUpload className="mr-2 h-4 w-4 text-foreground/50" />{' '}
                 <span>{dictionary.shared.importer.title}</span>
               </Link>
@@ -262,7 +263,7 @@ export default function JobListActions({
           className="ml-auto flex h-8 whitespace-nowrap"
           asChild
         >
-          <Link href={`/job/new`} prefetch={false}>
+          <Link href={`/admin/job/new`} prefetch={false}>
             <FaPlus className="mr-2 h-4 w-4" />
             <span>{dictionary.shared.new}</span>
           </Link>

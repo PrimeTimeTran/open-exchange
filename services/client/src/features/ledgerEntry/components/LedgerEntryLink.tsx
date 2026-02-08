@@ -20,15 +20,22 @@ export function LedgerEntryLink({
     return '';
   }
 
-  const hasPermissionToRead = hasPermission(permissions.ledgerEntryRead, context);
+  const hasPermissionToRead = hasPermission(
+    permissions.ledgerEntryRead,
+    context,
+  );
 
   if (!hasPermissionToRead) {
-    return <span className={className}>{ledgerEntryLabel(ledgerEntry, context.dictionary)}</span>;
+    return (
+      <span className={className}>
+        {ledgerEntryLabel(ledgerEntry, context.dictionary)}
+      </span>
+    );
   }
 
   return (
     <Link
-      href={`/ledger-entry/${ledgerEntry.id}`}
+      href={`/admin/ledger-entry/${ledgerEntry.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

@@ -23,12 +23,16 @@ export function FeedbackLink({
   const hasPermissionToRead = hasPermission(permissions.feedbackRead, context);
 
   if (!hasPermissionToRead) {
-    return <span className={className}>{feedbackLabel(feedback, context.dictionary)}</span>;
+    return (
+      <span className={className}>
+        {feedbackLabel(feedback, context.dictionary)}
+      </span>
+    );
   }
 
   return (
     <Link
-      href={`/feedback/${feedback.id}`}
+      href={`/admin/feedback/${feedback.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

@@ -23,12 +23,14 @@ export function ChatLink({
   const hasPermissionToRead = hasPermission(permissions.chatRead, context);
 
   if (!hasPermissionToRead) {
-    return <span className={className}>{chatLabel(chat, context.dictionary)}</span>;
+    return (
+      <span className={className}>{chatLabel(chat, context.dictionary)}</span>
+    );
   }
 
   return (
     <Link
-      href={`/chat/${chat.id}`}
+      href={`/admin/chat/${chat.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

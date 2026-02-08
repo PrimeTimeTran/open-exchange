@@ -5,9 +5,20 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { FaEdit, FaHistory, FaSearch, FaTrashAlt, FaArchive, FaUndo } from 'react-icons/fa';
+import {
+  FaEdit,
+  FaHistory,
+  FaSearch,
+  FaTrashAlt,
+  FaArchive,
+  FaUndo,
+} from 'react-icons/fa';
 import { RxDotsHorizontal } from 'react-icons/rx';
-import { chaterDestroyManyApiCall, chaterArchiveManyApiCall, chaterRestoreManyApiCall } from 'src/features/chater/chaterApiCalls';
+import {
+  chaterDestroyManyApiCall,
+  chaterArchiveManyApiCall,
+  chaterRestoreManyApiCall,
+} from 'src/features/chater/chaterApiCalls';
 import { permissions } from 'src/features/permissions';
 import { hasPermission } from 'src/features/security';
 import { AppContext } from 'src/shared/controller/appContext';
@@ -138,7 +149,13 @@ export function ChaterActions({
     },
   });
 
-  if (mode === 'view' && !hasPermissionToEdit && !hasPermissionToDestroy && !hasPermissionToArchive && !hasPermissionToRestore) {
+  if (
+    mode === 'view' &&
+    !hasPermissionToEdit &&
+    !hasPermissionToDestroy &&
+    !hasPermissionToArchive &&
+    !hasPermissionToRestore
+  ) {
     return null;
   }
 
@@ -168,7 +185,7 @@ export function ChaterActions({
         <DropdownMenuContent align="end" className="w-[160px]">
           {mode === 'table' && (
             <DropdownMenuItem asChild>
-              <Link href={`/chater/${chater.id}`} prefetch={false}>
+              <Link href={`/admin/chater/${chater.id}`} prefetch={false}>
                 <FaSearch className="mr-2 h-4 w-4 text-foreground/50" />{' '}
                 {dictionary.shared.view}
               </Link>
@@ -177,7 +194,7 @@ export function ChaterActions({
 
           {mode === 'table' && hasPermissionToEdit && (
             <DropdownMenuItem asChild>
-              <Link href={`/chater/${chater.id}/edit`} prefetch={false}>
+              <Link href={`/admin/chater/${chater.id}/edit`} prefetch={false}>
                 <FaEdit className="mr-2 h-4 w-4 text-foreground/50" />{' '}
                 {dictionary.shared.edit}
               </Link>
@@ -187,13 +204,11 @@ export function ChaterActions({
           {hasPermissionToAuditLogs && (
             <DropdownMenuItem asChild>
               <Link
-                href={`/audit-log?${objectToQuery(
-                  {
-                    filter: {
-                      entityId: chater.id,
-                    },
+                href={`/audit-log?${objectToQuery({
+                  filter: {
+                    entityId: chater.id,
                   },
-                )}`}
+                })}`}
                 prefetch={false}
               >
                 <FaHistory className="mr-2 h-4 w-4 text-foreground/50" />{' '}
@@ -236,7 +251,7 @@ export function ChaterActions({
 
       {mode === 'view' && hasPermissionToEdit && (
         <Button size="sm" className="ml-auto flex h-8" asChild>
-          <Link href={`/chater/${chater.id}/edit`} prefetch={false}>
+          <Link href={`/admin/chater/${chater.id}/edit`} prefetch={false}>
             <FaEdit className="mr-2 h-4 w-4" /> {dictionary.shared.edit}
           </Link>
         </Button>

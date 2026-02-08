@@ -155,7 +155,7 @@ export default function MembershipListActions({
           </DropdownMenuItem>
           {hasPermissionToImport && (
             <DropdownMenuItem asChild>
-              <Link href={`/membership/importer`} prefetch={false}>
+              <Link href={`/admin/membership/importer`} prefetch={false}>
                 <MdUpload className="mr-2 h-4 w-4 text-foreground/50" />{' '}
                 <span>{dictionary.shared.importer.title}</span>
               </Link>
@@ -172,7 +172,7 @@ export default function MembershipListActions({
           className="ml-auto flex h-8 whitespace-nowrap"
           asChild
         >
-          <Link href={`/membership/new`} prefetch={false}>
+          <Link href={`/admin/membership/new`} prefetch={false}>
             <FaPlus className="mr-2 h-4 w-4" />
             <span className="whitespace-nowrap">{dictionary.shared.new}</span>
           </Link>

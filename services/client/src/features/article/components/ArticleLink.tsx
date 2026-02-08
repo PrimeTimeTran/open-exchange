@@ -23,12 +23,16 @@ export function ArticleLink({
   const hasPermissionToRead = hasPermission(permissions.articleRead, context);
 
   if (!hasPermissionToRead) {
-    return <span className={className}>{articleLabel(article, context.dictionary)}</span>;
+    return (
+      <span className={className}>
+        {articleLabel(article, context.dictionary)}
+      </span>
+    );
   }
 
   return (
     <Link
-      href={`/article/${article.id}`}
+      href={`/admin/article/${article.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

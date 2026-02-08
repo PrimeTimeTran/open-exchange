@@ -145,7 +145,7 @@ export function ProfileForm({ context }: { context: AppContext }) {
               {dictionary.auth.profile.button}
             </Button>
 
-            <Link href={`/`} prefetch={false}>
+            <Link href={`/admin/`} prefetch={false}>
               <Button
                 disabled={mutation.isPending || mutation.isSuccess}
                 type="button"

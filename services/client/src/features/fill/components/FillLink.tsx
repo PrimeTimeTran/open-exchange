@@ -23,12 +23,14 @@ export function FillLink({
   const hasPermissionToRead = hasPermission(permissions.fillRead, context);
 
   if (!hasPermissionToRead) {
-    return <span className={className}>{fillLabel(fill, context.dictionary)}</span>;
+    return (
+      <span className={className}>{fillLabel(fill, context.dictionary)}</span>
+    );
   }
 
   return (
     <Link
-      href={`/fill/${fill.id}`}
+      href={`/admin/fill/${fill.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

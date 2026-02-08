@@ -20,15 +20,22 @@ export function FeeScheduleLink({
     return '';
   }
 
-  const hasPermissionToRead = hasPermission(permissions.feeScheduleRead, context);
+  const hasPermissionToRead = hasPermission(
+    permissions.feeScheduleRead,
+    context,
+  );
 
   if (!hasPermissionToRead) {
-    return <span className={className}>{feeScheduleLabel(feeSchedule, context.dictionary)}</span>;
+    return (
+      <span className={className}>
+        {feeScheduleLabel(feeSchedule, context.dictionary)}
+      </span>
+    );
   }
 
   return (
     <Link
-      href={`/fee-schedule/${feeSchedule.id}`}
+      href={`/admin/fee-schedule/${feeSchedule.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

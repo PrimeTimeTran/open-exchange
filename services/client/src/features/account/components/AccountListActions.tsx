@@ -245,7 +245,7 @@ export default function AccountListActions({
           </DropdownMenuItem>
           {hasPermissionToImport && (
             <DropdownMenuItem asChild>
-              <Link href={`/account/importer`} prefetch={false}>
+              <Link href={`/admin/account/importer`} prefetch={false}>
                 <MdUpload className="mr-2 h-4 w-4 text-foreground/50" />{' '}
                 <span>{dictionary.shared.importer.title}</span>
               </Link>
@@ -262,7 +262,7 @@ export default function AccountListActions({
           className="ml-auto flex h-8 whitespace-nowrap"
           asChild
         >
-          <Link href={`/account/new`} prefetch={false}>
+          <Link href={`/admin/account/new`} prefetch={false}>
             <FaPlus className="mr-2 h-4 w-4" />
             <span>{dictionary.shared.new}</span>
           </Link>

@@ -154,7 +154,7 @@ export function PasswordChangeForm({ context }: { context: AppContext }) {
               {dictionary.auth.passwordChange.button}
             </Button>
 
-            <Link href={`/`} prefetch={false}>
+            <Link href={`/admin/`} prefetch={false}>
               <Button
                 disabled={mutation.isPending || mutation.isSuccess}
                 type="button"

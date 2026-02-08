@@ -23,12 +23,14 @@ export function JobLink({
   const hasPermissionToRead = hasPermission(permissions.jobRead, context);
 
   if (!hasPermissionToRead) {
-    return <span className={className}>{jobLabel(job, context.dictionary)}</span>;
+    return (
+      <span className={className}>{jobLabel(job, context.dictionary)}</span>
+    );
   }
 
   return (
     <Link
-      href={`/job/${job.id}`}
+      href={`/admin/job/${job.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

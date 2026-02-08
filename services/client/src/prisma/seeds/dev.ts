@@ -7,6 +7,8 @@ import { seedMembership } from './membership';
 import { seedAssets } from './assets';
 import { seedInstruments } from './instruments';
 import { seedWallets } from './wallets';
+import { seedDeposits } from './deposits';
+import { seedWithdrawals } from './withdrawals';
 import { seedOrders } from './orders';
 import { seedSystemAccounts } from './systemAccounts';
 
@@ -21,6 +23,8 @@ async function main() {
   const assetsMap = await seedAssets(prisma, tenant.id, membership.id, user.id);
   await seedInstruments(prisma, tenant.id, membership.id, user.id, assetsMap);
   await seedWallets(prisma, tenant.id, membership.id, user.id, assetsMap);
+  await seedDeposits(prisma, tenant.id, membership.id, user.id, assetsMap);
+  await seedWithdrawals(prisma, tenant.id, membership.id, user.id, assetsMap);
   await seedOrders(prisma, tenant.id, membership.id, user.id);
   await seedSystemAccounts(
     prisma,

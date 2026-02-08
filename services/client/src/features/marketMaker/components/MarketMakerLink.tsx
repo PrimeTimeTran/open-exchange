@@ -20,15 +20,22 @@ export function MarketMakerLink({
     return '';
   }
 
-  const hasPermissionToRead = hasPermission(permissions.marketMakerRead, context);
+  const hasPermissionToRead = hasPermission(
+    permissions.marketMakerRead,
+    context,
+  );
 
   if (!hasPermissionToRead) {
-    return <span className={className}>{marketMakerLabel(marketMaker, context.dictionary)}</span>;
+    return (
+      <span className={className}>
+        {marketMakerLabel(marketMaker, context.dictionary)}
+      </span>
+    );
   }
 
   return (
     <Link
-      href={`/market-maker/${marketMaker.id}`}
+      href={`/admin/market-maker/${marketMaker.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

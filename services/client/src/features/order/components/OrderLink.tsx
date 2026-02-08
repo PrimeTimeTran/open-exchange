@@ -23,12 +23,14 @@ export function OrderLink({
   const hasPermissionToRead = hasPermission(permissions.orderRead, context);
 
   if (!hasPermissionToRead) {
-    return <span className={className}>{orderLabel(order, context.dictionary)}</span>;
+    return (
+      <span className={className}>{orderLabel(order, context.dictionary)}</span>
+    );
   }
 
   return (
     <Link
-      href={`/order/${order.id}`}
+      href={`/admin/order/${order.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

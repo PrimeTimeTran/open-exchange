@@ -5,9 +5,20 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { FaEdit, FaHistory, FaSearch, FaTrashAlt, FaArchive, FaUndo } from 'react-icons/fa';
+import {
+  FaEdit,
+  FaHistory,
+  FaSearch,
+  FaTrashAlt,
+  FaArchive,
+  FaUndo,
+} from 'react-icons/fa';
 import { RxDotsHorizontal } from 'react-icons/rx';
-import { candidateDestroyManyApiCall, candidateArchiveManyApiCall, candidateRestoreManyApiCall } from 'src/features/candidate/candidateApiCalls';
+import {
+  candidateDestroyManyApiCall,
+  candidateArchiveManyApiCall,
+  candidateRestoreManyApiCall,
+} from 'src/features/candidate/candidateApiCalls';
 import { permissions } from 'src/features/permissions';
 import { hasPermission } from 'src/features/security';
 import { AppContext } from 'src/shared/controller/appContext';
@@ -41,7 +52,10 @@ export function CandidateActions({
 
   const queryClient = useQueryClient();
 
-  const hasPermissionToEdit = hasPermission(permissions.candidateUpdate, context);
+  const hasPermissionToEdit = hasPermission(
+    permissions.candidateUpdate,
+    context,
+  );
 
   const hasPermissionToAuditLogs = hasPermission(
     auditLogPermissions.auditLogRead,
@@ -138,7 +152,13 @@ export function CandidateActions({
     },
   });
 
-  if (mode === 'view' && !hasPermissionToEdit && !hasPermissionToDestroy && !hasPermissionToArchive && !hasPermissionToRestore) {
+  if (
+    mode === 'view' &&
+    !hasPermissionToEdit &&
+    !hasPermissionToDestroy &&
+    !hasPermissionToArchive &&
+    !hasPermissionToRestore
+  ) {
     return null;
   }
 
@@ -168,7 +188,7 @@ export function CandidateActions({
         <DropdownMenuContent align="end" className="w-[160px]">
           {mode === 'table' && (
             <DropdownMenuItem asChild>
-              <Link href={`/candidate/${candidate.id}`} prefetch={false}>
+              <Link href={`/admin/candidate/${candidate.id}`} prefetch={false}>
                 <FaSearch className="mr-2 h-4 w-4 text-foreground/50" />{' '}
                 {dictionary.shared.view}
               </Link>
@@ -177,7 +197,10 @@ export function CandidateActions({
 
           {mode === 'table' && hasPermissionToEdit && (
             <DropdownMenuItem asChild>
-              <Link href={`/candidate/${candidate.id}/edit`} prefetch={false}>
+              <Link
+                href={`/admin/candidate/${candidate.id}/edit`}
+                prefetch={false}
+              >
                 <FaEdit className="mr-2 h-4 w-4 text-foreground/50" />{' '}
                 {dictionary.shared.edit}
               </Link>
@@ -187,13 +210,11 @@ export function CandidateActions({
           {hasPermissionToAuditLogs && (
             <DropdownMenuItem asChild>
               <Link
-                href={`/audit-log?${objectToQuery(
-                  {
-                    filter: {
-                      entityId: candidate.id,
-                    },
+                href={`/audit-log?${objectToQuery({
+                  filter: {
+                    entityId: candidate.id,
                   },
-                )}`}
+                })}`}
                 prefetch={false}
               >
                 <FaHistory className="mr-2 h-4 w-4 text-foreground/50" />{' '}
@@ -236,7 +257,7 @@ export function CandidateActions({
 
       {mode === 'view' && hasPermissionToEdit && (
         <Button size="sm" className="ml-auto flex h-8" asChild>
-          <Link href={`/candidate/${candidate.id}/edit`} prefetch={false}>
+          <Link href={`/admin/candidate/${candidate.id}/edit`} prefetch={false}>
             <FaEdit className="mr-2 h-4 w-4" /> {dictionary.shared.edit}
           </Link>
         </Button>

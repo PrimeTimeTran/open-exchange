@@ -20,15 +20,22 @@ export function NotificationLink({
     return '';
   }
 
-  const hasPermissionToRead = hasPermission(permissions.notificationRead, context);
+  const hasPermissionToRead = hasPermission(
+    permissions.notificationRead,
+    context,
+  );
 
   if (!hasPermissionToRead) {
-    return <span className={className}>{notificationLabel(notification, context.dictionary)}</span>;
+    return (
+      <span className={className}>
+        {notificationLabel(notification, context.dictionary)}
+      </span>
+    );
   }
 
   return (
     <Link
-      href={`/notification/${notification.id}`}
+      href={`/admin/notification/${notification.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

@@ -23,12 +23,16 @@ export function MessageLink({
   const hasPermissionToRead = hasPermission(permissions.messageRead, context);
 
   if (!hasPermissionToRead) {
-    return <span className={className}>{messageLabel(message, context.dictionary)}</span>;
+    return (
+      <span className={className}>
+        {messageLabel(message, context.dictionary)}
+      </span>
+    );
   }
 
   return (
     <Link
-      href={`/message/${message.id}`}
+      href={`/admin/message/${message.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

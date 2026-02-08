@@ -20,15 +20,22 @@ export function SystemAccountLink({
     return '';
   }
 
-  const hasPermissionToRead = hasPermission(permissions.systemAccountRead, context);
+  const hasPermissionToRead = hasPermission(
+    permissions.systemAccountRead,
+    context,
+  );
 
   if (!hasPermissionToRead) {
-    return <span className={className}>{systemAccountLabel(systemAccount, context.dictionary)}</span>;
+    return (
+      <span className={className}>
+        {systemAccountLabel(systemAccount, context.dictionary)}
+      </span>
+    );
   }
 
   return (
     <Link
-      href={`/system-account/${systemAccount.id}`}
+      href={`/admin/system-account/${systemAccount.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

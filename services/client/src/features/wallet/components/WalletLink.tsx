@@ -23,12 +23,16 @@ export function WalletLink({
   const hasPermissionToRead = hasPermission(permissions.walletRead, context);
 
   if (!hasPermissionToRead) {
-    return <span className={className}>{walletLabel(wallet, context.dictionary)}</span>;
+    return (
+      <span className={className}>
+        {walletLabel(wallet, context.dictionary)}
+      </span>
+    );
   }
 
   return (
     <Link
-      href={`/wallet/${wallet.id}`}
+      href={`/admin/wallet/${wallet.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

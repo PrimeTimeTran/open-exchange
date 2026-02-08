@@ -105,7 +105,7 @@ export function ApiKeyActions({
 
           {hasPermissionToEdit && (
             <DropdownMenuItem asChild>
-              <Link href={`/api-key/${apiKey.id}/edit`} prefetch={false}>
+              <Link href={`/admin/api-key/${apiKey.id}/edit`} prefetch={false}>
                 <FaEdit className="mr-2 h-4 w-4 text-foreground/50" />{' '}
                 {dictionary.shared.edit}
               </Link>

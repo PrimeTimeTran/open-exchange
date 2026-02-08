@@ -23,12 +23,16 @@ export function ListingLink({
   const hasPermissionToRead = hasPermission(permissions.listingRead, context);
 
   if (!hasPermissionToRead) {
-    return <span className={className}>{listingLabel(listing, context.dictionary)}</span>;
+    return (
+      <span className={className}>
+        {listingLabel(listing, context.dictionary)}
+      </span>
+    );
   }
 
   return (
     <Link
-      href={`/listing/${listing.id}`}
+      href={`/admin/listing/${listing.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

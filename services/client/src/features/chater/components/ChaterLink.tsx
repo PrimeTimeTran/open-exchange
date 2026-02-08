@@ -23,12 +23,16 @@ export function ChaterLink({
   const hasPermissionToRead = hasPermission(permissions.chaterRead, context);
 
   if (!hasPermissionToRead) {
-    return <span className={className}>{chaterLabel(chater, context.dictionary)}</span>;
+    return (
+      <span className={className}>
+        {chaterLabel(chater, context.dictionary)}
+      </span>
+    );
   }
 
   return (
     <Link
-      href={`/chater/${chater.id}`}
+      href={`/admin/chater/${chater.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

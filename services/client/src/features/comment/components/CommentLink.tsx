@@ -23,12 +23,16 @@ export function CommentLink({
   const hasPermissionToRead = hasPermission(permissions.commentRead, context);
 
   if (!hasPermissionToRead) {
-    return <span className={className}>{commentLabel(comment, context.dictionary)}</span>;
+    return (
+      <span className={className}>
+        {commentLabel(comment, context.dictionary)}
+      </span>
+    );
   }
 
   return (
     <Link
-      href={`/comment/${comment.id}`}
+      href={`/admin/comment/${comment.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

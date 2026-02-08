@@ -23,12 +23,14 @@ export function AssetLink({
   const hasPermissionToRead = hasPermission(permissions.assetRead, context);
 
   if (!hasPermissionToRead) {
-    return <span className={className}>{assetLabel(asset, context.dictionary)}</span>;
+    return (
+      <span className={className}>{assetLabel(asset, context.dictionary)}</span>
+    );
   }
 
   return (
     <Link
-      href={`/asset/${asset.id}`}
+      href={`/admin/asset/${asset.id}`}
       className={cn(
         'text-blue-500 hover:text-blue-400 hover:underline focus:text-blue-400 dark:text-blue-400',
         className,

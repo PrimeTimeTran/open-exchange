@@ -136,7 +136,10 @@ export function MembershipActions({
         <DropdownMenuContent align="end" className="w-[160px]">
           {mode === 'table' && (
             <DropdownMenuItem asChild>
-              <Link href={`/membership/${membership.id}`} prefetch={false}>
+              <Link
+                href={`/admin/membership/${membership.id}`}
+                prefetch={false}
+              >
                 <FaSearch className="mr-2 h-4 w-4 text-foreground/50" />{' '}
                 {dictionary.shared.view}
               </Link>
@@ -156,7 +159,10 @@ export function MembershipActions({
 
           {mode === 'table' && hasPermissionToEdit && (
             <DropdownMenuItem asChild>
-              <Link href={`/membership/${membership.id}/edit`} prefetch={false}>
+              <Link
+                href={`/admin/membership/${membership.id}/edit`}
+                prefetch={false}
+              >
                 <FaEdit className="mr-2 h-4 w-4 text-foreground/50" />{' '}
                 {dictionary.shared.edit}
               </Link>
@@ -239,7 +245,10 @@ export function MembershipActions({
 
       {mode === 'view' && hasPermissionToEdit && (
         <Button size="sm" className="ml-auto flex h-8" asChild>
-          <Link href={`/membership/${membership.id}/edit`} prefetch={false}>
+          <Link
+            href={`/admin/membership/${membership.id}/edit`}
+            prefetch={false}
+          >
             <FaEdit className="mr-2 h-4 w-4" /> {dictionary.shared.edit}
           </Link>
         </Button>
