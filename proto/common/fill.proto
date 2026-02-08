@@ -10,9 +10,9 @@ message Fill {
   string trade_id = 3;
   
   string side = 4; // "buy" or "sell"
-  string price = 5;
-  string quantity = 6;
-  string fee = 7;
+  string price = 5; // Decimal(72,0)
+  string quantity = 6; // Decimal(72,0)
+  string fee = 7; // Decimal(72,0)
   
   string meta = 8; // JSON string
   

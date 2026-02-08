@@ -28,11 +28,11 @@ type Fill struct {
 	Id        string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	TenantId  string `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	TradeId   string `protobuf:"bytes,3,opt,name=trade_id,json=tradeId,proto3" json:"trade_id,omitempty"`
-	Side      string `protobuf:"bytes,4,opt,name=side,proto3" json:"side,omitempty"` // "buy" or "sell"
-	Price     string `protobuf:"bytes,5,opt,name=price,proto3" json:"price,omitempty"`
-	Quantity  string `protobuf:"bytes,6,opt,name=quantity,proto3" json:"quantity,omitempty"`
-	Fee       string `protobuf:"bytes,7,opt,name=fee,proto3" json:"fee,omitempty"`
-	Meta      string `protobuf:"bytes,8,opt,name=meta,proto3" json:"meta,omitempty"` // JSON string
+	Side      string `protobuf:"bytes,4,opt,name=side,proto3" json:"side,omitempty"`         // "buy" or "sell"
+	Price     string `protobuf:"bytes,5,opt,name=price,proto3" json:"price,omitempty"`       // Decimal(72,0)
+	Quantity  string `protobuf:"bytes,6,opt,name=quantity,proto3" json:"quantity,omitempty"` // Decimal(72,0)
+	Fee       string `protobuf:"bytes,7,opt,name=fee,proto3" json:"fee,omitempty"`           // Decimal(72,0)
+	Meta      string `protobuf:"bytes,8,opt,name=meta,proto3" json:"meta,omitempty"`         // JSON string
 	CreatedAt int64  `protobuf:"varint,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt int64  `protobuf:"varint,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 }

@@ -10,7 +10,7 @@ message LedgerEntry {
   string event_id = 3;
   string account_id = 4;
   
-  string amount = 5; // Positive or negative
+  string amount = 5; // Decimal(72,0) Positive or negative
   string meta = 6; // JSON string
   
   int64 created_at = 7;

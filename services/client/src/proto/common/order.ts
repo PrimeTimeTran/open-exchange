@@ -199,10 +199,7 @@ export interface Order {
   type?:
     | OrderType
     | undefined;
-  /**
-   * Using string for decimals to avoid precision loss (e.g. "0.00000001")
-   * In Go/Node, these should be parsed with a Decimal library.
-   */
+  /** Decimal(72,0) */
   price?: string | undefined;
   quantity?: string | undefined;
   quantityFilled?: string | undefined;

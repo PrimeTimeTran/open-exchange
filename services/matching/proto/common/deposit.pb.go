@@ -30,7 +30,7 @@ type Deposit struct {
 	AccountId             string `protobuf:"bytes,3,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
 	AssetId               string `protobuf:"bytes,4,opt,name=asset_id,json=assetId,proto3" json:"asset_id,omitempty"`
 	WalletId              string `protobuf:"bytes,5,opt,name=wallet_id,json=walletId,proto3" json:"wallet_id,omitempty"` // Added for context, though schema links via account/asset
-	Amount                string `protobuf:"bytes,6,opt,name=amount,proto3" json:"amount,omitempty"`
+	Amount                string `protobuf:"bytes,6,opt,name=amount,proto3" json:"amount,omitempty"`                     // Decimal(72,0)
 	Status                string `protobuf:"bytes,7,opt,name=status,proto3" json:"status,omitempty"`
 	Chain                 string `protobuf:"bytes,8,opt,name=chain,proto3" json:"chain,omitempty"`
 	TxHash                string `protobuf:"bytes,9,opt,name=tx_hash,json=txHash,proto3" json:"tx_hash,omitempty"`

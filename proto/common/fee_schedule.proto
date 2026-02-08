@@ -11,7 +11,7 @@ message FeeSchedule {
   string scope = 3; // e.g. "global", "user", "vip"
   int32 maker_fee_bps = 4;
   int32 taker_fee_bps = 5;
-  string min_fee_amount = 6; // string for precision if needed, Prisma said Int? but fees usually have decimals
+  string min_fee_amount = 6; // Decimal(72,0)
   
   int64 effective_from = 7;
   int64 effective_to = 8;

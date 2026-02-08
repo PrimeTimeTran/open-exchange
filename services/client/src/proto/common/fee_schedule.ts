@@ -20,7 +20,7 @@ export interface FeeSchedule {
   takerFeeBps?:
     | number
     | undefined;
-  /** string for precision if needed, Prisma said Int? but fees usually have decimals */
+  /** Decimal(72,0) */
   minFeeAmount?: string | undefined;
   effectiveFrom?: string | undefined;
   effectiveTo?: string | undefined;

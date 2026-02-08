@@ -14,8 +14,14 @@ export interface Trade {
   tenantId?: string | undefined;
   instrumentId?: string | undefined;
   buyOrderId?: string | undefined;
-  sellOrderId?: string | undefined;
-  price?: string | undefined;
+  sellOrderId?:
+    | string
+    | undefined;
+  /** Decimal(72,0) */
+  price?:
+    | string
+    | undefined;
+  /** Decimal(72,0) */
   quantity?:
     | string
     | undefined;

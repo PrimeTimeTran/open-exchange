@@ -14,9 +14,18 @@ export interface BalanceSnapshot {
   tenantId?: string | undefined;
   accountId?: string | undefined;
   walletId?: string | undefined;
-  assetId?: string | undefined;
-  available?: string | undefined;
-  locked?: string | undefined;
+  assetId?:
+    | string
+    | undefined;
+  /** Decimal(72,0) */
+  available?:
+    | string
+    | undefined;
+  /** Decimal(72,0) */
+  locked?:
+    | string
+    | undefined;
+  /** Decimal(72,0) */
   total?: string | undefined;
   snapshotAt?:
     | string

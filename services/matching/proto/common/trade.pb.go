@@ -30,9 +30,9 @@ type Trade struct {
 	InstrumentId string `protobuf:"bytes,3,opt,name=instrument_id,json=instrumentId,proto3" json:"instrument_id,omitempty"`
 	BuyOrderId   string `protobuf:"bytes,4,opt,name=buy_order_id,json=buyOrderId,proto3" json:"buy_order_id,omitempty"`
 	SellOrderId  string `protobuf:"bytes,5,opt,name=sell_order_id,json=sellOrderId,proto3" json:"sell_order_id,omitempty"`
-	Price        string `protobuf:"bytes,6,opt,name=price,proto3" json:"price,omitempty"`
-	Quantity     string `protobuf:"bytes,7,opt,name=quantity,proto3" json:"quantity,omitempty"`
-	Meta         string `protobuf:"bytes,8,opt,name=meta,proto3" json:"meta,omitempty"` // JSON string
+	Price        string `protobuf:"bytes,6,opt,name=price,proto3" json:"price,omitempty"`       // Decimal(72,0)
+	Quantity     string `protobuf:"bytes,7,opt,name=quantity,proto3" json:"quantity,omitempty"` // Decimal(72,0)
+	Meta         string `protobuf:"bytes,8,opt,name=meta,proto3" json:"meta,omitempty"`         // JSON string
 	CreatedAt    int64  `protobuf:"varint,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt    int64  `protobuf:"varint,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 }

@@ -13,6 +13,7 @@ use sqlx::PgPool;
 
 #[derive(Debug, Default)]
 pub struct LedgerImpl {
+    #[allow(dead_code)]
     db_pool: Option<PgPool>, // Optional for now to keep Default deriving working until full refactor
     order_service: OrderService,
     user_service: UserService,
@@ -27,6 +28,19 @@ impl LedgerImpl {
     pub fn new(db_pool: PgPool) -> Self {
         Self {
             db_pool: Some(db_pool),
+            order_service: OrderService::new(),
+            user_service: UserService::new(),
+            account_service: AccountService::new(),
+            wallet_service: WalletService::new(),
+            deposit_service: DepositService::new(),
+            withdrawal_service: WithdrawalService::new(),
+            asset_service: AssetService::new(),
+        }
+    }
+
+    pub fn new_test() -> Self {
+        Self {
+            db_pool: None,
             order_service: OrderService::new(),
             user_service: UserService::new(),
             account_service: AccountService::new(),

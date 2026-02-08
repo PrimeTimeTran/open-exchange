@@ -30,7 +30,7 @@ type FeeSchedule struct {
 	Scope         string `protobuf:"bytes,3,opt,name=scope,proto3" json:"scope,omitempty"` // e.g. "global", "user", "vip"
 	MakerFeeBps   int32  `protobuf:"varint,4,opt,name=maker_fee_bps,json=makerFeeBps,proto3" json:"maker_fee_bps,omitempty"`
 	TakerFeeBps   int32  `protobuf:"varint,5,opt,name=taker_fee_bps,json=takerFeeBps,proto3" json:"taker_fee_bps,omitempty"`
-	MinFeeAmount  string `protobuf:"bytes,6,opt,name=min_fee_amount,json=minFeeAmount,proto3" json:"min_fee_amount,omitempty"` // string for precision if needed, Prisma said Int? but fees usually have decimals
+	MinFeeAmount  string `protobuf:"bytes,6,opt,name=min_fee_amount,json=minFeeAmount,proto3" json:"min_fee_amount,omitempty"` // Decimal(72,0)
 	EffectiveFrom int64  `protobuf:"varint,7,opt,name=effective_from,json=effectiveFrom,proto3" json:"effective_from,omitempty"`
 	EffectiveTo   int64  `protobuf:"varint,8,opt,name=effective_to,json=effectiveTo,proto3" json:"effective_to,omitempty"`
 	Tier          string `protobuf:"bytes,9,opt,name=tier,proto3" json:"tier,omitempty"`

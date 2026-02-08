@@ -237,8 +237,7 @@ type Order struct {
 	TenantId string    `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	Side     OrderSide `protobuf:"varint,3,opt,name=side,proto3,enum=common.OrderSide" json:"side,omitempty"`
 	Type     OrderType `protobuf:"varint,4,opt,name=type,proto3,enum=common.OrderType" json:"type,omitempty"`
-	// Using string for decimals to avoid precision loss (e.g. "0.00000001")
-	// In Go/Node, these should be parsed with a Decimal library.
+	// Decimal(72,0)
 	Price          string      `protobuf:"bytes,5,opt,name=price,proto3" json:"price,omitempty"`
 	Quantity       string      `protobuf:"bytes,6,opt,name=quantity,proto3" json:"quantity,omitempty"`
 	QuantityFilled string      `protobuf:"bytes,7,opt,name=quantity_filled,json=quantityFilled,proto3" json:"quantity_filled,omitempty"`

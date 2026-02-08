@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package common;
+
+option go_package = "github.com/open-exchange/matching_engine/proto/common";
+
+message MarketMaker {
+  string id = 1;
+  string tenant_id = 2;
+  
+  string organization_name = 3;
+  string contact_email = 4;
+  string contact_phone = 5;
+  string status = 6;
+  string tier = 7;
+  string markets_supported = 8;
+  
+  int32 min_quote_size = 9;
+  int32 max_quote_size = 10;
+  int32 spread_limit = 11;
+  bool quote_obligation = 12;
+  int32 daily_volume_target = 13;
+  int32 maker_fee = 14;
+  int32 taker_fee = 15;
+  int32 rebate_rate = 16;
+  int32 rebate_balance = 17;
+  bool api_access = 18;
+  int32 max_orders_per_second = 19;
+  bool direct_market_access = 20;
+  int64 contract_signed_at = 21;
+  int32 obligation_violation_count = 22;
+  string audit_log = 23; // JSON string
+  string notes_internal = 24;
+  string special_order_types = 25;
+  string min_fee_amount = 26;
+  
+  int64 created_at = 27;
+  int64 updated_at = 28;
+}

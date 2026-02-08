@@ -17,14 +17,7 @@ export interface Wallet {
   assetId?:
     | string
     | undefined;
-  /**
-   * Balances are integers in the Prisma schema, likely representing smallest unit (sats/cents)
-   * or they might be floats in practice but stored as Int? Let's assume double or string for proto to be safe,
-   * but if the DB has Int, it might be limited. The user schema says `Int?`.
-   * Wait, `Int` in Prisma is 32-bit usually unless `BigInt`.
-   * Crypto exchanges usually need Decimal or BigInt.
-   * I will use string to be safe and compatible with the other protos I defined which used string for precision.
-   */
+  /** Balances are Decimal(72,0) */
   available?: string | undefined;
   locked?: string | undefined;
   total?: string | undefined;

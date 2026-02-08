@@ -14,8 +14,14 @@ export interface Withdrawal {
   tenantId?: string | undefined;
   accountId?: string | undefined;
   assetId?: string | undefined;
-  walletId?: string | undefined;
-  amount?: string | undefined;
+  walletId?:
+    | string
+    | undefined;
+  /** Decimal(72,0) */
+  amount?:
+    | string
+    | undefined;
+  /** Decimal(72,0) */
   fee?: string | undefined;
   status?: string | undefined;
   destinationAddress?: string | undefined;

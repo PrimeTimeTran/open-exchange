@@ -11,8 +11,8 @@ message Withdrawal {
   string asset_id = 4;
   string wallet_id = 5;
   
-  string amount = 6;
-  string fee = 7;
+  string amount = 6; // Decimal(72,0)
+  string fee = 7; // Decimal(72,0)
   string status = 8;
   
   string destination_address = 9;

@@ -16,9 +16,18 @@ export interface Fill {
     | string
     | undefined;
   /** "buy" or "sell" */
-  side?: string | undefined;
-  price?: string | undefined;
-  quantity?: string | undefined;
+  side?:
+    | string
+    | undefined;
+  /** Decimal(72,0) */
+  price?:
+    | string
+    | undefined;
+  /** Decimal(72,0) */
+  quantity?:
+    | string
+    | undefined;
+  /** Decimal(72,0) */
   fee?:
     | string
     | undefined;

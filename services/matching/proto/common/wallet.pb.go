@@ -30,12 +30,7 @@ type Wallet struct {
 	UserId    string `protobuf:"bytes,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	AccountId string `protobuf:"bytes,4,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
 	AssetId   string `protobuf:"bytes,5,opt,name=asset_id,json=assetId,proto3" json:"asset_id,omitempty"`
-	// Balances are integers in the Prisma schema, likely representing smallest unit (sats/cents)
-	// or they might be floats in practice but stored as Int? Let's assume double or string for proto to be safe,
-	// but if the DB has Int, it might be limited. The user schema says `Int?`.
-	// Wait, `Int` in Prisma is 32-bit usually unless `BigInt`.
-	// Crypto exchanges usually need Decimal or BigInt.
-	// I will use string to be safe and compatible with the other protos I defined which used string for precision.
+	// Balances are Decimal(72,0)
 	Available string `protobuf:"bytes,6,opt,name=available,proto3" json:"available,omitempty"`
 	Locked    string `protobuf:"bytes,7,opt,name=locked,proto3" json:"locked,omitempty"`
 	Total     string `protobuf:"bytes,8,opt,name=total,proto3" json:"total,omitempty"`

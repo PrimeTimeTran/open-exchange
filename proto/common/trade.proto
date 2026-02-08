@@ -14,8 +14,8 @@ message Trade {
   string buy_order_id = 4;
   string sell_order_id = 5;
   
-  string price = 6;
-  string quantity = 7;
+  string price = 6; // Decimal(72,0)
+  string quantity = 7; // Decimal(72,0)
   
   string meta = 8; // JSON string
   

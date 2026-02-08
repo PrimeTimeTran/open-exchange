@@ -30,8 +30,8 @@ type Withdrawal struct {
 	AccountId          string `protobuf:"bytes,3,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
 	AssetId            string `protobuf:"bytes,4,opt,name=asset_id,json=assetId,proto3" json:"asset_id,omitempty"`
 	WalletId           string `protobuf:"bytes,5,opt,name=wallet_id,json=walletId,proto3" json:"wallet_id,omitempty"`
-	Amount             string `protobuf:"bytes,6,opt,name=amount,proto3" json:"amount,omitempty"`
-	Fee                string `protobuf:"bytes,7,opt,name=fee,proto3" json:"fee,omitempty"`
+	Amount             string `protobuf:"bytes,6,opt,name=amount,proto3" json:"amount,omitempty"` // Decimal(72,0)
+	Fee                string `protobuf:"bytes,7,opt,name=fee,proto3" json:"fee,omitempty"`       // Decimal(72,0)
 	Status             string `protobuf:"bytes,8,opt,name=status,proto3" json:"status,omitempty"`
 	DestinationAddress string `protobuf:"bytes,9,opt,name=destination_address,json=destinationAddress,proto3" json:"destination_address,omitempty"`
 	DestinationTag     string `protobuf:"bytes,10,opt,name=destination_tag,json=destinationTag,proto3" json:"destination_tag,omitempty"`

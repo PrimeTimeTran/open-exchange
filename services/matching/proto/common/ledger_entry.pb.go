@@ -29,7 +29,7 @@ type LedgerEntry struct {
 	TenantId  string `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	EventId   string `protobuf:"bytes,3,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
 	AccountId string `protobuf:"bytes,4,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
-	Amount    string `protobuf:"bytes,5,opt,name=amount,proto3" json:"amount,omitempty"` // Positive or negative
+	Amount    string `protobuf:"bytes,5,opt,name=amount,proto3" json:"amount,omitempty"` // Decimal(72,0) Positive or negative
 	Meta      string `protobuf:"bytes,6,opt,name=meta,proto3" json:"meta,omitempty"`     // JSON string
 	CreatedAt int64  `protobuf:"varint,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt int64  `protobuf:"varint,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`

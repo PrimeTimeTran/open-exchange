@@ -30,9 +30,9 @@ type BalanceSnapshot struct {
 	AccountId  string `protobuf:"bytes,3,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
 	WalletId   string `protobuf:"bytes,4,opt,name=wallet_id,json=walletId,proto3" json:"wallet_id,omitempty"`
 	AssetId    string `protobuf:"bytes,5,opt,name=asset_id,json=assetId,proto3" json:"asset_id,omitempty"`
-	Available  string `protobuf:"bytes,6,opt,name=available,proto3" json:"available,omitempty"`
-	Locked     string `protobuf:"bytes,7,opt,name=locked,proto3" json:"locked,omitempty"`
-	Total      string `protobuf:"bytes,8,opt,name=total,proto3" json:"total,omitempty"`
+	Available  string `protobuf:"bytes,6,opt,name=available,proto3" json:"available,omitempty"` // Decimal(72,0)
+	Locked     string `protobuf:"bytes,7,opt,name=locked,proto3" json:"locked,omitempty"`       // Decimal(72,0)
+	Total      string `protobuf:"bytes,8,opt,name=total,proto3" json:"total,omitempty"`         // Decimal(72,0)
 	SnapshotAt int64  `protobuf:"varint,9,opt,name=snapshot_at,json=snapshotAt,proto3" json:"snapshot_at,omitempty"`
 	Meta       string `protobuf:"bytes,10,opt,name=meta,proto3" json:"meta,omitempty"` // JSON string
 	CreatedAt  int64  `protobuf:"varint,11,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`

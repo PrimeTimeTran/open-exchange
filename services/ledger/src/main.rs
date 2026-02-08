@@ -1,14 +1,9 @@
-mod api;
-mod domain;
-mod infra;
-mod proto;
-mod system;
-
 use tonic::transport::Server;
-use crate::api::hello::MyGreeter;
-use crate::api::ledger::LedgerImpl;
-use crate::proto::hello_world::greeter_server::GreeterServer;
-use crate::proto::ledger::ledger_service_server::LedgerServiceServer;
+use ledger::api::hello::MyGreeter;
+use ledger::api::ledger::LedgerImpl;
+use ledger::proto::hello_world::greeter_server::GreeterServer;
+use ledger::proto::ledger::ledger_service_server::LedgerServiceServer;
+use ledger::{infra, system};
 use dotenv::dotenv;
 use std::env;
 

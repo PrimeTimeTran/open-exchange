@@ -11,7 +11,7 @@ message Deposit {
   string asset_id = 4;
   string wallet_id = 5; // Added for context, though schema links via account/asset
   
-  string amount = 6;
+  string amount = 6; // Decimal(72,0)
   string status = 7;
   
   string chain = 8;

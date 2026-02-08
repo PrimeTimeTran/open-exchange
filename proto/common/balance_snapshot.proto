@@ -12,9 +12,9 @@ message BalanceSnapshot {
   string wallet_id = 4;
   string asset_id = 5;
   
-  string available = 6;
-  string locked = 7;
-  string total = 8;
+  string available = 6; // Decimal(72,0)
+  string locked = 7; // Decimal(72,0)
+  string total = 8; // Decimal(72,0)
   
   int64 snapshot_at = 9;
   

@@ -16,7 +16,7 @@ export interface LedgerEntry {
   accountId?:
     | string
     | undefined;
-  /** Positive or negative */
+  /** Decimal(72,0) Positive or negative */
   amount?:
     | string
     | undefined;

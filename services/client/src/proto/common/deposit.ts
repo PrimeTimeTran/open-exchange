@@ -17,7 +17,10 @@ export interface Deposit {
     | string
     | undefined;
   /** Added for context, though schema links via account/asset */
-  walletId?: string | undefined;
+  walletId?:
+    | string
+    | undefined;
+  /** Decimal(72,0) */
   amount?: string | undefined;
   status?: string | undefined;
   chain?: string | undefined;

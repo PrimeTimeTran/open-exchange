@@ -38,8 +38,7 @@ message Order {
   OrderSide side = 3;
   OrderType type = 4;
   
-  // Using string for decimals to avoid precision loss (e.g. "0.00000001")
-  // In Go/Node, these should be parsed with a Decimal library.
+  // Decimal(72,0)
   string price = 5;
   string quantity = 6;
   string quantity_filled = 7;
