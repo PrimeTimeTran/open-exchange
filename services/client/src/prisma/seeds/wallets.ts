@@ -17,20 +17,32 @@ export async function seedWallets(
   for (const balance of balances) {
     const asset = assetsMap.get(balance.asset);
     if (asset) {
+      // Create separate accounts for each asset context as requested.
+      // USD -> USD (Funding)
+      // BTC -> BTC_USD (Trading)
+      // ETH -> ETH_USD (Trading)
+      // AAPL -> AAPL_USD (Trading)
+
+      let accountName =
+        balance.asset === 'USD' ? 'USD' : `${balance.asset}_USD`;
+      let accountType = balance.asset === 'USD' ? 'cash' : 'custody';
+
       let account = await prisma.account.findFirst({
         where: {
           tenantId,
           userId: membershipId,
+          name: accountName,
         },
       });
 
       if (!account) {
-        console.log('Creating Main account for user...');
+        console.log(`Creating ${accountName} account for user...`);
         account = await prisma.account.create({
           data: {
+            name: accountName,
             tenantId,
             userId: membershipId,
-            type: 'custody',
+            type: accountType,
             status: 'active',
             createdByMembershipId: membershipId,
             updatedByMembershipId: membershipId,
@@ -55,13 +67,13 @@ export async function seedWallets(
         await prisma.wallet.create({
           data: {
             tenantId,
+            locked: 0,
+            version: 1,
             userId: membershipId,
             accountId: account.id,
             assetId: asset.id,
             available: balance.amount,
             total: balance.amount,
-            locked: 0,
-            version: 1,
             createdByMembershipId: membershipId,
             updatedByMembershipId: membershipId,
             createdByUserId: userId,

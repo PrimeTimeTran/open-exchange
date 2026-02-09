@@ -124,6 +124,7 @@ func TestPlaceOrder_WithMatch(t *testing.T) {
 		Price:        "50000",
 		Quantity:     "1.0",
 		InstrumentId: "BTC-USD",
+		AccountId:    "user1",
 	}), nil)
 
 	// New Buy Order that matches
@@ -134,6 +135,7 @@ func TestPlaceOrder_WithMatch(t *testing.T) {
 		Price:        "50000",
 		Quantity:     "0.5",
 		InstrumentId: "BTC-USD",
+		AccountId:    "user2",
 	}
 
 	// Expectations

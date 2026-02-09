@@ -7,6 +7,8 @@ use ledger::{infra, system};
 use ledger::config::Config;
 use ledger::domain::orders::OrderService;
 use ledger::domain::accounts::AccountService;
+use ledger::domain::wallets::WalletService;
+use ledger::domain::assets::AssetService;
 use ledger::infra::repositories::{PostgresOrderRepository, PostgresAccountRepository};
 use std::sync::Arc;
 use dotenv::dotenv;
@@ -29,7 +31,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let account_repo = Arc::new(PostgresAccountRepository::new(db_pool.clone()));
 
     // Services
-    let order_service = OrderService::new(order_repo);
+    let wallet_service = WalletService::new();
+    let asset_service = AssetService::new();
+    
+    let order_service = OrderService::new(
+        order_repo, 
+        Arc::new(wallet_service.clone()), 
+        Arc::new(asset_service.clone())
+    );
     let account_service = AccountService::new(account_repo);
 
     // Start HTTP Health Server
@@ -40,7 +49,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let addr = format!("[::]:{}", config.port).parse()?;
     let greeter = MyGreeter::default();
-    let ledger_impl = LedgerImpl::new(order_service, account_service);
+    let ledger_impl = LedgerImpl::new(
+        order_service, 
+        account_service,
+        wallet_service,
+        asset_service
+    );
 
     println!("LedgerService listening on {}", addr);
 

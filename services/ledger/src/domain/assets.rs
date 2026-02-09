@@ -64,6 +64,11 @@ impl AssetService {
         let mut instruments = self.instruments.lock().unwrap();
         instruments.push(instrument);
     }
+
+    pub fn get_instrument(&self, id: &str) -> Option<common::Instrument> {
+        let instruments = self.instruments.lock().unwrap();
+        instruments.iter().find(|i| i.id == id).cloned()
+    }
     
     // Add getters if needed
 }

@@ -62,8 +62,8 @@ impl OrderRepository for PostgresOrderRepository {
     async fn create(&self, order: Order) -> Result<Order> {
         let rec: OrderRow = sqlx::query_as(
             r#"
-            INSERT INTO "Order" (id, "tenantId", "accountId", "instrumentId", side, quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt")
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            INSERT INTO "Order" (id, "tenantId", "accountId", "instrumentId", side, quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "createdByMembershipId", "updatedByMembershipId")
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $3, $3, NULL, NULL)
             RETURNING id, "tenantId", "accountId", "instrumentId", side, CAST(quantity AS FLOAT8), CAST(price AS FLOAT8), status, CAST("quantityFilled" AS FLOAT8), meta, "createdAt", "updatedAt"
             "#
         )

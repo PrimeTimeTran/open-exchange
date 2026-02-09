@@ -22,6 +22,7 @@ const (
 	OrderCreated     OrderEventType = "CREATED"     // New order added to book
 	OrderUpdated     OrderEventType = "UPDATED"     // Order modified (partial fill)
 	OrderFilled      OrderEventType = "FILLED"      // Order fully filled
+	OrderCancelled   OrderEventType = "CANCELLED"   // Order removed from book
 )
 
 // OrderBookEvent represents a change to an order in the book (L2 data)

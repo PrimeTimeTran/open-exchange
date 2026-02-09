@@ -47,6 +47,11 @@ impl WalletService {
         wallets.iter().find(|x| x.id == wallet_id).cloned()
     }
 
+    pub fn get_wallet_by_account_and_asset(&self, account_id: &str, asset_id: &str) -> Option<common::Wallet> {
+        let wallets = self.wallets.lock().unwrap();
+        wallets.iter().find(|x| x.account_id == account_id && x.asset_id == asset_id).cloned()
+    }
+
     pub fn update_wallet(&self, wallet: common::Wallet) -> bool {
         let mut wallets = self.wallets.lock().unwrap();
         if let Some(pos) = wallets.iter().position(|x| x.id == wallet.id) {

@@ -15,6 +15,7 @@ type Order struct {
 	Quantity       float64
 	QuantityFilled float64
 	InstrumentID   string
+	AccountID      string
 	Timestamp      int64
 	OriginalOrder  *common.Order
 }
@@ -43,6 +44,7 @@ func NewOrderFromProto(o *common.Order) *Order {
 		Quantity:       q,
 		QuantityFilled: qf,
 		InstrumentID:   o.InstrumentId,
+		AccountID:      o.AccountId,
 		Timestamp:      o.CreatedAt,
 		OriginalOrder:  o,
 	}

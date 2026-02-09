@@ -17,6 +17,22 @@ func (ob *OrderBook) matchLimitBuy(order *Order, onMatch func(Trade) error) ([]T
 	for len(ob.Asks) > 0 && ob.Asks[0].Price <= order.Price && !order.Filled() {
 		bestAsk := ob.Asks[0]
 		
+		// Self-Trade Prevention: Cancel resting order from same user
+		if bestAsk.AccountID == order.AccountID {
+			log.Printf("Self-Trade Prevention: Cancelling resting Ask %s for User %s", bestAsk.ID, bestAsk.AccountID)
+			ob.Asks = ob.Asks[1:]
+			bookEvents = append(bookEvents, events.OrderBookEvent{
+				Type:         events.OrderCancelled,
+				OrderID:      bestAsk.ID,
+				InstrumentID: ob.InstrumentID,
+				Price:        bestAsk.Price,
+				Quantity:     0,
+				Side:         "SELL",
+				Timestamp:    time.Now().Unix(),
+			})
+			continue
+		}
+
 		tradePrice := bestAsk.Price
 		tradeQty := min(order.Remaining(), bestAsk.Remaining())
 		
@@ -89,6 +105,22 @@ func (ob *OrderBook) matchLimitSell(order *Order, onMatch func(Trade) error) ([]
 	for len(ob.Bids) > 0 && ob.Bids[0].Price >= order.Price && !order.Filled() {
 		bestBid := ob.Bids[0]
 		
+		// Self-Trade Prevention: Cancel resting order from same user
+		if bestBid.AccountID == order.AccountID {
+			log.Printf("Self-Trade Prevention: Cancelling resting Bid %s for User %s", bestBid.ID, bestBid.AccountID)
+			ob.Bids = ob.Bids[1:]
+			bookEvents = append(bookEvents, events.OrderBookEvent{
+				Type:         events.OrderCancelled,
+				OrderID:      bestBid.ID,
+				InstrumentID: ob.InstrumentID,
+				Price:        bestBid.Price,
+				Quantity:     0,
+				Side:         "BUY",
+				Timestamp:    time.Now().Unix(),
+			})
+			continue
+		}
+
 		tradePrice := bestBid.Price
 		tradeQty := min(order.Remaining(), bestBid.Remaining())
 		

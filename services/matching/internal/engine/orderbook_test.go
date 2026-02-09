@@ -17,6 +17,7 @@ func createOrder(id string, side common.OrderSide, orderType common.OrderType, p
 		Quantity:     qty,
 		InstrumentID: "BTC-USD",
 		Timestamp:    time.Now().UnixNano(),
+		AccountID:    "user_" + id, // Ensure unique AccountID to prevent Self-Trade Prevention in tests
 	}
 }
 

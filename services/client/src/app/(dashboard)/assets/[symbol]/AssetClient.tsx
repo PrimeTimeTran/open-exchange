@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-
 import { PriceUpdate } from 'src/proto/market/market';
 import { ChartDataPoint, useMarketChart } from 'src/hooks/use-market-chart';
+import { useMutation } from '@tanstack/react-query';
+import { placeMatchingEngineOrder } from 'src/actions/order';
+import { instrumentAutocompleteApiCall } from 'src/features/instrument/instrumentApiCalls';
+import { useToast } from 'src/shared/components/ui/use-toast';
 
 import { PriceChart } from '@/components/charts/price-chart';
 import { AssetAbout } from '@/components/assets/asset-about';
@@ -41,19 +42,56 @@ export function AssetClient({
     initialChartData,
   });
 
+  const { toast } = useToast();
+
+  const orderMutation = useMutation({
+    mutationFn: async (data: {
+      type: 'market' | 'limit';
+      quantity: string;
+      price?: string;
+      timeInForce: string;
+      asset: string;
+    }) => {
+      console.log('Hi');
+      // Find the instrument ID first
+      const instruments = await instrumentAutocompleteApiCall({
+        search: data.asset,
+        take: 1,
+      });
+
+      if (!instruments || instruments.length === 0) {
+        throw new Error(`Instrument ${data.asset} not found`);
+      }
+
+      const instrumentId = instruments[0].id;
+
+      return placeMatchingEngineOrder({
+        instrumentId,
+        side: 'buy', // Hardcoded for now based on UI
+        type: data.type,
+        quantity: data.quantity,
+        price: data.price,
+        timeInForce: data.timeInForce,
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Order placed',
+        description: 'Your order has been successfully placed.',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Order failed',
+        description: error.message || 'Failed to place order',
+        variant: 'destructive',
+      });
+    },
+  });
+
   return (
     <div className="flex flex-col lg:flex-row gap-8">
       <div className="flex-1 space-y-8">
-        <div className="mb-6">
-          <Link
-            href="/home"
-            className="flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Dashboard
-          </Link>
-        </div>
-
         <div>
           <h1 className="text-4xl font-bold tracking-tight mb-2">{symbol}</h1>
           <ChartHeader
@@ -63,26 +101,23 @@ export function AssetClient({
             isPositive={isDisplayPositive}
           />
         </div>
-
         <PriceChart
           data={chartData}
           color={lineColor}
           timeRange={timeRange}
           onHover={setHoveredData}
         />
-
         <TimeRangeSelector
           currentRange={timeRange}
           onRangeChange={handleRangeChange}
         />
-
         <AssetAbout symbol={symbol} />
-
         <NewsSection symbol={symbol} />
       </div>
-
-      {/* Sidebar (Order Entry) */}
-      <OrderSidebar symbol={symbol} />
+      <OrderSidebar
+        symbol={symbol}
+        onSubmit={(data) => orderMutation.mutate(data)}
+      />
     </div>
   );
 }

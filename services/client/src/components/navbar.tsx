@@ -5,12 +5,11 @@ import { useTheme } from 'next-themes';
 import {
   Moon,
   Sun,
-  Menu,
   User,
   Wallet,
-  Settings,
   LogOut,
   Laptop,
+  Settings,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { GlobalSidebar } from './global-sidebar';
