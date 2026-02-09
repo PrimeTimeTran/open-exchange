@@ -1,62 +1,170 @@
 import React from 'react';
+import Link from 'next/link';
+import { prisma } from '@/prisma';
+import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui';
 import { Badge } from '@/shared/components/ui/badge';
 import {
-  ArrowLeft,
-  CheckCircle2,
   Clock,
   Globe,
-  MapPin,
-  Zap,
+  Monitor,
+  ArrowLeft,
   Briefcase,
   DollarSign,
-  Monitor,
+  CheckCircle2,
 } from 'lucide-react';
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
 
-// Mock data for demonstration purposes
-const getJobBySlug = (slug: string) => {
-  // In a real app, fetch from API or CMS
-  return {
-    id: '1',
-    title: 'Senior Frontend Engineer',
-    department: 'Engineering',
-    location: 'Remote',
-    type: 'Full-time',
-    salary: '$160k - $220k + Equity',
-    postedAt: '2 days ago',
-    description: `We are looking for a Senior Frontend Engineer to lead the development of our core trading interface. You will be responsible for building high-performance, real-time React applications that handle thousands of updates per second.`,
-    responsibilities: [
-      'Architect and build scalable frontend applications using Next.js, React, and TypeScript.',
-      'Optimize application performance for high-frequency data updates (WebSocket streams).',
-      'Collaborate with product designers to implement pixel-perfect, responsive UIs.',
-      'Lead code reviews and mentor junior engineers.',
-      'Contribute to our internal component library and design system.',
-    ],
-    requirements: [
-      '5+ years of experience with modern frontend frameworks (React, Vue, etc.).',
-      'Deep understanding of TypeScript, React internals, and performance optimization.',
-      'Experience with state management libraries (Zustand, Redux, etc.) and real-time data.',
-      'Strong knowledge of CSS, Tailwind, and responsive design principles.',
-      'Experience building financial or data-heavy applications is a plus.',
-    ],
-    benefits: [
-      'Competitive salary and significant equity package.',
-      '100% remote-first culture with flexible hours.',
-      'Comprehensive health, dental, and vision insurance.',
-      'Unlimited PTO and a generous equipment stipend.',
-      'Annual company retreats and regular team meetups.',
-    ],
-  };
+export const dynamic = 'force-dynamic';
+
+const SimpleMarkdown = ({ content }: { content: string | null }) => {
+  if (!content) return null;
+
+  const lines = content.split('\n');
+  const elements: React.ReactNode[] = [];
+  let currentList: React.ReactNode[] = [];
+
+  lines.forEach((line, index) => {
+    // Handle headers
+    if (line.startsWith('### ')) {
+      if (currentList.length > 0) {
+        elements.push(
+          <ul key={`list-${index}`} className="list-disc pl-5 space-y-2 mb-4">
+            {currentList}
+          </ul>,
+        );
+        currentList = [];
+      }
+      elements.push(
+        <h3 key={index} className="text-xl font-bold mt-6 mb-3 text-foreground">
+          {line.replace('### ', '')}
+        </h3>,
+      );
+      return;
+    }
+
+    // Handle lists
+    if (line.trim().startsWith('- ')) {
+      const text = line.trim().substring(2);
+      const parts = text.split('**');
+      const children = parts.map((part, i) =>
+        i % 2 === 1 ? (
+          <strong key={i} className="font-semibold text-foreground">
+            {part}
+          </strong>
+        ) : (
+          part
+        ),
+      );
+
+      currentList.push(
+        <li key={index} className="text-muted-foreground">
+          {children}
+        </li>,
+      );
+      return;
+    }
+
+    // Flush list if we hit a non-list line
+    if (currentList.length > 0) {
+      elements.push(
+        <ul key={`list-${index}`} className="list-disc pl-5 space-y-2 mb-4">
+          {currentList}
+        </ul>,
+      );
+      currentList = [];
+    }
+
+    // Handle paragraphs
+    if (line.trim() !== '') {
+      const parts = line.split('**');
+      const children = parts.map((part, i) =>
+        i % 2 === 1 ? (
+          <strong key={i} className="font-semibold text-foreground">
+            {part}
+          </strong>
+        ) : (
+          part
+        ),
+      );
+      elements.push(
+        <p key={index} className="mb-4 text-muted-foreground leading-relaxed">
+          {children}
+        </p>,
+      );
+    }
+  });
+
+  if (currentList.length > 0) {
+    elements.push(
+      <ul key="list-end" className="list-disc pl-5 space-y-2 mb-4">
+        {currentList}
+      </ul>,
+    );
+  }
+
+  return <>{elements}</>;
 };
 
-export default function JobPage({ params }: { params: { slug: string } }) {
-  const job = getJobBySlug(params.slug);
+export default async function JobPage({
+  params,
+}: {
+  params: { slug: string };
+}) {
+  const decodedSlug = decodeURIComponent(params.slug);
+  const slugTitle = decodedSlug.replace(/-/g, ' ');
+
+  // Try to find job by ID first if it looks like a UUID (legacy support or direct links)
+  const isUuid =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      params.slug,
+    );
+  let job = null;
+
+  if (isUuid) {
+    job = await prisma.job.findUnique({
+      where: { id: params.slug },
+    });
+  }
+
+  // If not found by ID (or not a UUID), try to find by title (assuming slug is title-based)
+  // This is a simple fuzzy match or exact match depending on how strict we want to be
+  if (!job) {
+    job = await prisma.job.findFirst({
+      where: {
+        title: {
+          mode: 'insensitive',
+          equals: slugTitle,
+        },
+      },
+    });
+  }
 
   if (!job) {
     notFound();
   }
+
+  // Helper to parse potential markdown or list items if stored as string
+  // Assuming description/requirements/responsibilities are markdown strings
+  // We will render them as simple paragraphs or lists for now if no markdown renderer is available
+  // But ideally use a markdown renderer component if available.
+  // Since user asked not to use new packages, we will try to format it cleanly.
+
+  const formatCurrency = (amount: number | null, currency: string | null) => {
+    if (!amount) return 'Competitive';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency || 'USD',
+      maximumSignificantDigits: 3,
+    }).format(amount);
+  };
+
+  const salaryRange =
+    job.salaryLow && job.salaryHigh
+      ? `${formatCurrency(job.salaryLow, job.currency)} - ${formatCurrency(
+          job.salaryHigh,
+          job.currency,
+        )}`
+      : 'Competitive Salary';
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -92,7 +200,7 @@ export default function JobPage({ params }: { params: { slug: string } }) {
                   variant="outline"
                   className="px-3 py-1 border-primary/20 bg-primary/5 text-primary"
                 >
-                  {job.department}
+                  {job.team}
                 </Badge>
                 <Badge variant="outline" className="px-3 py-1">
                   {job.type}
@@ -113,11 +221,13 @@ export default function JobPage({ params }: { params: { slug: string } }) {
               <div className="flex flex-wrap items-center gap-6 text-muted-foreground text-sm md:text-base">
                 <div className="flex items-center gap-2">
                   <DollarSign className="w-4 h-4 text-primary" />
-                  <span>{job.salary}</span>
+                  <span>{salaryRange}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-primary" />
-                  <span>Posted {job.postedAt}</span>
+                  <span>
+                    Posted {new Date(job.createdAt).toLocaleDateString()}
+                  </span>
                 </div>
               </div>
             </div>
@@ -130,64 +240,46 @@ export default function JobPage({ params }: { params: { slug: string } }) {
                 About the Role
               </h2>
               <div className="prose prose-lg dark:prose-invert max-w-none text-muted-foreground leading-relaxed">
-                <p>{job.description}</p>
-                <p>
-                  At our core, we value transparency, performance, and
-                  user-centric design. In this role, you'll have the autonomy to
-                  make architectural decisions and the support to execute them.
-                  You'll work closely with a team of passionate builders who are
-                  reshaping the future of digital asset exchange.
-                </p>
+                <SimpleMarkdown content={job.description} />
               </div>
             </section>
 
             {/* Responsibilities */}
-            <section className="space-y-6">
-              <h2 className="text-2xl font-bold font-display">
-                What You'll Do
-              </h2>
-              <ul className="space-y-4">
-                {job.responsibilities.map((item, index) => (
-                  <li
-                    key={index}
-                    className="flex items-start gap-3 text-muted-foreground"
-                  >
-                    <div className="mt-1.5 min-w-5">
-                      <CheckCircle2 className="w-5 h-5 text-primary" />
-                    </div>
-                    <span className="leading-relaxed">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
+            {job.responsibilities && (
+              <section className="space-y-6">
+                <h2 className="text-2xl font-bold font-display">
+                  What You'll Do
+                </h2>
+                <div className="prose prose-lg dark:prose-invert max-w-none text-muted-foreground leading-relaxed">
+                  <SimpleMarkdown content={job.responsibilities} />
+                </div>
+              </section>
+            )}
 
             {/* Requirements */}
-            <section className="space-y-6">
-              <h2 className="text-2xl font-bold font-display">
-                What We Look For
-              </h2>
-              <ul className="space-y-4">
-                {job.requirements.map((item, index) => (
-                  <li
-                    key={index}
-                    className="flex items-start gap-3 text-muted-foreground"
-                  >
-                    <div className="mt-1.5 min-w-5">
-                      <Zap className="w-5 h-5 text-primary" />
-                    </div>
-                    <span className="leading-relaxed">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
+            {job.requirements && (
+              <section className="space-y-6">
+                <h2 className="text-2xl font-bold font-display">
+                  What We Look For
+                </h2>
+                <div className="prose prose-lg dark:prose-invert max-w-none text-muted-foreground leading-relaxed">
+                  <SimpleMarkdown content={job.requirements} />
+                </div>
+              </section>
+            )}
 
-            {/* Benefits */}
+            {/* Benefits - Hardcoded for now as it's not in DB schema explicitly as array */}
             <section className="space-y-6">
               <h2 className="text-2xl font-bold font-display">
                 Benefits & Perks
               </h2>
               <div className="grid sm:grid-cols-2 gap-4">
-                {job.benefits.map((item, index) => (
+                {[
+                  'Competitive salary and equity package',
+                  'Remote-first culture with flexible hours',
+                  'Comprehensive health, dental, and vision insurance',
+                  'Unlimited PTO and equipment stipend',
+                ].map((item, index) => (
                   <div
                     key={index}
                     className="p-4 rounded-xl bg-muted/30 border border-border/50 flex gap-3 items-start"

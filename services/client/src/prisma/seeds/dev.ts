@@ -11,6 +11,7 @@ import { seedDeposits } from './deposits';
 import { seedWithdrawals } from './withdrawals';
 import { seedOrders } from './orders';
 import { seedSystemAccounts } from './systemAccounts';
+import { seedJobs } from './jobs';
 
 const prisma = new PrismaClient();
 
@@ -33,6 +34,7 @@ async function main() {
     user.id,
     assetsMap,
   );
+  await seedJobs(prisma, tenant.id, membership.id, user.id);
 
   console.log('Seeding completed.');
 }

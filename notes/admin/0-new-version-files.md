@@ -1,5 +1,0 @@
-- Add deleted files.
-  - src/app/(public)
-  - src/components
-  - src/utils
-  - test
