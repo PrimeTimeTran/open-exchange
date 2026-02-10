@@ -1,7 +1,6 @@
-import { matchingEngineClient as client } from '@/services/MatchingEngineClient';
-import { GetOrderBookResponse } from '@/proto/matching/engine';
-import { Order } from '@/proto/common/order';
 import { prisma } from '@/prisma';
+import { matchingClient } from '@/services/MatchingClient';
+import { GetOrderBookResponse } from '@/proto/matching/engine';
 
 async function getOrderBook(
   instrumentId: string,
@@ -33,7 +32,9 @@ async function getOrderBook(
       console.warn(`Instrument not found for symbol: ${instrumentId}`);
     }
   }
-  return await client.getOrderBook({ instrumentId: targetInstrumentId });
+  return await matchingClient.getOrderBook({
+    instrumentId: targetInstrumentId,
+  });
 }
 
 export default async function OrdersPage({

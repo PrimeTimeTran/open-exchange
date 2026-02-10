@@ -1,23 +1,25 @@
+use uuid::Uuid;
+use tonic::Request;
+use super::common::*;
+use ledger::proto::ledger::order_service_server::OrderService;
+use ledger::proto::ledger::account_service_server::AccountService;
+use ledger::proto::ledger::wallet_service_server::WalletService;
+use ledger::proto::common::{Order, OrderSide, OrderStatus, TimeInForce, OrderType};
 use ledger::proto::ledger::{
     RecordOrderRequest, CancelOrderRequest, CreateAccountRequest, GetAccountRequest
 };
-use ledger::proto::ledger::ledger_service_server::LedgerService;
-use ledger::proto::common::{Order, OrderSide, OrderStatus, TimeInForce, OrderType};
-use tonic::Request;
-use uuid::Uuid;
-use super::common::*;
 
 #[tokio::test]
 async fn test_record_order_success() {
     let ctx = TestContext::new();
     
     // Need minimum setup for order to pass validation now
-    let usd_account_id = create_account(&ctx.service, &ctx.user_id, "cash").await;
-    let usd_asset_id = create_asset(&ctx.service, "USD", "fiat", 2).await;
-    let btc_asset_id = create_asset(&ctx.service, "BTC", "crypto", 8).await;
-    let instrument_id = create_instrument(&ctx.service, "BTC_USD", &btc_asset_id, &usd_asset_id).await;
-    let usd_wallet_id = create_wallet(&ctx.service, &usd_account_id, &usd_asset_id).await;
-    deposit_funds(&ctx.service, &usd_wallet_id, "100000").await;
+    let usd_account_id = create_account(&ctx.account_service, &ctx.user_id, "cash").await;
+    let usd_asset_id = create_asset(&ctx.asset_service, "USD", "fiat", 2).await;
+    let btc_asset_id = create_asset(&ctx.asset_service, "BTC", "crypto", 8).await;
+    let instrument_id = create_instrument(&ctx.asset_service, "BTC_USD", &btc_asset_id, &usd_asset_id).await;
+    let usd_wallet_id = create_wallet(&ctx.wallet_service, &usd_account_id, &usd_asset_id).await;
+    deposit_funds(&ctx.deposit_service, &usd_wallet_id, "100000").await;
 
     let order_id = Uuid::new_v4().to_string();
     let order = Order {
@@ -41,7 +43,7 @@ async fn test_record_order_success() {
         order: Some(order),
     });
 
-    let response = ctx.service.record_order(request).await.unwrap();
+    let response = ctx.order_service.record_order(request).await.unwrap();
     let resp = response.into_inner();
 
     assert!(resp.success);
@@ -60,7 +62,7 @@ async fn test_create_and_get_account() {
         r#type: account_type.clone(),
     });
 
-    let create_resp = ctx.service.create_account(create_req).await.unwrap().into_inner();
+    let create_resp = ctx.account_service.create_account(create_req).await.unwrap().into_inner();
     let created_account = create_resp.account.unwrap();
     
     assert_eq!(created_account.user_id, user_id);
@@ -72,7 +74,7 @@ async fn test_create_and_get_account() {
         account_id: created_account.id.clone(),
     });
 
-    let get_resp = ctx.service.get_account(get_req).await.unwrap().into_inner();
+    let get_resp = ctx.account_service.get_account(get_req).await.unwrap().into_inner();
     let retrieved_account = get_resp.account.unwrap();
 
     assert_eq!(retrieved_account.id, created_account.id);
@@ -88,12 +90,12 @@ async fn test_cancel_order() {
     // But wait, cancel_order usually requires order to exist.
     // So we must create it first.
     
-    let usd_account_id = create_account(&ctx.service, &ctx.user_id, "cash").await;
-    let usd_asset_id = create_asset(&ctx.service, "USD", "fiat", 2).await;
-    let btc_asset_id = create_asset(&ctx.service, "BTC", "crypto", 8).await;
-    let instrument_id = create_instrument(&ctx.service, "BTC_USD", &btc_asset_id, &usd_asset_id).await;
-    let usd_wallet_id = create_wallet(&ctx.service, &usd_account_id, &usd_asset_id).await;
-    deposit_funds(&ctx.service, &usd_wallet_id, "100000").await;
+    let usd_account_id = create_account(&ctx.account_service, &ctx.user_id, "cash").await;
+    let usd_asset_id = create_asset(&ctx.asset_service, "USD", "fiat", 2).await;
+    let btc_asset_id = create_asset(&ctx.asset_service, "BTC", "crypto", 8).await;
+    let instrument_id = create_instrument(&ctx.asset_service, "BTC_USD", &btc_asset_id, &usd_asset_id).await;
+    let usd_wallet_id = create_wallet(&ctx.wallet_service, &usd_account_id, &usd_asset_id).await;
+    deposit_funds(&ctx.deposit_service, &usd_wallet_id, "100000").await;
 
     let order = Order {
         id: order_id.clone(),
@@ -115,11 +117,11 @@ async fn test_cancel_order() {
     let record_req = Request::new(RecordOrderRequest {
         order: Some(order),
     });
-    ctx.service.record_order(record_req).await.unwrap();
+    ctx.order_service.record_order(record_req).await.unwrap();
 
     // Verify Funds Locked
     let get_wallet_req = Request::new(ledger::proto::ledger::GetWalletRequest { wallet_id: usd_wallet_id.clone() });
-    let w_locked = ctx.service.get_wallet(get_wallet_req).await.unwrap().into_inner().wallet.unwrap();
+    let w_locked = ctx.wallet_service.get_wallet(get_wallet_req).await.unwrap().into_inner().wallet.unwrap();
     // 100,000 - 50,000 = 50,000 Available
     assert_eq!(w_locked.available, "50000");
     assert_eq!(w_locked.locked, "50000");
@@ -129,7 +131,7 @@ async fn test_cancel_order() {
         order_id: order_id.clone(),
     });
 
-    let cancel_resp = ctx.service.cancel_order(cancel_req).await.unwrap().into_inner();
+    let cancel_resp = ctx.order_service.cancel_order(cancel_req).await.unwrap().into_inner();
     assert!(cancel_resp.success);
     assert_eq!(cancel_resp.message, "Order cancelled");
 
@@ -137,7 +139,7 @@ async fn test_cancel_order() {
     // Note: This assertion assumes cancel_order implementation handles unlocking.
     // If it currently doesn't, this test will fail, highlighting the missing logic.
     let get_wallet_req_2 = Request::new(ledger::proto::ledger::GetWalletRequest { wallet_id: usd_wallet_id.clone() });
-    let w_unlocked = ctx.service.get_wallet(get_wallet_req_2).await.unwrap().into_inner().wallet.unwrap();
+    let w_unlocked = ctx.wallet_service.get_wallet(get_wallet_req_2).await.unwrap().into_inner().wallet.unwrap();
     
     // Should be back to 100,000 Available, 0 Locked
     // If logic is missing, these asserts will likely fail.

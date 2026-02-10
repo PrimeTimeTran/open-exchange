@@ -544,10 +544,10 @@ export const CancelOrderResponse: MessageFns<CancelOrderResponse> = {
   },
 };
 
-export type MatchingEngineService = typeof MatchingEngineService;
-export const MatchingEngineService = {
+export type MatchingService = typeof MatchingService;
+export const MatchingService = {
   placeOrder: {
-    path: "/matching.MatchingEngine/PlaceOrder",
+    path: "/matching.Matching/PlaceOrder",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: PlaceOrderRequest): Buffer => Buffer.from(PlaceOrderRequest.encode(value).finish()),
@@ -556,7 +556,7 @@ export const MatchingEngineService = {
     responseDeserialize: (value: Buffer): PlaceOrderResponse => PlaceOrderResponse.decode(value),
   },
   cancelOrder: {
-    path: "/matching.MatchingEngine/CancelOrder",
+    path: "/matching.Matching/CancelOrder",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: CancelOrderRequest): Buffer => Buffer.from(CancelOrderRequest.encode(value).finish()),
@@ -565,7 +565,7 @@ export const MatchingEngineService = {
     responseDeserialize: (value: Buffer): CancelOrderResponse => CancelOrderResponse.decode(value),
   },
   getOrderBook: {
-    path: "/matching.MatchingEngine/GetOrderBook",
+    path: "/matching.Matching/GetOrderBook",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: GetOrderBookRequest): Buffer => Buffer.from(GetOrderBookRequest.encode(value).finish()),
@@ -576,13 +576,13 @@ export const MatchingEngineService = {
   },
 } as const;
 
-export interface MatchingEngineServer extends UntypedServiceImplementation {
+export interface MatchingServer extends UntypedServiceImplementation {
   placeOrder: handleUnaryCall<PlaceOrderRequest, PlaceOrderResponse>;
   cancelOrder: handleUnaryCall<CancelOrderRequest, CancelOrderResponse>;
   getOrderBook: handleUnaryCall<GetOrderBookRequest, GetOrderBookResponse>;
 }
 
-export interface MatchingEngineClient extends Client {
+export interface MatchingClient extends Client {
   placeOrder(
     request: PlaceOrderRequest,
     callback: (error: ServiceError | null, response: PlaceOrderResponse) => void,
@@ -630,12 +630,9 @@ export interface MatchingEngineClient extends Client {
   ): ClientUnaryCall;
 }
 
-export const MatchingEngineClient = makeGenericClientConstructor(
-  MatchingEngineService,
-  "matching.MatchingEngine",
-) as unknown as {
-  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): MatchingEngineClient;
-  service: typeof MatchingEngineService;
+export const MatchingClient = makeGenericClientConstructor(MatchingService, "matching.Matching") as unknown as {
+  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): MatchingClient;
+  service: typeof MatchingService;
   serviceName: string;
 };
 

@@ -1,7 +1,7 @@
 use ledger::proto::ledger::{
     CreateUserRequest, GetUserRequest, UpdateUserRequest, DeleteUserRequest
 };
-use ledger::proto::ledger::ledger_service_server::LedgerService;
+use ledger::proto::ledger::user_service_server::UserService;
 use tonic::Request;
 use super::common::TestContext;
 
@@ -17,7 +17,7 @@ async fn test_create_user_success() {
         last_name: "Doe".to_string(),
     });
 
-    let resp = ctx.service.create_user(req).await.unwrap().into_inner();
+    let resp = ctx.user_service.create_user(req).await.unwrap().into_inner();
     let user = resp.user.expect("User should be returned");
 
     assert_eq!(user.email, email);
@@ -35,11 +35,11 @@ async fn test_get_user_success() {
         first_name: "Jane".to_string(),
         last_name: "Doe".to_string(),
     });
-    let created_user = ctx.service.create_user(create_req).await.unwrap().into_inner().user.unwrap();
+    let created_user = ctx.user_service.create_user(create_req).await.unwrap().into_inner().user.unwrap();
 
     // Get user
     let get_req = Request::new(GetUserRequest { user_id: created_user.id.clone() });
-    let resp = ctx.service.get_user(get_req).await.unwrap().into_inner();
+    let resp = ctx.user_service.get_user(get_req).await.unwrap().into_inner();
     let fetched_user = resp.user.unwrap();
 
     assert_eq!(fetched_user.id, created_user.id);
@@ -51,7 +51,7 @@ async fn test_get_user_not_found() {
     let ctx = TestContext::new();
     let get_req = Request::new(GetUserRequest { user_id: "non-existent-id".to_string() });
     
-    let resp = ctx.service.get_user(get_req).await;
+    let resp = ctx.user_service.get_user(get_req).await;
     assert!(resp.is_err(), "Should return error for non-existent user");
     assert_eq!(resp.unwrap_err().code(), tonic::Code::NotFound);
 }
@@ -67,7 +67,7 @@ async fn test_update_user_details() {
         first_name: "Original".to_string(),
         last_name: "Name".to_string(),
     });
-    let mut user = ctx.service.create_user(create_req).await.unwrap().into_inner().user.unwrap();
+    let mut user = ctx.user_service.create_user(create_req).await.unwrap().into_inner().user.unwrap();
 
     // Update
     user.email = "new@example.com".to_string(); // Updating email
@@ -75,14 +75,14 @@ async fn test_update_user_details() {
     // but here we test the persistence of the update.
     
     let update_req = Request::new(UpdateUserRequest { user: Some(user.clone()) });
-    let update_resp = ctx.service.update_user(update_req).await.unwrap().into_inner();
+    let update_resp = ctx.user_service.update_user(update_req).await.unwrap().into_inner();
     let updated_user = update_resp.user.unwrap();
 
     assert_eq!(updated_user.email, "new@example.com");
 
     // Verify persistence
     let get_req = Request::new(GetUserRequest { user_id: user.id.clone() });
-    let final_user = ctx.service.get_user(get_req).await.unwrap().into_inner().user.unwrap();
+    let final_user = ctx.user_service.get_user(get_req).await.unwrap().into_inner().user.unwrap();
     assert_eq!(final_user.email, "new@example.com");
 }
 
@@ -96,15 +96,15 @@ async fn test_delete_user_check() {
         first_name: "Del".to_string(),
         last_name: "Me".to_string(),
     });
-    let user = ctx.service.create_user(create_req).await.unwrap().into_inner().user.unwrap();
+    let user = ctx.user_service.create_user(create_req).await.unwrap().into_inner().user.unwrap();
 
     // Delete
     let del_req = Request::new(DeleteUserRequest { user_id: user.id.clone() });
-    let del_resp = ctx.service.delete_user(del_req).await.unwrap().into_inner();
+    let del_resp = ctx.user_service.delete_user(del_req).await.unwrap().into_inner();
     assert!(del_resp.success);
 
     // Verify Gone
     let get_req = Request::new(GetUserRequest { user_id: user.id.clone() });
-    let get_resp = ctx.service.get_user(get_req).await;
+    let get_resp = ctx.user_service.get_user(get_req).await;
     assert!(get_resp.is_err(), "Deleted user should not be found");
 }

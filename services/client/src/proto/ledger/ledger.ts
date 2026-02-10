@@ -5231,11 +5231,10 @@ export const GetSystemAccountResponse: MessageFns<GetSystemAccountResponse> = {
   },
 };
 
-export type LedgerServiceService = typeof LedgerServiceService;
-export const LedgerServiceService = {
-  /** Order Management */
+export type OrderServiceService = typeof OrderServiceService;
+export const OrderServiceService = {
   recordOrder: {
-    path: "/ledger.LedgerService/RecordOrder",
+    path: "/ledger.OrderService/RecordOrder",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: RecordOrderRequest): Buffer => Buffer.from(RecordOrderRequest.encode(value).finish()),
@@ -5244,7 +5243,7 @@ export const LedgerServiceService = {
     responseDeserialize: (value: Buffer): RecordOrderResponse => RecordOrderResponse.decode(value),
   },
   cancelOrder: {
-    path: "/ledger.LedgerService/CancelOrder",
+    path: "/ledger.OrderService/CancelOrder",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: CancelOrderRequest): Buffer => Buffer.from(CancelOrderRequest.encode(value).finish()),
@@ -5253,7 +5252,7 @@ export const LedgerServiceService = {
     responseDeserialize: (value: Buffer): CancelOrderResponse => CancelOrderResponse.decode(value),
   },
   deleteOrder: {
-    path: "/ledger.LedgerService/DeleteOrder",
+    path: "/ledger.OrderService/DeleteOrder",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: DeleteOrderRequest): Buffer => Buffer.from(DeleteOrderRequest.encode(value).finish()),
@@ -5262,7 +5261,7 @@ export const LedgerServiceService = {
     responseDeserialize: (value: Buffer): DeleteOrderResponse => DeleteOrderResponse.decode(value),
   },
   getOpenOrders: {
-    path: "/ledger.LedgerService/GetOpenOrders",
+    path: "/ledger.OrderService/GetOpenOrders",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: GetOpenOrdersRequest): Buffer => Buffer.from(GetOpenOrdersRequest.encode(value).finish()),
@@ -5272,7 +5271,7 @@ export const LedgerServiceService = {
     responseDeserialize: (value: Buffer): GetOpenOrdersResponse => GetOpenOrdersResponse.decode(value),
   },
   recordTrade: {
-    path: "/ledger.LedgerService/RecordTrade",
+    path: "/ledger.OrderService/RecordTrade",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: RecordTradeRequest): Buffer => Buffer.from(RecordTradeRequest.encode(value).finish()),
@@ -5280,9 +5279,107 @@ export const LedgerServiceService = {
     responseSerialize: (value: RecordTradeResponse): Buffer => Buffer.from(RecordTradeResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): RecordTradeResponse => RecordTradeResponse.decode(value),
   },
-  /** User Management */
+} as const;
+
+export interface OrderServiceServer extends UntypedServiceImplementation {
+  recordOrder: handleUnaryCall<RecordOrderRequest, RecordOrderResponse>;
+  cancelOrder: handleUnaryCall<CancelOrderRequest, CancelOrderResponse>;
+  deleteOrder: handleUnaryCall<DeleteOrderRequest, DeleteOrderResponse>;
+  getOpenOrders: handleUnaryCall<GetOpenOrdersRequest, GetOpenOrdersResponse>;
+  recordTrade: handleUnaryCall<RecordTradeRequest, RecordTradeResponse>;
+}
+
+export interface OrderServiceClient extends Client {
+  recordOrder(
+    request: RecordOrderRequest,
+    callback: (error: ServiceError | null, response: RecordOrderResponse) => void,
+  ): ClientUnaryCall;
+  recordOrder(
+    request: RecordOrderRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: RecordOrderResponse) => void,
+  ): ClientUnaryCall;
+  recordOrder(
+    request: RecordOrderRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: RecordOrderResponse) => void,
+  ): ClientUnaryCall;
+  cancelOrder(
+    request: CancelOrderRequest,
+    callback: (error: ServiceError | null, response: CancelOrderResponse) => void,
+  ): ClientUnaryCall;
+  cancelOrder(
+    request: CancelOrderRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CancelOrderResponse) => void,
+  ): ClientUnaryCall;
+  cancelOrder(
+    request: CancelOrderRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CancelOrderResponse) => void,
+  ): ClientUnaryCall;
+  deleteOrder(
+    request: DeleteOrderRequest,
+    callback: (error: ServiceError | null, response: DeleteOrderResponse) => void,
+  ): ClientUnaryCall;
+  deleteOrder(
+    request: DeleteOrderRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: DeleteOrderResponse) => void,
+  ): ClientUnaryCall;
+  deleteOrder(
+    request: DeleteOrderRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: DeleteOrderResponse) => void,
+  ): ClientUnaryCall;
+  getOpenOrders(
+    request: GetOpenOrdersRequest,
+    callback: (error: ServiceError | null, response: GetOpenOrdersResponse) => void,
+  ): ClientUnaryCall;
+  getOpenOrders(
+    request: GetOpenOrdersRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetOpenOrdersResponse) => void,
+  ): ClientUnaryCall;
+  getOpenOrders(
+    request: GetOpenOrdersRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetOpenOrdersResponse) => void,
+  ): ClientUnaryCall;
+  recordTrade(
+    request: RecordTradeRequest,
+    callback: (error: ServiceError | null, response: RecordTradeResponse) => void,
+  ): ClientUnaryCall;
+  recordTrade(
+    request: RecordTradeRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: RecordTradeResponse) => void,
+  ): ClientUnaryCall;
+  recordTrade(
+    request: RecordTradeRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: RecordTradeResponse) => void,
+  ): ClientUnaryCall;
+}
+
+export const OrderServiceClient = makeGenericClientConstructor(
+  OrderServiceService,
+  "ledger.OrderService",
+) as unknown as {
+  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): OrderServiceClient;
+  service: typeof OrderServiceService;
+  serviceName: string;
+};
+
+export type UserServiceService = typeof UserServiceService;
+export const UserServiceService = {
   createUser: {
-    path: "/ledger.LedgerService/CreateUser",
+    path: "/ledger.UserService/CreateUser",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: CreateUserRequest): Buffer => Buffer.from(CreateUserRequest.encode(value).finish()),
@@ -5291,7 +5388,7 @@ export const LedgerServiceService = {
     responseDeserialize: (value: Buffer): CreateUserResponse => CreateUserResponse.decode(value),
   },
   getUser: {
-    path: "/ledger.LedgerService/GetUser",
+    path: "/ledger.UserService/GetUser",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: GetUserRequest): Buffer => Buffer.from(GetUserRequest.encode(value).finish()),
@@ -5300,7 +5397,7 @@ export const LedgerServiceService = {
     responseDeserialize: (value: Buffer): GetUserResponse => GetUserResponse.decode(value),
   },
   updateUser: {
-    path: "/ledger.LedgerService/UpdateUser",
+    path: "/ledger.UserService/UpdateUser",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: UpdateUserRequest): Buffer => Buffer.from(UpdateUserRequest.encode(value).finish()),
@@ -5309,7 +5406,7 @@ export const LedgerServiceService = {
     responseDeserialize: (value: Buffer): UpdateUserResponse => UpdateUserResponse.decode(value),
   },
   deleteUser: {
-    path: "/ledger.LedgerService/DeleteUser",
+    path: "/ledger.UserService/DeleteUser",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: DeleteUserRequest): Buffer => Buffer.from(DeleteUserRequest.encode(value).finish()),
@@ -5317,9 +5414,88 @@ export const LedgerServiceService = {
     responseSerialize: (value: DeleteUserResponse): Buffer => Buffer.from(DeleteUserResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): DeleteUserResponse => DeleteUserResponse.decode(value),
   },
-  /** Account Management */
+} as const;
+
+export interface UserServiceServer extends UntypedServiceImplementation {
+  createUser: handleUnaryCall<CreateUserRequest, CreateUserResponse>;
+  getUser: handleUnaryCall<GetUserRequest, GetUserResponse>;
+  updateUser: handleUnaryCall<UpdateUserRequest, UpdateUserResponse>;
+  deleteUser: handleUnaryCall<DeleteUserRequest, DeleteUserResponse>;
+}
+
+export interface UserServiceClient extends Client {
+  createUser(
+    request: CreateUserRequest,
+    callback: (error: ServiceError | null, response: CreateUserResponse) => void,
+  ): ClientUnaryCall;
+  createUser(
+    request: CreateUserRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CreateUserResponse) => void,
+  ): ClientUnaryCall;
+  createUser(
+    request: CreateUserRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CreateUserResponse) => void,
+  ): ClientUnaryCall;
+  getUser(
+    request: GetUserRequest,
+    callback: (error: ServiceError | null, response: GetUserResponse) => void,
+  ): ClientUnaryCall;
+  getUser(
+    request: GetUserRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetUserResponse) => void,
+  ): ClientUnaryCall;
+  getUser(
+    request: GetUserRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetUserResponse) => void,
+  ): ClientUnaryCall;
+  updateUser(
+    request: UpdateUserRequest,
+    callback: (error: ServiceError | null, response: UpdateUserResponse) => void,
+  ): ClientUnaryCall;
+  updateUser(
+    request: UpdateUserRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: UpdateUserResponse) => void,
+  ): ClientUnaryCall;
+  updateUser(
+    request: UpdateUserRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: UpdateUserResponse) => void,
+  ): ClientUnaryCall;
+  deleteUser(
+    request: DeleteUserRequest,
+    callback: (error: ServiceError | null, response: DeleteUserResponse) => void,
+  ): ClientUnaryCall;
+  deleteUser(
+    request: DeleteUserRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: DeleteUserResponse) => void,
+  ): ClientUnaryCall;
+  deleteUser(
+    request: DeleteUserRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: DeleteUserResponse) => void,
+  ): ClientUnaryCall;
+}
+
+export const UserServiceClient = makeGenericClientConstructor(UserServiceService, "ledger.UserService") as unknown as {
+  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): UserServiceClient;
+  service: typeof UserServiceService;
+  serviceName: string;
+};
+
+export type AccountServiceService = typeof AccountServiceService;
+export const AccountServiceService = {
   createAccount: {
-    path: "/ledger.LedgerService/CreateAccount",
+    path: "/ledger.AccountService/CreateAccount",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: CreateAccountRequest): Buffer => Buffer.from(CreateAccountRequest.encode(value).finish()),
@@ -5329,7 +5505,7 @@ export const LedgerServiceService = {
     responseDeserialize: (value: Buffer): CreateAccountResponse => CreateAccountResponse.decode(value),
   },
   getAccount: {
-    path: "/ledger.LedgerService/GetAccount",
+    path: "/ledger.AccountService/GetAccount",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: GetAccountRequest): Buffer => Buffer.from(GetAccountRequest.encode(value).finish()),
@@ -5338,7 +5514,7 @@ export const LedgerServiceService = {
     responseDeserialize: (value: Buffer): GetAccountResponse => GetAccountResponse.decode(value),
   },
   updateAccount: {
-    path: "/ledger.LedgerService/UpdateAccount",
+    path: "/ledger.AccountService/UpdateAccount",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: UpdateAccountRequest): Buffer => Buffer.from(UpdateAccountRequest.encode(value).finish()),
@@ -5348,7 +5524,7 @@ export const LedgerServiceService = {
     responseDeserialize: (value: Buffer): UpdateAccountResponse => UpdateAccountResponse.decode(value),
   },
   deleteAccount: {
-    path: "/ledger.LedgerService/DeleteAccount",
+    path: "/ledger.AccountService/DeleteAccount",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: DeleteAccountRequest): Buffer => Buffer.from(DeleteAccountRequest.encode(value).finish()),
@@ -5358,7 +5534,7 @@ export const LedgerServiceService = {
     responseDeserialize: (value: Buffer): DeleteAccountResponse => DeleteAccountResponse.decode(value),
   },
   listAccounts: {
-    path: "/ledger.LedgerService/ListAccounts",
+    path: "/ledger.AccountService/ListAccounts",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: ListAccountsRequest): Buffer => Buffer.from(ListAccountsRequest.encode(value).finish()),
@@ -5367,201 +5543,8 @@ export const LedgerServiceService = {
       Buffer.from(ListAccountsResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): ListAccountsResponse => ListAccountsResponse.decode(value),
   },
-  /** Wallet Management */
-  createWallet: {
-    path: "/ledger.LedgerService/CreateWallet",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: CreateWalletRequest): Buffer => Buffer.from(CreateWalletRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): CreateWalletRequest => CreateWalletRequest.decode(value),
-    responseSerialize: (value: CreateWalletResponse): Buffer =>
-      Buffer.from(CreateWalletResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): CreateWalletResponse => CreateWalletResponse.decode(value),
-  },
-  getWallet: {
-    path: "/ledger.LedgerService/GetWallet",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: GetWalletRequest): Buffer => Buffer.from(GetWalletRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): GetWalletRequest => GetWalletRequest.decode(value),
-    responseSerialize: (value: GetWalletResponse): Buffer => Buffer.from(GetWalletResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): GetWalletResponse => GetWalletResponse.decode(value),
-  },
-  updateWallet: {
-    path: "/ledger.LedgerService/UpdateWallet",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: UpdateWalletRequest): Buffer => Buffer.from(UpdateWalletRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): UpdateWalletRequest => UpdateWalletRequest.decode(value),
-    responseSerialize: (value: UpdateWalletResponse): Buffer =>
-      Buffer.from(UpdateWalletResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): UpdateWalletResponse => UpdateWalletResponse.decode(value),
-  },
-  deleteWallet: {
-    path: "/ledger.LedgerService/DeleteWallet",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: DeleteWalletRequest): Buffer => Buffer.from(DeleteWalletRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): DeleteWalletRequest => DeleteWalletRequest.decode(value),
-    responseSerialize: (value: DeleteWalletResponse): Buffer =>
-      Buffer.from(DeleteWalletResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): DeleteWalletResponse => DeleteWalletResponse.decode(value),
-  },
-  listWallets: {
-    path: "/ledger.LedgerService/ListWallets",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: ListWalletsRequest): Buffer => Buffer.from(ListWalletsRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): ListWalletsRequest => ListWalletsRequest.decode(value),
-    responseSerialize: (value: ListWalletsResponse): Buffer => Buffer.from(ListWalletsResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): ListWalletsResponse => ListWalletsResponse.decode(value),
-  },
-  /** Fund Management */
-  createDeposit: {
-    path: "/ledger.LedgerService/CreateDeposit",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: CreateDepositRequest): Buffer => Buffer.from(CreateDepositRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): CreateDepositRequest => CreateDepositRequest.decode(value),
-    responseSerialize: (value: CreateDepositResponse): Buffer =>
-      Buffer.from(CreateDepositResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): CreateDepositResponse => CreateDepositResponse.decode(value),
-  },
-  getDeposit: {
-    path: "/ledger.LedgerService/GetDeposit",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: GetDepositRequest): Buffer => Buffer.from(GetDepositRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): GetDepositRequest => GetDepositRequest.decode(value),
-    responseSerialize: (value: GetDepositResponse): Buffer => Buffer.from(GetDepositResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): GetDepositResponse => GetDepositResponse.decode(value),
-  },
-  updateDeposit: {
-    path: "/ledger.LedgerService/UpdateDeposit",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: UpdateDepositRequest): Buffer => Buffer.from(UpdateDepositRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): UpdateDepositRequest => UpdateDepositRequest.decode(value),
-    responseSerialize: (value: UpdateDepositResponse): Buffer =>
-      Buffer.from(UpdateDepositResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): UpdateDepositResponse => UpdateDepositResponse.decode(value),
-  },
-  cancelDeposit: {
-    path: "/ledger.LedgerService/CancelDeposit",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: CancelDepositRequest): Buffer => Buffer.from(CancelDepositRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): CancelDepositRequest => CancelDepositRequest.decode(value),
-    responseSerialize: (value: CancelDepositResponse): Buffer =>
-      Buffer.from(CancelDepositResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): CancelDepositResponse => CancelDepositResponse.decode(value),
-  },
-  listDeposits: {
-    path: "/ledger.LedgerService/ListDeposits",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: ListDepositsRequest): Buffer => Buffer.from(ListDepositsRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): ListDepositsRequest => ListDepositsRequest.decode(value),
-    responseSerialize: (value: ListDepositsResponse): Buffer =>
-      Buffer.from(ListDepositsResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): ListDepositsResponse => ListDepositsResponse.decode(value),
-  },
-  createWithdrawal: {
-    path: "/ledger.LedgerService/CreateWithdrawal",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: CreateWithdrawalRequest): Buffer =>
-      Buffer.from(CreateWithdrawalRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): CreateWithdrawalRequest => CreateWithdrawalRequest.decode(value),
-    responseSerialize: (value: CreateWithdrawalResponse): Buffer =>
-      Buffer.from(CreateWithdrawalResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): CreateWithdrawalResponse => CreateWithdrawalResponse.decode(value),
-  },
-  getWithdrawal: {
-    path: "/ledger.LedgerService/GetWithdrawal",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: GetWithdrawalRequest): Buffer => Buffer.from(GetWithdrawalRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): GetWithdrawalRequest => GetWithdrawalRequest.decode(value),
-    responseSerialize: (value: GetWithdrawalResponse): Buffer =>
-      Buffer.from(GetWithdrawalResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): GetWithdrawalResponse => GetWithdrawalResponse.decode(value),
-  },
-  updateWithdrawal: {
-    path: "/ledger.LedgerService/UpdateWithdrawal",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: UpdateWithdrawalRequest): Buffer =>
-      Buffer.from(UpdateWithdrawalRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): UpdateWithdrawalRequest => UpdateWithdrawalRequest.decode(value),
-    responseSerialize: (value: UpdateWithdrawalResponse): Buffer =>
-      Buffer.from(UpdateWithdrawalResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): UpdateWithdrawalResponse => UpdateWithdrawalResponse.decode(value),
-  },
-  cancelWithdrawal: {
-    path: "/ledger.LedgerService/CancelWithdrawal",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: CancelWithdrawalRequest): Buffer =>
-      Buffer.from(CancelWithdrawalRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): CancelWithdrawalRequest => CancelWithdrawalRequest.decode(value),
-    responseSerialize: (value: CancelWithdrawalResponse): Buffer =>
-      Buffer.from(CancelWithdrawalResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): CancelWithdrawalResponse => CancelWithdrawalResponse.decode(value),
-  },
-  listWithdrawals: {
-    path: "/ledger.LedgerService/ListWithdrawals",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: ListWithdrawalsRequest): Buffer =>
-      Buffer.from(ListWithdrawalsRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): ListWithdrawalsRequest => ListWithdrawalsRequest.decode(value),
-    responseSerialize: (value: ListWithdrawalsResponse): Buffer =>
-      Buffer.from(ListWithdrawalsResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): ListWithdrawalsResponse => ListWithdrawalsResponse.decode(value),
-  },
-  /** Asset & Instrument (Read-only usually, but maybe admin creates them) */
-  createAsset: {
-    path: "/ledger.LedgerService/CreateAsset",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: CreateAssetRequest): Buffer => Buffer.from(CreateAssetRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): CreateAssetRequest => CreateAssetRequest.decode(value),
-    responseSerialize: (value: CreateAssetResponse): Buffer => Buffer.from(CreateAssetResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): CreateAssetResponse => CreateAssetResponse.decode(value),
-  },
-  getAsset: {
-    path: "/ledger.LedgerService/GetAsset",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: GetAssetRequest): Buffer => Buffer.from(GetAssetRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): GetAssetRequest => GetAssetRequest.decode(value),
-    responseSerialize: (value: GetAssetResponse): Buffer => Buffer.from(GetAssetResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): GetAssetResponse => GetAssetResponse.decode(value),
-  },
-  listAssets: {
-    path: "/ledger.LedgerService/ListAssets",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: ListAssetsRequest): Buffer => Buffer.from(ListAssetsRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): ListAssetsRequest => ListAssetsRequest.decode(value),
-    responseSerialize: (value: ListAssetsResponse): Buffer => Buffer.from(ListAssetsResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): ListAssetsResponse => ListAssetsResponse.decode(value),
-  },
-  createInstrument: {
-    path: "/ledger.LedgerService/CreateInstrument",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: CreateInstrumentRequest): Buffer =>
-      Buffer.from(CreateInstrumentRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): CreateInstrumentRequest => CreateInstrumentRequest.decode(value),
-    responseSerialize: (value: CreateInstrumentResponse): Buffer =>
-      Buffer.from(CreateInstrumentResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): CreateInstrumentResponse => CreateInstrumentResponse.decode(value),
-  },
-  /** System */
   getSystemAccount: {
-    path: "/ledger.LedgerService/GetSystemAccount",
+    path: "/ledger.AccountService/GetSystemAccount",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: GetSystemAccountRequest): Buffer =>
@@ -5573,492 +5556,615 @@ export const LedgerServiceService = {
   },
 } as const;
 
-export interface LedgerServiceServer extends UntypedServiceImplementation {
-  /** Order Management */
-  recordOrder: handleUnaryCall<RecordOrderRequest, RecordOrderResponse>;
-  cancelOrder: handleUnaryCall<CancelOrderRequest, CancelOrderResponse>;
-  deleteOrder: handleUnaryCall<DeleteOrderRequest, DeleteOrderResponse>;
-  getOpenOrders: handleUnaryCall<GetOpenOrdersRequest, GetOpenOrdersResponse>;
-  recordTrade: handleUnaryCall<RecordTradeRequest, RecordTradeResponse>;
-  /** User Management */
-  createUser: handleUnaryCall<CreateUserRequest, CreateUserResponse>;
-  getUser: handleUnaryCall<GetUserRequest, GetUserResponse>;
-  updateUser: handleUnaryCall<UpdateUserRequest, UpdateUserResponse>;
-  deleteUser: handleUnaryCall<DeleteUserRequest, DeleteUserResponse>;
-  /** Account Management */
+export interface AccountServiceServer extends UntypedServiceImplementation {
   createAccount: handleUnaryCall<CreateAccountRequest, CreateAccountResponse>;
   getAccount: handleUnaryCall<GetAccountRequest, GetAccountResponse>;
   updateAccount: handleUnaryCall<UpdateAccountRequest, UpdateAccountResponse>;
   deleteAccount: handleUnaryCall<DeleteAccountRequest, DeleteAccountResponse>;
   listAccounts: handleUnaryCall<ListAccountsRequest, ListAccountsResponse>;
-  /** Wallet Management */
+  getSystemAccount: handleUnaryCall<GetSystemAccountRequest, GetSystemAccountResponse>;
+}
+
+export interface AccountServiceClient extends Client {
+  createAccount(
+    request: CreateAccountRequest,
+    callback: (error: ServiceError | null, response: CreateAccountResponse) => void,
+  ): ClientUnaryCall;
+  createAccount(
+    request: CreateAccountRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CreateAccountResponse) => void,
+  ): ClientUnaryCall;
+  createAccount(
+    request: CreateAccountRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CreateAccountResponse) => void,
+  ): ClientUnaryCall;
+  getAccount(
+    request: GetAccountRequest,
+    callback: (error: ServiceError | null, response: GetAccountResponse) => void,
+  ): ClientUnaryCall;
+  getAccount(
+    request: GetAccountRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetAccountResponse) => void,
+  ): ClientUnaryCall;
+  getAccount(
+    request: GetAccountRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetAccountResponse) => void,
+  ): ClientUnaryCall;
+  updateAccount(
+    request: UpdateAccountRequest,
+    callback: (error: ServiceError | null, response: UpdateAccountResponse) => void,
+  ): ClientUnaryCall;
+  updateAccount(
+    request: UpdateAccountRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: UpdateAccountResponse) => void,
+  ): ClientUnaryCall;
+  updateAccount(
+    request: UpdateAccountRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: UpdateAccountResponse) => void,
+  ): ClientUnaryCall;
+  deleteAccount(
+    request: DeleteAccountRequest,
+    callback: (error: ServiceError | null, response: DeleteAccountResponse) => void,
+  ): ClientUnaryCall;
+  deleteAccount(
+    request: DeleteAccountRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: DeleteAccountResponse) => void,
+  ): ClientUnaryCall;
+  deleteAccount(
+    request: DeleteAccountRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: DeleteAccountResponse) => void,
+  ): ClientUnaryCall;
+  listAccounts(
+    request: ListAccountsRequest,
+    callback: (error: ServiceError | null, response: ListAccountsResponse) => void,
+  ): ClientUnaryCall;
+  listAccounts(
+    request: ListAccountsRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: ListAccountsResponse) => void,
+  ): ClientUnaryCall;
+  listAccounts(
+    request: ListAccountsRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: ListAccountsResponse) => void,
+  ): ClientUnaryCall;
+  getSystemAccount(
+    request: GetSystemAccountRequest,
+    callback: (error: ServiceError | null, response: GetSystemAccountResponse) => void,
+  ): ClientUnaryCall;
+  getSystemAccount(
+    request: GetSystemAccountRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetSystemAccountResponse) => void,
+  ): ClientUnaryCall;
+  getSystemAccount(
+    request: GetSystemAccountRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetSystemAccountResponse) => void,
+  ): ClientUnaryCall;
+}
+
+export const AccountServiceClient = makeGenericClientConstructor(
+  AccountServiceService,
+  "ledger.AccountService",
+) as unknown as {
+  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): AccountServiceClient;
+  service: typeof AccountServiceService;
+  serviceName: string;
+};
+
+export type WalletServiceService = typeof WalletServiceService;
+export const WalletServiceService = {
+  createWallet: {
+    path: "/ledger.WalletService/CreateWallet",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateWalletRequest): Buffer => Buffer.from(CreateWalletRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateWalletRequest => CreateWalletRequest.decode(value),
+    responseSerialize: (value: CreateWalletResponse): Buffer =>
+      Buffer.from(CreateWalletResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CreateWalletResponse => CreateWalletResponse.decode(value),
+  },
+  getWallet: {
+    path: "/ledger.WalletService/GetWallet",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetWalletRequest): Buffer => Buffer.from(GetWalletRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetWalletRequest => GetWalletRequest.decode(value),
+    responseSerialize: (value: GetWalletResponse): Buffer => Buffer.from(GetWalletResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetWalletResponse => GetWalletResponse.decode(value),
+  },
+  updateWallet: {
+    path: "/ledger.WalletService/UpdateWallet",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: UpdateWalletRequest): Buffer => Buffer.from(UpdateWalletRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): UpdateWalletRequest => UpdateWalletRequest.decode(value),
+    responseSerialize: (value: UpdateWalletResponse): Buffer =>
+      Buffer.from(UpdateWalletResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): UpdateWalletResponse => UpdateWalletResponse.decode(value),
+  },
+  deleteWallet: {
+    path: "/ledger.WalletService/DeleteWallet",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: DeleteWalletRequest): Buffer => Buffer.from(DeleteWalletRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): DeleteWalletRequest => DeleteWalletRequest.decode(value),
+    responseSerialize: (value: DeleteWalletResponse): Buffer =>
+      Buffer.from(DeleteWalletResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): DeleteWalletResponse => DeleteWalletResponse.decode(value),
+  },
+  listWallets: {
+    path: "/ledger.WalletService/ListWallets",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListWalletsRequest): Buffer => Buffer.from(ListWalletsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListWalletsRequest => ListWalletsRequest.decode(value),
+    responseSerialize: (value: ListWalletsResponse): Buffer => Buffer.from(ListWalletsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListWalletsResponse => ListWalletsResponse.decode(value),
+  },
+} as const;
+
+export interface WalletServiceServer extends UntypedServiceImplementation {
   createWallet: handleUnaryCall<CreateWalletRequest, CreateWalletResponse>;
   getWallet: handleUnaryCall<GetWalletRequest, GetWalletResponse>;
   updateWallet: handleUnaryCall<UpdateWalletRequest, UpdateWalletResponse>;
   deleteWallet: handleUnaryCall<DeleteWalletRequest, DeleteWalletResponse>;
   listWallets: handleUnaryCall<ListWalletsRequest, ListWalletsResponse>;
-  /** Fund Management */
+}
+
+export interface WalletServiceClient extends Client {
+  createWallet(
+    request: CreateWalletRequest,
+    callback: (error: ServiceError | null, response: CreateWalletResponse) => void,
+  ): ClientUnaryCall;
+  createWallet(
+    request: CreateWalletRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CreateWalletResponse) => void,
+  ): ClientUnaryCall;
+  createWallet(
+    request: CreateWalletRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CreateWalletResponse) => void,
+  ): ClientUnaryCall;
+  getWallet(
+    request: GetWalletRequest,
+    callback: (error: ServiceError | null, response: GetWalletResponse) => void,
+  ): ClientUnaryCall;
+  getWallet(
+    request: GetWalletRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetWalletResponse) => void,
+  ): ClientUnaryCall;
+  getWallet(
+    request: GetWalletRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetWalletResponse) => void,
+  ): ClientUnaryCall;
+  updateWallet(
+    request: UpdateWalletRequest,
+    callback: (error: ServiceError | null, response: UpdateWalletResponse) => void,
+  ): ClientUnaryCall;
+  updateWallet(
+    request: UpdateWalletRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: UpdateWalletResponse) => void,
+  ): ClientUnaryCall;
+  updateWallet(
+    request: UpdateWalletRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: UpdateWalletResponse) => void,
+  ): ClientUnaryCall;
+  deleteWallet(
+    request: DeleteWalletRequest,
+    callback: (error: ServiceError | null, response: DeleteWalletResponse) => void,
+  ): ClientUnaryCall;
+  deleteWallet(
+    request: DeleteWalletRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: DeleteWalletResponse) => void,
+  ): ClientUnaryCall;
+  deleteWallet(
+    request: DeleteWalletRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: DeleteWalletResponse) => void,
+  ): ClientUnaryCall;
+  listWallets(
+    request: ListWalletsRequest,
+    callback: (error: ServiceError | null, response: ListWalletsResponse) => void,
+  ): ClientUnaryCall;
+  listWallets(
+    request: ListWalletsRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: ListWalletsResponse) => void,
+  ): ClientUnaryCall;
+  listWallets(
+    request: ListWalletsRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: ListWalletsResponse) => void,
+  ): ClientUnaryCall;
+}
+
+export const WalletServiceClient = makeGenericClientConstructor(
+  WalletServiceService,
+  "ledger.WalletService",
+) as unknown as {
+  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): WalletServiceClient;
+  service: typeof WalletServiceService;
+  serviceName: string;
+};
+
+export type DepositServiceService = typeof DepositServiceService;
+export const DepositServiceService = {
+  createDeposit: {
+    path: "/ledger.DepositService/CreateDeposit",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateDepositRequest): Buffer => Buffer.from(CreateDepositRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateDepositRequest => CreateDepositRequest.decode(value),
+    responseSerialize: (value: CreateDepositResponse): Buffer =>
+      Buffer.from(CreateDepositResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CreateDepositResponse => CreateDepositResponse.decode(value),
+  },
+  getDeposit: {
+    path: "/ledger.DepositService/GetDeposit",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetDepositRequest): Buffer => Buffer.from(GetDepositRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetDepositRequest => GetDepositRequest.decode(value),
+    responseSerialize: (value: GetDepositResponse): Buffer => Buffer.from(GetDepositResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetDepositResponse => GetDepositResponse.decode(value),
+  },
+  updateDeposit: {
+    path: "/ledger.DepositService/UpdateDeposit",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: UpdateDepositRequest): Buffer => Buffer.from(UpdateDepositRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): UpdateDepositRequest => UpdateDepositRequest.decode(value),
+    responseSerialize: (value: UpdateDepositResponse): Buffer =>
+      Buffer.from(UpdateDepositResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): UpdateDepositResponse => UpdateDepositResponse.decode(value),
+  },
+  cancelDeposit: {
+    path: "/ledger.DepositService/CancelDeposit",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CancelDepositRequest): Buffer => Buffer.from(CancelDepositRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CancelDepositRequest => CancelDepositRequest.decode(value),
+    responseSerialize: (value: CancelDepositResponse): Buffer =>
+      Buffer.from(CancelDepositResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CancelDepositResponse => CancelDepositResponse.decode(value),
+  },
+  listDeposits: {
+    path: "/ledger.DepositService/ListDeposits",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListDepositsRequest): Buffer => Buffer.from(ListDepositsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListDepositsRequest => ListDepositsRequest.decode(value),
+    responseSerialize: (value: ListDepositsResponse): Buffer =>
+      Buffer.from(ListDepositsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListDepositsResponse => ListDepositsResponse.decode(value),
+  },
+} as const;
+
+export interface DepositServiceServer extends UntypedServiceImplementation {
   createDeposit: handleUnaryCall<CreateDepositRequest, CreateDepositResponse>;
   getDeposit: handleUnaryCall<GetDepositRequest, GetDepositResponse>;
   updateDeposit: handleUnaryCall<UpdateDepositRequest, UpdateDepositResponse>;
   cancelDeposit: handleUnaryCall<CancelDepositRequest, CancelDepositResponse>;
   listDeposits: handleUnaryCall<ListDepositsRequest, ListDepositsResponse>;
+}
+
+export interface DepositServiceClient extends Client {
+  createDeposit(
+    request: CreateDepositRequest,
+    callback: (error: ServiceError | null, response: CreateDepositResponse) => void,
+  ): ClientUnaryCall;
+  createDeposit(
+    request: CreateDepositRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CreateDepositResponse) => void,
+  ): ClientUnaryCall;
+  createDeposit(
+    request: CreateDepositRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CreateDepositResponse) => void,
+  ): ClientUnaryCall;
+  getDeposit(
+    request: GetDepositRequest,
+    callback: (error: ServiceError | null, response: GetDepositResponse) => void,
+  ): ClientUnaryCall;
+  getDeposit(
+    request: GetDepositRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetDepositResponse) => void,
+  ): ClientUnaryCall;
+  getDeposit(
+    request: GetDepositRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetDepositResponse) => void,
+  ): ClientUnaryCall;
+  updateDeposit(
+    request: UpdateDepositRequest,
+    callback: (error: ServiceError | null, response: UpdateDepositResponse) => void,
+  ): ClientUnaryCall;
+  updateDeposit(
+    request: UpdateDepositRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: UpdateDepositResponse) => void,
+  ): ClientUnaryCall;
+  updateDeposit(
+    request: UpdateDepositRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: UpdateDepositResponse) => void,
+  ): ClientUnaryCall;
+  cancelDeposit(
+    request: CancelDepositRequest,
+    callback: (error: ServiceError | null, response: CancelDepositResponse) => void,
+  ): ClientUnaryCall;
+  cancelDeposit(
+    request: CancelDepositRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CancelDepositResponse) => void,
+  ): ClientUnaryCall;
+  cancelDeposit(
+    request: CancelDepositRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CancelDepositResponse) => void,
+  ): ClientUnaryCall;
+  listDeposits(
+    request: ListDepositsRequest,
+    callback: (error: ServiceError | null, response: ListDepositsResponse) => void,
+  ): ClientUnaryCall;
+  listDeposits(
+    request: ListDepositsRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: ListDepositsResponse) => void,
+  ): ClientUnaryCall;
+  listDeposits(
+    request: ListDepositsRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: ListDepositsResponse) => void,
+  ): ClientUnaryCall;
+}
+
+export const DepositServiceClient = makeGenericClientConstructor(
+  DepositServiceService,
+  "ledger.DepositService",
+) as unknown as {
+  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): DepositServiceClient;
+  service: typeof DepositServiceService;
+  serviceName: string;
+};
+
+export type WithdrawalServiceService = typeof WithdrawalServiceService;
+export const WithdrawalServiceService = {
+  createWithdrawal: {
+    path: "/ledger.WithdrawalService/CreateWithdrawal",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateWithdrawalRequest): Buffer =>
+      Buffer.from(CreateWithdrawalRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateWithdrawalRequest => CreateWithdrawalRequest.decode(value),
+    responseSerialize: (value: CreateWithdrawalResponse): Buffer =>
+      Buffer.from(CreateWithdrawalResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CreateWithdrawalResponse => CreateWithdrawalResponse.decode(value),
+  },
+  getWithdrawal: {
+    path: "/ledger.WithdrawalService/GetWithdrawal",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetWithdrawalRequest): Buffer => Buffer.from(GetWithdrawalRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetWithdrawalRequest => GetWithdrawalRequest.decode(value),
+    responseSerialize: (value: GetWithdrawalResponse): Buffer =>
+      Buffer.from(GetWithdrawalResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetWithdrawalResponse => GetWithdrawalResponse.decode(value),
+  },
+  updateWithdrawal: {
+    path: "/ledger.WithdrawalService/UpdateWithdrawal",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: UpdateWithdrawalRequest): Buffer =>
+      Buffer.from(UpdateWithdrawalRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): UpdateWithdrawalRequest => UpdateWithdrawalRequest.decode(value),
+    responseSerialize: (value: UpdateWithdrawalResponse): Buffer =>
+      Buffer.from(UpdateWithdrawalResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): UpdateWithdrawalResponse => UpdateWithdrawalResponse.decode(value),
+  },
+  cancelWithdrawal: {
+    path: "/ledger.WithdrawalService/CancelWithdrawal",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CancelWithdrawalRequest): Buffer =>
+      Buffer.from(CancelWithdrawalRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CancelWithdrawalRequest => CancelWithdrawalRequest.decode(value),
+    responseSerialize: (value: CancelWithdrawalResponse): Buffer =>
+      Buffer.from(CancelWithdrawalResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CancelWithdrawalResponse => CancelWithdrawalResponse.decode(value),
+  },
+  listWithdrawals: {
+    path: "/ledger.WithdrawalService/ListWithdrawals",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListWithdrawalsRequest): Buffer =>
+      Buffer.from(ListWithdrawalsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListWithdrawalsRequest => ListWithdrawalsRequest.decode(value),
+    responseSerialize: (value: ListWithdrawalsResponse): Buffer =>
+      Buffer.from(ListWithdrawalsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListWithdrawalsResponse => ListWithdrawalsResponse.decode(value),
+  },
+} as const;
+
+export interface WithdrawalServiceServer extends UntypedServiceImplementation {
   createWithdrawal: handleUnaryCall<CreateWithdrawalRequest, CreateWithdrawalResponse>;
   getWithdrawal: handleUnaryCall<GetWithdrawalRequest, GetWithdrawalResponse>;
   updateWithdrawal: handleUnaryCall<UpdateWithdrawalRequest, UpdateWithdrawalResponse>;
   cancelWithdrawal: handleUnaryCall<CancelWithdrawalRequest, CancelWithdrawalResponse>;
   listWithdrawals: handleUnaryCall<ListWithdrawalsRequest, ListWithdrawalsResponse>;
-  /** Asset & Instrument (Read-only usually, but maybe admin creates them) */
+}
+
+export interface WithdrawalServiceClient extends Client {
+  createWithdrawal(
+    request: CreateWithdrawalRequest,
+    callback: (error: ServiceError | null, response: CreateWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  createWithdrawal(
+    request: CreateWithdrawalRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CreateWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  createWithdrawal(
+    request: CreateWithdrawalRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CreateWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  getWithdrawal(
+    request: GetWithdrawalRequest,
+    callback: (error: ServiceError | null, response: GetWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  getWithdrawal(
+    request: GetWithdrawalRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  getWithdrawal(
+    request: GetWithdrawalRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  updateWithdrawal(
+    request: UpdateWithdrawalRequest,
+    callback: (error: ServiceError | null, response: UpdateWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  updateWithdrawal(
+    request: UpdateWithdrawalRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: UpdateWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  updateWithdrawal(
+    request: UpdateWithdrawalRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: UpdateWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  cancelWithdrawal(
+    request: CancelWithdrawalRequest,
+    callback: (error: ServiceError | null, response: CancelWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  cancelWithdrawal(
+    request: CancelWithdrawalRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CancelWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  cancelWithdrawal(
+    request: CancelWithdrawalRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CancelWithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  listWithdrawals(
+    request: ListWithdrawalsRequest,
+    callback: (error: ServiceError | null, response: ListWithdrawalsResponse) => void,
+  ): ClientUnaryCall;
+  listWithdrawals(
+    request: ListWithdrawalsRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: ListWithdrawalsResponse) => void,
+  ): ClientUnaryCall;
+  listWithdrawals(
+    request: ListWithdrawalsRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: ListWithdrawalsResponse) => void,
+  ): ClientUnaryCall;
+}
+
+export const WithdrawalServiceClient = makeGenericClientConstructor(
+  WithdrawalServiceService,
+  "ledger.WithdrawalService",
+) as unknown as {
+  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): WithdrawalServiceClient;
+  service: typeof WithdrawalServiceService;
+  serviceName: string;
+};
+
+export type AssetServiceService = typeof AssetServiceService;
+export const AssetServiceService = {
+  createAsset: {
+    path: "/ledger.AssetService/CreateAsset",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateAssetRequest): Buffer => Buffer.from(CreateAssetRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateAssetRequest => CreateAssetRequest.decode(value),
+    responseSerialize: (value: CreateAssetResponse): Buffer => Buffer.from(CreateAssetResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CreateAssetResponse => CreateAssetResponse.decode(value),
+  },
+  getAsset: {
+    path: "/ledger.AssetService/GetAsset",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetAssetRequest): Buffer => Buffer.from(GetAssetRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetAssetRequest => GetAssetRequest.decode(value),
+    responseSerialize: (value: GetAssetResponse): Buffer => Buffer.from(GetAssetResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetAssetResponse => GetAssetResponse.decode(value),
+  },
+  listAssets: {
+    path: "/ledger.AssetService/ListAssets",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListAssetsRequest): Buffer => Buffer.from(ListAssetsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListAssetsRequest => ListAssetsRequest.decode(value),
+    responseSerialize: (value: ListAssetsResponse): Buffer => Buffer.from(ListAssetsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListAssetsResponse => ListAssetsResponse.decode(value),
+  },
+  createInstrument: {
+    path: "/ledger.AssetService/CreateInstrument",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateInstrumentRequest): Buffer =>
+      Buffer.from(CreateInstrumentRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateInstrumentRequest => CreateInstrumentRequest.decode(value),
+    responseSerialize: (value: CreateInstrumentResponse): Buffer =>
+      Buffer.from(CreateInstrumentResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CreateInstrumentResponse => CreateInstrumentResponse.decode(value),
+  },
+} as const;
+
+export interface AssetServiceServer extends UntypedServiceImplementation {
   createAsset: handleUnaryCall<CreateAssetRequest, CreateAssetResponse>;
   getAsset: handleUnaryCall<GetAssetRequest, GetAssetResponse>;
   listAssets: handleUnaryCall<ListAssetsRequest, ListAssetsResponse>;
   createInstrument: handleUnaryCall<CreateInstrumentRequest, CreateInstrumentResponse>;
-  /** System */
-  getSystemAccount: handleUnaryCall<GetSystemAccountRequest, GetSystemAccountResponse>;
 }
 
-export interface LedgerServiceClient extends Client {
-  /** Order Management */
-  recordOrder(
-    request: RecordOrderRequest,
-    callback: (error: ServiceError | null, response: RecordOrderResponse) => void,
-  ): ClientUnaryCall;
-  recordOrder(
-    request: RecordOrderRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: RecordOrderResponse) => void,
-  ): ClientUnaryCall;
-  recordOrder(
-    request: RecordOrderRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: RecordOrderResponse) => void,
-  ): ClientUnaryCall;
-  cancelOrder(
-    request: CancelOrderRequest,
-    callback: (error: ServiceError | null, response: CancelOrderResponse) => void,
-  ): ClientUnaryCall;
-  cancelOrder(
-    request: CancelOrderRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: CancelOrderResponse) => void,
-  ): ClientUnaryCall;
-  cancelOrder(
-    request: CancelOrderRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: CancelOrderResponse) => void,
-  ): ClientUnaryCall;
-  deleteOrder(
-    request: DeleteOrderRequest,
-    callback: (error: ServiceError | null, response: DeleteOrderResponse) => void,
-  ): ClientUnaryCall;
-  deleteOrder(
-    request: DeleteOrderRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: DeleteOrderResponse) => void,
-  ): ClientUnaryCall;
-  deleteOrder(
-    request: DeleteOrderRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: DeleteOrderResponse) => void,
-  ): ClientUnaryCall;
-  getOpenOrders(
-    request: GetOpenOrdersRequest,
-    callback: (error: ServiceError | null, response: GetOpenOrdersResponse) => void,
-  ): ClientUnaryCall;
-  getOpenOrders(
-    request: GetOpenOrdersRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: GetOpenOrdersResponse) => void,
-  ): ClientUnaryCall;
-  getOpenOrders(
-    request: GetOpenOrdersRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: GetOpenOrdersResponse) => void,
-  ): ClientUnaryCall;
-  recordTrade(
-    request: RecordTradeRequest,
-    callback: (error: ServiceError | null, response: RecordTradeResponse) => void,
-  ): ClientUnaryCall;
-  recordTrade(
-    request: RecordTradeRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: RecordTradeResponse) => void,
-  ): ClientUnaryCall;
-  recordTrade(
-    request: RecordTradeRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: RecordTradeResponse) => void,
-  ): ClientUnaryCall;
-  /** User Management */
-  createUser(
-    request: CreateUserRequest,
-    callback: (error: ServiceError | null, response: CreateUserResponse) => void,
-  ): ClientUnaryCall;
-  createUser(
-    request: CreateUserRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: CreateUserResponse) => void,
-  ): ClientUnaryCall;
-  createUser(
-    request: CreateUserRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: CreateUserResponse) => void,
-  ): ClientUnaryCall;
-  getUser(
-    request: GetUserRequest,
-    callback: (error: ServiceError | null, response: GetUserResponse) => void,
-  ): ClientUnaryCall;
-  getUser(
-    request: GetUserRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: GetUserResponse) => void,
-  ): ClientUnaryCall;
-  getUser(
-    request: GetUserRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: GetUserResponse) => void,
-  ): ClientUnaryCall;
-  updateUser(
-    request: UpdateUserRequest,
-    callback: (error: ServiceError | null, response: UpdateUserResponse) => void,
-  ): ClientUnaryCall;
-  updateUser(
-    request: UpdateUserRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: UpdateUserResponse) => void,
-  ): ClientUnaryCall;
-  updateUser(
-    request: UpdateUserRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: UpdateUserResponse) => void,
-  ): ClientUnaryCall;
-  deleteUser(
-    request: DeleteUserRequest,
-    callback: (error: ServiceError | null, response: DeleteUserResponse) => void,
-  ): ClientUnaryCall;
-  deleteUser(
-    request: DeleteUserRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: DeleteUserResponse) => void,
-  ): ClientUnaryCall;
-  deleteUser(
-    request: DeleteUserRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: DeleteUserResponse) => void,
-  ): ClientUnaryCall;
-  /** Account Management */
-  createAccount(
-    request: CreateAccountRequest,
-    callback: (error: ServiceError | null, response: CreateAccountResponse) => void,
-  ): ClientUnaryCall;
-  createAccount(
-    request: CreateAccountRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: CreateAccountResponse) => void,
-  ): ClientUnaryCall;
-  createAccount(
-    request: CreateAccountRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: CreateAccountResponse) => void,
-  ): ClientUnaryCall;
-  getAccount(
-    request: GetAccountRequest,
-    callback: (error: ServiceError | null, response: GetAccountResponse) => void,
-  ): ClientUnaryCall;
-  getAccount(
-    request: GetAccountRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: GetAccountResponse) => void,
-  ): ClientUnaryCall;
-  getAccount(
-    request: GetAccountRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: GetAccountResponse) => void,
-  ): ClientUnaryCall;
-  updateAccount(
-    request: UpdateAccountRequest,
-    callback: (error: ServiceError | null, response: UpdateAccountResponse) => void,
-  ): ClientUnaryCall;
-  updateAccount(
-    request: UpdateAccountRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: UpdateAccountResponse) => void,
-  ): ClientUnaryCall;
-  updateAccount(
-    request: UpdateAccountRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: UpdateAccountResponse) => void,
-  ): ClientUnaryCall;
-  deleteAccount(
-    request: DeleteAccountRequest,
-    callback: (error: ServiceError | null, response: DeleteAccountResponse) => void,
-  ): ClientUnaryCall;
-  deleteAccount(
-    request: DeleteAccountRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: DeleteAccountResponse) => void,
-  ): ClientUnaryCall;
-  deleteAccount(
-    request: DeleteAccountRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: DeleteAccountResponse) => void,
-  ): ClientUnaryCall;
-  listAccounts(
-    request: ListAccountsRequest,
-    callback: (error: ServiceError | null, response: ListAccountsResponse) => void,
-  ): ClientUnaryCall;
-  listAccounts(
-    request: ListAccountsRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: ListAccountsResponse) => void,
-  ): ClientUnaryCall;
-  listAccounts(
-    request: ListAccountsRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: ListAccountsResponse) => void,
-  ): ClientUnaryCall;
-  /** Wallet Management */
-  createWallet(
-    request: CreateWalletRequest,
-    callback: (error: ServiceError | null, response: CreateWalletResponse) => void,
-  ): ClientUnaryCall;
-  createWallet(
-    request: CreateWalletRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: CreateWalletResponse) => void,
-  ): ClientUnaryCall;
-  createWallet(
-    request: CreateWalletRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: CreateWalletResponse) => void,
-  ): ClientUnaryCall;
-  getWallet(
-    request: GetWalletRequest,
-    callback: (error: ServiceError | null, response: GetWalletResponse) => void,
-  ): ClientUnaryCall;
-  getWallet(
-    request: GetWalletRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: GetWalletResponse) => void,
-  ): ClientUnaryCall;
-  getWallet(
-    request: GetWalletRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: GetWalletResponse) => void,
-  ): ClientUnaryCall;
-  updateWallet(
-    request: UpdateWalletRequest,
-    callback: (error: ServiceError | null, response: UpdateWalletResponse) => void,
-  ): ClientUnaryCall;
-  updateWallet(
-    request: UpdateWalletRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: UpdateWalletResponse) => void,
-  ): ClientUnaryCall;
-  updateWallet(
-    request: UpdateWalletRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: UpdateWalletResponse) => void,
-  ): ClientUnaryCall;
-  deleteWallet(
-    request: DeleteWalletRequest,
-    callback: (error: ServiceError | null, response: DeleteWalletResponse) => void,
-  ): ClientUnaryCall;
-  deleteWallet(
-    request: DeleteWalletRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: DeleteWalletResponse) => void,
-  ): ClientUnaryCall;
-  deleteWallet(
-    request: DeleteWalletRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: DeleteWalletResponse) => void,
-  ): ClientUnaryCall;
-  listWallets(
-    request: ListWalletsRequest,
-    callback: (error: ServiceError | null, response: ListWalletsResponse) => void,
-  ): ClientUnaryCall;
-  listWallets(
-    request: ListWalletsRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: ListWalletsResponse) => void,
-  ): ClientUnaryCall;
-  listWallets(
-    request: ListWalletsRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: ListWalletsResponse) => void,
-  ): ClientUnaryCall;
-  /** Fund Management */
-  createDeposit(
-    request: CreateDepositRequest,
-    callback: (error: ServiceError | null, response: CreateDepositResponse) => void,
-  ): ClientUnaryCall;
-  createDeposit(
-    request: CreateDepositRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: CreateDepositResponse) => void,
-  ): ClientUnaryCall;
-  createDeposit(
-    request: CreateDepositRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: CreateDepositResponse) => void,
-  ): ClientUnaryCall;
-  getDeposit(
-    request: GetDepositRequest,
-    callback: (error: ServiceError | null, response: GetDepositResponse) => void,
-  ): ClientUnaryCall;
-  getDeposit(
-    request: GetDepositRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: GetDepositResponse) => void,
-  ): ClientUnaryCall;
-  getDeposit(
-    request: GetDepositRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: GetDepositResponse) => void,
-  ): ClientUnaryCall;
-  updateDeposit(
-    request: UpdateDepositRequest,
-    callback: (error: ServiceError | null, response: UpdateDepositResponse) => void,
-  ): ClientUnaryCall;
-  updateDeposit(
-    request: UpdateDepositRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: UpdateDepositResponse) => void,
-  ): ClientUnaryCall;
-  updateDeposit(
-    request: UpdateDepositRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: UpdateDepositResponse) => void,
-  ): ClientUnaryCall;
-  cancelDeposit(
-    request: CancelDepositRequest,
-    callback: (error: ServiceError | null, response: CancelDepositResponse) => void,
-  ): ClientUnaryCall;
-  cancelDeposit(
-    request: CancelDepositRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: CancelDepositResponse) => void,
-  ): ClientUnaryCall;
-  cancelDeposit(
-    request: CancelDepositRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: CancelDepositResponse) => void,
-  ): ClientUnaryCall;
-  listDeposits(
-    request: ListDepositsRequest,
-    callback: (error: ServiceError | null, response: ListDepositsResponse) => void,
-  ): ClientUnaryCall;
-  listDeposits(
-    request: ListDepositsRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: ListDepositsResponse) => void,
-  ): ClientUnaryCall;
-  listDeposits(
-    request: ListDepositsRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: ListDepositsResponse) => void,
-  ): ClientUnaryCall;
-  createWithdrawal(
-    request: CreateWithdrawalRequest,
-    callback: (error: ServiceError | null, response: CreateWithdrawalResponse) => void,
-  ): ClientUnaryCall;
-  createWithdrawal(
-    request: CreateWithdrawalRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: CreateWithdrawalResponse) => void,
-  ): ClientUnaryCall;
-  createWithdrawal(
-    request: CreateWithdrawalRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: CreateWithdrawalResponse) => void,
-  ): ClientUnaryCall;
-  getWithdrawal(
-    request: GetWithdrawalRequest,
-    callback: (error: ServiceError | null, response: GetWithdrawalResponse) => void,
-  ): ClientUnaryCall;
-  getWithdrawal(
-    request: GetWithdrawalRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: GetWithdrawalResponse) => void,
-  ): ClientUnaryCall;
-  getWithdrawal(
-    request: GetWithdrawalRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: GetWithdrawalResponse) => void,
-  ): ClientUnaryCall;
-  updateWithdrawal(
-    request: UpdateWithdrawalRequest,
-    callback: (error: ServiceError | null, response: UpdateWithdrawalResponse) => void,
-  ): ClientUnaryCall;
-  updateWithdrawal(
-    request: UpdateWithdrawalRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: UpdateWithdrawalResponse) => void,
-  ): ClientUnaryCall;
-  updateWithdrawal(
-    request: UpdateWithdrawalRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: UpdateWithdrawalResponse) => void,
-  ): ClientUnaryCall;
-  cancelWithdrawal(
-    request: CancelWithdrawalRequest,
-    callback: (error: ServiceError | null, response: CancelWithdrawalResponse) => void,
-  ): ClientUnaryCall;
-  cancelWithdrawal(
-    request: CancelWithdrawalRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: CancelWithdrawalResponse) => void,
-  ): ClientUnaryCall;
-  cancelWithdrawal(
-    request: CancelWithdrawalRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: CancelWithdrawalResponse) => void,
-  ): ClientUnaryCall;
-  listWithdrawals(
-    request: ListWithdrawalsRequest,
-    callback: (error: ServiceError | null, response: ListWithdrawalsResponse) => void,
-  ): ClientUnaryCall;
-  listWithdrawals(
-    request: ListWithdrawalsRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: ListWithdrawalsResponse) => void,
-  ): ClientUnaryCall;
-  listWithdrawals(
-    request: ListWithdrawalsRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: ListWithdrawalsResponse) => void,
-  ): ClientUnaryCall;
-  /** Asset & Instrument (Read-only usually, but maybe admin creates them) */
+export interface AssetServiceClient extends Client {
   createAsset(
     request: CreateAssetRequest,
     callback: (error: ServiceError | null, response: CreateAssetResponse) => void,
@@ -6118,31 +6224,15 @@ export interface LedgerServiceClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: CreateInstrumentResponse) => void,
-  ): ClientUnaryCall;
-  /** System */
-  getSystemAccount(
-    request: GetSystemAccountRequest,
-    callback: (error: ServiceError | null, response: GetSystemAccountResponse) => void,
-  ): ClientUnaryCall;
-  getSystemAccount(
-    request: GetSystemAccountRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: GetSystemAccountResponse) => void,
-  ): ClientUnaryCall;
-  getSystemAccount(
-    request: GetSystemAccountRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: GetSystemAccountResponse) => void,
   ): ClientUnaryCall;
 }
 
-export const LedgerServiceClient = makeGenericClientConstructor(
-  LedgerServiceService,
-  "ledger.LedgerService",
+export const AssetServiceClient = makeGenericClientConstructor(
+  AssetServiceService,
+  "ledger.AssetService",
 ) as unknown as {
-  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): LedgerServiceClient;
-  service: typeof LedgerServiceService;
+  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): AssetServiceClient;
+  service: typeof AssetServiceService;
   serviceName: string;
 };
 

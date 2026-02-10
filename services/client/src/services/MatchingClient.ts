@@ -1,5 +1,5 @@
 import { credentials } from '@grpc/grpc-js';
-import { MatchingEngineClient } from 'src/proto/matching/engine';
+import { MatchingClient } from 'src/proto/matching/engine';
 import {
   PlaceOrderRequest,
   PlaceOrderResponse,
@@ -10,16 +10,16 @@ import {
 const MATCHING_ENGINE_URL =
   process.env.MATCHING_ENGINE_URL || 'localhost:50051';
 
-console.log('MatchingEngineClient: Connecting to', MATCHING_ENGINE_URL);
+console.log('MatchingClient: Connecting to', MATCHING_ENGINE_URL);
 
 // We instantiate the client once.
 // In a real app, you might want to handle connection pooling or reconnection strategies.
-const client = new MatchingEngineClient(
+const client = new MatchingClient(
   MATCHING_ENGINE_URL,
   credentials.createInsecure(),
 );
 
-export const matchingEngineClient = {
+export const matchingClient = {
   placeOrder: async (
     request: PlaceOrderRequest,
   ): Promise<PlaceOrderResponse> => {

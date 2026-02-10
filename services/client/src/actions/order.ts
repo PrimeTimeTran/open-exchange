@@ -1,7 +1,6 @@
 'use server';
 
 import { prisma } from 'src/prisma';
-import { matchingEngineClient } from 'src/services/MatchingEngineClient';
 import { ledgerClient } from 'src/services/LedgerClient';
 import { PlaceOrderRequest } from 'src/proto/matching/engine';
 import {

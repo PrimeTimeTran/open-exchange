@@ -1,5 +1,11 @@
 import { credentials } from '@grpc/grpc-js';
-import { LedgerServiceClient } from 'src/proto/ledger/ledger';
+import {
+  AssetServiceClient,
+  OrderServiceClient,
+  AccountServiceClient,
+  WalletServiceClient,
+  DepositServiceClient,
+} from 'src/proto/ledger/ledger';
 import {
   ListWalletsRequest,
   ListWalletsResponse,
@@ -23,7 +29,23 @@ const LEDGER_SERVICE_URL = process.env.LEDGER_SERVICE_URL || 'localhost:50052';
 
 console.log('LedgerClient: Connecting to', LEDGER_SERVICE_URL);
 
-const client = new LedgerServiceClient(
+const assetClient = new AssetServiceClient(
+  LEDGER_SERVICE_URL,
+  credentials.createInsecure(),
+);
+const orderClient = new OrderServiceClient(
+  LEDGER_SERVICE_URL,
+  credentials.createInsecure(),
+);
+const accountClient = new AccountServiceClient(
+  LEDGER_SERVICE_URL,
+  credentials.createInsecure(),
+);
+const walletClient = new WalletServiceClient(
+  LEDGER_SERVICE_URL,
+  credentials.createInsecure(),
+);
+const depositClient = new DepositServiceClient(
   LEDGER_SERVICE_URL,
   credentials.createInsecure(),
 );
@@ -31,7 +53,7 @@ const client = new LedgerServiceClient(
 export const ledgerClient = {
   getAsset: async (request: GetAssetRequest): Promise<GetAssetResponse> => {
     return new Promise((resolve, reject) => {
-      client.getAsset(request, (err, response) => {
+      assetClient.getAsset(request, (err, response) => {
         if (err) {
           reject(err);
         } else {
@@ -45,7 +67,7 @@ export const ledgerClient = {
     request: ListAssetsRequest,
   ): Promise<ListAssetsResponse> => {
     return new Promise((resolve, reject) => {
-      client.listAssets(request, (err, response) => {
+      assetClient.listAssets(request, (err, response) => {
         if (err) {
           reject(err);
         } else {
@@ -59,7 +81,7 @@ export const ledgerClient = {
     request: CreateAccountRequest,
   ): Promise<CreateAccountResponse> => {
     return new Promise((resolve, reject) => {
-      client.createAccount(request, (err, response) => {
+      accountClient.createAccount(request, (err, response) => {
         if (err) {
           reject(err);
         } else {
@@ -73,7 +95,7 @@ export const ledgerClient = {
     request: CreateWalletRequest,
   ): Promise<CreateWalletResponse> => {
     return new Promise((resolve, reject) => {
-      client.createWallet(request, (err, response) => {
+      walletClient.createWallet(request, (err, response) => {
         if (err) {
           reject(err);
         } else {
@@ -87,7 +109,7 @@ export const ledgerClient = {
     request: CreateDepositRequest,
   ): Promise<CreateDepositResponse> => {
     return new Promise((resolve, reject) => {
-      client.createDeposit(request, (err, response) => {
+      depositClient.createDeposit(request, (err, response) => {
         if (err) {
           reject(err);
         } else {
@@ -101,7 +123,7 @@ export const ledgerClient = {
     request: ListAccountsRequest,
   ): Promise<ListAccountsResponse> => {
     return new Promise((resolve, reject) => {
-      client.listAccounts(request, (err, response) => {
+      accountClient.listAccounts(request, (err, response) => {
         if (err) {
           reject(err);
         } else {
@@ -115,7 +137,7 @@ export const ledgerClient = {
     request: ListWalletsRequest,
   ): Promise<ListWalletsResponse> => {
     return new Promise((resolve, reject) => {
-      client.listWallets(request, (err, response) => {
+      walletClient.listWallets(request, (err, response) => {
         if (err) {
           reject(err);
         } else {
@@ -129,7 +151,7 @@ export const ledgerClient = {
     request: RecordOrderRequest,
   ): Promise<RecordOrderResponse> => {
     return new Promise((resolve, reject) => {
-      client.recordOrder(request, (err, response) => {
+      orderClient.recordOrder(request, (err, response) => {
         if (err) {
           reject(err);
         } else {

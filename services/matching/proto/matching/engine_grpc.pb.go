@@ -19,163 +19,163 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	MatchingEngine_PlaceOrder_FullMethodName   = "/matching.MatchingEngine/PlaceOrder"
-	MatchingEngine_CancelOrder_FullMethodName  = "/matching.MatchingEngine/CancelOrder"
-	MatchingEngine_GetOrderBook_FullMethodName = "/matching.MatchingEngine/GetOrderBook"
+	Matching_PlaceOrder_FullMethodName   = "/matching.Matching/PlaceOrder"
+	Matching_CancelOrder_FullMethodName  = "/matching.Matching/CancelOrder"
+	Matching_GetOrderBook_FullMethodName = "/matching.Matching/GetOrderBook"
 )
 
-// MatchingEngineClient is the client API for MatchingEngine service.
+// MatchingClient is the client API for Matching service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type MatchingEngineClient interface {
+type MatchingClient interface {
 	PlaceOrder(ctx context.Context, in *PlaceOrderRequest, opts ...grpc.CallOption) (*PlaceOrderResponse, error)
 	CancelOrder(ctx context.Context, in *CancelOrderRequest, opts ...grpc.CallOption) (*CancelOrderResponse, error)
 	GetOrderBook(ctx context.Context, in *GetOrderBookRequest, opts ...grpc.CallOption) (*GetOrderBookResponse, error)
 }
 
-type matchingEngineClient struct {
+type matchingClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewMatchingEngineClient(cc grpc.ClientConnInterface) MatchingEngineClient {
-	return &matchingEngineClient{cc}
+func NewMatchingClient(cc grpc.ClientConnInterface) MatchingClient {
+	return &matchingClient{cc}
 }
 
-func (c *matchingEngineClient) PlaceOrder(ctx context.Context, in *PlaceOrderRequest, opts ...grpc.CallOption) (*PlaceOrderResponse, error) {
+func (c *matchingClient) PlaceOrder(ctx context.Context, in *PlaceOrderRequest, opts ...grpc.CallOption) (*PlaceOrderResponse, error) {
 	out := new(PlaceOrderResponse)
-	err := c.cc.Invoke(ctx, MatchingEngine_PlaceOrder_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Matching_PlaceOrder_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *matchingEngineClient) CancelOrder(ctx context.Context, in *CancelOrderRequest, opts ...grpc.CallOption) (*CancelOrderResponse, error) {
+func (c *matchingClient) CancelOrder(ctx context.Context, in *CancelOrderRequest, opts ...grpc.CallOption) (*CancelOrderResponse, error) {
 	out := new(CancelOrderResponse)
-	err := c.cc.Invoke(ctx, MatchingEngine_CancelOrder_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Matching_CancelOrder_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *matchingEngineClient) GetOrderBook(ctx context.Context, in *GetOrderBookRequest, opts ...grpc.CallOption) (*GetOrderBookResponse, error) {
+func (c *matchingClient) GetOrderBook(ctx context.Context, in *GetOrderBookRequest, opts ...grpc.CallOption) (*GetOrderBookResponse, error) {
 	out := new(GetOrderBookResponse)
-	err := c.cc.Invoke(ctx, MatchingEngine_GetOrderBook_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Matching_GetOrderBook_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// MatchingEngineServer is the server API for MatchingEngine service.
-// All implementations must embed UnimplementedMatchingEngineServer
+// MatchingServer is the server API for Matching service.
+// All implementations must embed UnimplementedMatchingServer
 // for forward compatibility
-type MatchingEngineServer interface {
+type MatchingServer interface {
 	PlaceOrder(context.Context, *PlaceOrderRequest) (*PlaceOrderResponse, error)
 	CancelOrder(context.Context, *CancelOrderRequest) (*CancelOrderResponse, error)
 	GetOrderBook(context.Context, *GetOrderBookRequest) (*GetOrderBookResponse, error)
-	mustEmbedUnimplementedMatchingEngineServer()
+	mustEmbedUnimplementedMatchingServer()
 }
 
-// UnimplementedMatchingEngineServer must be embedded to have forward compatible implementations.
-type UnimplementedMatchingEngineServer struct {
+// UnimplementedMatchingServer must be embedded to have forward compatible implementations.
+type UnimplementedMatchingServer struct {
 }
 
-func (UnimplementedMatchingEngineServer) PlaceOrder(context.Context, *PlaceOrderRequest) (*PlaceOrderResponse, error) {
+func (UnimplementedMatchingServer) PlaceOrder(context.Context, *PlaceOrderRequest) (*PlaceOrderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PlaceOrder not implemented")
 }
-func (UnimplementedMatchingEngineServer) CancelOrder(context.Context, *CancelOrderRequest) (*CancelOrderResponse, error) {
+func (UnimplementedMatchingServer) CancelOrder(context.Context, *CancelOrderRequest) (*CancelOrderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelOrder not implemented")
 }
-func (UnimplementedMatchingEngineServer) GetOrderBook(context.Context, *GetOrderBookRequest) (*GetOrderBookResponse, error) {
+func (UnimplementedMatchingServer) GetOrderBook(context.Context, *GetOrderBookRequest) (*GetOrderBookResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOrderBook not implemented")
 }
-func (UnimplementedMatchingEngineServer) mustEmbedUnimplementedMatchingEngineServer() {}
+func (UnimplementedMatchingServer) mustEmbedUnimplementedMatchingServer() {}
 
-// UnsafeMatchingEngineServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to MatchingEngineServer will
+// UnsafeMatchingServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to MatchingServer will
 // result in compilation errors.
-type UnsafeMatchingEngineServer interface {
-	mustEmbedUnimplementedMatchingEngineServer()
+type UnsafeMatchingServer interface {
+	mustEmbedUnimplementedMatchingServer()
 }
 
-func RegisterMatchingEngineServer(s grpc.ServiceRegistrar, srv MatchingEngineServer) {
-	s.RegisterService(&MatchingEngine_ServiceDesc, srv)
+func RegisterMatchingServer(s grpc.ServiceRegistrar, srv MatchingServer) {
+	s.RegisterService(&Matching_ServiceDesc, srv)
 }
 
-func _MatchingEngine_PlaceOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Matching_PlaceOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PlaceOrderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MatchingEngineServer).PlaceOrder(ctx, in)
+		return srv.(MatchingServer).PlaceOrder(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MatchingEngine_PlaceOrder_FullMethodName,
+		FullMethod: Matching_PlaceOrder_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MatchingEngineServer).PlaceOrder(ctx, req.(*PlaceOrderRequest))
+		return srv.(MatchingServer).PlaceOrder(ctx, req.(*PlaceOrderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MatchingEngine_CancelOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Matching_CancelOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CancelOrderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MatchingEngineServer).CancelOrder(ctx, in)
+		return srv.(MatchingServer).CancelOrder(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MatchingEngine_CancelOrder_FullMethodName,
+		FullMethod: Matching_CancelOrder_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MatchingEngineServer).CancelOrder(ctx, req.(*CancelOrderRequest))
+		return srv.(MatchingServer).CancelOrder(ctx, req.(*CancelOrderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MatchingEngine_GetOrderBook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Matching_GetOrderBook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetOrderBookRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MatchingEngineServer).GetOrderBook(ctx, in)
+		return srv.(MatchingServer).GetOrderBook(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MatchingEngine_GetOrderBook_FullMethodName,
+		FullMethod: Matching_GetOrderBook_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MatchingEngineServer).GetOrderBook(ctx, req.(*GetOrderBookRequest))
+		return srv.(MatchingServer).GetOrderBook(ctx, req.(*GetOrderBookRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// MatchingEngine_ServiceDesc is the grpc.ServiceDesc for MatchingEngine service.
+// Matching_ServiceDesc is the grpc.ServiceDesc for Matching service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var MatchingEngine_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "matching.MatchingEngine",
-	HandlerType: (*MatchingEngineServer)(nil),
+var Matching_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "matching.Matching",
+	HandlerType: (*MatchingServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "PlaceOrder",
-			Handler:    _MatchingEngine_PlaceOrder_Handler,
+			Handler:    _Matching_PlaceOrder_Handler,
 		},
 		{
 			MethodName: "CancelOrder",
-			Handler:    _MatchingEngine_CancelOrder_Handler,
+			Handler:    _Matching_CancelOrder_Handler,
 		},
 		{
 			MethodName: "GetOrderBook",
-			Handler:    _MatchingEngine_GetOrderBook_Handler,
+			Handler:    _Matching_GetOrderBook_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

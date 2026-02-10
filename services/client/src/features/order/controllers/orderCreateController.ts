@@ -6,7 +6,7 @@ import { validateHasPermission } from 'src/features/security';
 import { prismaAuth } from 'src/prisma';
 import { AppContext } from 'src/shared/controller/appContext';
 import { prismaRelationship } from 'src/prisma/prismaRelationship';
-import { matchingEngineClient } from 'src/services/MatchingEngineClient';
+import { matchingClient } from '@/services/MatchingClient';
 import {
   OrderSide,
   OrderType,
@@ -72,7 +72,7 @@ export async function orderCreate(body: unknown, context: AppContext) {
   });
 
   try {
-    await matchingEngineClient.placeOrder({
+    await matchingClient.placeOrder({
       order: mapOrderToProto(order),
     });
   } catch (error) {

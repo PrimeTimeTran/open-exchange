@@ -19,1324 +19,1628 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	LedgerService_RecordOrder_FullMethodName      = "/ledger.LedgerService/RecordOrder"
-	LedgerService_CancelOrder_FullMethodName      = "/ledger.LedgerService/CancelOrder"
-	LedgerService_DeleteOrder_FullMethodName      = "/ledger.LedgerService/DeleteOrder"
-	LedgerService_GetOpenOrders_FullMethodName    = "/ledger.LedgerService/GetOpenOrders"
-	LedgerService_RecordTrade_FullMethodName      = "/ledger.LedgerService/RecordTrade"
-	LedgerService_CreateUser_FullMethodName       = "/ledger.LedgerService/CreateUser"
-	LedgerService_GetUser_FullMethodName          = "/ledger.LedgerService/GetUser"
-	LedgerService_UpdateUser_FullMethodName       = "/ledger.LedgerService/UpdateUser"
-	LedgerService_DeleteUser_FullMethodName       = "/ledger.LedgerService/DeleteUser"
-	LedgerService_CreateAccount_FullMethodName    = "/ledger.LedgerService/CreateAccount"
-	LedgerService_GetAccount_FullMethodName       = "/ledger.LedgerService/GetAccount"
-	LedgerService_UpdateAccount_FullMethodName    = "/ledger.LedgerService/UpdateAccount"
-	LedgerService_DeleteAccount_FullMethodName    = "/ledger.LedgerService/DeleteAccount"
-	LedgerService_ListAccounts_FullMethodName     = "/ledger.LedgerService/ListAccounts"
-	LedgerService_CreateWallet_FullMethodName     = "/ledger.LedgerService/CreateWallet"
-	LedgerService_GetWallet_FullMethodName        = "/ledger.LedgerService/GetWallet"
-	LedgerService_UpdateWallet_FullMethodName     = "/ledger.LedgerService/UpdateWallet"
-	LedgerService_DeleteWallet_FullMethodName     = "/ledger.LedgerService/DeleteWallet"
-	LedgerService_ListWallets_FullMethodName      = "/ledger.LedgerService/ListWallets"
-	LedgerService_CreateDeposit_FullMethodName    = "/ledger.LedgerService/CreateDeposit"
-	LedgerService_GetDeposit_FullMethodName       = "/ledger.LedgerService/GetDeposit"
-	LedgerService_UpdateDeposit_FullMethodName    = "/ledger.LedgerService/UpdateDeposit"
-	LedgerService_CancelDeposit_FullMethodName    = "/ledger.LedgerService/CancelDeposit"
-	LedgerService_ListDeposits_FullMethodName     = "/ledger.LedgerService/ListDeposits"
-	LedgerService_CreateWithdrawal_FullMethodName = "/ledger.LedgerService/CreateWithdrawal"
-	LedgerService_GetWithdrawal_FullMethodName    = "/ledger.LedgerService/GetWithdrawal"
-	LedgerService_UpdateWithdrawal_FullMethodName = "/ledger.LedgerService/UpdateWithdrawal"
-	LedgerService_CancelWithdrawal_FullMethodName = "/ledger.LedgerService/CancelWithdrawal"
-	LedgerService_ListWithdrawals_FullMethodName  = "/ledger.LedgerService/ListWithdrawals"
-	LedgerService_CreateAsset_FullMethodName      = "/ledger.LedgerService/CreateAsset"
-	LedgerService_GetAsset_FullMethodName         = "/ledger.LedgerService/GetAsset"
-	LedgerService_ListAssets_FullMethodName       = "/ledger.LedgerService/ListAssets"
-	LedgerService_CreateInstrument_FullMethodName = "/ledger.LedgerService/CreateInstrument"
-	LedgerService_GetSystemAccount_FullMethodName = "/ledger.LedgerService/GetSystemAccount"
+	OrderService_RecordOrder_FullMethodName   = "/ledger.OrderService/RecordOrder"
+	OrderService_CancelOrder_FullMethodName   = "/ledger.OrderService/CancelOrder"
+	OrderService_DeleteOrder_FullMethodName   = "/ledger.OrderService/DeleteOrder"
+	OrderService_GetOpenOrders_FullMethodName = "/ledger.OrderService/GetOpenOrders"
+	OrderService_RecordTrade_FullMethodName   = "/ledger.OrderService/RecordTrade"
 )
 
-// LedgerServiceClient is the client API for LedgerService service.
+// OrderServiceClient is the client API for OrderService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type LedgerServiceClient interface {
-	// Order Management
+type OrderServiceClient interface {
 	RecordOrder(ctx context.Context, in *RecordOrderRequest, opts ...grpc.CallOption) (*RecordOrderResponse, error)
 	CancelOrder(ctx context.Context, in *CancelOrderRequest, opts ...grpc.CallOption) (*CancelOrderResponse, error)
 	DeleteOrder(ctx context.Context, in *DeleteOrderRequest, opts ...grpc.CallOption) (*DeleteOrderResponse, error)
 	GetOpenOrders(ctx context.Context, in *GetOpenOrdersRequest, opts ...grpc.CallOption) (*GetOpenOrdersResponse, error)
 	RecordTrade(ctx context.Context, in *RecordTradeRequest, opts ...grpc.CallOption) (*RecordTradeResponse, error)
-	// User Management
-	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error)
-	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
-	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error)
-	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
-	// Account Management
-	CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*CreateAccountResponse, error)
-	GetAccount(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*GetAccountResponse, error)
-	UpdateAccount(ctx context.Context, in *UpdateAccountRequest, opts ...grpc.CallOption) (*UpdateAccountResponse, error)
-	DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error)
-	ListAccounts(ctx context.Context, in *ListAccountsRequest, opts ...grpc.CallOption) (*ListAccountsResponse, error)
-	// Wallet Management
-	CreateWallet(ctx context.Context, in *CreateWalletRequest, opts ...grpc.CallOption) (*CreateWalletResponse, error)
-	GetWallet(ctx context.Context, in *GetWalletRequest, opts ...grpc.CallOption) (*GetWalletResponse, error)
-	UpdateWallet(ctx context.Context, in *UpdateWalletRequest, opts ...grpc.CallOption) (*UpdateWalletResponse, error)
-	DeleteWallet(ctx context.Context, in *DeleteWalletRequest, opts ...grpc.CallOption) (*DeleteWalletResponse, error)
-	ListWallets(ctx context.Context, in *ListWalletsRequest, opts ...grpc.CallOption) (*ListWalletsResponse, error)
-	// Fund Management
-	CreateDeposit(ctx context.Context, in *CreateDepositRequest, opts ...grpc.CallOption) (*CreateDepositResponse, error)
-	GetDeposit(ctx context.Context, in *GetDepositRequest, opts ...grpc.CallOption) (*GetDepositResponse, error)
-	UpdateDeposit(ctx context.Context, in *UpdateDepositRequest, opts ...grpc.CallOption) (*UpdateDepositResponse, error)
-	CancelDeposit(ctx context.Context, in *CancelDepositRequest, opts ...grpc.CallOption) (*CancelDepositResponse, error)
-	ListDeposits(ctx context.Context, in *ListDepositsRequest, opts ...grpc.CallOption) (*ListDepositsResponse, error)
-	CreateWithdrawal(ctx context.Context, in *CreateWithdrawalRequest, opts ...grpc.CallOption) (*CreateWithdrawalResponse, error)
-	GetWithdrawal(ctx context.Context, in *GetWithdrawalRequest, opts ...grpc.CallOption) (*GetWithdrawalResponse, error)
-	UpdateWithdrawal(ctx context.Context, in *UpdateWithdrawalRequest, opts ...grpc.CallOption) (*UpdateWithdrawalResponse, error)
-	CancelWithdrawal(ctx context.Context, in *CancelWithdrawalRequest, opts ...grpc.CallOption) (*CancelWithdrawalResponse, error)
-	ListWithdrawals(ctx context.Context, in *ListWithdrawalsRequest, opts ...grpc.CallOption) (*ListWithdrawalsResponse, error)
-	// Asset & Instrument (Read-only usually, but maybe admin creates them)
-	CreateAsset(ctx context.Context, in *CreateAssetRequest, opts ...grpc.CallOption) (*CreateAssetResponse, error)
-	GetAsset(ctx context.Context, in *GetAssetRequest, opts ...grpc.CallOption) (*GetAssetResponse, error)
-	ListAssets(ctx context.Context, in *ListAssetsRequest, opts ...grpc.CallOption) (*ListAssetsResponse, error)
-	CreateInstrument(ctx context.Context, in *CreateInstrumentRequest, opts ...grpc.CallOption) (*CreateInstrumentResponse, error)
-	// System
-	GetSystemAccount(ctx context.Context, in *GetSystemAccountRequest, opts ...grpc.CallOption) (*GetSystemAccountResponse, error)
 }
 
-type ledgerServiceClient struct {
+type orderServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewLedgerServiceClient(cc grpc.ClientConnInterface) LedgerServiceClient {
-	return &ledgerServiceClient{cc}
+func NewOrderServiceClient(cc grpc.ClientConnInterface) OrderServiceClient {
+	return &orderServiceClient{cc}
 }
 
-func (c *ledgerServiceClient) RecordOrder(ctx context.Context, in *RecordOrderRequest, opts ...grpc.CallOption) (*RecordOrderResponse, error) {
+func (c *orderServiceClient) RecordOrder(ctx context.Context, in *RecordOrderRequest, opts ...grpc.CallOption) (*RecordOrderResponse, error) {
 	out := new(RecordOrderResponse)
-	err := c.cc.Invoke(ctx, LedgerService_RecordOrder_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, OrderService_RecordOrder_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *ledgerServiceClient) CancelOrder(ctx context.Context, in *CancelOrderRequest, opts ...grpc.CallOption) (*CancelOrderResponse, error) {
+func (c *orderServiceClient) CancelOrder(ctx context.Context, in *CancelOrderRequest, opts ...grpc.CallOption) (*CancelOrderResponse, error) {
 	out := new(CancelOrderResponse)
-	err := c.cc.Invoke(ctx, LedgerService_CancelOrder_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, OrderService_CancelOrder_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *ledgerServiceClient) DeleteOrder(ctx context.Context, in *DeleteOrderRequest, opts ...grpc.CallOption) (*DeleteOrderResponse, error) {
+func (c *orderServiceClient) DeleteOrder(ctx context.Context, in *DeleteOrderRequest, opts ...grpc.CallOption) (*DeleteOrderResponse, error) {
 	out := new(DeleteOrderResponse)
-	err := c.cc.Invoke(ctx, LedgerService_DeleteOrder_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, OrderService_DeleteOrder_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *ledgerServiceClient) GetOpenOrders(ctx context.Context, in *GetOpenOrdersRequest, opts ...grpc.CallOption) (*GetOpenOrdersResponse, error) {
+func (c *orderServiceClient) GetOpenOrders(ctx context.Context, in *GetOpenOrdersRequest, opts ...grpc.CallOption) (*GetOpenOrdersResponse, error) {
 	out := new(GetOpenOrdersResponse)
-	err := c.cc.Invoke(ctx, LedgerService_GetOpenOrders_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, OrderService_GetOpenOrders_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *ledgerServiceClient) RecordTrade(ctx context.Context, in *RecordTradeRequest, opts ...grpc.CallOption) (*RecordTradeResponse, error) {
+func (c *orderServiceClient) RecordTrade(ctx context.Context, in *RecordTradeRequest, opts ...grpc.CallOption) (*RecordTradeResponse, error) {
 	out := new(RecordTradeResponse)
-	err := c.cc.Invoke(ctx, LedgerService_RecordTrade_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, OrderService_RecordTrade_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *ledgerServiceClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error) {
-	out := new(CreateUserResponse)
-	err := c.cc.Invoke(ctx, LedgerService_CreateUser_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error) {
-	out := new(GetUserResponse)
-	err := c.cc.Invoke(ctx, LedgerService_GetUser_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error) {
-	out := new(UpdateUserResponse)
-	err := c.cc.Invoke(ctx, LedgerService_UpdateUser_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error) {
-	out := new(DeleteUserResponse)
-	err := c.cc.Invoke(ctx, LedgerService_DeleteUser_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*CreateAccountResponse, error) {
-	out := new(CreateAccountResponse)
-	err := c.cc.Invoke(ctx, LedgerService_CreateAccount_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) GetAccount(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*GetAccountResponse, error) {
-	out := new(GetAccountResponse)
-	err := c.cc.Invoke(ctx, LedgerService_GetAccount_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) UpdateAccount(ctx context.Context, in *UpdateAccountRequest, opts ...grpc.CallOption) (*UpdateAccountResponse, error) {
-	out := new(UpdateAccountResponse)
-	err := c.cc.Invoke(ctx, LedgerService_UpdateAccount_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error) {
-	out := new(DeleteAccountResponse)
-	err := c.cc.Invoke(ctx, LedgerService_DeleteAccount_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) ListAccounts(ctx context.Context, in *ListAccountsRequest, opts ...grpc.CallOption) (*ListAccountsResponse, error) {
-	out := new(ListAccountsResponse)
-	err := c.cc.Invoke(ctx, LedgerService_ListAccounts_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) CreateWallet(ctx context.Context, in *CreateWalletRequest, opts ...grpc.CallOption) (*CreateWalletResponse, error) {
-	out := new(CreateWalletResponse)
-	err := c.cc.Invoke(ctx, LedgerService_CreateWallet_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) GetWallet(ctx context.Context, in *GetWalletRequest, opts ...grpc.CallOption) (*GetWalletResponse, error) {
-	out := new(GetWalletResponse)
-	err := c.cc.Invoke(ctx, LedgerService_GetWallet_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) UpdateWallet(ctx context.Context, in *UpdateWalletRequest, opts ...grpc.CallOption) (*UpdateWalletResponse, error) {
-	out := new(UpdateWalletResponse)
-	err := c.cc.Invoke(ctx, LedgerService_UpdateWallet_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) DeleteWallet(ctx context.Context, in *DeleteWalletRequest, opts ...grpc.CallOption) (*DeleteWalletResponse, error) {
-	out := new(DeleteWalletResponse)
-	err := c.cc.Invoke(ctx, LedgerService_DeleteWallet_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) ListWallets(ctx context.Context, in *ListWalletsRequest, opts ...grpc.CallOption) (*ListWalletsResponse, error) {
-	out := new(ListWalletsResponse)
-	err := c.cc.Invoke(ctx, LedgerService_ListWallets_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) CreateDeposit(ctx context.Context, in *CreateDepositRequest, opts ...grpc.CallOption) (*CreateDepositResponse, error) {
-	out := new(CreateDepositResponse)
-	err := c.cc.Invoke(ctx, LedgerService_CreateDeposit_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) GetDeposit(ctx context.Context, in *GetDepositRequest, opts ...grpc.CallOption) (*GetDepositResponse, error) {
-	out := new(GetDepositResponse)
-	err := c.cc.Invoke(ctx, LedgerService_GetDeposit_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) UpdateDeposit(ctx context.Context, in *UpdateDepositRequest, opts ...grpc.CallOption) (*UpdateDepositResponse, error) {
-	out := new(UpdateDepositResponse)
-	err := c.cc.Invoke(ctx, LedgerService_UpdateDeposit_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) CancelDeposit(ctx context.Context, in *CancelDepositRequest, opts ...grpc.CallOption) (*CancelDepositResponse, error) {
-	out := new(CancelDepositResponse)
-	err := c.cc.Invoke(ctx, LedgerService_CancelDeposit_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) ListDeposits(ctx context.Context, in *ListDepositsRequest, opts ...grpc.CallOption) (*ListDepositsResponse, error) {
-	out := new(ListDepositsResponse)
-	err := c.cc.Invoke(ctx, LedgerService_ListDeposits_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) CreateWithdrawal(ctx context.Context, in *CreateWithdrawalRequest, opts ...grpc.CallOption) (*CreateWithdrawalResponse, error) {
-	out := new(CreateWithdrawalResponse)
-	err := c.cc.Invoke(ctx, LedgerService_CreateWithdrawal_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) GetWithdrawal(ctx context.Context, in *GetWithdrawalRequest, opts ...grpc.CallOption) (*GetWithdrawalResponse, error) {
-	out := new(GetWithdrawalResponse)
-	err := c.cc.Invoke(ctx, LedgerService_GetWithdrawal_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) UpdateWithdrawal(ctx context.Context, in *UpdateWithdrawalRequest, opts ...grpc.CallOption) (*UpdateWithdrawalResponse, error) {
-	out := new(UpdateWithdrawalResponse)
-	err := c.cc.Invoke(ctx, LedgerService_UpdateWithdrawal_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) CancelWithdrawal(ctx context.Context, in *CancelWithdrawalRequest, opts ...grpc.CallOption) (*CancelWithdrawalResponse, error) {
-	out := new(CancelWithdrawalResponse)
-	err := c.cc.Invoke(ctx, LedgerService_CancelWithdrawal_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) ListWithdrawals(ctx context.Context, in *ListWithdrawalsRequest, opts ...grpc.CallOption) (*ListWithdrawalsResponse, error) {
-	out := new(ListWithdrawalsResponse)
-	err := c.cc.Invoke(ctx, LedgerService_ListWithdrawals_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) CreateAsset(ctx context.Context, in *CreateAssetRequest, opts ...grpc.CallOption) (*CreateAssetResponse, error) {
-	out := new(CreateAssetResponse)
-	err := c.cc.Invoke(ctx, LedgerService_CreateAsset_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) GetAsset(ctx context.Context, in *GetAssetRequest, opts ...grpc.CallOption) (*GetAssetResponse, error) {
-	out := new(GetAssetResponse)
-	err := c.cc.Invoke(ctx, LedgerService_GetAsset_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) ListAssets(ctx context.Context, in *ListAssetsRequest, opts ...grpc.CallOption) (*ListAssetsResponse, error) {
-	out := new(ListAssetsResponse)
-	err := c.cc.Invoke(ctx, LedgerService_ListAssets_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) CreateInstrument(ctx context.Context, in *CreateInstrumentRequest, opts ...grpc.CallOption) (*CreateInstrumentResponse, error) {
-	out := new(CreateInstrumentResponse)
-	err := c.cc.Invoke(ctx, LedgerService_CreateInstrument_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ledgerServiceClient) GetSystemAccount(ctx context.Context, in *GetSystemAccountRequest, opts ...grpc.CallOption) (*GetSystemAccountResponse, error) {
-	out := new(GetSystemAccountResponse)
-	err := c.cc.Invoke(ctx, LedgerService_GetSystemAccount_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// LedgerServiceServer is the server API for LedgerService service.
-// All implementations must embed UnimplementedLedgerServiceServer
+// OrderServiceServer is the server API for OrderService service.
+// All implementations must embed UnimplementedOrderServiceServer
 // for forward compatibility
-type LedgerServiceServer interface {
-	// Order Management
+type OrderServiceServer interface {
 	RecordOrder(context.Context, *RecordOrderRequest) (*RecordOrderResponse, error)
 	CancelOrder(context.Context, *CancelOrderRequest) (*CancelOrderResponse, error)
 	DeleteOrder(context.Context, *DeleteOrderRequest) (*DeleteOrderResponse, error)
 	GetOpenOrders(context.Context, *GetOpenOrdersRequest) (*GetOpenOrdersResponse, error)
 	RecordTrade(context.Context, *RecordTradeRequest) (*RecordTradeResponse, error)
-	// User Management
-	CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error)
-	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
-	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
-	DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
-	// Account Management
-	CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error)
-	GetAccount(context.Context, *GetAccountRequest) (*GetAccountResponse, error)
-	UpdateAccount(context.Context, *UpdateAccountRequest) (*UpdateAccountResponse, error)
-	DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error)
-	ListAccounts(context.Context, *ListAccountsRequest) (*ListAccountsResponse, error)
-	// Wallet Management
-	CreateWallet(context.Context, *CreateWalletRequest) (*CreateWalletResponse, error)
-	GetWallet(context.Context, *GetWalletRequest) (*GetWalletResponse, error)
-	UpdateWallet(context.Context, *UpdateWalletRequest) (*UpdateWalletResponse, error)
-	DeleteWallet(context.Context, *DeleteWalletRequest) (*DeleteWalletResponse, error)
-	ListWallets(context.Context, *ListWalletsRequest) (*ListWalletsResponse, error)
-	// Fund Management
-	CreateDeposit(context.Context, *CreateDepositRequest) (*CreateDepositResponse, error)
-	GetDeposit(context.Context, *GetDepositRequest) (*GetDepositResponse, error)
-	UpdateDeposit(context.Context, *UpdateDepositRequest) (*UpdateDepositResponse, error)
-	CancelDeposit(context.Context, *CancelDepositRequest) (*CancelDepositResponse, error)
-	ListDeposits(context.Context, *ListDepositsRequest) (*ListDepositsResponse, error)
-	CreateWithdrawal(context.Context, *CreateWithdrawalRequest) (*CreateWithdrawalResponse, error)
-	GetWithdrawal(context.Context, *GetWithdrawalRequest) (*GetWithdrawalResponse, error)
-	UpdateWithdrawal(context.Context, *UpdateWithdrawalRequest) (*UpdateWithdrawalResponse, error)
-	CancelWithdrawal(context.Context, *CancelWithdrawalRequest) (*CancelWithdrawalResponse, error)
-	ListWithdrawals(context.Context, *ListWithdrawalsRequest) (*ListWithdrawalsResponse, error)
-	// Asset & Instrument (Read-only usually, but maybe admin creates them)
-	CreateAsset(context.Context, *CreateAssetRequest) (*CreateAssetResponse, error)
-	GetAsset(context.Context, *GetAssetRequest) (*GetAssetResponse, error)
-	ListAssets(context.Context, *ListAssetsRequest) (*ListAssetsResponse, error)
-	CreateInstrument(context.Context, *CreateInstrumentRequest) (*CreateInstrumentResponse, error)
-	// System
-	GetSystemAccount(context.Context, *GetSystemAccountRequest) (*GetSystemAccountResponse, error)
-	mustEmbedUnimplementedLedgerServiceServer()
+	mustEmbedUnimplementedOrderServiceServer()
 }
 
-// UnimplementedLedgerServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedLedgerServiceServer struct {
+// UnimplementedOrderServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedOrderServiceServer struct {
 }
 
-func (UnimplementedLedgerServiceServer) RecordOrder(context.Context, *RecordOrderRequest) (*RecordOrderResponse, error) {
+func (UnimplementedOrderServiceServer) RecordOrder(context.Context, *RecordOrderRequest) (*RecordOrderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RecordOrder not implemented")
 }
-func (UnimplementedLedgerServiceServer) CancelOrder(context.Context, *CancelOrderRequest) (*CancelOrderResponse, error) {
+func (UnimplementedOrderServiceServer) CancelOrder(context.Context, *CancelOrderRequest) (*CancelOrderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelOrder not implemented")
 }
-func (UnimplementedLedgerServiceServer) DeleteOrder(context.Context, *DeleteOrderRequest) (*DeleteOrderResponse, error) {
+func (UnimplementedOrderServiceServer) DeleteOrder(context.Context, *DeleteOrderRequest) (*DeleteOrderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteOrder not implemented")
 }
-func (UnimplementedLedgerServiceServer) GetOpenOrders(context.Context, *GetOpenOrdersRequest) (*GetOpenOrdersResponse, error) {
+func (UnimplementedOrderServiceServer) GetOpenOrders(context.Context, *GetOpenOrdersRequest) (*GetOpenOrdersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOpenOrders not implemented")
 }
-func (UnimplementedLedgerServiceServer) RecordTrade(context.Context, *RecordTradeRequest) (*RecordTradeResponse, error) {
+func (UnimplementedOrderServiceServer) RecordTrade(context.Context, *RecordTradeRequest) (*RecordTradeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RecordTrade not implemented")
 }
-func (UnimplementedLedgerServiceServer) CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
-}
-func (UnimplementedLedgerServiceServer) GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
-}
-func (UnimplementedLedgerServiceServer) UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
-}
-func (UnimplementedLedgerServiceServer) DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
-}
-func (UnimplementedLedgerServiceServer) CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateAccount not implemented")
-}
-func (UnimplementedLedgerServiceServer) GetAccount(context.Context, *GetAccountRequest) (*GetAccountResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAccount not implemented")
-}
-func (UnimplementedLedgerServiceServer) UpdateAccount(context.Context, *UpdateAccountRequest) (*UpdateAccountResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateAccount not implemented")
-}
-func (UnimplementedLedgerServiceServer) DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteAccount not implemented")
-}
-func (UnimplementedLedgerServiceServer) ListAccounts(context.Context, *ListAccountsRequest) (*ListAccountsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListAccounts not implemented")
-}
-func (UnimplementedLedgerServiceServer) CreateWallet(context.Context, *CreateWalletRequest) (*CreateWalletResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateWallet not implemented")
-}
-func (UnimplementedLedgerServiceServer) GetWallet(context.Context, *GetWalletRequest) (*GetWalletResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetWallet not implemented")
-}
-func (UnimplementedLedgerServiceServer) UpdateWallet(context.Context, *UpdateWalletRequest) (*UpdateWalletResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateWallet not implemented")
-}
-func (UnimplementedLedgerServiceServer) DeleteWallet(context.Context, *DeleteWalletRequest) (*DeleteWalletResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteWallet not implemented")
-}
-func (UnimplementedLedgerServiceServer) ListWallets(context.Context, *ListWalletsRequest) (*ListWalletsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListWallets not implemented")
-}
-func (UnimplementedLedgerServiceServer) CreateDeposit(context.Context, *CreateDepositRequest) (*CreateDepositResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateDeposit not implemented")
-}
-func (UnimplementedLedgerServiceServer) GetDeposit(context.Context, *GetDepositRequest) (*GetDepositResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetDeposit not implemented")
-}
-func (UnimplementedLedgerServiceServer) UpdateDeposit(context.Context, *UpdateDepositRequest) (*UpdateDepositResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateDeposit not implemented")
-}
-func (UnimplementedLedgerServiceServer) CancelDeposit(context.Context, *CancelDepositRequest) (*CancelDepositResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CancelDeposit not implemented")
-}
-func (UnimplementedLedgerServiceServer) ListDeposits(context.Context, *ListDepositsRequest) (*ListDepositsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListDeposits not implemented")
-}
-func (UnimplementedLedgerServiceServer) CreateWithdrawal(context.Context, *CreateWithdrawalRequest) (*CreateWithdrawalResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateWithdrawal not implemented")
-}
-func (UnimplementedLedgerServiceServer) GetWithdrawal(context.Context, *GetWithdrawalRequest) (*GetWithdrawalResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetWithdrawal not implemented")
-}
-func (UnimplementedLedgerServiceServer) UpdateWithdrawal(context.Context, *UpdateWithdrawalRequest) (*UpdateWithdrawalResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateWithdrawal not implemented")
-}
-func (UnimplementedLedgerServiceServer) CancelWithdrawal(context.Context, *CancelWithdrawalRequest) (*CancelWithdrawalResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CancelWithdrawal not implemented")
-}
-func (UnimplementedLedgerServiceServer) ListWithdrawals(context.Context, *ListWithdrawalsRequest) (*ListWithdrawalsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListWithdrawals not implemented")
-}
-func (UnimplementedLedgerServiceServer) CreateAsset(context.Context, *CreateAssetRequest) (*CreateAssetResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateAsset not implemented")
-}
-func (UnimplementedLedgerServiceServer) GetAsset(context.Context, *GetAssetRequest) (*GetAssetResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAsset not implemented")
-}
-func (UnimplementedLedgerServiceServer) ListAssets(context.Context, *ListAssetsRequest) (*ListAssetsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListAssets not implemented")
-}
-func (UnimplementedLedgerServiceServer) CreateInstrument(context.Context, *CreateInstrumentRequest) (*CreateInstrumentResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateInstrument not implemented")
-}
-func (UnimplementedLedgerServiceServer) GetSystemAccount(context.Context, *GetSystemAccountRequest) (*GetSystemAccountResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetSystemAccount not implemented")
-}
-func (UnimplementedLedgerServiceServer) mustEmbedUnimplementedLedgerServiceServer() {}
+func (UnimplementedOrderServiceServer) mustEmbedUnimplementedOrderServiceServer() {}
 
-// UnsafeLedgerServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to LedgerServiceServer will
+// UnsafeOrderServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to OrderServiceServer will
 // result in compilation errors.
-type UnsafeLedgerServiceServer interface {
-	mustEmbedUnimplementedLedgerServiceServer()
+type UnsafeOrderServiceServer interface {
+	mustEmbedUnimplementedOrderServiceServer()
 }
 
-func RegisterLedgerServiceServer(s grpc.ServiceRegistrar, srv LedgerServiceServer) {
-	s.RegisterService(&LedgerService_ServiceDesc, srv)
+func RegisterOrderServiceServer(s grpc.ServiceRegistrar, srv OrderServiceServer) {
+	s.RegisterService(&OrderService_ServiceDesc, srv)
 }
 
-func _LedgerService_RecordOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _OrderService_RecordOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RecordOrderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LedgerServiceServer).RecordOrder(ctx, in)
+		return srv.(OrderServiceServer).RecordOrder(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LedgerService_RecordOrder_FullMethodName,
+		FullMethod: OrderService_RecordOrder_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).RecordOrder(ctx, req.(*RecordOrderRequest))
+		return srv.(OrderServiceServer).RecordOrder(ctx, req.(*RecordOrderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LedgerService_CancelOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _OrderService_CancelOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CancelOrderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LedgerServiceServer).CancelOrder(ctx, in)
+		return srv.(OrderServiceServer).CancelOrder(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LedgerService_CancelOrder_FullMethodName,
+		FullMethod: OrderService_CancelOrder_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).CancelOrder(ctx, req.(*CancelOrderRequest))
+		return srv.(OrderServiceServer).CancelOrder(ctx, req.(*CancelOrderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LedgerService_DeleteOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _OrderService_DeleteOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteOrderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LedgerServiceServer).DeleteOrder(ctx, in)
+		return srv.(OrderServiceServer).DeleteOrder(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LedgerService_DeleteOrder_FullMethodName,
+		FullMethod: OrderService_DeleteOrder_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).DeleteOrder(ctx, req.(*DeleteOrderRequest))
+		return srv.(OrderServiceServer).DeleteOrder(ctx, req.(*DeleteOrderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LedgerService_GetOpenOrders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _OrderService_GetOpenOrders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetOpenOrdersRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LedgerServiceServer).GetOpenOrders(ctx, in)
+		return srv.(OrderServiceServer).GetOpenOrders(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LedgerService_GetOpenOrders_FullMethodName,
+		FullMethod: OrderService_GetOpenOrders_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).GetOpenOrders(ctx, req.(*GetOpenOrdersRequest))
+		return srv.(OrderServiceServer).GetOpenOrders(ctx, req.(*GetOpenOrdersRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LedgerService_RecordTrade_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _OrderService_RecordTrade_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RecordTradeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LedgerServiceServer).RecordTrade(ctx, in)
+		return srv.(OrderServiceServer).RecordTrade(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LedgerService_RecordTrade_FullMethodName,
+		FullMethod: OrderService_RecordTrade_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).RecordTrade(ctx, req.(*RecordTradeRequest))
+		return srv.(OrderServiceServer).RecordTrade(ctx, req.(*RecordTradeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LedgerService_CreateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+// OrderService_ServiceDesc is the grpc.ServiceDesc for OrderService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var OrderService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "ledger.OrderService",
+	HandlerType: (*OrderServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "RecordOrder",
+			Handler:    _OrderService_RecordOrder_Handler,
+		},
+		{
+			MethodName: "CancelOrder",
+			Handler:    _OrderService_CancelOrder_Handler,
+		},
+		{
+			MethodName: "DeleteOrder",
+			Handler:    _OrderService_DeleteOrder_Handler,
+		},
+		{
+			MethodName: "GetOpenOrders",
+			Handler:    _OrderService_GetOpenOrders_Handler,
+		},
+		{
+			MethodName: "RecordTrade",
+			Handler:    _OrderService_RecordTrade_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "ledger/ledger.proto",
+}
+
+const (
+	UserService_CreateUser_FullMethodName = "/ledger.UserService/CreateUser"
+	UserService_GetUser_FullMethodName    = "/ledger.UserService/GetUser"
+	UserService_UpdateUser_FullMethodName = "/ledger.UserService/UpdateUser"
+	UserService_DeleteUser_FullMethodName = "/ledger.UserService/DeleteUser"
+)
+
+// UserServiceClient is the client API for UserService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type UserServiceClient interface {
+	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error)
+	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
+	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error)
+	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
+}
+
+type userServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewUserServiceClient(cc grpc.ClientConnInterface) UserServiceClient {
+	return &userServiceClient{cc}
+}
+
+func (c *userServiceClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error) {
+	out := new(CreateUserResponse)
+	err := c.cc.Invoke(ctx, UserService_CreateUser_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error) {
+	out := new(GetUserResponse)
+	err := c.cc.Invoke(ctx, UserService_GetUser_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error) {
+	out := new(UpdateUserResponse)
+	err := c.cc.Invoke(ctx, UserService_UpdateUser_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error) {
+	out := new(DeleteUserResponse)
+	err := c.cc.Invoke(ctx, UserService_DeleteUser_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// UserServiceServer is the server API for UserService service.
+// All implementations must embed UnimplementedUserServiceServer
+// for forward compatibility
+type UserServiceServer interface {
+	CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error)
+	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
+	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
+	DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
+	mustEmbedUnimplementedUserServiceServer()
+}
+
+// UnimplementedUserServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedUserServiceServer struct {
+}
+
+func (UnimplementedUserServiceServer) CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
+}
+func (UnimplementedUserServiceServer) GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
+}
+func (UnimplementedUserServiceServer) UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
+}
+func (UnimplementedUserServiceServer) DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
+}
+func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
+
+// UnsafeUserServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to UserServiceServer will
+// result in compilation errors.
+type UnsafeUserServiceServer interface {
+	mustEmbedUnimplementedUserServiceServer()
+}
+
+func RegisterUserServiceServer(s grpc.ServiceRegistrar, srv UserServiceServer) {
+	s.RegisterService(&UserService_ServiceDesc, srv)
+}
+
+func _UserService_CreateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LedgerServiceServer).CreateUser(ctx, in)
+		return srv.(UserServiceServer).CreateUser(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LedgerService_CreateUser_FullMethodName,
+		FullMethod: UserService_CreateUser_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).CreateUser(ctx, req.(*CreateUserRequest))
+		return srv.(UserServiceServer).CreateUser(ctx, req.(*CreateUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LedgerService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _UserService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LedgerServiceServer).GetUser(ctx, in)
+		return srv.(UserServiceServer).GetUser(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LedgerService_GetUser_FullMethodName,
+		FullMethod: UserService_GetUser_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).GetUser(ctx, req.(*GetUserRequest))
+		return srv.(UserServiceServer).GetUser(ctx, req.(*GetUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LedgerService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _UserService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LedgerServiceServer).UpdateUser(ctx, in)
+		return srv.(UserServiceServer).UpdateUser(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LedgerService_UpdateUser_FullMethodName,
+		FullMethod: UserService_UpdateUser_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).UpdateUser(ctx, req.(*UpdateUserRequest))
+		return srv.(UserServiceServer).UpdateUser(ctx, req.(*UpdateUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LedgerService_DeleteUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _UserService_DeleteUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LedgerServiceServer).DeleteUser(ctx, in)
+		return srv.(UserServiceServer).DeleteUser(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LedgerService_DeleteUser_FullMethodName,
+		FullMethod: UserService_DeleteUser_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).DeleteUser(ctx, req.(*DeleteUserRequest))
+		return srv.(UserServiceServer).DeleteUser(ctx, req.(*DeleteUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LedgerService_CreateAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+// UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var UserService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "ledger.UserService",
+	HandlerType: (*UserServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreateUser",
+			Handler:    _UserService_CreateUser_Handler,
+		},
+		{
+			MethodName: "GetUser",
+			Handler:    _UserService_GetUser_Handler,
+		},
+		{
+			MethodName: "UpdateUser",
+			Handler:    _UserService_UpdateUser_Handler,
+		},
+		{
+			MethodName: "DeleteUser",
+			Handler:    _UserService_DeleteUser_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "ledger/ledger.proto",
+}
+
+const (
+	AccountService_CreateAccount_FullMethodName    = "/ledger.AccountService/CreateAccount"
+	AccountService_GetAccount_FullMethodName       = "/ledger.AccountService/GetAccount"
+	AccountService_UpdateAccount_FullMethodName    = "/ledger.AccountService/UpdateAccount"
+	AccountService_DeleteAccount_FullMethodName    = "/ledger.AccountService/DeleteAccount"
+	AccountService_ListAccounts_FullMethodName     = "/ledger.AccountService/ListAccounts"
+	AccountService_GetSystemAccount_FullMethodName = "/ledger.AccountService/GetSystemAccount"
+)
+
+// AccountServiceClient is the client API for AccountService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type AccountServiceClient interface {
+	CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*CreateAccountResponse, error)
+	GetAccount(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*GetAccountResponse, error)
+	UpdateAccount(ctx context.Context, in *UpdateAccountRequest, opts ...grpc.CallOption) (*UpdateAccountResponse, error)
+	DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error)
+	ListAccounts(ctx context.Context, in *ListAccountsRequest, opts ...grpc.CallOption) (*ListAccountsResponse, error)
+	GetSystemAccount(ctx context.Context, in *GetSystemAccountRequest, opts ...grpc.CallOption) (*GetSystemAccountResponse, error)
+}
+
+type accountServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewAccountServiceClient(cc grpc.ClientConnInterface) AccountServiceClient {
+	return &accountServiceClient{cc}
+}
+
+func (c *accountServiceClient) CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*CreateAccountResponse, error) {
+	out := new(CreateAccountResponse)
+	err := c.cc.Invoke(ctx, AccountService_CreateAccount_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *accountServiceClient) GetAccount(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*GetAccountResponse, error) {
+	out := new(GetAccountResponse)
+	err := c.cc.Invoke(ctx, AccountService_GetAccount_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *accountServiceClient) UpdateAccount(ctx context.Context, in *UpdateAccountRequest, opts ...grpc.CallOption) (*UpdateAccountResponse, error) {
+	out := new(UpdateAccountResponse)
+	err := c.cc.Invoke(ctx, AccountService_UpdateAccount_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *accountServiceClient) DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error) {
+	out := new(DeleteAccountResponse)
+	err := c.cc.Invoke(ctx, AccountService_DeleteAccount_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *accountServiceClient) ListAccounts(ctx context.Context, in *ListAccountsRequest, opts ...grpc.CallOption) (*ListAccountsResponse, error) {
+	out := new(ListAccountsResponse)
+	err := c.cc.Invoke(ctx, AccountService_ListAccounts_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *accountServiceClient) GetSystemAccount(ctx context.Context, in *GetSystemAccountRequest, opts ...grpc.CallOption) (*GetSystemAccountResponse, error) {
+	out := new(GetSystemAccountResponse)
+	err := c.cc.Invoke(ctx, AccountService_GetSystemAccount_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// AccountServiceServer is the server API for AccountService service.
+// All implementations must embed UnimplementedAccountServiceServer
+// for forward compatibility
+type AccountServiceServer interface {
+	CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error)
+	GetAccount(context.Context, *GetAccountRequest) (*GetAccountResponse, error)
+	UpdateAccount(context.Context, *UpdateAccountRequest) (*UpdateAccountResponse, error)
+	DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error)
+	ListAccounts(context.Context, *ListAccountsRequest) (*ListAccountsResponse, error)
+	GetSystemAccount(context.Context, *GetSystemAccountRequest) (*GetSystemAccountResponse, error)
+	mustEmbedUnimplementedAccountServiceServer()
+}
+
+// UnimplementedAccountServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedAccountServiceServer struct {
+}
+
+func (UnimplementedAccountServiceServer) CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateAccount not implemented")
+}
+func (UnimplementedAccountServiceServer) GetAccount(context.Context, *GetAccountRequest) (*GetAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAccount not implemented")
+}
+func (UnimplementedAccountServiceServer) UpdateAccount(context.Context, *UpdateAccountRequest) (*UpdateAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateAccount not implemented")
+}
+func (UnimplementedAccountServiceServer) DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteAccount not implemented")
+}
+func (UnimplementedAccountServiceServer) ListAccounts(context.Context, *ListAccountsRequest) (*ListAccountsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListAccounts not implemented")
+}
+func (UnimplementedAccountServiceServer) GetSystemAccount(context.Context, *GetSystemAccountRequest) (*GetSystemAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSystemAccount not implemented")
+}
+func (UnimplementedAccountServiceServer) mustEmbedUnimplementedAccountServiceServer() {}
+
+// UnsafeAccountServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to AccountServiceServer will
+// result in compilation errors.
+type UnsafeAccountServiceServer interface {
+	mustEmbedUnimplementedAccountServiceServer()
+}
+
+func RegisterAccountServiceServer(s grpc.ServiceRegistrar, srv AccountServiceServer) {
+	s.RegisterService(&AccountService_ServiceDesc, srv)
+}
+
+func _AccountService_CreateAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateAccountRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LedgerServiceServer).CreateAccount(ctx, in)
+		return srv.(AccountServiceServer).CreateAccount(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LedgerService_CreateAccount_FullMethodName,
+		FullMethod: AccountService_CreateAccount_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).CreateAccount(ctx, req.(*CreateAccountRequest))
+		return srv.(AccountServiceServer).CreateAccount(ctx, req.(*CreateAccountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LedgerService_GetAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AccountService_GetAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetAccountRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LedgerServiceServer).GetAccount(ctx, in)
+		return srv.(AccountServiceServer).GetAccount(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LedgerService_GetAccount_FullMethodName,
+		FullMethod: AccountService_GetAccount_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).GetAccount(ctx, req.(*GetAccountRequest))
+		return srv.(AccountServiceServer).GetAccount(ctx, req.(*GetAccountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LedgerService_UpdateAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AccountService_UpdateAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateAccountRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LedgerServiceServer).UpdateAccount(ctx, in)
+		return srv.(AccountServiceServer).UpdateAccount(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LedgerService_UpdateAccount_FullMethodName,
+		FullMethod: AccountService_UpdateAccount_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).UpdateAccount(ctx, req.(*UpdateAccountRequest))
+		return srv.(AccountServiceServer).UpdateAccount(ctx, req.(*UpdateAccountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LedgerService_DeleteAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AccountService_DeleteAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteAccountRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LedgerServiceServer).DeleteAccount(ctx, in)
+		return srv.(AccountServiceServer).DeleteAccount(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LedgerService_DeleteAccount_FullMethodName,
+		FullMethod: AccountService_DeleteAccount_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).DeleteAccount(ctx, req.(*DeleteAccountRequest))
+		return srv.(AccountServiceServer).DeleteAccount(ctx, req.(*DeleteAccountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LedgerService_ListAccounts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AccountService_ListAccounts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListAccountsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LedgerServiceServer).ListAccounts(ctx, in)
+		return srv.(AccountServiceServer).ListAccounts(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LedgerService_ListAccounts_FullMethodName,
+		FullMethod: AccountService_ListAccounts_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).ListAccounts(ctx, req.(*ListAccountsRequest))
+		return srv.(AccountServiceServer).ListAccounts(ctx, req.(*ListAccountsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LedgerService_CreateWallet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateWalletRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LedgerServiceServer).CreateWallet(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LedgerService_CreateWallet_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).CreateWallet(ctx, req.(*CreateWalletRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _LedgerService_GetWallet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetWalletRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LedgerServiceServer).GetWallet(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LedgerService_GetWallet_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).GetWallet(ctx, req.(*GetWalletRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _LedgerService_UpdateWallet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateWalletRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LedgerServiceServer).UpdateWallet(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LedgerService_UpdateWallet_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).UpdateWallet(ctx, req.(*UpdateWalletRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _LedgerService_DeleteWallet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteWalletRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LedgerServiceServer).DeleteWallet(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LedgerService_DeleteWallet_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).DeleteWallet(ctx, req.(*DeleteWalletRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _LedgerService_ListWallets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListWalletsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LedgerServiceServer).ListWallets(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LedgerService_ListWallets_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).ListWallets(ctx, req.(*ListWalletsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _LedgerService_CreateDeposit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateDepositRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LedgerServiceServer).CreateDeposit(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LedgerService_CreateDeposit_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).CreateDeposit(ctx, req.(*CreateDepositRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _LedgerService_GetDeposit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetDepositRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LedgerServiceServer).GetDeposit(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LedgerService_GetDeposit_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).GetDeposit(ctx, req.(*GetDepositRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _LedgerService_UpdateDeposit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateDepositRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LedgerServiceServer).UpdateDeposit(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LedgerService_UpdateDeposit_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).UpdateDeposit(ctx, req.(*UpdateDepositRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _LedgerService_CancelDeposit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CancelDepositRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LedgerServiceServer).CancelDeposit(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LedgerService_CancelDeposit_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).CancelDeposit(ctx, req.(*CancelDepositRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _LedgerService_ListDeposits_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListDepositsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LedgerServiceServer).ListDeposits(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LedgerService_ListDeposits_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).ListDeposits(ctx, req.(*ListDepositsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _LedgerService_CreateWithdrawal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateWithdrawalRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LedgerServiceServer).CreateWithdrawal(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LedgerService_CreateWithdrawal_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).CreateWithdrawal(ctx, req.(*CreateWithdrawalRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _LedgerService_GetWithdrawal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetWithdrawalRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LedgerServiceServer).GetWithdrawal(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LedgerService_GetWithdrawal_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).GetWithdrawal(ctx, req.(*GetWithdrawalRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _LedgerService_UpdateWithdrawal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateWithdrawalRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LedgerServiceServer).UpdateWithdrawal(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LedgerService_UpdateWithdrawal_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).UpdateWithdrawal(ctx, req.(*UpdateWithdrawalRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _LedgerService_CancelWithdrawal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CancelWithdrawalRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LedgerServiceServer).CancelWithdrawal(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LedgerService_CancelWithdrawal_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).CancelWithdrawal(ctx, req.(*CancelWithdrawalRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _LedgerService_ListWithdrawals_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListWithdrawalsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LedgerServiceServer).ListWithdrawals(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LedgerService_ListWithdrawals_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).ListWithdrawals(ctx, req.(*ListWithdrawalsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _LedgerService_CreateAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateAssetRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LedgerServiceServer).CreateAsset(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LedgerService_CreateAsset_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).CreateAsset(ctx, req.(*CreateAssetRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _LedgerService_GetAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetAssetRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LedgerServiceServer).GetAsset(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LedgerService_GetAsset_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).GetAsset(ctx, req.(*GetAssetRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _LedgerService_ListAssets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListAssetsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LedgerServiceServer).ListAssets(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LedgerService_ListAssets_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).ListAssets(ctx, req.(*ListAssetsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _LedgerService_CreateInstrument_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateInstrumentRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LedgerServiceServer).CreateInstrument(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LedgerService_CreateInstrument_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).CreateInstrument(ctx, req.(*CreateInstrumentRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _LedgerService_GetSystemAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AccountService_GetSystemAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetSystemAccountRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LedgerServiceServer).GetSystemAccount(ctx, in)
+		return srv.(AccountServiceServer).GetSystemAccount(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LedgerService_GetSystemAccount_FullMethodName,
+		FullMethod: AccountService_GetSystemAccount_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LedgerServiceServer).GetSystemAccount(ctx, req.(*GetSystemAccountRequest))
+		return srv.(AccountServiceServer).GetSystemAccount(ctx, req.(*GetSystemAccountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// LedgerService_ServiceDesc is the grpc.ServiceDesc for LedgerService service.
+// AccountService_ServiceDesc is the grpc.ServiceDesc for AccountService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var LedgerService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ledger.LedgerService",
-	HandlerType: (*LedgerServiceServer)(nil),
+var AccountService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "ledger.AccountService",
+	HandlerType: (*AccountServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "RecordOrder",
-			Handler:    _LedgerService_RecordOrder_Handler,
-		},
-		{
-			MethodName: "CancelOrder",
-			Handler:    _LedgerService_CancelOrder_Handler,
-		},
-		{
-			MethodName: "DeleteOrder",
-			Handler:    _LedgerService_DeleteOrder_Handler,
-		},
-		{
-			MethodName: "GetOpenOrders",
-			Handler:    _LedgerService_GetOpenOrders_Handler,
-		},
-		{
-			MethodName: "RecordTrade",
-			Handler:    _LedgerService_RecordTrade_Handler,
-		},
-		{
-			MethodName: "CreateUser",
-			Handler:    _LedgerService_CreateUser_Handler,
-		},
-		{
-			MethodName: "GetUser",
-			Handler:    _LedgerService_GetUser_Handler,
-		},
-		{
-			MethodName: "UpdateUser",
-			Handler:    _LedgerService_UpdateUser_Handler,
-		},
-		{
-			MethodName: "DeleteUser",
-			Handler:    _LedgerService_DeleteUser_Handler,
-		},
-		{
 			MethodName: "CreateAccount",
-			Handler:    _LedgerService_CreateAccount_Handler,
+			Handler:    _AccountService_CreateAccount_Handler,
 		},
 		{
 			MethodName: "GetAccount",
-			Handler:    _LedgerService_GetAccount_Handler,
+			Handler:    _AccountService_GetAccount_Handler,
 		},
 		{
 			MethodName: "UpdateAccount",
-			Handler:    _LedgerService_UpdateAccount_Handler,
+			Handler:    _AccountService_UpdateAccount_Handler,
 		},
 		{
 			MethodName: "DeleteAccount",
-			Handler:    _LedgerService_DeleteAccount_Handler,
+			Handler:    _AccountService_DeleteAccount_Handler,
 		},
 		{
 			MethodName: "ListAccounts",
-			Handler:    _LedgerService_ListAccounts_Handler,
-		},
-		{
-			MethodName: "CreateWallet",
-			Handler:    _LedgerService_CreateWallet_Handler,
-		},
-		{
-			MethodName: "GetWallet",
-			Handler:    _LedgerService_GetWallet_Handler,
-		},
-		{
-			MethodName: "UpdateWallet",
-			Handler:    _LedgerService_UpdateWallet_Handler,
-		},
-		{
-			MethodName: "DeleteWallet",
-			Handler:    _LedgerService_DeleteWallet_Handler,
-		},
-		{
-			MethodName: "ListWallets",
-			Handler:    _LedgerService_ListWallets_Handler,
-		},
-		{
-			MethodName: "CreateDeposit",
-			Handler:    _LedgerService_CreateDeposit_Handler,
-		},
-		{
-			MethodName: "GetDeposit",
-			Handler:    _LedgerService_GetDeposit_Handler,
-		},
-		{
-			MethodName: "UpdateDeposit",
-			Handler:    _LedgerService_UpdateDeposit_Handler,
-		},
-		{
-			MethodName: "CancelDeposit",
-			Handler:    _LedgerService_CancelDeposit_Handler,
-		},
-		{
-			MethodName: "ListDeposits",
-			Handler:    _LedgerService_ListDeposits_Handler,
-		},
-		{
-			MethodName: "CreateWithdrawal",
-			Handler:    _LedgerService_CreateWithdrawal_Handler,
-		},
-		{
-			MethodName: "GetWithdrawal",
-			Handler:    _LedgerService_GetWithdrawal_Handler,
-		},
-		{
-			MethodName: "UpdateWithdrawal",
-			Handler:    _LedgerService_UpdateWithdrawal_Handler,
-		},
-		{
-			MethodName: "CancelWithdrawal",
-			Handler:    _LedgerService_CancelWithdrawal_Handler,
-		},
-		{
-			MethodName: "ListWithdrawals",
-			Handler:    _LedgerService_ListWithdrawals_Handler,
-		},
-		{
-			MethodName: "CreateAsset",
-			Handler:    _LedgerService_CreateAsset_Handler,
-		},
-		{
-			MethodName: "GetAsset",
-			Handler:    _LedgerService_GetAsset_Handler,
-		},
-		{
-			MethodName: "ListAssets",
-			Handler:    _LedgerService_ListAssets_Handler,
-		},
-		{
-			MethodName: "CreateInstrument",
-			Handler:    _LedgerService_CreateInstrument_Handler,
+			Handler:    _AccountService_ListAccounts_Handler,
 		},
 		{
 			MethodName: "GetSystemAccount",
-			Handler:    _LedgerService_GetSystemAccount_Handler,
+			Handler:    _AccountService_GetSystemAccount_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "ledger/ledger.proto",
+}
+
+const (
+	WalletService_CreateWallet_FullMethodName = "/ledger.WalletService/CreateWallet"
+	WalletService_GetWallet_FullMethodName    = "/ledger.WalletService/GetWallet"
+	WalletService_UpdateWallet_FullMethodName = "/ledger.WalletService/UpdateWallet"
+	WalletService_DeleteWallet_FullMethodName = "/ledger.WalletService/DeleteWallet"
+	WalletService_ListWallets_FullMethodName  = "/ledger.WalletService/ListWallets"
+)
+
+// WalletServiceClient is the client API for WalletService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type WalletServiceClient interface {
+	CreateWallet(ctx context.Context, in *CreateWalletRequest, opts ...grpc.CallOption) (*CreateWalletResponse, error)
+	GetWallet(ctx context.Context, in *GetWalletRequest, opts ...grpc.CallOption) (*GetWalletResponse, error)
+	UpdateWallet(ctx context.Context, in *UpdateWalletRequest, opts ...grpc.CallOption) (*UpdateWalletResponse, error)
+	DeleteWallet(ctx context.Context, in *DeleteWalletRequest, opts ...grpc.CallOption) (*DeleteWalletResponse, error)
+	ListWallets(ctx context.Context, in *ListWalletsRequest, opts ...grpc.CallOption) (*ListWalletsResponse, error)
+}
+
+type walletServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewWalletServiceClient(cc grpc.ClientConnInterface) WalletServiceClient {
+	return &walletServiceClient{cc}
+}
+
+func (c *walletServiceClient) CreateWallet(ctx context.Context, in *CreateWalletRequest, opts ...grpc.CallOption) (*CreateWalletResponse, error) {
+	out := new(CreateWalletResponse)
+	err := c.cc.Invoke(ctx, WalletService_CreateWallet_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *walletServiceClient) GetWallet(ctx context.Context, in *GetWalletRequest, opts ...grpc.CallOption) (*GetWalletResponse, error) {
+	out := new(GetWalletResponse)
+	err := c.cc.Invoke(ctx, WalletService_GetWallet_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *walletServiceClient) UpdateWallet(ctx context.Context, in *UpdateWalletRequest, opts ...grpc.CallOption) (*UpdateWalletResponse, error) {
+	out := new(UpdateWalletResponse)
+	err := c.cc.Invoke(ctx, WalletService_UpdateWallet_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *walletServiceClient) DeleteWallet(ctx context.Context, in *DeleteWalletRequest, opts ...grpc.CallOption) (*DeleteWalletResponse, error) {
+	out := new(DeleteWalletResponse)
+	err := c.cc.Invoke(ctx, WalletService_DeleteWallet_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *walletServiceClient) ListWallets(ctx context.Context, in *ListWalletsRequest, opts ...grpc.CallOption) (*ListWalletsResponse, error) {
+	out := new(ListWalletsResponse)
+	err := c.cc.Invoke(ctx, WalletService_ListWallets_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// WalletServiceServer is the server API for WalletService service.
+// All implementations must embed UnimplementedWalletServiceServer
+// for forward compatibility
+type WalletServiceServer interface {
+	CreateWallet(context.Context, *CreateWalletRequest) (*CreateWalletResponse, error)
+	GetWallet(context.Context, *GetWalletRequest) (*GetWalletResponse, error)
+	UpdateWallet(context.Context, *UpdateWalletRequest) (*UpdateWalletResponse, error)
+	DeleteWallet(context.Context, *DeleteWalletRequest) (*DeleteWalletResponse, error)
+	ListWallets(context.Context, *ListWalletsRequest) (*ListWalletsResponse, error)
+	mustEmbedUnimplementedWalletServiceServer()
+}
+
+// UnimplementedWalletServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedWalletServiceServer struct {
+}
+
+func (UnimplementedWalletServiceServer) CreateWallet(context.Context, *CreateWalletRequest) (*CreateWalletResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateWallet not implemented")
+}
+func (UnimplementedWalletServiceServer) GetWallet(context.Context, *GetWalletRequest) (*GetWalletResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetWallet not implemented")
+}
+func (UnimplementedWalletServiceServer) UpdateWallet(context.Context, *UpdateWalletRequest) (*UpdateWalletResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateWallet not implemented")
+}
+func (UnimplementedWalletServiceServer) DeleteWallet(context.Context, *DeleteWalletRequest) (*DeleteWalletResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteWallet not implemented")
+}
+func (UnimplementedWalletServiceServer) ListWallets(context.Context, *ListWalletsRequest) (*ListWalletsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListWallets not implemented")
+}
+func (UnimplementedWalletServiceServer) mustEmbedUnimplementedWalletServiceServer() {}
+
+// UnsafeWalletServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to WalletServiceServer will
+// result in compilation errors.
+type UnsafeWalletServiceServer interface {
+	mustEmbedUnimplementedWalletServiceServer()
+}
+
+func RegisterWalletServiceServer(s grpc.ServiceRegistrar, srv WalletServiceServer) {
+	s.RegisterService(&WalletService_ServiceDesc, srv)
+}
+
+func _WalletService_CreateWallet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateWalletRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WalletServiceServer).CreateWallet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WalletService_CreateWallet_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WalletServiceServer).CreateWallet(ctx, req.(*CreateWalletRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WalletService_GetWallet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetWalletRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WalletServiceServer).GetWallet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WalletService_GetWallet_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WalletServiceServer).GetWallet(ctx, req.(*GetWalletRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WalletService_UpdateWallet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateWalletRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WalletServiceServer).UpdateWallet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WalletService_UpdateWallet_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WalletServiceServer).UpdateWallet(ctx, req.(*UpdateWalletRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WalletService_DeleteWallet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteWalletRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WalletServiceServer).DeleteWallet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WalletService_DeleteWallet_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WalletServiceServer).DeleteWallet(ctx, req.(*DeleteWalletRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WalletService_ListWallets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListWalletsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WalletServiceServer).ListWallets(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WalletService_ListWallets_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WalletServiceServer).ListWallets(ctx, req.(*ListWalletsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// WalletService_ServiceDesc is the grpc.ServiceDesc for WalletService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var WalletService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "ledger.WalletService",
+	HandlerType: (*WalletServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreateWallet",
+			Handler:    _WalletService_CreateWallet_Handler,
+		},
+		{
+			MethodName: "GetWallet",
+			Handler:    _WalletService_GetWallet_Handler,
+		},
+		{
+			MethodName: "UpdateWallet",
+			Handler:    _WalletService_UpdateWallet_Handler,
+		},
+		{
+			MethodName: "DeleteWallet",
+			Handler:    _WalletService_DeleteWallet_Handler,
+		},
+		{
+			MethodName: "ListWallets",
+			Handler:    _WalletService_ListWallets_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "ledger/ledger.proto",
+}
+
+const (
+	DepositService_CreateDeposit_FullMethodName = "/ledger.DepositService/CreateDeposit"
+	DepositService_GetDeposit_FullMethodName    = "/ledger.DepositService/GetDeposit"
+	DepositService_UpdateDeposit_FullMethodName = "/ledger.DepositService/UpdateDeposit"
+	DepositService_CancelDeposit_FullMethodName = "/ledger.DepositService/CancelDeposit"
+	DepositService_ListDeposits_FullMethodName  = "/ledger.DepositService/ListDeposits"
+)
+
+// DepositServiceClient is the client API for DepositService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type DepositServiceClient interface {
+	CreateDeposit(ctx context.Context, in *CreateDepositRequest, opts ...grpc.CallOption) (*CreateDepositResponse, error)
+	GetDeposit(ctx context.Context, in *GetDepositRequest, opts ...grpc.CallOption) (*GetDepositResponse, error)
+	UpdateDeposit(ctx context.Context, in *UpdateDepositRequest, opts ...grpc.CallOption) (*UpdateDepositResponse, error)
+	CancelDeposit(ctx context.Context, in *CancelDepositRequest, opts ...grpc.CallOption) (*CancelDepositResponse, error)
+	ListDeposits(ctx context.Context, in *ListDepositsRequest, opts ...grpc.CallOption) (*ListDepositsResponse, error)
+}
+
+type depositServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewDepositServiceClient(cc grpc.ClientConnInterface) DepositServiceClient {
+	return &depositServiceClient{cc}
+}
+
+func (c *depositServiceClient) CreateDeposit(ctx context.Context, in *CreateDepositRequest, opts ...grpc.CallOption) (*CreateDepositResponse, error) {
+	out := new(CreateDepositResponse)
+	err := c.cc.Invoke(ctx, DepositService_CreateDeposit_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *depositServiceClient) GetDeposit(ctx context.Context, in *GetDepositRequest, opts ...grpc.CallOption) (*GetDepositResponse, error) {
+	out := new(GetDepositResponse)
+	err := c.cc.Invoke(ctx, DepositService_GetDeposit_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *depositServiceClient) UpdateDeposit(ctx context.Context, in *UpdateDepositRequest, opts ...grpc.CallOption) (*UpdateDepositResponse, error) {
+	out := new(UpdateDepositResponse)
+	err := c.cc.Invoke(ctx, DepositService_UpdateDeposit_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *depositServiceClient) CancelDeposit(ctx context.Context, in *CancelDepositRequest, opts ...grpc.CallOption) (*CancelDepositResponse, error) {
+	out := new(CancelDepositResponse)
+	err := c.cc.Invoke(ctx, DepositService_CancelDeposit_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *depositServiceClient) ListDeposits(ctx context.Context, in *ListDepositsRequest, opts ...grpc.CallOption) (*ListDepositsResponse, error) {
+	out := new(ListDepositsResponse)
+	err := c.cc.Invoke(ctx, DepositService_ListDeposits_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// DepositServiceServer is the server API for DepositService service.
+// All implementations must embed UnimplementedDepositServiceServer
+// for forward compatibility
+type DepositServiceServer interface {
+	CreateDeposit(context.Context, *CreateDepositRequest) (*CreateDepositResponse, error)
+	GetDeposit(context.Context, *GetDepositRequest) (*GetDepositResponse, error)
+	UpdateDeposit(context.Context, *UpdateDepositRequest) (*UpdateDepositResponse, error)
+	CancelDeposit(context.Context, *CancelDepositRequest) (*CancelDepositResponse, error)
+	ListDeposits(context.Context, *ListDepositsRequest) (*ListDepositsResponse, error)
+	mustEmbedUnimplementedDepositServiceServer()
+}
+
+// UnimplementedDepositServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedDepositServiceServer struct {
+}
+
+func (UnimplementedDepositServiceServer) CreateDeposit(context.Context, *CreateDepositRequest) (*CreateDepositResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateDeposit not implemented")
+}
+func (UnimplementedDepositServiceServer) GetDeposit(context.Context, *GetDepositRequest) (*GetDepositResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDeposit not implemented")
+}
+func (UnimplementedDepositServiceServer) UpdateDeposit(context.Context, *UpdateDepositRequest) (*UpdateDepositResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateDeposit not implemented")
+}
+func (UnimplementedDepositServiceServer) CancelDeposit(context.Context, *CancelDepositRequest) (*CancelDepositResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CancelDeposit not implemented")
+}
+func (UnimplementedDepositServiceServer) ListDeposits(context.Context, *ListDepositsRequest) (*ListDepositsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListDeposits not implemented")
+}
+func (UnimplementedDepositServiceServer) mustEmbedUnimplementedDepositServiceServer() {}
+
+// UnsafeDepositServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to DepositServiceServer will
+// result in compilation errors.
+type UnsafeDepositServiceServer interface {
+	mustEmbedUnimplementedDepositServiceServer()
+}
+
+func RegisterDepositServiceServer(s grpc.ServiceRegistrar, srv DepositServiceServer) {
+	s.RegisterService(&DepositService_ServiceDesc, srv)
+}
+
+func _DepositService_CreateDeposit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateDepositRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DepositServiceServer).CreateDeposit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DepositService_CreateDeposit_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DepositServiceServer).CreateDeposit(ctx, req.(*CreateDepositRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DepositService_GetDeposit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDepositRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DepositServiceServer).GetDeposit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DepositService_GetDeposit_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DepositServiceServer).GetDeposit(ctx, req.(*GetDepositRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DepositService_UpdateDeposit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateDepositRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DepositServiceServer).UpdateDeposit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DepositService_UpdateDeposit_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DepositServiceServer).UpdateDeposit(ctx, req.(*UpdateDepositRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DepositService_CancelDeposit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CancelDepositRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DepositServiceServer).CancelDeposit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DepositService_CancelDeposit_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DepositServiceServer).CancelDeposit(ctx, req.(*CancelDepositRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DepositService_ListDeposits_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListDepositsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DepositServiceServer).ListDeposits(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DepositService_ListDeposits_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DepositServiceServer).ListDeposits(ctx, req.(*ListDepositsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// DepositService_ServiceDesc is the grpc.ServiceDesc for DepositService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var DepositService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "ledger.DepositService",
+	HandlerType: (*DepositServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreateDeposit",
+			Handler:    _DepositService_CreateDeposit_Handler,
+		},
+		{
+			MethodName: "GetDeposit",
+			Handler:    _DepositService_GetDeposit_Handler,
+		},
+		{
+			MethodName: "UpdateDeposit",
+			Handler:    _DepositService_UpdateDeposit_Handler,
+		},
+		{
+			MethodName: "CancelDeposit",
+			Handler:    _DepositService_CancelDeposit_Handler,
+		},
+		{
+			MethodName: "ListDeposits",
+			Handler:    _DepositService_ListDeposits_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "ledger/ledger.proto",
+}
+
+const (
+	WithdrawalService_CreateWithdrawal_FullMethodName = "/ledger.WithdrawalService/CreateWithdrawal"
+	WithdrawalService_GetWithdrawal_FullMethodName    = "/ledger.WithdrawalService/GetWithdrawal"
+	WithdrawalService_UpdateWithdrawal_FullMethodName = "/ledger.WithdrawalService/UpdateWithdrawal"
+	WithdrawalService_CancelWithdrawal_FullMethodName = "/ledger.WithdrawalService/CancelWithdrawal"
+	WithdrawalService_ListWithdrawals_FullMethodName  = "/ledger.WithdrawalService/ListWithdrawals"
+)
+
+// WithdrawalServiceClient is the client API for WithdrawalService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type WithdrawalServiceClient interface {
+	CreateWithdrawal(ctx context.Context, in *CreateWithdrawalRequest, opts ...grpc.CallOption) (*CreateWithdrawalResponse, error)
+	GetWithdrawal(ctx context.Context, in *GetWithdrawalRequest, opts ...grpc.CallOption) (*GetWithdrawalResponse, error)
+	UpdateWithdrawal(ctx context.Context, in *UpdateWithdrawalRequest, opts ...grpc.CallOption) (*UpdateWithdrawalResponse, error)
+	CancelWithdrawal(ctx context.Context, in *CancelWithdrawalRequest, opts ...grpc.CallOption) (*CancelWithdrawalResponse, error)
+	ListWithdrawals(ctx context.Context, in *ListWithdrawalsRequest, opts ...grpc.CallOption) (*ListWithdrawalsResponse, error)
+}
+
+type withdrawalServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewWithdrawalServiceClient(cc grpc.ClientConnInterface) WithdrawalServiceClient {
+	return &withdrawalServiceClient{cc}
+}
+
+func (c *withdrawalServiceClient) CreateWithdrawal(ctx context.Context, in *CreateWithdrawalRequest, opts ...grpc.CallOption) (*CreateWithdrawalResponse, error) {
+	out := new(CreateWithdrawalResponse)
+	err := c.cc.Invoke(ctx, WithdrawalService_CreateWithdrawal_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *withdrawalServiceClient) GetWithdrawal(ctx context.Context, in *GetWithdrawalRequest, opts ...grpc.CallOption) (*GetWithdrawalResponse, error) {
+	out := new(GetWithdrawalResponse)
+	err := c.cc.Invoke(ctx, WithdrawalService_GetWithdrawal_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *withdrawalServiceClient) UpdateWithdrawal(ctx context.Context, in *UpdateWithdrawalRequest, opts ...grpc.CallOption) (*UpdateWithdrawalResponse, error) {
+	out := new(UpdateWithdrawalResponse)
+	err := c.cc.Invoke(ctx, WithdrawalService_UpdateWithdrawal_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *withdrawalServiceClient) CancelWithdrawal(ctx context.Context, in *CancelWithdrawalRequest, opts ...grpc.CallOption) (*CancelWithdrawalResponse, error) {
+	out := new(CancelWithdrawalResponse)
+	err := c.cc.Invoke(ctx, WithdrawalService_CancelWithdrawal_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *withdrawalServiceClient) ListWithdrawals(ctx context.Context, in *ListWithdrawalsRequest, opts ...grpc.CallOption) (*ListWithdrawalsResponse, error) {
+	out := new(ListWithdrawalsResponse)
+	err := c.cc.Invoke(ctx, WithdrawalService_ListWithdrawals_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// WithdrawalServiceServer is the server API for WithdrawalService service.
+// All implementations must embed UnimplementedWithdrawalServiceServer
+// for forward compatibility
+type WithdrawalServiceServer interface {
+	CreateWithdrawal(context.Context, *CreateWithdrawalRequest) (*CreateWithdrawalResponse, error)
+	GetWithdrawal(context.Context, *GetWithdrawalRequest) (*GetWithdrawalResponse, error)
+	UpdateWithdrawal(context.Context, *UpdateWithdrawalRequest) (*UpdateWithdrawalResponse, error)
+	CancelWithdrawal(context.Context, *CancelWithdrawalRequest) (*CancelWithdrawalResponse, error)
+	ListWithdrawals(context.Context, *ListWithdrawalsRequest) (*ListWithdrawalsResponse, error)
+	mustEmbedUnimplementedWithdrawalServiceServer()
+}
+
+// UnimplementedWithdrawalServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedWithdrawalServiceServer struct {
+}
+
+func (UnimplementedWithdrawalServiceServer) CreateWithdrawal(context.Context, *CreateWithdrawalRequest) (*CreateWithdrawalResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateWithdrawal not implemented")
+}
+func (UnimplementedWithdrawalServiceServer) GetWithdrawal(context.Context, *GetWithdrawalRequest) (*GetWithdrawalResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetWithdrawal not implemented")
+}
+func (UnimplementedWithdrawalServiceServer) UpdateWithdrawal(context.Context, *UpdateWithdrawalRequest) (*UpdateWithdrawalResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateWithdrawal not implemented")
+}
+func (UnimplementedWithdrawalServiceServer) CancelWithdrawal(context.Context, *CancelWithdrawalRequest) (*CancelWithdrawalResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CancelWithdrawal not implemented")
+}
+func (UnimplementedWithdrawalServiceServer) ListWithdrawals(context.Context, *ListWithdrawalsRequest) (*ListWithdrawalsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListWithdrawals not implemented")
+}
+func (UnimplementedWithdrawalServiceServer) mustEmbedUnimplementedWithdrawalServiceServer() {}
+
+// UnsafeWithdrawalServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to WithdrawalServiceServer will
+// result in compilation errors.
+type UnsafeWithdrawalServiceServer interface {
+	mustEmbedUnimplementedWithdrawalServiceServer()
+}
+
+func RegisterWithdrawalServiceServer(s grpc.ServiceRegistrar, srv WithdrawalServiceServer) {
+	s.RegisterService(&WithdrawalService_ServiceDesc, srv)
+}
+
+func _WithdrawalService_CreateWithdrawal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateWithdrawalRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WithdrawalServiceServer).CreateWithdrawal(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WithdrawalService_CreateWithdrawal_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WithdrawalServiceServer).CreateWithdrawal(ctx, req.(*CreateWithdrawalRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WithdrawalService_GetWithdrawal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetWithdrawalRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WithdrawalServiceServer).GetWithdrawal(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WithdrawalService_GetWithdrawal_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WithdrawalServiceServer).GetWithdrawal(ctx, req.(*GetWithdrawalRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WithdrawalService_UpdateWithdrawal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateWithdrawalRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WithdrawalServiceServer).UpdateWithdrawal(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WithdrawalService_UpdateWithdrawal_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WithdrawalServiceServer).UpdateWithdrawal(ctx, req.(*UpdateWithdrawalRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WithdrawalService_CancelWithdrawal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CancelWithdrawalRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WithdrawalServiceServer).CancelWithdrawal(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WithdrawalService_CancelWithdrawal_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WithdrawalServiceServer).CancelWithdrawal(ctx, req.(*CancelWithdrawalRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WithdrawalService_ListWithdrawals_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListWithdrawalsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WithdrawalServiceServer).ListWithdrawals(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WithdrawalService_ListWithdrawals_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WithdrawalServiceServer).ListWithdrawals(ctx, req.(*ListWithdrawalsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// WithdrawalService_ServiceDesc is the grpc.ServiceDesc for WithdrawalService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var WithdrawalService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "ledger.WithdrawalService",
+	HandlerType: (*WithdrawalServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreateWithdrawal",
+			Handler:    _WithdrawalService_CreateWithdrawal_Handler,
+		},
+		{
+			MethodName: "GetWithdrawal",
+			Handler:    _WithdrawalService_GetWithdrawal_Handler,
+		},
+		{
+			MethodName: "UpdateWithdrawal",
+			Handler:    _WithdrawalService_UpdateWithdrawal_Handler,
+		},
+		{
+			MethodName: "CancelWithdrawal",
+			Handler:    _WithdrawalService_CancelWithdrawal_Handler,
+		},
+		{
+			MethodName: "ListWithdrawals",
+			Handler:    _WithdrawalService_ListWithdrawals_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "ledger/ledger.proto",
+}
+
+const (
+	AssetService_CreateAsset_FullMethodName      = "/ledger.AssetService/CreateAsset"
+	AssetService_GetAsset_FullMethodName         = "/ledger.AssetService/GetAsset"
+	AssetService_ListAssets_FullMethodName       = "/ledger.AssetService/ListAssets"
+	AssetService_CreateInstrument_FullMethodName = "/ledger.AssetService/CreateInstrument"
+)
+
+// AssetServiceClient is the client API for AssetService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type AssetServiceClient interface {
+	CreateAsset(ctx context.Context, in *CreateAssetRequest, opts ...grpc.CallOption) (*CreateAssetResponse, error)
+	GetAsset(ctx context.Context, in *GetAssetRequest, opts ...grpc.CallOption) (*GetAssetResponse, error)
+	ListAssets(ctx context.Context, in *ListAssetsRequest, opts ...grpc.CallOption) (*ListAssetsResponse, error)
+	CreateInstrument(ctx context.Context, in *CreateInstrumentRequest, opts ...grpc.CallOption) (*CreateInstrumentResponse, error)
+}
+
+type assetServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewAssetServiceClient(cc grpc.ClientConnInterface) AssetServiceClient {
+	return &assetServiceClient{cc}
+}
+
+func (c *assetServiceClient) CreateAsset(ctx context.Context, in *CreateAssetRequest, opts ...grpc.CallOption) (*CreateAssetResponse, error) {
+	out := new(CreateAssetResponse)
+	err := c.cc.Invoke(ctx, AssetService_CreateAsset_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *assetServiceClient) GetAsset(ctx context.Context, in *GetAssetRequest, opts ...grpc.CallOption) (*GetAssetResponse, error) {
+	out := new(GetAssetResponse)
+	err := c.cc.Invoke(ctx, AssetService_GetAsset_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *assetServiceClient) ListAssets(ctx context.Context, in *ListAssetsRequest, opts ...grpc.CallOption) (*ListAssetsResponse, error) {
+	out := new(ListAssetsResponse)
+	err := c.cc.Invoke(ctx, AssetService_ListAssets_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *assetServiceClient) CreateInstrument(ctx context.Context, in *CreateInstrumentRequest, opts ...grpc.CallOption) (*CreateInstrumentResponse, error) {
+	out := new(CreateInstrumentResponse)
+	err := c.cc.Invoke(ctx, AssetService_CreateInstrument_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// AssetServiceServer is the server API for AssetService service.
+// All implementations must embed UnimplementedAssetServiceServer
+// for forward compatibility
+type AssetServiceServer interface {
+	CreateAsset(context.Context, *CreateAssetRequest) (*CreateAssetResponse, error)
+	GetAsset(context.Context, *GetAssetRequest) (*GetAssetResponse, error)
+	ListAssets(context.Context, *ListAssetsRequest) (*ListAssetsResponse, error)
+	CreateInstrument(context.Context, *CreateInstrumentRequest) (*CreateInstrumentResponse, error)
+	mustEmbedUnimplementedAssetServiceServer()
+}
+
+// UnimplementedAssetServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedAssetServiceServer struct {
+}
+
+func (UnimplementedAssetServiceServer) CreateAsset(context.Context, *CreateAssetRequest) (*CreateAssetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateAsset not implemented")
+}
+func (UnimplementedAssetServiceServer) GetAsset(context.Context, *GetAssetRequest) (*GetAssetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAsset not implemented")
+}
+func (UnimplementedAssetServiceServer) ListAssets(context.Context, *ListAssetsRequest) (*ListAssetsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListAssets not implemented")
+}
+func (UnimplementedAssetServiceServer) CreateInstrument(context.Context, *CreateInstrumentRequest) (*CreateInstrumentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateInstrument not implemented")
+}
+func (UnimplementedAssetServiceServer) mustEmbedUnimplementedAssetServiceServer() {}
+
+// UnsafeAssetServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to AssetServiceServer will
+// result in compilation errors.
+type UnsafeAssetServiceServer interface {
+	mustEmbedUnimplementedAssetServiceServer()
+}
+
+func RegisterAssetServiceServer(s grpc.ServiceRegistrar, srv AssetServiceServer) {
+	s.RegisterService(&AssetService_ServiceDesc, srv)
+}
+
+func _AssetService_CreateAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAssetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AssetServiceServer).CreateAsset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AssetService_CreateAsset_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AssetServiceServer).CreateAsset(ctx, req.(*CreateAssetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AssetService_GetAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAssetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AssetServiceServer).GetAsset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AssetService_GetAsset_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AssetServiceServer).GetAsset(ctx, req.(*GetAssetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AssetService_ListAssets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAssetsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AssetServiceServer).ListAssets(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AssetService_ListAssets_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AssetServiceServer).ListAssets(ctx, req.(*ListAssetsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AssetService_CreateInstrument_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateInstrumentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AssetServiceServer).CreateInstrument(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AssetService_CreateInstrument_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AssetServiceServer).CreateInstrument(ctx, req.(*CreateInstrumentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// AssetService_ServiceDesc is the grpc.ServiceDesc for AssetService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var AssetService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "ledger.AssetService",
+	HandlerType: (*AssetServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreateAsset",
+			Handler:    _AssetService_CreateAsset_Handler,
+		},
+		{
+			MethodName: "GetAsset",
+			Handler:    _AssetService_GetAsset_Handler,
+		},
+		{
+			MethodName: "ListAssets",
+			Handler:    _AssetService_ListAssets_Handler,
+		},
+		{
+			MethodName: "CreateInstrument",
+			Handler:    _AssetService_CreateInstrument_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

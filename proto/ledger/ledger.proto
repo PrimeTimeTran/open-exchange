@@ -17,55 +17,62 @@ import "common/system_account.proto";
 
 option go_package = "github.com/open-exchange/matching_engine/proto/ledger";
 
-service LedgerService {
-  // Order Management
+service OrderService {
   rpc RecordOrder(RecordOrderRequest) returns (RecordOrderResponse);
   rpc CancelOrder(CancelOrderRequest) returns (CancelOrderResponse);
   rpc DeleteOrder(DeleteOrderRequest) returns (DeleteOrderResponse);
   rpc GetOpenOrders(GetOpenOrdersRequest) returns (GetOpenOrdersResponse);
   rpc RecordTrade(RecordTradeRequest) returns (RecordTradeResponse);
-  
-  // User Management
+}
+
+service UserService {
   rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
   rpc GetUser(GetUserRequest) returns (GetUserResponse);
   rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
   rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
-  
-  // Account Management
+}
+
+service AccountService {
   rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse);
   rpc GetAccount(GetAccountRequest) returns (GetAccountResponse);
   rpc UpdateAccount(UpdateAccountRequest) returns (UpdateAccountResponse);
   rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
   rpc ListAccounts(ListAccountsRequest) returns (ListAccountsResponse);
-  
-  // Wallet Management
+  rpc GetSystemAccount(GetSystemAccountRequest) returns (GetSystemAccountResponse);
+}
+
+service WalletService {
   rpc CreateWallet(CreateWalletRequest) returns (CreateWalletResponse);
   rpc GetWallet(GetWalletRequest) returns (GetWalletResponse);
   rpc UpdateWallet(UpdateWalletRequest) returns (UpdateWalletResponse);
   rpc DeleteWallet(DeleteWalletRequest) returns (DeleteWalletResponse);
   rpc ListWallets(ListWalletsRequest) returns (ListWalletsResponse);
   
-  // Fund Management
+  // Deposits (Often related to wallets, but can be separate. Keeping with wallets for now or split?)
+  // User asked for "organized better". DepositService seems distinct enough.
+}
+
+service DepositService {
   rpc CreateDeposit(CreateDepositRequest) returns (CreateDepositResponse);
   rpc GetDeposit(GetDepositRequest) returns (GetDepositResponse);
   rpc UpdateDeposit(UpdateDepositRequest) returns (UpdateDepositResponse);
   rpc CancelDeposit(CancelDepositRequest) returns (CancelDepositResponse);
   rpc ListDeposits(ListDepositsRequest) returns (ListDepositsResponse);
+}
 
+service WithdrawalService {
   rpc CreateWithdrawal(CreateWithdrawalRequest) returns (CreateWithdrawalResponse);
   rpc GetWithdrawal(GetWithdrawalRequest) returns (GetWithdrawalResponse);
   rpc UpdateWithdrawal(UpdateWithdrawalRequest) returns (UpdateWithdrawalResponse);
   rpc CancelWithdrawal(CancelWithdrawalRequest) returns (CancelWithdrawalResponse);
   rpc ListWithdrawals(ListWithdrawalsRequest) returns (ListWithdrawalsResponse);
-  
-  // Asset & Instrument (Read-only usually, but maybe admin creates them)
+}
+
+service AssetService {
   rpc CreateAsset(CreateAssetRequest) returns (CreateAssetResponse);
   rpc GetAsset(GetAssetRequest) returns (GetAssetResponse);
   rpc ListAssets(ListAssetsRequest) returns (ListAssetsResponse);
   rpc CreateInstrument(CreateInstrumentRequest) returns (CreateInstrumentResponse);
-
-  // System
-  rpc GetSystemAccount(GetSystemAccountRequest) returns (GetSystemAccountResponse);
 }
 
 // --- Order Messages ---

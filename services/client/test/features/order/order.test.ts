@@ -1,7 +1,7 @@
 import { prismaDangerouslyBypassAuth } from 'src/prisma';
 import testCleanDatabase from 'src/shared/test/testCleanDatabase';
 import { testContext } from 'src/shared/test/testContext';
-import { matchingEngineClient } from 'src/services/MatchingEngineClient';
+import { matchingClient } from '@/services/MatchingClient';
 import { orderCreateController } from 'src/features/order/controllers/orderCreateController';
 import { orderEnumerators } from 'src/features/order/orderEnumerators';
 
@@ -56,7 +56,7 @@ describe('Order Feature', () => {
 
       // 1. Setup Mock for gRPC
       const placeOrderSpy = jest
-        .spyOn(matchingEngineClient, 'placeOrder')
+        .spyOn(matchingClient, 'placeOrder')
         .mockResolvedValue({
           orderId: 'mock-order-id',
           success: true,

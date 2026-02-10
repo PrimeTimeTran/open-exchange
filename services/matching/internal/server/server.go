@@ -9,7 +9,7 @@ import (
 )
 
 type MatchingServer struct {
-	pb.UnimplementedMatchingEngineServer
+	pb.UnimplementedMatchingServer
 	Service *service.MatchingService
 }
 

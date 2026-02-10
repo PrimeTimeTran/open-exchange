@@ -43,7 +43,7 @@ func main() {
 		log.Fatalf("did not connect to ledger: %v", err)
 	}
 	defer conn.Close()
-	ledgerClient := ledger.NewLedgerServiceClient(conn)
+	ledgerClient := ledger.NewOrderServiceClient(conn)
 	greeterClient := helloworld.NewGreeterClient(conn)
 
 	// 2. Initialize Engine and Service
@@ -96,7 +96,7 @@ func main() {
 
 	s := grpc.NewServer()
 	matchingServer := server.NewMatchingServer(svc)
-	pb.RegisterMatchingEngineServer(s, matchingServer)
+	pb.RegisterMatchingServer(s, matchingServer)
 
 	greeterServer := server.NewGreeterServer(greeterClient)
 	helloworld.RegisterGreeterServer(s, greeterServer)

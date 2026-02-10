@@ -25,9 +25,9 @@ import (
 
 const bufSize = 1024 * 1024
 
-// setupTestServer spins up an in-memory gRPC server with the MatchingEngine service registered.
+// setupTestServer spins up an in-memory gRPC server with the Matching service registered.
 // It returns the client to talk to this server, the mock dependencies to set expectations, and a cleanup function.
-func setupTestServer(t *testing.T) (pb.MatchingEngineClient, *testutil.MockLedgerClient, *testutil.MockPublisher, func()) {
+func setupTestServer(t *testing.T) (pb.MatchingClient, *testutil.MockLedgerClient, *testutil.MockPublisher, func()) {
 	// 1. Create In-Memory Listener
 	lis := bufconn.Listen(bufSize)
 
@@ -42,7 +42,7 @@ func setupTestServer(t *testing.T) (pb.MatchingEngineClient, *testutil.MockLedge
 
 	// 4. Create and Start gRPC Server
 	s := grpc.NewServer()
-	pb.RegisterMatchingEngineServer(s, serverImpl)
+	pb.RegisterMatchingServer(s, serverImpl)
 
 	go func() {
 		if err := s.Serve(lis); err != nil {
@@ -60,7 +60,7 @@ func setupTestServer(t *testing.T) (pb.MatchingEngineClient, *testutil.MockLedge
 		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
 
-	client := pb.NewMatchingEngineClient(conn)
+	client := pb.NewMatchingClient(conn)
 
 	// Cleanup closure
 	cleanup := func() {

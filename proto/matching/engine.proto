@@ -6,7 +6,7 @@ import "common/order.proto";
 
 option go_package = "github.com/open-exchange/matching_engine/proto/matching";
 
-service MatchingEngine {
+service Matching {
   rpc PlaceOrder(PlaceOrderRequest) returns (PlaceOrderResponse);
   rpc CancelOrder(CancelOrderRequest) returns (CancelOrderResponse);
   rpc GetOrderBook(GetOrderBookRequest) returns (GetOrderBookResponse);
