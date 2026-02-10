@@ -1,3 +1,6 @@
+pub mod instrument;
+pub use instrument::InMemoryInstrumentRepository;
+
 use async_trait::async_trait;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
@@ -92,6 +95,17 @@ impl OrderRepository for InMemoryOrderRepository {
         let mut orders = self.orders.lock().unwrap();
         if let Some(order) = orders.iter_mut().find(|o| o.id == id) {
             order.status = status;
+            order.updated_at = chrono::Utc::now();
+            Ok(())
+        } else {
+            Err(AppError::NotFound(format!("Order {} not found", id)))
+        }
+    }
+
+    async fn update_filled_amount(&self, id: Uuid, filled: f64) -> Result<()> {
+        let mut orders = self.orders.lock().unwrap();
+        if let Some(order) = orders.iter_mut().find(|o| o.id == id) {
+            order.filled_quantity = filled;
             order.updated_at = chrono::Utc::now();
             Ok(())
         } else {

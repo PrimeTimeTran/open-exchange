@@ -53,16 +53,18 @@ impl LedgerImpl {
         use std::sync::Arc;
         use crate::infra::repositories::memory::InMemoryAssetRepository;
         use crate::infra::repositories::InMemoryWalletRepository;
+        use crate::infra::repositories::memory::InMemoryInstrumentRepository;
         
         let account_repo = Arc::new(InMemoryAccountRepository::new());
         let order_repo = Arc::new(InMemoryOrderRepository::new());
         let wallet_repo = Arc::new(InMemoryWalletRepository::new());
         let asset_repo = Arc::new(InMemoryAssetRepository::new());
+        let instrument_repo = Arc::new(InMemoryInstrumentRepository::new());
 
         let account_service = AccountService::new(account_repo);
         
         let wallet_service = WalletService::new(wallet_repo);
-        let asset_service = AssetService::new(asset_repo);
+        let asset_service = AssetService::new(asset_repo, instrument_repo);
         
         let order_service = OrderService::new(
             order_repo, 
@@ -796,7 +798,7 @@ impl LedgerService for LedgerImpl {
             req.r#type,
             req.base_asset_id,
             req.quote_asset_id,
-        );
+        ).await;
 
         Ok(Response::new(CreateInstrumentResponse {
             instrument: Some(instrument),

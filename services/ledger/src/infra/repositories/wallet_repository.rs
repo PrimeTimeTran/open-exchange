@@ -114,7 +114,7 @@ impl WalletRepository for PostgresWalletRepository {
 
         let rec: Option<WalletRow> = sqlx::query_as(
             r#"
-            SELECT id, "tenantId", "accountId"::text, "assetId"::text, 
+            SELECT id, "tenantId", "accountId", "assetId", 
                    CAST(available AS FLOAT8), CAST(locked AS FLOAT8), CAST(total AS FLOAT8), 
                    version, meta, "createdAt", "updatedAt"
             FROM "Wallet"
@@ -138,7 +138,7 @@ impl WalletRepository for PostgresWalletRepository {
             UPDATE "Wallet"
             SET available = $2, locked = $3, total = $4, "updatedAt" = $5
             WHERE id = $1
-            RETURNING id, "tenantId", "accountId"::text, "assetId"::text, 
+            RETURNING id, "tenantId", "accountId", "assetId", 
                       CAST(available AS FLOAT8), CAST(locked AS FLOAT8), CAST(total AS FLOAT8), 
                       version, meta, "createdAt", "updatedAt"
             "#

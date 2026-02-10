@@ -27,9 +27,6 @@ export function LedgerProvider({ children }: { children: React.ReactNode }) {
   const fetchedRef = React.useRef(false);
 
   const fetchAccounts = async () => {
-    if (fetchedRef.current) return;
-    fetchedRef.current = true;
-
     try {
       setLoading(true);
       const accs = await getLedgerAccounts();
@@ -48,6 +45,8 @@ export function LedgerProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
     fetchAccounts();
   }, []);
 

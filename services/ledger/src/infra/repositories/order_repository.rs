@@ -60,30 +60,34 @@ impl From<OrderRow> for Order {
 #[async_trait]
 impl OrderRepository for PostgresOrderRepository {
     async fn create(&self, order: Order) -> Result<Order> {
-        let rec: OrderRow = sqlx::query_as(
+        let (created_at, updated_at): (DateTime<Utc>, DateTime<Utc>) = sqlx::query_as(
             r#"
             INSERT INTO "Order" (id, "tenantId", "accountId", "instrumentId", side, quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "createdByMembershipId", "updatedByMembershipId")
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $3, $3, NULL, NULL)
-            RETURNING id, "tenantId", "accountId", "instrumentId", side, CAST(quantity AS FLOAT8), CAST(price AS FLOAT8), status, CAST("quantityFilled" AS FLOAT8), meta, "createdAt", "updatedAt"
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NULL, NULL, NULL, NULL)
+            RETURNING "createdAt", "updatedAt"
             "#
         )
         .bind(order.id)
         .bind(order.tenant_id)
         .bind(order.account_id)
         .bind(order.instrument_id)
-        .bind(order.side)
+        .bind(&order.side)
         .bind(order.quantity)
         .bind(order.price)
-        .bind(order.status)
+        .bind(&order.status)
         .bind(order.filled_quantity)
-        .bind(order.meta)
+        .bind(&order.meta)
         .bind(order.created_at)
         .bind(order.updated_at)
         .fetch_one(&self.pool)
         .await
         .map_err(AppError::DatabaseError)?;
 
-        Ok(rec.into())
+        let mut created_order = order;
+        created_order.created_at = created_at;
+        created_order.updated_at = updated_at;
+
+        Ok(created_order)
     }
 
     async fn get(&self, id: Uuid) -> Result<Option<Order>> {
@@ -117,6 +121,32 @@ impl OrderRepository for PostgresOrderRepository {
             return Err(AppError::NotFound(format!("Order {} not found", id)));
         }
 
+        Ok(())
+    }
+
+    async fn update_filled_amount(&self, id: Uuid, filled_delta: f64) -> Result<()> {
+        let result = sqlx::query(
+            r#"
+            UPDATE "Order" 
+            SET "quantityFilled" = "quantityFilled" + $2,
+                status = CASE 
+                    WHEN "quantityFilled" + $2 >= quantity THEN 'filled' 
+                    ELSE 'partial' 
+                END,
+                "updatedAt" = $3
+            WHERE id = $1
+            "#
+        )
+        .bind(id)
+        .bind(filled_delta)
+        .bind(chrono::Utc::now())
+        .execute(&self.pool)
+        .await
+        .map_err(AppError::DatabaseError)?;
+
+        if result.rows_affected() == 0 {
+             return Err(AppError::NotFound(format!("Order {} not found", id)));
+        }
         Ok(())
     }
 

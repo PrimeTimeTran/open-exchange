@@ -1,21 +1,21 @@
 use crate::proto::common;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use uuid::Uuid;
 use chrono::Utc;
-use crate::infra::repositories::AssetRepository;
+use crate::infra::repositories::{AssetRepository, InstrumentRepository};
 use crate::error::Result;
 
 #[derive(Clone, Debug)]
 pub struct AssetService {
     repo: Arc<dyn AssetRepository>,
-    instruments: Arc<Mutex<Vec<common::Instrument>>>,
+    instrument_repo: Arc<dyn InstrumentRepository>,
 }
 
 impl AssetService {
-    pub fn new(repo: Arc<dyn AssetRepository>) -> Self {
+    pub fn new(repo: Arc<dyn AssetRepository>, instrument_repo: Arc<dyn InstrumentRepository>) -> Self {
         Self {
             repo,
-            instruments: Arc::new(Mutex::new(Vec::new())),
+            instrument_repo,
         }
     }
 
@@ -23,6 +23,7 @@ impl AssetService {
         let uuid = Uuid::parse_str(id).unwrap_or_default(); // TODO: handle error
         self.repo.get(uuid).await
     }
+
 
     pub async fn get_asset_by_symbol(&self, symbol: &str) -> Result<Option<common::Asset>> {
         self.repo.get_by_symbol(symbol).await
@@ -48,7 +49,7 @@ impl AssetService {
         }
     }
 
-    pub fn create_new_instrument(&self, symbol: String, instrument_type: String, base_id: String, quote_id: String) -> common::Instrument {
+    pub async fn create_new_instrument(&self, symbol: String, instrument_type: String, base_id: String, quote_id: String) -> common::Instrument {
         let instrument = common::Instrument {
             id: Uuid::new_v4().to_string(),
             tenant_id: "default".to_string(),
@@ -62,13 +63,17 @@ impl AssetService {
             updated_at: Utc::now().timestamp_millis(),
         };
 
-        self.instruments.lock().unwrap().push(instrument.clone());
-        instrument
+        // We unwrap here to match the previous signature that didn't return Result
+        // In a real app we should propagate the error
+        self.instrument_repo.create(instrument.clone()).await.unwrap_or(instrument)
     }
 
-    pub fn get_instrument(&self, id: &str) -> Option<common::Instrument> {
-        let instruments = self.instruments.lock().unwrap();
-        instruments.iter().find(|i| i.id == id).cloned()
+    pub async fn get_instrument(&self, id: &str) -> Option<common::Instrument> {
+        if let Ok(uuid) = Uuid::parse_str(id) {
+            self.instrument_repo.get(uuid).await.unwrap_or(None)
+        } else {
+            None
+        }
     }
 }
 

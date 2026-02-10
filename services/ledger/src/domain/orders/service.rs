@@ -42,7 +42,7 @@ impl OrderService {
 
     pub async fn validate_and_reserve_funds(&self, order: &Order) -> Result<()> {
         let instr_uuid = order.instrument_id.to_string();
-        if let Some(instrument) = self.asset_service.get_instrument(&instr_uuid) {
+        if let Some(instrument) = self.asset_service.get_instrument(&instr_uuid).await {
             let (required_asset_id, required_amount) = if order.side == "buy" {
                 (instrument.quote_asset_id, order.price * order.quantity)
             } else {

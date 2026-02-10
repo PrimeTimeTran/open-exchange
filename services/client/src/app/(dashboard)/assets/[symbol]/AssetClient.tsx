@@ -7,6 +7,7 @@ import { useMutation } from '@tanstack/react-query';
 import { placeMatchingEngineOrder } from 'src/actions/order';
 import { instrumentAutocompleteApiCall } from 'src/features/instrument/instrumentApiCalls';
 import { useToast } from 'src/shared/components/ui/use-toast';
+import { useLedger } from 'src/contexts/LedgerProvider';
 
 import { PriceChart } from '@/components/charts/price-chart';
 import { AssetAbout } from '@/components/assets/asset-about';
@@ -45,6 +46,7 @@ export function AssetClient({
   });
 
   const { toast } = useToast();
+  const { refresh } = useLedger();
 
   const orderMutation = useMutation({
     mutationFn: async (data: {
@@ -87,7 +89,7 @@ export function AssetClient({
 
       const instrumentId = instruments[0].id;
 
-      return placeMatchingEngineOrder({
+      return await placeMatchingEngineOrder({
         instrumentId,
         side: 'buy',
         type: data.type,
@@ -97,6 +99,7 @@ export function AssetClient({
       });
     },
     onSuccess: () => {
+      refresh();
       toast({
         title: 'Order placed',
         description: 'Your order has been successfully placed.',
