@@ -19,12 +19,14 @@ interface AssetClientProps {
   symbol: string;
   initialMarketData?: PriceUpdate;
   initialChartData?: ChartDataPoint[];
+  isAuthenticated: boolean;
 }
 
 export function AssetClient({
   symbol,
   initialMarketData,
   initialChartData,
+  isAuthenticated,
 }: AssetClientProps) {
   const {
     timeRange,
@@ -52,12 +54,32 @@ export function AssetClient({
       timeInForce: string;
       asset: string;
     }) => {
-      console.log('Hi');
       // Find the instrument ID first
-      const instruments = await instrumentAutocompleteApiCall({
-        search: data.asset,
+      // Prefer Spot USD pair if no specific symbol provided
+      let search = data.asset;
+      if (!search.includes('_')) {
+        search = `${search}_USD`;
+      }
+
+      let instruments = await instrumentAutocompleteApiCall({
+        search,
         take: 1,
       });
+
+      // Fallback: If strict spot pair not found, try generic search
+      if (!instruments || instruments.length === 0) {
+        console.warn(
+          `Spot instrument ${search} not found, falling back to ${data.asset}`,
+        );
+        instruments = await instrumentAutocompleteApiCall({
+          search: data.asset,
+          take: 1,
+        });
+      }
+      // const instruments = await instrumentAutocompleteApiCall({
+      //   search: data.asset,
+      //   take: 1,
+      // });
 
       if (!instruments || instruments.length === 0) {
         throw new Error(`Instrument ${data.asset} not found`);
@@ -67,7 +89,7 @@ export function AssetClient({
 
       return placeMatchingEngineOrder({
         instrumentId,
-        side: 'buy', // Hardcoded for now based on UI
+        side: 'buy',
         type: data.type,
         quantity: data.quantity,
         price: data.price,
@@ -116,6 +138,7 @@ export function AssetClient({
       </div>
       <OrderSidebar
         symbol={symbol}
+        isAuthenticated={isAuthenticated}
         onSubmit={(data) => orderMutation.mutate(data)}
       />
     </div>

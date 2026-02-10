@@ -60,6 +60,8 @@ service LedgerService {
   
   // Asset & Instrument (Read-only usually, but maybe admin creates them)
   rpc CreateAsset(CreateAssetRequest) returns (CreateAssetResponse);
+  rpc GetAsset(GetAssetRequest) returns (GetAssetResponse);
+  rpc ListAssets(ListAssetsRequest) returns (ListAssetsResponse);
   rpc CreateInstrument(CreateInstrumentRequest) returns (CreateInstrumentResponse);
 
   // System
@@ -353,6 +355,23 @@ message CreateAssetRequest {
 
 message CreateAssetResponse {
   common.Asset asset = 1;
+}
+
+message GetAssetRequest {
+  string asset_id = 1;
+  string symbol = 2;
+}
+
+message GetAssetResponse {
+  common.Asset asset = 1;
+}
+
+message ListAssetsRequest {
+  repeated string ids = 1;
+}
+
+message ListAssetsResponse {
+  repeated common.Asset assets = 1;
 }
 
 message CreateInstrumentRequest {

@@ -1,15 +1,19 @@
+use uuid::Uuid;
+use tonic::transport::Channel;
 use tonic::{Request, Response, Status};
-use crate::proto::ledger::ledger_service_server::LedgerService;
+
 use crate::proto::ledger::*;
 use crate::proto::common::{OrderSide, OrderStatus};
-use crate::domain::orders::{OrderService, Order};
+use crate::proto::ledger::ledger_service_server::LedgerService;
+use crate::proto::matching::matching_engine_client::MatchingEngineClient;
+
 use crate::domain::users::UserService;
-use crate::domain::accounts::AccountService;
-use crate::domain::wallets::WalletService;
-use crate::domain::deposits::DepositService;
-use crate::domain::withdrawals::WithdrawalService;
 use crate::domain::assets::AssetService;
-use uuid::Uuid;
+use crate::domain::wallets::WalletService;
+use crate::domain::accounts::AccountService;
+use crate::domain::deposits::DepositService;
+use crate::domain::orders::{OrderService, Order};
+use crate::domain::withdrawals::WithdrawalService;
 
 #[derive(Debug)]
 pub struct LedgerImpl {
@@ -20,6 +24,7 @@ pub struct LedgerImpl {
     deposit_service: DepositService,
     withdrawal_service: WithdrawalService,
     asset_service: AssetService,
+    matching_client: Option<MatchingEngineClient<Channel>>,
 }
 
 use crate::infra::repositories::{InMemoryAccountRepository, InMemoryOrderRepository};
@@ -30,6 +35,7 @@ impl LedgerImpl {
         account_service: AccountService,
         wallet_service: WalletService,
         asset_service: AssetService,
+        matching_client: Option<MatchingEngineClient<Channel>>,
     ) -> Self {
         Self {
             order_service,
@@ -39,18 +45,24 @@ impl LedgerImpl {
             deposit_service: DepositService::new(),
             withdrawal_service: WithdrawalService::new(),
             asset_service,
+            matching_client,
         }
     }
 
     pub fn new_test() -> Self {
         use std::sync::Arc;
+        use crate::infra::repositories::memory::InMemoryAssetRepository;
+        use crate::infra::repositories::InMemoryWalletRepository;
+        
         let account_repo = Arc::new(InMemoryAccountRepository::new());
         let order_repo = Arc::new(InMemoryOrderRepository::new());
+        let wallet_repo = Arc::new(InMemoryWalletRepository::new());
+        let asset_repo = Arc::new(InMemoryAssetRepository::new());
 
         let account_service = AccountService::new(account_repo);
         
-        let wallet_service = WalletService::new();
-        let asset_service = AssetService::new();
+        let wallet_service = WalletService::new(wallet_repo);
+        let asset_service = AssetService::new(asset_repo);
         
         let order_service = OrderService::new(
             order_repo, 
@@ -66,6 +78,7 @@ impl LedgerImpl {
             deposit_service: DepositService::new(),
             withdrawal_service: WithdrawalService::new(),
             asset_service,
+            matching_client: None,
         }
     }
 }
@@ -121,9 +134,41 @@ impl LedgerService for LedgerImpl {
                 updated_at: chrono::Utc::now(),
             };
 
+            let order_for_matching = crate::proto::common::Order {
+                id: order.id.to_string(),
+                tenant_id: order.tenant_id.to_string(),
+                account_id: order.account_id.to_string(),
+                instrument_id: order.instrument_id.to_string(),
+                side: proto_order.side,
+                r#type: proto_order.r#type,
+                price: order.price.to_string(),
+                quantity: order.quantity.to_string(),
+                quantity_filled: order.filled_quantity.to_string(),
+                time_in_force: proto_order.time_in_force,
+                status: OrderStatus::Open as i32,
+                meta: order.meta.to_string(),
+                created_at: order.created_at.timestamp_millis(),
+                updated_at: order.updated_at.timestamp_millis(),
+            };
+
             // OrderService handles validation and reservation internally now
             match self.order_service.create_order(order).await {
-                Ok(_) => {},
+                Ok(_) => {
+                    // Call Matching Engine
+                    if let Some(client) = &self.matching_client {
+                        let mut matching_client = client.clone();
+                        let request = tonic::Request::new(crate::proto::matching::PlaceOrderRequest {
+                            order: Some(order_for_matching),
+                        });
+
+                        tokio::spawn(async move {
+                            match matching_client.place_order(request).await {
+                                Ok(response) => println!("Successfully forwarded order to matching engine: {:?}", response),
+                                Err(e) => eprintln!("Failed to forward order to matching engine: {}", e),
+                            }
+                        });
+                    }
+                },
                 Err(crate::error::AppError::ValidationError(msg)) => return Err(Status::failed_precondition(msg)),
                 Err(e) => return Err(Status::internal(e.to_string())),
             }
@@ -430,8 +475,6 @@ impl LedgerService for LedgerImpl {
         }
     }
 
-
-
     // --- Wallet Management ---
 
     async fn create_wallet(
@@ -443,7 +486,7 @@ impl LedgerService for LedgerImpl {
         let wallet = self.wallet_service.create_new_wallet(
             req.account_id,
             req.asset_id,
-        );
+        ).await.map_err(|e| Status::internal(e.to_string()))?;
 
         Ok(Response::new(CreateWalletResponse {
             wallet: Some(wallet),
@@ -455,7 +498,7 @@ impl LedgerService for LedgerImpl {
         request: Request<GetWalletRequest>,
     ) -> Result<Response<GetWalletResponse>, Status> {
         let req = request.into_inner();
-        if let Some(wallet) = self.wallet_service.get_wallet(&req.wallet_id) {
+        if let Some(wallet) = self.wallet_service.get_wallet(&req.wallet_id).await.map_err(|e| Status::internal(e.to_string()))? {
              Ok(Response::new(GetWalletResponse {
                  wallet: Some(wallet),
              }))
@@ -470,16 +513,16 @@ impl LedgerService for LedgerImpl {
     ) -> Result<Response<UpdateWalletResponse>, Status> {
         let req = request.into_inner();
         
-        if let Some(mut wallet) = self.wallet_service.get_wallet(&req.wallet_id) {
+        if let Some(mut wallet) = self.wallet_service.get_wallet(&req.wallet_id).await.map_err(|e| Status::internal(e.to_string()))? {
              if !req.status.is_empty() {
                  wallet.status = req.status;
              }
              wallet.updated_at = chrono::Utc::now().timestamp_millis();
              
-             self.wallet_service.update_wallet(wallet.clone());
+             let updated = self.wallet_service.update_wallet(wallet.clone()).await.map_err(|e| Status::internal(e.to_string()))?;
              
              Ok(Response::new(UpdateWalletResponse {
-                 wallet: Some(wallet),
+                 wallet: Some(updated),
              }))
         } else {
              Err(Status::not_found("Wallet not found"))
@@ -491,13 +534,13 @@ impl LedgerService for LedgerImpl {
         request: Request<DeleteWalletRequest>,
     ) -> Result<Response<DeleteWalletResponse>, Status> {
         let req = request.into_inner();
-        if self.wallet_service.delete_wallet(&req.wallet_id) {
-             Ok(Response::new(DeleteWalletResponse {
+        match self.wallet_service.delete_wallet(&req.wallet_id).await {
+             Ok(_) => Ok(Response::new(DeleteWalletResponse {
                  success: true,
                  message: "Wallet deleted".to_string(),
-             }))
-        } else {
-             Err(Status::not_found("Wallet not found"))
+             })),
+             Err(crate::error::AppError::NotFound(_)) => Err(Status::not_found("Wallet not found")),
+             Err(e) => Err(Status::internal(e.to_string())),
         }
     }
 
@@ -506,9 +549,44 @@ impl LedgerService for LedgerImpl {
         request: Request<ListWalletsRequest>,
     ) -> Result<Response<ListWalletsResponse>, Status> {
         let req = request.into_inner();
-        let wallets = self.wallet_service.list_wallets(&req.account_id);
+        let wallets = self.wallet_service.list_wallets(&req.account_id).await.map_err(|e| Status::internal(e.to_string()))?;
         Ok(Response::new(ListWalletsResponse {
             wallets,
+        }))
+    }
+
+    // --- Asset Management ---
+
+    async fn get_asset(
+        &self,
+        request: Request<GetAssetRequest>,
+    ) -> Result<Response<GetAssetResponse>, Status> {
+        let req = request.into_inner();
+        
+        let asset = if !req.asset_id.is_empty() {
+            self.asset_service.get_asset(&req.asset_id).await.map_err(|e| Status::internal(e.to_string()))?
+        } else if !req.symbol.is_empty() {
+            self.asset_service.get_asset_by_symbol(&req.symbol).await.map_err(|e| Status::internal(e.to_string()))?
+        } else {
+            return Err(Status::invalid_argument("asset_id or symbol required"));
+        };
+
+        if let Some(a) = asset {
+            Ok(Response::new(GetAssetResponse {
+                asset: Some(a),
+            }))
+        } else {
+            Err(Status::not_found("Asset not found"))
+        }
+    }
+
+    async fn list_assets(
+        &self,
+        _request: Request<ListAssetsRequest>,
+    ) -> Result<Response<ListAssetsResponse>, Status> {
+        let assets = self.asset_service.list_assets().await.map_err(|e| Status::internal(e.to_string()))?;
+        Ok(Response::new(ListAssetsResponse {
+            assets,
         }))
     }
 
@@ -527,7 +605,7 @@ impl LedgerService for LedgerImpl {
         );
 
         // Update Wallet Balance
-        if let Some(mut wallet) = self.wallet_service.get_wallet(&req.wallet_id) {
+        if let Some(mut wallet) = self.wallet_service.get_wallet(&req.wallet_id).await.unwrap_or(None) {
             let current_avail: f64 = wallet.available.parse().unwrap_or(0.0);
             let deposit_amount: f64 = req.amount.parse().unwrap_or(0.0);
             let current_total: f64 = wallet.total.parse().unwrap_or(0.0);
@@ -536,7 +614,7 @@ impl LedgerService for LedgerImpl {
             wallet.total = (current_total + deposit_amount).to_string();
             wallet.updated_at = chrono::Utc::now().timestamp_millis();
             
-            self.wallet_service.update_wallet(wallet);
+            let _ = self.wallet_service.update_wallet(wallet).await;
         }
 
         Ok(Response::new(CreateDepositResponse {

@@ -324,6 +324,23 @@ export interface CreateAssetResponse {
   asset?: Asset | undefined;
 }
 
+export interface GetAssetRequest {
+  assetId?: string | undefined;
+  symbol?: string | undefined;
+}
+
+export interface GetAssetResponse {
+  asset?: Asset | undefined;
+}
+
+export interface ListAssetsRequest {
+  ids?: string[] | undefined;
+}
+
+export interface ListAssetsResponse {
+  assets?: Asset[] | undefined;
+}
+
 export interface CreateInstrumentRequest {
   symbol?: string | undefined;
   type?: string | undefined;
@@ -4656,6 +4673,270 @@ export const CreateAssetResponse: MessageFns<CreateAssetResponse> = {
   },
 };
 
+function createBaseGetAssetRequest(): GetAssetRequest {
+  return { assetId: "", symbol: "" };
+}
+
+export const GetAssetRequest: MessageFns<GetAssetRequest> = {
+  encode(message: GetAssetRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.assetId !== undefined && message.assetId !== "") {
+      writer.uint32(10).string(message.assetId);
+    }
+    if (message.symbol !== undefined && message.symbol !== "") {
+      writer.uint32(18).string(message.symbol);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetAssetRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetAssetRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.assetId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.symbol = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetAssetRequest {
+    return {
+      assetId: isSet(object.assetId)
+        ? globalThis.String(object.assetId)
+        : isSet(object.asset_id)
+        ? globalThis.String(object.asset_id)
+        : "",
+      symbol: isSet(object.symbol) ? globalThis.String(object.symbol) : "",
+    };
+  },
+
+  toJSON(message: GetAssetRequest): unknown {
+    const obj: any = {};
+    if (message.assetId !== undefined && message.assetId !== "") {
+      obj.assetId = message.assetId;
+    }
+    if (message.symbol !== undefined && message.symbol !== "") {
+      obj.symbol = message.symbol;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetAssetRequest>, I>>(base?: I): GetAssetRequest {
+    return GetAssetRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetAssetRequest>, I>>(object: I): GetAssetRequest {
+    const message = createBaseGetAssetRequest();
+    message.assetId = object.assetId ?? "";
+    message.symbol = object.symbol ?? "";
+    return message;
+  },
+};
+
+function createBaseGetAssetResponse(): GetAssetResponse {
+  return { asset: undefined };
+}
+
+export const GetAssetResponse: MessageFns<GetAssetResponse> = {
+  encode(message: GetAssetResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.asset !== undefined) {
+      Asset.encode(message.asset, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetAssetResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetAssetResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.asset = Asset.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetAssetResponse {
+    return { asset: isSet(object.asset) ? Asset.fromJSON(object.asset) : undefined };
+  },
+
+  toJSON(message: GetAssetResponse): unknown {
+    const obj: any = {};
+    if (message.asset !== undefined) {
+      obj.asset = Asset.toJSON(message.asset);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetAssetResponse>, I>>(base?: I): GetAssetResponse {
+    return GetAssetResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetAssetResponse>, I>>(object: I): GetAssetResponse {
+    const message = createBaseGetAssetResponse();
+    message.asset = (object.asset !== undefined && object.asset !== null) ? Asset.fromPartial(object.asset) : undefined;
+    return message;
+  },
+};
+
+function createBaseListAssetsRequest(): ListAssetsRequest {
+  return { ids: [] };
+}
+
+export const ListAssetsRequest: MessageFns<ListAssetsRequest> = {
+  encode(message: ListAssetsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.ids !== undefined && message.ids.length !== 0) {
+      for (const v of message.ids) {
+        writer.uint32(10).string(v!);
+      }
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListAssetsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListAssetsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          const el = reader.string();
+          if (el !== undefined) {
+            message.ids!.push(el);
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListAssetsRequest {
+    return { ids: globalThis.Array.isArray(object?.ids) ? object.ids.map((e: any) => globalThis.String(e)) : [] };
+  },
+
+  toJSON(message: ListAssetsRequest): unknown {
+    const obj: any = {};
+    if (message.ids?.length) {
+      obj.ids = message.ids;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListAssetsRequest>, I>>(base?: I): ListAssetsRequest {
+    return ListAssetsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListAssetsRequest>, I>>(object: I): ListAssetsRequest {
+    const message = createBaseListAssetsRequest();
+    message.ids = object.ids?.map((e) => e) || [];
+    return message;
+  },
+};
+
+function createBaseListAssetsResponse(): ListAssetsResponse {
+  return { assets: [] };
+}
+
+export const ListAssetsResponse: MessageFns<ListAssetsResponse> = {
+  encode(message: ListAssetsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.assets !== undefined && message.assets.length !== 0) {
+      for (const v of message.assets) {
+        Asset.encode(v!, writer.uint32(10).fork()).join();
+      }
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListAssetsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListAssetsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          const el = Asset.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.assets!.push(el);
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListAssetsResponse {
+    return { assets: globalThis.Array.isArray(object?.assets) ? object.assets.map((e: any) => Asset.fromJSON(e)) : [] };
+  },
+
+  toJSON(message: ListAssetsResponse): unknown {
+    const obj: any = {};
+    if (message.assets?.length) {
+      obj.assets = message.assets.map((e) => Asset.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListAssetsResponse>, I>>(base?: I): ListAssetsResponse {
+    return ListAssetsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListAssetsResponse>, I>>(object: I): ListAssetsResponse {
+    const message = createBaseListAssetsResponse();
+    message.assets = object.assets?.map((e) => Asset.fromPartial(e)) || [];
+    return message;
+  },
+};
+
 function createBaseCreateInstrumentRequest(): CreateInstrumentRequest {
   return { symbol: "", type: "", baseAssetId: "", quoteAssetId: "" };
 }
@@ -5249,6 +5530,24 @@ export const LedgerServiceService = {
     responseSerialize: (value: CreateAssetResponse): Buffer => Buffer.from(CreateAssetResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): CreateAssetResponse => CreateAssetResponse.decode(value),
   },
+  getAsset: {
+    path: "/ledger.LedgerService/GetAsset",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetAssetRequest): Buffer => Buffer.from(GetAssetRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetAssetRequest => GetAssetRequest.decode(value),
+    responseSerialize: (value: GetAssetResponse): Buffer => Buffer.from(GetAssetResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetAssetResponse => GetAssetResponse.decode(value),
+  },
+  listAssets: {
+    path: "/ledger.LedgerService/ListAssets",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListAssetsRequest): Buffer => Buffer.from(ListAssetsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListAssetsRequest => ListAssetsRequest.decode(value),
+    responseSerialize: (value: ListAssetsResponse): Buffer => Buffer.from(ListAssetsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListAssetsResponse => ListAssetsResponse.decode(value),
+  },
   createInstrument: {
     path: "/ledger.LedgerService/CreateInstrument",
     requestStream: false,
@@ -5311,6 +5610,8 @@ export interface LedgerServiceServer extends UntypedServiceImplementation {
   listWithdrawals: handleUnaryCall<ListWithdrawalsRequest, ListWithdrawalsResponse>;
   /** Asset & Instrument (Read-only usually, but maybe admin creates them) */
   createAsset: handleUnaryCall<CreateAssetRequest, CreateAssetResponse>;
+  getAsset: handleUnaryCall<GetAssetRequest, GetAssetResponse>;
+  listAssets: handleUnaryCall<ListAssetsRequest, ListAssetsResponse>;
   createInstrument: handleUnaryCall<CreateInstrumentRequest, CreateInstrumentResponse>;
   /** System */
   getSystemAccount: handleUnaryCall<GetSystemAccountRequest, GetSystemAccountResponse>;
@@ -5772,6 +6073,36 @@ export interface LedgerServiceClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: CreateAssetResponse) => void,
+  ): ClientUnaryCall;
+  getAsset(
+    request: GetAssetRequest,
+    callback: (error: ServiceError | null, response: GetAssetResponse) => void,
+  ): ClientUnaryCall;
+  getAsset(
+    request: GetAssetRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetAssetResponse) => void,
+  ): ClientUnaryCall;
+  getAsset(
+    request: GetAssetRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetAssetResponse) => void,
+  ): ClientUnaryCall;
+  listAssets(
+    request: ListAssetsRequest,
+    callback: (error: ServiceError | null, response: ListAssetsResponse) => void,
+  ): ClientUnaryCall;
+  listAssets(
+    request: ListAssetsRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: ListAssetsResponse) => void,
+  ): ClientUnaryCall;
+  listAssets(
+    request: ListAssetsRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: ListAssetsResponse) => void,
   ): ClientUnaryCall;
   createInstrument(
     request: CreateInstrumentRequest,

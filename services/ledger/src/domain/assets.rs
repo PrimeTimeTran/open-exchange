@@ -2,23 +2,39 @@ use crate::proto::common;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 use chrono::Utc;
+use crate::infra::repositories::AssetRepository;
+use crate::error::Result;
 
-#[derive(Debug, Default, Clone)]
+#[derive(Clone, Debug)]
 pub struct AssetService {
-    assets: Arc<Mutex<Vec<common::Asset>>>,
+    repo: Arc<dyn AssetRepository>,
     instruments: Arc<Mutex<Vec<common::Instrument>>>,
 }
 
 impl AssetService {
-    pub fn new() -> Self {
+    pub fn new(repo: Arc<dyn AssetRepository>) -> Self {
         Self {
-            assets: Arc::new(Mutex::new(Vec::new())),
+            repo,
             instruments: Arc::new(Mutex::new(Vec::new())),
         }
     }
 
+    pub async fn get_asset(&self, id: &str) -> Result<Option<common::Asset>> {
+        let uuid = Uuid::parse_str(id).unwrap_or_default(); // TODO: handle error
+        self.repo.get(uuid).await
+    }
+
+    pub async fn get_asset_by_symbol(&self, symbol: &str) -> Result<Option<common::Asset>> {
+        self.repo.get_by_symbol(symbol).await
+    }
+
+    pub async fn list_assets(&self) -> Result<Vec<common::Asset>> {
+        self.repo.list().await
+    }
+
     pub fn create_new_asset(&self, symbol: String, asset_type: String, precision: i32) -> common::Asset {
-        let asset = common::Asset {
+        // Warning: This is now broken/stubbed until we implement AssetRepository::create
+        common::Asset {
             id: Uuid::new_v4().to_string(),
             tenant_id: "default".to_string(),
             symbol,
@@ -29,11 +45,7 @@ impl AssetService {
             meta: "{}".to_string(),
             created_at: Utc::now().timestamp_millis(),
             updated_at: Utc::now().timestamp_millis(),
-        };
-
-        let mut assets = self.assets.lock().unwrap();
-        assets.push(asset.clone());
-        asset
+        }
     }
 
     pub fn create_new_instrument(&self, symbol: String, instrument_type: String, base_id: String, quote_id: String) -> common::Instrument {
@@ -50,25 +62,13 @@ impl AssetService {
             updated_at: Utc::now().timestamp_millis(),
         };
 
-        let mut instruments = self.instruments.lock().unwrap();
-        instruments.push(instrument.clone());
+        self.instruments.lock().unwrap().push(instrument.clone());
         instrument
-    }
-
-    pub fn create_asset(&self, asset: common::Asset) {
-        let mut assets = self.assets.lock().unwrap();
-        assets.push(asset);
-    }
-
-    pub fn create_instrument(&self, instrument: common::Instrument) {
-        let mut instruments = self.instruments.lock().unwrap();
-        instruments.push(instrument);
     }
 
     pub fn get_instrument(&self, id: &str) -> Option<common::Instrument> {
         let instruments = self.instruments.lock().unwrap();
         instruments.iter().find(|i| i.id == id).cloned()
     }
-    
-    // Add getters if needed
 }
+

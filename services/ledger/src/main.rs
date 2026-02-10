@@ -9,7 +9,7 @@ use ledger::domain::orders::OrderService;
 use ledger::domain::accounts::AccountService;
 use ledger::domain::wallets::WalletService;
 use ledger::domain::assets::AssetService;
-use ledger::infra::repositories::{PostgresOrderRepository, PostgresAccountRepository};
+use ledger::infra::repositories::{PostgresOrderRepository, PostgresAccountRepository, PostgresWalletRepository};
 use std::sync::Arc;
 use dotenv::dotenv;
 
@@ -29,10 +29,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Repositories
     let order_repo = Arc::new(PostgresOrderRepository::new(db_pool.clone()));
     let account_repo = Arc::new(PostgresAccountRepository::new(db_pool.clone()));
+    let wallet_repo = Arc::new(PostgresWalletRepository::new(db_pool.clone()));
+    let asset_repo = Arc::new(ledger::infra::repositories::PostgresAssetRepository::new(db_pool.clone()));
 
     // Services
-    let wallet_service = WalletService::new();
-    let asset_service = AssetService::new();
+    let wallet_service = WalletService::new(wallet_repo);
+    let asset_service = AssetService::new(asset_repo);
     
     let order_service = OrderService::new(
         order_repo, 
@@ -40,6 +42,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Arc::new(asset_service.clone())
     );
     let account_service = AccountService::new(account_repo);
+
+    // Matching Engine Connection
+    let matching_engine_url = std::env::var("MATCHING_ENGINE_URL").unwrap_or_else(|_| "http://matching:50051".to_string());
+    println!("Connecting to Matching Engine at: {}", matching_engine_url);
+    
+    let mut retry_count = 0;
+    let max_retries = 10;
+    let matching_client = loop {
+        match ledger::proto::matching::matching_engine_client::MatchingEngineClient::connect(matching_engine_url.clone()).await {
+            Ok(client) => {
+                println!("Connected to Matching Engine.");
+                break Some(client);
+            },
+            Err(e) => {
+                retry_count += 1;
+                eprintln!("Failed to connect to Matching Engine: {}. Retry {}/{}...", e, retry_count, max_retries);
+                if retry_count >= max_retries {
+                    eprintln!("Giving up on Matching Engine connection. Orders will strictly be recorded but not matched.");
+                    break None;
+                }
+                tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+            }
+        }
+    };
 
     // Start HTTP Health Server
     let health_port = 8081; // Could be from config
@@ -53,7 +79,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         order_service, 
         account_service,
         wallet_service,
-        asset_service
+        asset_service,
+        matching_client,
     );
 
     println!("LedgerService listening on {}", addr);

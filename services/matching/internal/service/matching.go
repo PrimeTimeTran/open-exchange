@@ -38,14 +38,15 @@ func NewMatchingService(engine *engine.Engine, ledgerClient LedgerClientInterfac
 }
 
 func (s *MatchingService) PlaceOrder(ctx context.Context, order *common.Order) (string, error) {
-	// 1. Forward to Ledger
-	log.Printf("Matching Service: Forwarding order %s to Ledger...", order.Id)
-	_, err := s.LedgerClient.RecordOrder(ctx, &ledger.RecordOrderRequest{
-		Order: order,
-	})
-	if err != nil {
-		return "", fmt.Errorf("failed to record order in ledger: %w", err)
-	}
+	// 1. Forward to Ledger - SKIPPED (Ledger calls us now)
+	// log.Printf("Matching Service: Forwarding order %s to Ledger...", order.Id)
+	// _, err := s.LedgerClient.RecordOrder(ctx, &ledger.RecordOrderRequest{
+	// 	Order: order,
+	// })
+	// if err != nil {
+	// 	return "", fmt.Errorf("failed to record order in ledger: %w", err)
+	// }
+    log.Printf("Matching Service: Received order %s (assumed valid from Ledger)", order.Id)
 
 	// 2. Process in Engine
 	internalOrder := engine.NewOrderFromProto(order)
@@ -62,10 +63,13 @@ func (s *MatchingService) PlaceOrder(ctx context.Context, order *common.Order) (
 		})
 		if err != nil {
 			log.Printf("ERROR: Failed to record trade in ledger: %v. Aborting match.", err)
-			return err
+			return fmt.Errorf("failed to record trade in ledger: %w", err)
 		}
 		return nil
 	})
+
+	log.Printf("Engine.ProcessOrder returned: trades=%d err=%v", len(trades), err)
+
 	if err != nil {
 		// If it's a ledger error during matching, we still might have partial trades returned.
 		log.Printf("ProcessOrder finished with error (likely ledger rejection): %v", err)

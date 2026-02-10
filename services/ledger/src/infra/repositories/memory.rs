@@ -3,6 +3,7 @@ use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 use crate::domain::accounts::{Account, AccountRepository};
 use crate::domain::orders::{Order, OrderRepository};
+use crate::domain::wallets::{Wallet, WalletRepository};
 use crate::error::{AppError, Result};
 
 // --- InMemoryAccountRepository ---
@@ -105,5 +106,100 @@ impl OrderRepository for InMemoryOrderRepository {
             .filter(|o| o.status == "open" || o.status == "partial" || o.status == "new")
             .cloned()
             .collect())
+    }
+}
+
+// --- InMemoryWalletRepository ---
+
+#[derive(Clone, Default, Debug)]
+pub struct InMemoryWalletRepository {
+    wallets: Arc<Mutex<Vec<Wallet>>>,
+}
+
+impl InMemoryWalletRepository {
+    pub fn new() -> Self {
+        Self {
+            wallets: Arc::new(Mutex::new(Vec::new())),
+        }
+    }
+}
+
+#[async_trait]
+impl WalletRepository for InMemoryWalletRepository {
+    async fn create(&self, wallet: Wallet) -> Result<Wallet> {
+        let mut wallets = self.wallets.lock().unwrap();
+        wallets.push(wallet.clone());
+        Ok(wallet)
+    }
+
+    async fn get(&self, id: Uuid) -> Result<Option<Wallet>> {
+        let wallets = self.wallets.lock().unwrap();
+        Ok(wallets.iter().find(|w| w.id == id.to_string()).cloned())
+    }
+
+    async fn get_by_account_and_asset(&self, account_id: &str, asset_id: &str) -> Result<Option<Wallet>> {
+        let wallets = self.wallets.lock().unwrap();
+        Ok(wallets.iter().find(|w| w.account_id == account_id && w.asset_id == asset_id).cloned())
+    }
+
+    async fn update(&self, wallet: Wallet) -> Result<Wallet> {
+        let mut wallets = self.wallets.lock().unwrap();
+        if let Some(pos) = wallets.iter().position(|w| w.id == wallet.id) {
+            wallets[pos] = wallet.clone();
+            Ok(wallet)
+        } else {
+            Err(AppError::NotFound(format!("Wallet {} not found", wallet.id)))
+        }
+    }
+
+    async fn delete(&self, id: Uuid) -> Result<()> {
+        let mut wallets = self.wallets.lock().unwrap();
+        if let Some(pos) = wallets.iter().position(|w| w.id == id.to_string()) {
+            wallets.remove(pos);
+            Ok(())
+        } else {
+            Err(AppError::NotFound(format!("Wallet {} not found", id)))
+        }
+    }
+
+    async fn list_by_account(&self, account_id: &str) -> Result<Vec<Wallet>> {
+        let wallets = self.wallets.lock().unwrap();
+        Ok(wallets.iter().filter(|w| w.account_id == account_id).cloned().collect())
+    }
+}
+
+// --- InMemoryAssetRepository ---
+
+use crate::infra::repositories::AssetRepository;
+use crate::proto::common;
+
+#[derive(Clone, Default, Debug)]
+pub struct InMemoryAssetRepository {
+    assets: Arc<Mutex<Vec<common::Asset>>>,
+}
+
+impl InMemoryAssetRepository {
+    pub fn new() -> Self {
+        Self {
+            assets: Arc::new(Mutex::new(Vec::new())),
+        }
+    }
+}
+
+#[async_trait]
+impl AssetRepository for InMemoryAssetRepository {
+    async fn get(&self, id: Uuid) -> Result<Option<common::Asset>> {
+        let assets = self.assets.lock().unwrap();
+        Ok(assets.iter().find(|a| a.id == id.to_string()).cloned())
+    }
+
+    async fn get_by_symbol(&self, symbol: &str) -> Result<Option<common::Asset>> {
+        let assets = self.assets.lock().unwrap();
+        Ok(assets.iter().find(|a| a.symbol == symbol).cloned())
+    }
+
+    async fn list(&self) -> Result<Vec<common::Asset>> {
+        let assets = self.assets.lock().unwrap();
+        Ok(assets.clone())
     }
 }

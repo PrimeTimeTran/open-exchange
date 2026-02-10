@@ -10,9 +10,11 @@ import {
   SelectTrigger,
   SelectContent,
 } from '@/components/ui/select';
+import { useLedger } from 'src/contexts/LedgerProvider';
 
 interface OrderSidebarProps {
   symbol: string;
+  isAuthenticated?: boolean;
   onSubmit?: (data: {
     asset: string;
     price?: string;
@@ -22,11 +24,41 @@ interface OrderSidebarProps {
   }) => void;
 }
 
-export function OrderSidebar({ symbol, onSubmit }: OrderSidebarProps) {
+export function OrderSidebar({
+  symbol,
+  isAuthenticated,
+  onSubmit,
+}: OrderSidebarProps) {
   const [orderType, setOrderType] = useState<'market' | 'limit'>('market');
   const [quantity, setQuantity] = useState('1');
   const [limitPrice, setLimitPrice] = useState('50000');
   const [timeInForce, setTimeInForce] = useState('gtc');
+  const { wallets, loading } = useLedger();
+
+  // Find Quote wallet (USD)
+  const quoteWallet = wallets.find((w) => w.assetSymbol === 'USD');
+
+  const buyingPower = quoteWallet
+    ? Number(quoteWallet.available) / Math.pow(10, quoteWallet.assetDecimals)
+    : 0;
+
+  if (loading) {
+    return (
+      <div className="lg:w-80 w-full shrink-0">
+        <div className="sticky top-24 space-y-6">
+          <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden p-6 space-y-6">
+            <h3 className="font-bold text-xl">Buy {symbol}</h3>
+            <div className="space-y-4 animate-pulse">
+              <div className="h-10 bg-muted rounded w-full" />
+              <div className="h-10 bg-muted rounded w-full" />
+              <div className="h-10 bg-muted rounded w-full" />
+              <div className="h-10 bg-muted rounded w-full" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="lg:w-80 w-full shrink-0">
@@ -109,6 +141,7 @@ export function OrderSidebar({ symbol, onSubmit }: OrderSidebarProps) {
 
             <Button
               variant="primary"
+              disabled={!isAuthenticated}
               onClick={() =>
                 onSubmit?.({
                   asset: symbol,
@@ -119,14 +152,14 @@ export function OrderSidebar({ symbol, onSubmit }: OrderSidebarProps) {
                 })
               }
             >
-              Create Order
+              {isAuthenticated ? 'Create Order' : 'Sign in to Trade'}
             </Button>
           </div>
 
           <div className="pt-4 border-t border-border">
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Buying Power</span>
-              <span>$12,450.00</span>
+              <span>${buyingPower.toLocaleString()}</span>
             </div>
           </div>
         </div>

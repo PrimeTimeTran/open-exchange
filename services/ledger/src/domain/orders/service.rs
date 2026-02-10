@@ -31,12 +31,16 @@ impl OrderService {
     }
 
     pub async fn create_order(&self, order: Order) -> Result<Order> {
-        // Validate and Reserve Funds
-        self.validate_and_reserve_funds(&order)?;
+        if let Ok(Some(existing)) = self.repo.get(order.id).await {
+            println!("Order {} already exists, skipping creation and fund reservation.", order.id);
+            return Ok(existing);
+        }
+
+        self.validate_and_reserve_funds(&order).await?;
         self.repo.create(order).await
     }
 
-    pub fn validate_and_reserve_funds(&self, order: &Order) -> Result<()> {
+    pub async fn validate_and_reserve_funds(&self, order: &Order) -> Result<()> {
         let instr_uuid = order.instrument_id.to_string();
         if let Some(instrument) = self.asset_service.get_instrument(&instr_uuid) {
             let (required_asset_id, required_amount) = if order.side == "buy" {
@@ -46,7 +50,12 @@ impl OrderService {
             };
 
             let account_uuid = order.account_id.to_string();
-            if let Some(mut wallet) = self.wallet_service.get_wallet_by_account_and_asset(&account_uuid, &required_asset_id) {
+            // Fetch wallet (async)
+            let wallet_opt = self.wallet_service.get_wallet_by_account_and_asset(&account_uuid, &required_asset_id)
+                .await
+                .map_err(|e| AppError::Internal(e.to_string()))?;
+
+            if let Some(mut wallet) = wallet_opt {
                 let available: f64 = wallet.available.parse().unwrap_or(0.0);
                 if available < required_amount {
                     return Err(AppError::ValidationError(format!(
@@ -61,7 +70,7 @@ impl OrderService {
                 wallet.locked = (locked + required_amount).to_string();
                 wallet.updated_at = chrono::Utc::now().timestamp_millis();
                 
-                self.wallet_service.update_wallet(wallet);
+                self.wallet_service.update_wallet(wallet).await.map_err(|e| AppError::Internal(e.to_string()))?;
             } else {
                 return Err(AppError::ValidationError("Wallet for required asset not found in account".to_string()));
             }

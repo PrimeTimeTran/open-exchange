@@ -13,6 +13,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "../../proto/helloworld/helloworld.proto",
         "../../proto/common/order.proto",
         "../../proto/ledger/ledger.proto",
+        "../../proto/matching/engine.proto",
         // Add more protos here
     ];
 

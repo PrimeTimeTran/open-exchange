@@ -33,8 +33,6 @@ async function getOrderBook(
       console.warn(`Instrument not found for symbol: ${instrumentId}`);
     }
   }
-
-  // The client wrapper now provides a promise-based getOrderBook method
   return await client.getOrderBook({ instrumentId: targetInstrumentId });
 }
 
@@ -46,6 +44,17 @@ export default async function OrdersPage({
   const instrumentId = (searchParams.instrument_id as string) || 'BTC-USD';
   let orderBook: GetOrderBookResponse | null = null;
   let error: string | null = null;
+
+  // Fetch all available instruments for the dropdown
+  const instruments = await prisma.instrument.findMany({
+    where: {
+      archivedAt: null,
+      status: 'active',
+    },
+    orderBy: {
+      symbol: 'asc',
+    },
+  });
 
   try {
     orderBook = await getOrderBook(instrumentId);
@@ -71,9 +80,19 @@ export default async function OrdersPage({
           defaultValue={instrumentId}
           className="border border-input bg-background p-2 rounded w-64 text-foreground"
         >
-          <option value="BTC-USD">BTC-USD</option>
-          <option value="ETH-USD">ETH-USD</option>
-          <option value="AAPL-USD">AAPL-USD</option>
+          {instruments.length > 0 ? (
+            instruments.map((i) => (
+              <option key={i.id} value={i.symbol}>
+                {i.symbol.replace(/_/g, '-')}
+              </option>
+            ))
+          ) : (
+            <>
+              <option value="BTC-USD">BTC-USD</option>
+              <option value="ETH-USD">ETH-USD</option>
+              <option value="AAPL-USD">AAPL-USD</option>
+            </>
+          )}
         </select>
         <button
           type="submit"

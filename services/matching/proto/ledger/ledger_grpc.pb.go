@@ -49,6 +49,8 @@ const (
 	LedgerService_CancelWithdrawal_FullMethodName = "/ledger.LedgerService/CancelWithdrawal"
 	LedgerService_ListWithdrawals_FullMethodName  = "/ledger.LedgerService/ListWithdrawals"
 	LedgerService_CreateAsset_FullMethodName      = "/ledger.LedgerService/CreateAsset"
+	LedgerService_GetAsset_FullMethodName         = "/ledger.LedgerService/GetAsset"
+	LedgerService_ListAssets_FullMethodName       = "/ledger.LedgerService/ListAssets"
 	LedgerService_CreateInstrument_FullMethodName = "/ledger.LedgerService/CreateInstrument"
 	LedgerService_GetSystemAccount_FullMethodName = "/ledger.LedgerService/GetSystemAccount"
 )
@@ -93,6 +95,8 @@ type LedgerServiceClient interface {
 	ListWithdrawals(ctx context.Context, in *ListWithdrawalsRequest, opts ...grpc.CallOption) (*ListWithdrawalsResponse, error)
 	// Asset & Instrument (Read-only usually, but maybe admin creates them)
 	CreateAsset(ctx context.Context, in *CreateAssetRequest, opts ...grpc.CallOption) (*CreateAssetResponse, error)
+	GetAsset(ctx context.Context, in *GetAssetRequest, opts ...grpc.CallOption) (*GetAssetResponse, error)
+	ListAssets(ctx context.Context, in *ListAssetsRequest, opts ...grpc.CallOption) (*ListAssetsResponse, error)
 	CreateInstrument(ctx context.Context, in *CreateInstrumentRequest, opts ...grpc.CallOption) (*CreateInstrumentResponse, error)
 	// System
 	GetSystemAccount(ctx context.Context, in *GetSystemAccountRequest, opts ...grpc.CallOption) (*GetSystemAccountResponse, error)
@@ -376,6 +380,24 @@ func (c *ledgerServiceClient) CreateAsset(ctx context.Context, in *CreateAssetRe
 	return out, nil
 }
 
+func (c *ledgerServiceClient) GetAsset(ctx context.Context, in *GetAssetRequest, opts ...grpc.CallOption) (*GetAssetResponse, error) {
+	out := new(GetAssetResponse)
+	err := c.cc.Invoke(ctx, LedgerService_GetAsset_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ledgerServiceClient) ListAssets(ctx context.Context, in *ListAssetsRequest, opts ...grpc.CallOption) (*ListAssetsResponse, error) {
+	out := new(ListAssetsResponse)
+	err := c.cc.Invoke(ctx, LedgerService_ListAssets_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *ledgerServiceClient) CreateInstrument(ctx context.Context, in *CreateInstrumentRequest, opts ...grpc.CallOption) (*CreateInstrumentResponse, error) {
 	out := new(CreateInstrumentResponse)
 	err := c.cc.Invoke(ctx, LedgerService_CreateInstrument_FullMethodName, in, out, opts...)
@@ -434,6 +456,8 @@ type LedgerServiceServer interface {
 	ListWithdrawals(context.Context, *ListWithdrawalsRequest) (*ListWithdrawalsResponse, error)
 	// Asset & Instrument (Read-only usually, but maybe admin creates them)
 	CreateAsset(context.Context, *CreateAssetRequest) (*CreateAssetResponse, error)
+	GetAsset(context.Context, *GetAssetRequest) (*GetAssetResponse, error)
+	ListAssets(context.Context, *ListAssetsRequest) (*ListAssetsResponse, error)
 	CreateInstrument(context.Context, *CreateInstrumentRequest) (*CreateInstrumentResponse, error)
 	// System
 	GetSystemAccount(context.Context, *GetSystemAccountRequest) (*GetSystemAccountResponse, error)
@@ -533,6 +557,12 @@ func (UnimplementedLedgerServiceServer) ListWithdrawals(context.Context, *ListWi
 }
 func (UnimplementedLedgerServiceServer) CreateAsset(context.Context, *CreateAssetRequest) (*CreateAssetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateAsset not implemented")
+}
+func (UnimplementedLedgerServiceServer) GetAsset(context.Context, *GetAssetRequest) (*GetAssetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAsset not implemented")
+}
+func (UnimplementedLedgerServiceServer) ListAssets(context.Context, *ListAssetsRequest) (*ListAssetsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListAssets not implemented")
 }
 func (UnimplementedLedgerServiceServer) CreateInstrument(context.Context, *CreateInstrumentRequest) (*CreateInstrumentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateInstrument not implemented")
@@ -1093,6 +1123,42 @@ func _LedgerService_CreateAsset_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LedgerService_GetAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAssetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LedgerServiceServer).GetAsset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LedgerService_GetAsset_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LedgerServiceServer).GetAsset(ctx, req.(*GetAssetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LedgerService_ListAssets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAssetsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LedgerServiceServer).ListAssets(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LedgerService_ListAssets_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LedgerServiceServer).ListAssets(ctx, req.(*ListAssetsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _LedgerService_CreateInstrument_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateInstrumentRequest)
 	if err := dec(in); err != nil {
@@ -1255,6 +1321,14 @@ var LedgerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateAsset",
 			Handler:    _LedgerService_CreateAsset_Handler,
+		},
+		{
+			MethodName: "GetAsset",
+			Handler:    _LedgerService_GetAsset_Handler,
+		},
+		{
+			MethodName: "ListAssets",
+			Handler:    _LedgerService_ListAssets_Handler,
 		},
 		{
 			MethodName: "CreateInstrument",

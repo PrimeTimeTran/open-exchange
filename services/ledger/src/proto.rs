@@ -11,3 +11,7 @@ pub mod common {
 pub mod ledger {
     tonic::include_proto!("ledger");
 }
+
+pub mod matching {
+    tonic::include_proto!("matching");
+}

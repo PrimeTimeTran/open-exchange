@@ -1,7 +1,9 @@
 import React from 'react';
+import { cookies } from 'next/headers';
 import { marketClient } from 'src/services/MarketClient';
 import { AssetClient } from './AssetClient';
 import { fetchMarketData } from 'src/actions/market';
+import { appContextForReact } from 'src/shared/controller/appContext';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +14,8 @@ export default async function AssetPage({
 }) {
   const symbol = params.symbol.toUpperCase();
   const apiSymbol = symbol.includes('_') ? symbol : `${symbol}_USD`;
+  const context = await appContextForReact(cookies());
+  const isAuthenticated = !!context.currentUser;
 
   let marketData;
   let chartData;
@@ -43,6 +47,7 @@ export default async function AssetPage({
           symbol={symbol}
           initialMarketData={marketData}
           initialChartData={chartData}
+          isAuthenticated={isAuthenticated}
         />
       </div>
     </div>

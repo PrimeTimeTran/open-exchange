@@ -15,48 +15,79 @@ import { v4 as uuidv4 } from 'uuid';
 import { cookies } from 'next/headers';
 import { appContextForReact } from 'src/shared/controller/appContext';
 
-export async function placeMatchingEngineOrder(data: {
+// --- Types ---
+
+interface OrderInput {
   instrumentId: string;
   side: 'buy' | 'sell';
   type: 'market' | 'limit';
   quantity: string;
   price?: string;
   timeInForce: string;
-}) {
-  console.log('placeMatchingEngineOrder', data);
-  const context = await appContextForReact(cookies());
-  const currentUser = context.currentUser;
-  const currentMembership = context.currentMembership;
-  const currentTenant = context.currentTenant;
+}
 
-  if (!currentUser || !currentMembership) {
-    throw new Error('User not authenticated');
+// --- Main Action ---
+
+export async function placeMatchingEngineOrder(data: OrderInput) {
+  const { currentMembership, currentTenant } = await getAuthenticatedContext();
+  const account = await ensureAccount(currentMembership.id, currentTenant?.id);
+  // getInstrument is still good to ensure it exists locally, but strictly we could rely on ledger.
+  // Keeping it doesn't hurt.
+  await getInstrument(data.instrumentId);
+
+  // 1. Construct the Order
+  const { order } = constructOrderRequest(data, account.id, currentTenant?.id);
+
+  if (!order) {
+    throw new Error('Failed to construct order object');
   }
 
-  // Find account for current membership
+  // 2. Validate & Reserve Funds (Call Ledger Service)
+  // This will also forward the order to the Matching Engine if validation succeeds.
+  await validateAndReserveFunds(order);
+
+  return {
+    success: true,
+    orderId: order.id,
+  };
+}
+
+// --- Helpers ---
+
+async function getAuthenticatedContext() {
+  const context = await appContextForReact(cookies());
+  if (!context.currentUser || !context.currentMembership) {
+    throw new Error('User not authenticated');
+  }
+  return {
+    currentUser: context.currentUser,
+    currentMembership: context.currentMembership,
+    currentTenant: context.currentTenant,
+  };
+}
+
+async function ensureAccount(userId: string, tenantId?: string) {
   let account = await prisma.account.findFirst({
-    where: {
-      userId: currentMembership.id,
-      tenantId: currentTenant?.id,
-    },
+    where: { userId, tenantId },
   });
 
   if (!account) {
-    // Create a default account if none exists
     account = await prisma.account.create({
       data: {
         name: 'Default Account',
         type: 'default',
-        userId: currentMembership.id,
-        tenantId: currentTenant?.id,
+        userId,
+        tenantId,
         status: 'active',
       },
     });
   }
+  return account;
+}
 
-  // Fetch instrument details to know base/quote assets
+async function getInstrument(instrumentId: string) {
   const instrument = await prisma.instrument.findUnique({
-    where: { id: data.instrumentId },
+    where: { id: instrumentId },
     include: {
       quoteAsset: true,
       underlyingAsset: true,
@@ -66,53 +97,34 @@ export async function placeMatchingEngineOrder(data: {
   if (!instrument || !instrument.quoteAsset || !instrument.underlyingAsset) {
     throw new Error('Instrument or assets not found');
   }
+  return instrument;
+}
 
-  // Pre-check balance using Ledger Service
+async function validateAndReserveFunds(order: Order) {
   try {
-    const walletResponse = await ledgerClient.listWallets({
-      accountId: account.id,
-    });
+    // This calls LedgerService.recordOrder which:
+    // 1. Validates user has sufficient available balance.
+    // 2. Locks the required amount (decrements available, increments locked).
+    // 3. Persists the order in the Ledger DB with status 'Open'.
+    // If validation fails, it throws an error and nothing is recorded.
+    const response = await ledgerClient.recordOrder({ order });
 
-    if (data.side === 'buy' && data.type === 'limit' && data.price) {
-      // Check Quote Asset (e.g. USD) balance
-      const requiredAmount = Number(data.price) * Number(data.quantity);
-      const quoteWallet = walletResponse.wallets?.find(
-        (w) => w.assetId === instrument.quoteAsset!.id,
-      );
-      const availableBalance = Number(quoteWallet?.available || 0);
-
-      if (availableBalance < requiredAmount) {
-        throw new Error(
-          `Insufficient ${instrument.quoteAsset.symbol} balance. Required: ${requiredAmount}, Available: ${availableBalance}`,
-        );
-      }
-    } else if (data.side === 'sell') {
-      // Check Base Asset (e.g. BTC) balance
-      const requiredAmount = Number(data.quantity);
-      const baseWallet = walletResponse.wallets?.find(
-        (w) => w.assetId === instrument.underlyingAsset!.id,
-      );
-      const availableBalance = Number(baseWallet?.available || 0);
-
-      if (availableBalance < requiredAmount) {
-        throw new Error(
-          `Insufficient ${instrument.underlyingAsset.symbol} balance. Required: ${requiredAmount}, Available: ${availableBalance}`,
-        );
-      }
+    if (!response.success) {
+      throw new Error(response.message || 'Ledger validation failed');
     }
+    console.log('Funds reserved in ledger:', response.transactionId);
   } catch (error: any) {
     console.error('Ledger check failed:', error);
-    // Don't block if ledger service is down or error is strictly network related,
-    // unless you want strict enforcement.
-    // For now, re-throwing if it's our "Insufficient balance" error.
-    if (error.message.includes('Insufficient')) {
-      throw error;
-    }
-    // Otherwise, we might log and proceed, letting Matching Engine be final arbiter.
-    // But usually you want to fail here if you can't verify.
-    // throw error;
+    // Propagate error to UI
+    throw new Error(error.message || 'Failed to validate order with ledger');
   }
+}
 
+function constructOrderRequest(
+  data: OrderInput,
+  accountId: string,
+  tenantId?: string,
+): PlaceOrderRequest {
   const orderId = uuidv4();
 
   let price = data.price;
@@ -122,8 +134,8 @@ export async function placeMatchingEngineOrder(data: {
 
   const order: Order = {
     id: orderId,
-    tenantId: currentTenant?.id || undefined,
-    accountId: account.id,
+    tenantId: tenantId || undefined,
+    accountId,
     instrumentId: data.instrumentId,
     side:
       data.side === 'buy'
@@ -142,28 +154,7 @@ export async function placeMatchingEngineOrder(data: {
     updatedAt: Date.now().toString(),
   };
 
-  const request: PlaceOrderRequest = {
-    order,
-  };
-
-  try {
-    const response = await matchingEngineClient.placeOrder(request);
-    console.log('placeOrder response', response);
-
-    if (!response.success) {
-      throw new Error(
-        response.errorMessage || 'Unknown error from matching engine',
-      );
-    }
-
-    return {
-      success: true,
-      orderId: response.orderId,
-    };
-  } catch (error: any) {
-    console.error('placeOrder error', error);
-    throw new Error(error.message || 'Failed to place order');
-  }
+  return { order };
 }
 
 function mapTimeInForce(tif: string): TimeInForce {

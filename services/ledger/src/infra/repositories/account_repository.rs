@@ -19,12 +19,12 @@ impl PostgresAccountRepository {
 struct AccountRow {
     id: Uuid,
     #[sqlx(rename = "tenantId")]
-    tenant_id: String,
+    tenant_id: Uuid,
     #[sqlx(rename = "userId")]
-    user_id: String,
+    user_id: Uuid,
     r#type: String,
     status: String,
-    meta: serde_json::Value,
+    meta: Option<serde_json::Value>,
     #[sqlx(rename = "createdAt")]
     created_at: DateTime<Utc>,
     #[sqlx(rename = "updatedAt")]
@@ -35,11 +35,11 @@ impl From<AccountRow> for Account {
     fn from(row: AccountRow) -> Self {
         Self {
             id: row.id,
-            tenant_id: row.tenant_id,
-            user_id: row.user_id,
+            tenant_id: row.tenant_id.to_string(),
+            user_id: row.user_id.to_string(),
             r#type: row.r#type,
             status: row.status,
-            meta: row.meta,
+            meta: row.meta.unwrap_or(serde_json::json!({})),
             created_at: row.created_at,
             updated_at: row.updated_at,
         }
@@ -49,6 +49,9 @@ impl From<AccountRow> for Account {
 #[async_trait]
 impl AccountRepository for PostgresAccountRepository {
     async fn create(&self, account: Account) -> Result<Account> {
+        let tenant_id = Uuid::parse_str(&account.tenant_id).unwrap_or_default();
+        let user_id = Uuid::parse_str(&account.user_id).map_err(|_| AppError::ValidationError("Invalid user_id".into()))?;
+
         let rec: AccountRow = sqlx::query_as(
             r#"
             INSERT INTO "Account" (id, "tenantId", "userId", type, status, meta, "createdAt", "updatedAt")
@@ -57,8 +60,8 @@ impl AccountRepository for PostgresAccountRepository {
             "#
         )
         .bind(account.id)
-        .bind(account.tenant_id)
-        .bind(account.user_id)
+        .bind(tenant_id)
+        .bind(user_id)
         .bind(account.r#type)
         .bind(account.status)
         .bind(account.meta)
@@ -88,6 +91,9 @@ impl AccountRepository for PostgresAccountRepository {
     }
 
     async fn update(&self, account: Account) -> Result<Account> {
+        let tenant_id = Uuid::parse_str(&account.tenant_id).unwrap_or_default();
+        let user_id = Uuid::parse_str(&account.user_id).map_err(|_| AppError::ValidationError("Invalid user_id".into()))?;
+
         let rec: AccountRow = sqlx::query_as(
             r#"
             UPDATE "Account"
@@ -97,8 +103,8 @@ impl AccountRepository for PostgresAccountRepository {
             "#
         )
         .bind(account.id)
-        .bind(account.tenant_id)
-        .bind(account.user_id)
+        .bind(tenant_id)
+        .bind(user_id)
         .bind(account.r#type)
         .bind(account.status)
         .bind(account.meta)
@@ -130,6 +136,9 @@ impl AccountRepository for PostgresAccountRepository {
     }
 
     async fn list_by_user(&self, user_id: &str) -> Result<Vec<Account>> {
+        log::info!("Listing accounts for user_id: {}", user_id);
+        let user_uuid = Uuid::parse_str(user_id).map_err(|_| AppError::ValidationError("Invalid user_id".into()))?;
+
         let recs: Vec<AccountRow> = sqlx::query_as(
             r#"
             SELECT id, "tenantId", "userId", type, status, meta, "createdAt", "updatedAt"
@@ -137,7 +146,7 @@ impl AccountRepository for PostgresAccountRepository {
             WHERE "userId" = $1
             "#
         )
-        .bind(user_id)
+        .bind(user_uuid)
         .fetch_all(&self.pool)
         .await
         .map_err(AppError::DatabaseError)?;

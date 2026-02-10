@@ -6,91 +6,32 @@ import (
 
 	"github.com/open-exchange/matching_engine/internal/engine"
 	"github.com/open-exchange/matching_engine/internal/events"
+	"github.com/open-exchange/matching_engine/internal/testutil"
 	common "github.com/open-exchange/matching_engine/proto/common"
 	ledger "github.com/open-exchange/matching_engine/proto/ledger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"google.golang.org/grpc"
 )
 
-// MockPublisher is a mock implementation of events.Publisher
-type MockPublisher struct {
-	mock.Mock
+func setupServiceTest() (*MatchingService, *engine.Engine, *testutil.MockLedgerClient, *testutil.MockPublisher) {
+	eng := engine.NewEngine()
+	mockLedger := new(testutil.MockLedgerClient)
+	mockPublisher := new(testutil.MockPublisher)
+	svc := NewMatchingService(eng, mockLedger, mockPublisher)
+	return svc, eng, mockLedger, mockPublisher
 }
-
-func (m *MockPublisher) PublishTrade(ctx context.Context, event events.TradeEvent) error {
-	args := m.Called(ctx, event)
-	return args.Error(0)
-}
-
-func (m *MockPublisher) PublishOrderCancelled(ctx context.Context, event events.OrderCancelledEvent) error {
-	args := m.Called(ctx, event)
-	return args.Error(0)
-}
-
-func (m *MockPublisher) PublishOrderBookEvent(ctx context.Context, event events.OrderBookEvent) error {
-	args := m.Called(ctx, event)
-	return args.Error(0)
-}
-
-// MockLedgerClient is a mock implementation of ledger.LedgerServiceClient
-type MockLedgerClient struct {
-	mock.Mock
-}
-
-func (m *MockLedgerClient) RecordOrder(ctx context.Context, in *ledger.RecordOrderRequest, opts ...grpc.CallOption) (*ledger.RecordOrderResponse, error) {
-	args := m.Called(ctx, in, opts)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*ledger.RecordOrderResponse), args.Error(1)
-}
-
-func (m *MockLedgerClient) GetOpenOrders(ctx context.Context, in *ledger.GetOpenOrdersRequest, opts ...grpc.CallOption) (*ledger.GetOpenOrdersResponse, error) {
-	args := m.Called(ctx, in, opts)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*ledger.GetOpenOrdersResponse), args.Error(1)
-}
-
-func (m *MockLedgerClient) RecordTrade(ctx context.Context, in *ledger.RecordTradeRequest, opts ...grpc.CallOption) (*ledger.RecordTradeResponse, error) {
-	args := m.Called(ctx, in, opts)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*ledger.RecordTradeResponse), args.Error(1)
-}
-
-func (m *MockLedgerClient) CancelOrder(ctx context.Context, in *ledger.CancelOrderRequest, opts ...grpc.CallOption) (*ledger.CancelOrderResponse, error) {
-	args := m.Called(ctx, in, opts)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*ledger.CancelOrderResponse), args.Error(1)
-}
-
 
 func TestPlaceOrder(t *testing.T) {
 	// Setup
-	eng := engine.NewEngine()
-	mockLedger := new(MockLedgerClient)
-	mockPublisher := new(MockPublisher)
-	svc := NewMatchingService(eng, mockLedger, mockPublisher)
+	svc, eng, _, mockPublisher := setupServiceTest()
 
-	order := &common.Order{
-		Id:           "new_order",
-		Side:         common.OrderSide_ORDER_SIDE_BUY,
-		Type:         common.OrderType_ORDER_TYPE_LIMIT,
-		Price:        "55000",
-		Quantity:     "0.5",
-		InstrumentId: "BTC-USD",
-	}
+	order := testutil.NewOrder("new_order", common.OrderSide_ORDER_SIDE_BUY, 55000, 0.5)
 
 	// Expectations
-	mockLedger.On("RecordOrder", mock.Anything, mock.Anything, mock.Anything).Return(&ledger.RecordOrderResponse{
-		Success: true,
-	}, nil)
+	// RecordOrder is no longer called by Matching Service (Ledger calls Matching)
+	// mockLedger.On("RecordOrder", mock.Anything, mock.Anything, mock.Anything).Return(&ledger.RecordOrderResponse{
+	// 	Success: true,
+	// }, nil)
 
 	// Expect PublishOrderBookEvent
 	mockPublisher.On("PublishOrderBookEvent", mock.Anything, mock.Anything).Return(nil)
@@ -111,37 +52,22 @@ func TestPlaceOrder(t *testing.T) {
 
 func TestPlaceOrder_WithMatch(t *testing.T) {
 	// Setup
-	eng := engine.NewEngine()
-	mockLedger := new(MockLedgerClient)
-	mockPublisher := new(MockPublisher)
-	svc := NewMatchingService(eng, mockLedger, mockPublisher)
+	svc, eng, mockLedger, mockPublisher := setupServiceTest()
 
 	// Pre-fill the engine with a sell order
-	eng.ProcessOrder(engine.NewOrderFromProto(&common.Order{
-		Id:           "sell_1",
-		Side:         common.OrderSide_ORDER_SIDE_SELL,
-		Type:         common.OrderType_ORDER_TYPE_LIMIT,
-		Price:        "50000",
-		Quantity:     "1.0",
-		InstrumentId: "BTC-USD",
-		AccountId:    "user1",
-	}), nil)
+	sellOrder := testutil.NewOrder("sell_1", common.OrderSide_ORDER_SIDE_SELL, 50000, 1.0)
+	sellOrder.AccountId = "user1"
+	eng.ProcessOrder(engine.NewOrderFromProto(sellOrder), nil)
 
 	// New Buy Order that matches
-	order := &common.Order{
-		Id:           "buy_1",
-		Side:         common.OrderSide_ORDER_SIDE_BUY,
-		Type:         common.OrderType_ORDER_TYPE_LIMIT,
-		Price:        "50000",
-		Quantity:     "0.5",
-		InstrumentId: "BTC-USD",
-		AccountId:    "user2",
-	}
+	order := testutil.NewOrder("buy_1", common.OrderSide_ORDER_SIDE_BUY, 50000, 0.5)
+	order.AccountId = "user2"
 
 	// Expectations
-	mockLedger.On("RecordOrder", mock.Anything, mock.Anything, mock.Anything).Return(&ledger.RecordOrderResponse{
-		Success: true,
-	}, nil)
+	// RecordOrder is no longer called by Matching Service (Ledger calls Matching)
+	// mockLedger.On("RecordOrder", mock.Anything, mock.Anything, mock.Anything).Return(&ledger.RecordOrderResponse{
+	// 	Success: true,
+	// }, nil)
 
 	// Expect RecordTrade to be called once
 	mockLedger.On("RecordTrade", mock.Anything, mock.MatchedBy(func(req *ledger.RecordTradeRequest) bool {
@@ -172,20 +98,10 @@ func TestPlaceOrder_WithMatch(t *testing.T) {
 
 func TestCancelOrder(t *testing.T) {
 	// Setup
-	eng := engine.NewEngine()
-	mockLedger := new(MockLedgerClient)
-	mockPublisher := new(MockPublisher)
-	svc := NewMatchingService(eng, mockLedger, mockPublisher)
+	svc, eng, mockLedger, mockPublisher := setupServiceTest()
 
 	// Pre-fill
-	eng.ProcessOrder(engine.NewOrderFromProto(&common.Order{
-		Id:           "order_to_cancel",
-		Side:         common.OrderSide_ORDER_SIDE_BUY,
-		Type:         common.OrderType_ORDER_TYPE_LIMIT,
-		Price:        "50000",
-		Quantity:     "1.0",
-		InstrumentId: "BTC-USD",
-	}), nil)
+	eng.ProcessOrder(engine.NewOrderFromProto(testutil.NewOrder("order_to_cancel", common.OrderSide_ORDER_SIDE_BUY, 50000, 1.0)), nil)
 
 	// Expectations
 	mockLedger.On("CancelOrder", mock.Anything, mock.MatchedBy(func(req *ledger.CancelOrderRequest) bool {
@@ -214,29 +130,12 @@ func TestCancelOrder(t *testing.T) {
 
 func TestRecoverState(t *testing.T) {
 	// Setup
-	eng := engine.NewEngine()
-	mockLedger := new(MockLedgerClient)
-	mockPublisher := new(MockPublisher)
-	svc := NewMatchingService(eng, mockLedger, mockPublisher)
+	svc, eng, mockLedger, _ := setupServiceTest()
 
 	// Mock Data: 2 existing orders
 	existingOrders := []*common.Order{
-		{
-			Id:           "order1",
-			Side:         common.OrderSide_ORDER_SIDE_BUY,
-			Type:         common.OrderType_ORDER_TYPE_LIMIT,
-			Price:        "50000",
-			Quantity:     "1.0",
-			InstrumentId: "BTC-USD",
-		},
-		{
-			Id:           "order2",
-			Side:         common.OrderSide_ORDER_SIDE_SELL,
-			Type:         common.OrderType_ORDER_TYPE_LIMIT,
-			Price:        "60000",
-			Quantity:     "2.0",
-			InstrumentId: "BTC-USD",
-		},
+		testutil.NewOrder("order1", common.OrderSide_ORDER_SIDE_BUY, 50000, 1.0),
+		testutil.NewOrder("order2", common.OrderSide_ORDER_SIDE_SELL, 60000, 2.0),
 	}
 
 	// Expectations
@@ -265,10 +164,7 @@ func TestRecoverState(t *testing.T) {
 
 func TestRecoverState_LedgerError(t *testing.T) {
 	// Setup
-	eng := engine.NewEngine()
-	mockLedger := new(MockLedgerClient)
-	mockPublisher := new(MockPublisher)
-	svc := NewMatchingService(eng, mockLedger, mockPublisher)
+	svc, _, mockLedger, _ := setupServiceTest()
 
 	// Expectations
 	mockLedger.On("GetOpenOrders", mock.Anything, mock.Anything, mock.Anything).Return(nil, assert.AnError)

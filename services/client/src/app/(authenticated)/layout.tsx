@@ -7,6 +7,7 @@ import { DesignSystemProvider } from '@/providers/design-system';
 import { getDictionary } from '@/translation/getDictionary';
 import { getLocaleFromCookies } from '@/translation/getLocaleFromCookies';
 import { appContextForReact } from 'src/shared/controller/appContext';
+import { LedgerProvider } from 'src/contexts/LedgerProvider';
 
 export async function generateMetadata() {
   const locale = getLocaleFromCookies(cookies());
@@ -40,8 +41,10 @@ export default async function DashboardLayout({
       disableTransitionOnChange
     >
       <DesignSystemProvider>
-        <Navbar currentUser={context.currentUser} />
-        <main className="min-h-screen bg-background">{children}</main>
+        <LedgerProvider>
+          <Navbar currentUser={context.currentUser} />
+          <main className="min-h-screen bg-background">{children}</main>
+        </LedgerProvider>
       </DesignSystemProvider>
     </ThemeProvider>
   );
