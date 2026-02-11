@@ -5,6 +5,8 @@ use super::repository::OrderRepository;
 use crate::error::{Result, AppError};
 use crate::domain::wallets::WalletService;
 use crate::domain::assets::AssetService;
+use rust_decimal::Decimal;
+use std::str::FromStr;
 
 use std::fmt;
 
@@ -44,9 +46,9 @@ impl OrderService {
         let instr_uuid = order.instrument_id.to_string();
         if let Some(instrument) = self.asset_service.get_instrument(&instr_uuid).await {
             let (required_asset_id, required_amount) = if order.side == "buy" {
-                (instrument.quote_asset_id, order.price * order.quantity)
+                (instrument.quote_asset_id.clone(), order.price * order.quantity)
             } else {
-                (instrument.underlying_asset_id, order.quantity)
+                (instrument.underlying_asset_id.clone(), order.quantity)
             };
 
             let account_uuid = order.account_id.to_string();
@@ -56,7 +58,7 @@ impl OrderService {
                 .map_err(|e| AppError::Internal(e.to_string()))?;
 
             if let Some(mut wallet) = wallet_opt {
-                let available: f64 = wallet.available.parse().unwrap_or(0.0);
+                let available = Decimal::from_str(&wallet.available).unwrap_or(Decimal::ZERO);
                 if available < required_amount {
                     return Err(AppError::ValidationError(format!(
                         "Insufficient funds. Required: {}, Available: {}", 
@@ -65,7 +67,7 @@ impl OrderService {
                 }
 
                 // Lock funds
-                let locked: f64 = wallet.locked.parse().unwrap_or(0.0);
+                let locked = Decimal::from_str(&wallet.locked).unwrap_or(Decimal::ZERO);
                 wallet.available = (available - required_amount).to_string();
                 wallet.locked = (locked + required_amount).to_string();
                 wallet.updated_at = chrono::Utc::now().timestamp_millis();
@@ -95,7 +97,7 @@ impl OrderService {
         self.repo.list_open().await
     }
 
-    pub async fn fill_order(&self, id: Uuid, fill_qty: f64, _fill_price: f64) -> Result<()> {
+    pub async fn fill_order(&self, id: Uuid, fill_qty: Decimal, _fill_price: Decimal) -> Result<()> {
         if let Some(order) = self.repo.get(id).await? {
             let new_filled = order.filled_quantity + fill_qty;
             let status = if new_filled >= order.quantity {

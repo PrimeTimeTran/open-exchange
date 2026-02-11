@@ -4,6 +4,9 @@ use uuid::Uuid;
 use crate::domain::wallets::{Wallet, WalletRepository};
 use crate::error::{AppError, Result};
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
+use std::str::FromStr;
+use sqlx::{Transaction, Postgres};
 
 #[derive(Debug)]
 pub struct PostgresWalletRepository {
@@ -25,9 +28,9 @@ struct WalletRow {
     account_id: Uuid,
     #[sqlx(rename = "assetId")]
     asset_id: Uuid,
-    available: Option<f64>,
-    locked: Option<f64>,
-    total: Option<f64>,
+    available: Option<Decimal>,
+    locked: Option<Decimal>,
+    total: Option<Decimal>,
     version: Option<i32>,
     meta: Option<serde_json::Value>,
     #[sqlx(rename = "createdAt")]
@@ -44,9 +47,9 @@ impl From<WalletRow> for Wallet {
             user_id: "".to_string(),
             account_id: row.account_id.to_string(),
             asset_id: row.asset_id.to_string(),
-            available: row.available.unwrap_or(0.0).to_string(),
-            locked: row.locked.unwrap_or(0.0).to_string(),
-            total: row.total.unwrap_or(0.0).to_string(),
+            available: row.available.unwrap_or_default().to_string(),
+            locked: row.locked.unwrap_or_default().to_string(),
+            total: row.total.unwrap_or_default().to_string(),
             version: row.version.unwrap_or(1),
             status: "active".to_string(),
             meta: row.meta.unwrap_or(serde_json::json!({})).to_string(),
@@ -68,7 +71,7 @@ impl WalletRepository for PostgresWalletRepository {
             INSERT INTO "Wallet" (id, "tenantId", "accountId", "assetId", available, locked, total, version, meta, "createdAt", "updatedAt")
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING id, "tenantId", "accountId", "assetId", 
-                      CAST(available AS FLOAT8), CAST(locked AS FLOAT8), CAST(total AS FLOAT8), 
+                      available, locked, total, 
                       version, meta, "createdAt", "updatedAt"
             "#
         )
@@ -76,9 +79,9 @@ impl WalletRepository for PostgresWalletRepository {
         .bind(tenant_id)
         .bind(account_id)
         .bind(asset_id)
-        .bind(wallet.available.parse::<f64>().unwrap_or(0.0))
-        .bind(wallet.locked.parse::<f64>().unwrap_or(0.0))
-        .bind(wallet.total.parse::<f64>().unwrap_or(0.0))
+        .bind(Decimal::from_str(&wallet.available).unwrap_or_default())
+        .bind(Decimal::from_str(&wallet.locked).unwrap_or_default())
+        .bind(Decimal::from_str(&wallet.total).unwrap_or_default())
         .bind(wallet.version)
         .bind(serde_json::from_str::<serde_json::Value>(&wallet.meta).unwrap_or(serde_json::json!({})))
         .bind(chrono::Utc::now())
@@ -94,7 +97,7 @@ impl WalletRepository for PostgresWalletRepository {
         let rec: Option<WalletRow> = sqlx::query_as(
             r#"
             SELECT id, "tenantId", "accountId", "assetId", 
-                   CAST(available AS FLOAT8), CAST(locked AS FLOAT8), CAST(total AS FLOAT8), 
+                   available, locked, total, 
                    version, meta, "createdAt", "updatedAt"
             FROM "Wallet"
             WHERE id = $1
@@ -115,7 +118,7 @@ impl WalletRepository for PostgresWalletRepository {
         let rec: Option<WalletRow> = sqlx::query_as(
             r#"
             SELECT id, "tenantId", "accountId", "assetId", 
-                   CAST(available AS FLOAT8), CAST(locked AS FLOAT8), CAST(total AS FLOAT8), 
+                   available, locked, total, 
                    version, meta, "createdAt", "updatedAt"
             FROM "Wallet"
             WHERE "accountId" = $1 AND "assetId" = $2
@@ -124,6 +127,28 @@ impl WalletRepository for PostgresWalletRepository {
         .bind(acc_uuid)
         .bind(asset_uuid)
         .fetch_optional(&self.pool)
+        .await
+        .map_err(AppError::DatabaseError)?;
+
+        Ok(rec.map(|r| r.into()))
+    }
+
+    async fn get_by_account_and_asset_with_tx(&self, tx: &mut Transaction<'_, Postgres>, account_id: &str, asset_id: &str) -> Result<Option<Wallet>> {
+        let acc_uuid = Uuid::parse_str(account_id).map_err(|_| AppError::ValidationError("Invalid account_id".into()))?;
+        let asset_uuid = Uuid::parse_str(asset_id).map_err(|_| AppError::ValidationError("Invalid asset_id".into()))?;
+
+        let rec: Option<WalletRow> = sqlx::query_as(
+            r#"
+            SELECT id, "tenantId", "accountId", "assetId", 
+                   available, locked, total, 
+                   version, meta, "createdAt", "updatedAt"
+            FROM "Wallet"
+            WHERE "accountId" = $1 AND "assetId" = $2
+            "#
+        )
+        .bind(acc_uuid)
+        .bind(asset_uuid)
+        .fetch_optional(&mut **tx)
         .await
         .map_err(AppError::DatabaseError)?;
 
@@ -139,16 +164,41 @@ impl WalletRepository for PostgresWalletRepository {
             SET available = $2, locked = $3, total = $4, "updatedAt" = $5
             WHERE id = $1
             RETURNING id, "tenantId", "accountId", "assetId", 
-                      CAST(available AS FLOAT8), CAST(locked AS FLOAT8), CAST(total AS FLOAT8), 
+                      available, locked, total, 
                       version, meta, "createdAt", "updatedAt"
             "#
         )
         .bind(id)
-        .bind(wallet.available.parse::<f64>().unwrap_or(0.0))
-        .bind(wallet.locked.parse::<f64>().unwrap_or(0.0))
-        .bind(wallet.total.parse::<f64>().unwrap_or(0.0))
+        .bind(Decimal::from_str(&wallet.available).unwrap_or_default())
+        .bind(Decimal::from_str(&wallet.locked).unwrap_or_default())
+        .bind(Decimal::from_str(&wallet.total).unwrap_or_default())
         .bind(chrono::Utc::now())
         .fetch_one(&self.pool)
+        .await
+        .map_err(AppError::DatabaseError)?;
+
+        Ok(rec.into())
+    }
+
+    async fn update_with_tx(&self, tx: &mut Transaction<'_, Postgres>, wallet: Wallet) -> Result<Wallet> {
+        let id = Uuid::parse_str(&wallet.id).map_err(|_| AppError::ValidationError("Invalid wallet id".into()))?;
+        
+        let rec: WalletRow = sqlx::query_as(
+            r#"
+            UPDATE "Wallet"
+            SET available = $2, locked = $3, total = $4, "updatedAt" = $5
+            WHERE id = $1
+            RETURNING id, "tenantId", "accountId", "assetId", 
+                      available, locked, total, 
+                      version, meta, "createdAt", "updatedAt"
+            "#
+        )
+        .bind(id)
+        .bind(Decimal::from_str(&wallet.available).unwrap_or_default())
+        .bind(Decimal::from_str(&wallet.locked).unwrap_or_default())
+        .bind(Decimal::from_str(&wallet.total).unwrap_or_default())
+        .bind(chrono::Utc::now())
+        .fetch_one(&mut **tx)
         .await
         .map_err(AppError::DatabaseError)?;
 
@@ -174,7 +224,7 @@ impl WalletRepository for PostgresWalletRepository {
         let recs: Vec<WalletRow> = sqlx::query_as(
             r#"
             SELECT id, "tenantId", "accountId", "assetId", 
-                   CAST(available AS FLOAT8), CAST(locked AS FLOAT8), CAST(total AS FLOAT8), 
+                   available, locked, total, 
                    version, meta, "createdAt", "updatedAt"
             FROM "Wallet"
             WHERE "accountId" = $1

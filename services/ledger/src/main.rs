@@ -5,7 +5,6 @@ use tonic::transport::Server;
 use ledger::config::Config;
 use ledger::{infra, system};
 use ledger::api::{
-    hello::MyGreeter,
     orders::OrderServiceImpl,
     accounts::AccountServiceImpl,
     wallets::WalletServiceImpl,
@@ -31,10 +30,11 @@ use ledger::infra::repositories::{
     PostgresAccountRepository, 
     PostgresWalletRepository,
     PostgresAssetRepository,
-    PostgresInstrumentRepository
+    PostgresInstrumentRepository,
+    PostgresFillRepository,
+    PostgresLedgerRepository
 };
 use ledger::proto::{
-    hello_world::greeter_server::GreeterServer,
     ledger::{
         order_service_server::OrderServiceServer,
         account_service_server::AccountServiceServer,
@@ -66,6 +66,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let wallet_repo = Arc::new(PostgresWalletRepository::new(db_pool.clone()));
     let asset_repo = Arc::new(PostgresAssetRepository::new(db_pool.clone()));
     let instrument_repo = Arc::new(PostgresInstrumentRepository::new(db_pool.clone()));
+    let fill_repo = Arc::new(PostgresFillRepository::new(db_pool.clone()));
+
+    let ledger_repo = Arc::new(PostgresLedgerRepository::new(db_pool.clone()));
 
     // Services (Domain)
     let wallet_service = Arc::new(WalletService::new(wallet_repo));
@@ -85,7 +88,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let trade_processor = Arc::new(TradeProcessor::new(
         order_repo.clone(), 
         instrument_repo.clone(), 
-        ledger_service.clone()
+        ledger_service.clone(),
+        wallet_service.clone(),
+        fill_repo.clone(),
+        ledger_repo.clone(),
     ));
 
     // Matching Engine Connection
@@ -115,7 +121,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     let addr = format!("[::]:{}", config.port).parse()?;
-    let greeter = MyGreeter::default();
 
     // API Services
     let order_impl = OrderServiceImpl::new(order_service, asset_service.clone(), matching_client);
@@ -130,7 +135,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("LedgerService listening on {}", addr);
 
     Server::builder()
-        .add_service(GreeterServer::new(greeter))
         .add_service(OrderServiceServer::new(order_impl))
         .add_service(AccountServiceServer::new(account_impl))
         .add_service(WalletServiceServer::new(wallet_impl))

@@ -9,6 +9,9 @@ use crate::proto::ledger::order_service_server::OrderService;
 use crate::proto::matching::matching_client::MatchingClient;
 use crate::domain::orders::{OrderService as OrderDomainService, Order};
 use crate::domain::assets::AssetService;
+use rust_decimal::Decimal;
+use rust_decimal::MathematicalOps;
+use std::str::FromStr;
 
 pub struct OrderServiceImpl {
     order_service: Arc<OrderDomainService>,
@@ -50,20 +53,24 @@ impl OrderService for OrderServiceImpl {
                 let base_decimals = self.asset_service.get_asset(&instrument.underlying_asset_id).await.unwrap_or(None).map(|a| a.decimals).unwrap_or(0);
                 let quote_decimals = self.asset_service.get_asset(&instrument.quote_asset_id).await.unwrap_or(None).map(|a| a.decimals).unwrap_or(0);
                 
-                let quantity_raw = proto_order.quantity.parse::<f64>().unwrap_or(0.0);
-                let price_raw = proto_order.price.parse::<f64>().unwrap_or(0.0);
+                let quantity_raw = Decimal::from_str(&proto_order.quantity).unwrap_or(Decimal::ZERO);
+                let price_raw = Decimal::from_str(&proto_order.price).unwrap_or(Decimal::ZERO);
                 
                 // Scaling logic:
                 // Quantity (atomic) = Quantity (major) * 10^base_decimals
                 // Price (atomic quote per atomic base) = Price (major) * 10^(quote_decimals - base_decimals)
                 
-                let q_scaled = (quantity_raw * 10f64.powi(base_decimals)).round();
-                let p_scaled = price_raw * 10f64.powi(quote_decimals - base_decimals);
+                let base_scale = Decimal::from(10).powi(base_decimals as i64);
+                let quote_scale = Decimal::from(10).powi(quote_decimals as i64);
+                
+                let q_scaled = (quantity_raw * base_scale).round();
+                let p_scaled = price_raw * quote_scale / base_scale;
                 
                 (q_scaled, p_scaled)
             } else {
                     // Fallback if instrument not found
-                    (proto_order.quantity.parse().unwrap_or(0.0), proto_order.price.parse().unwrap_or(0.0))
+                    (Decimal::from_str(&proto_order.quantity).unwrap_or(Decimal::ZERO), 
+                     Decimal::from_str(&proto_order.price).unwrap_or(Decimal::ZERO))
             };
 
             // Convert Proto Enum (i32) to Domain String
@@ -91,8 +98,8 @@ impl OrderService for OrderServiceImpl {
                 quantity: quantity_scaled,
                 price: price_scaled,
                 status: status_str,
-                filled_quantity: proto_order.quantity_filled.parse().unwrap_or(0.0),
-                average_fill_price: 0.0,
+                filled_quantity: Decimal::from_str(&proto_order.quantity_filled).unwrap_or(Decimal::ZERO),
+                average_fill_price: Decimal::ZERO,
                 meta: serde_json::from_str(&proto_order.meta).unwrap_or(serde_json::json!({})),
                 created_at: chrono::Utc::now(),
                 updated_at: chrono::Utc::now(),
@@ -186,9 +193,12 @@ impl OrderService for OrderServiceImpl {
                 let base_decimals = self.asset_service.get_asset(&instrument.underlying_asset_id).await.unwrap_or(None).map(|a| a.decimals).unwrap_or(0);
                 let quote_decimals = self.asset_service.get_asset(&instrument.quote_asset_id).await.unwrap_or(None).map(|a| a.decimals).unwrap_or(0);
                 
-                let q_unscaled = o.quantity / 10f64.powi(base_decimals);
-                let p_unscaled = o.price / 10f64.powi(quote_decimals - base_decimals);
-                let f_unscaled = o.filled_quantity / 10f64.powi(base_decimals);
+                let base_scale = Decimal::from(10).powi(base_decimals as i64);
+                let quote_scale = Decimal::from(10).powi(quote_decimals as i64);
+                
+                let q_unscaled = o.quantity / base_scale;
+                let p_unscaled = o.price * base_scale / quote_scale;
+                let f_unscaled = o.filled_quantity / base_scale;
                 
                 (q_unscaled.to_string(), p_unscaled.to_string(), f_unscaled.to_string())
             } else {
@@ -247,16 +257,20 @@ impl OrderService for OrderServiceImpl {
             let base_decimals = self.asset_service.get_asset(&instrument.underlying_asset_id).await.unwrap_or(None).map(|a| a.decimals).unwrap_or(0);
             let quote_decimals = self.asset_service.get_asset(&instrument.quote_asset_id).await.unwrap_or(None).map(|a| a.decimals).unwrap_or(0);
             
-            let quantity_raw = req.quantity.parse::<f64>().unwrap_or(0.0);
-            let price_raw = req.price.parse::<f64>().unwrap_or(0.0);
+            let quantity_raw = Decimal::from_str(&req.quantity).unwrap_or(Decimal::ZERO);
+            let price_raw = Decimal::from_str(&req.price).unwrap_or(Decimal::ZERO);
             
-            let q_scaled = (quantity_raw * 10f64.powi(base_decimals)).round();
-            let p_scaled = price_raw * 10f64.powi(quote_decimals - base_decimals);
+            let base_scale = Decimal::from(10).powi(base_decimals as i64);
+            let quote_scale = Decimal::from(10).powi(quote_decimals as i64);
+            
+            let q_scaled = (quantity_raw * base_scale).round();
+            let p_scaled = price_raw * quote_scale / base_scale;
             
             (q_scaled, p_scaled)
         } else {
              // Fallback if instrument not found
-             (req.quantity.parse().unwrap_or(0.0), req.price.parse().unwrap_or(0.0))
+             (Decimal::from_str(&req.quantity).unwrap_or(Decimal::ZERO), 
+              Decimal::from_str(&req.price).unwrap_or(Decimal::ZERO))
         };
 
         // Update Maker Order

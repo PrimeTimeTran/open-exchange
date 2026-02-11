@@ -1,11 +1,14 @@
-use tonic::{Request, Response, Status};
-use tonic::transport::Channel;
 use uuid::Uuid;
+use tonic::transport::Channel;
+use tonic::{Request, Response, Status};
 use crate::proto::ledger::*;
 use crate::proto::common::{OrderSide, OrderStatus};
 use crate::proto::matching::matching_client::MatchingClient;
 use crate::domain::orders::{OrderService, Order};
 use crate::domain::assets::AssetService;
+use rust_decimal::Decimal;
+use std::str::FromStr;
+use rust_decimal::prelude::ToPrimitive;
 
 pub async fn record_order(
     order_service: &OrderService,
@@ -31,8 +34,8 @@ pub async fn record_order(
             let base_decimals = asset_service.get_asset(&instrument.underlying_asset_id).await.unwrap_or(None).map(|a| a.decimals).unwrap_or(0);
             let quote_decimals = asset_service.get_asset(&instrument.quote_asset_id).await.unwrap_or(None).map(|a| a.decimals).unwrap_or(0);
             
-            let quantity_raw = proto_order.quantity.parse::<f64>().unwrap_or(0.0);
-            let price_raw = proto_order.price.parse::<f64>().unwrap_or(0.0);
+            let quantity_raw = Decimal::from_str(&proto_order.quantity).map_err(|_| Status::invalid_argument("Invalid quantity format"))?;
+            let price_raw = Decimal::from_str(&proto_order.price).map_err(|_| Status::invalid_argument("Invalid price format"))?;
 
             println!("Ledger [Scaling]: Instrument ID: {}", proto_order.instrument_id);
             println!("Ledger [Scaling]: Base Decimals: {}, Quote Decimals: {}", base_decimals, quote_decimals);
@@ -42,15 +45,18 @@ pub async fn record_order(
             // Quantity (atomic) = Quantity (major) * 10^base_decimals
             // Price (atomic quote per atomic base) = Price (major) * 10^(quote_decimals - base_decimals)
             
-            let q_scaled = (quantity_raw * 10f64.powi(base_decimals)).round();
-            let p_scaled = price_raw * 10f64.powi(quote_decimals - base_decimals);
+            let base_multiplier = Decimal::from(10).powi(base_decimals as i64);
+            let quote_multiplier = Decimal::from(10).powi((quote_decimals - base_decimals) as i64);
+
+            let q_scaled = (quantity_raw * base_multiplier).round();
+            let p_scaled = price_raw * quote_multiplier;
             
             println!("Ledger [Scaling]: Scaled Quantity: {}, Scaled Price: {}", q_scaled, p_scaled);
 
             (q_scaled, p_scaled)
         } else {
                 // Fallback if instrument not found
-                (proto_order.quantity.parse().unwrap_or(0.0), proto_order.price.parse().unwrap_or(0.0))
+                (Decimal::from_str(&proto_order.quantity).unwrap_or_default(), Decimal::from_str(&proto_order.price).unwrap_or_default())
         };
 
         // Convert Proto Enum (i32) to Domain String
@@ -78,8 +84,8 @@ pub async fn record_order(
             quantity: quantity_scaled,
             price: price_scaled,
             status: status_str,
-            filled_quantity: proto_order.quantity_filled.parse().unwrap_or(0.0),
-            average_fill_price: 0.0,
+            filled_quantity: Decimal::from_str(&proto_order.quantity_filled).unwrap_or_default(),
+            average_fill_price: Decimal::default(),
             meta: serde_json::from_str(&proto_order.meta).unwrap_or(serde_json::json!({})),
             created_at: chrono::Utc::now(),
             updated_at: chrono::Utc::now(),

@@ -1,6 +1,14 @@
 use std::sync::Arc;
 use tonic::Request;
 use uuid::Uuid;
+use rust_decimal::Decimal;
+use std::str::FromStr;
+
+pub fn assert_decimal(left: &str, right: &str) {
+    let l = Decimal::from_str(left).unwrap_or_else(|_| panic!("Invalid decimal left: {}", left));
+    let r = Decimal::from_str(right).unwrap_or_else(|_| panic!("Invalid decimal right: {}", right));
+    assert_eq!(l, r, "Decimals not equal: {} != {}", left, right);
+}
 
 use ledger::api::{
     orders::OrderServiceImpl,

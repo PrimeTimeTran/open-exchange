@@ -8,6 +8,8 @@ use crate::domain::accounts::{Account, AccountRepository};
 use crate::domain::orders::{Order, OrderRepository};
 use crate::domain::wallets::{Wallet, WalletRepository};
 use crate::error::{AppError, Result};
+use rust_decimal::Decimal;
+use sqlx::{Transaction, Postgres};
 
 // --- InMemoryAccountRepository ---
 
@@ -102,7 +104,7 @@ impl OrderRepository for InMemoryOrderRepository {
         }
     }
 
-    async fn update_filled_amount(&self, id: Uuid, filled: f64) -> Result<()> {
+    async fn update_filled_amount(&self, id: Uuid, filled: Decimal) -> Result<()> {
         let mut orders = self.orders.lock().unwrap();
         if let Some(order) = orders.iter_mut().find(|o| o.id == id) {
             order.filled_quantity = filled;
@@ -156,6 +158,10 @@ impl WalletRepository for InMemoryWalletRepository {
         Ok(wallets.iter().find(|w| w.account_id == account_id && w.asset_id == asset_id).cloned())
     }
 
+    async fn get_by_account_and_asset_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, account_id: &str, asset_id: &str) -> Result<Option<Wallet>> {
+        self.get_by_account_and_asset(account_id, asset_id).await
+    }
+
     async fn update(&self, wallet: Wallet) -> Result<Wallet> {
         let mut wallets = self.wallets.lock().unwrap();
         if let Some(pos) = wallets.iter().position(|w| w.id == wallet.id) {
@@ -164,6 +170,10 @@ impl WalletRepository for InMemoryWalletRepository {
         } else {
             Err(AppError::NotFound(format!("Wallet {} not found", wallet.id)))
         }
+    }
+
+    async fn update_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, wallet: Wallet) -> Result<Wallet> {
+        self.update(wallet).await
     }
 
     async fn delete(&self, id: Uuid) -> Result<()> {

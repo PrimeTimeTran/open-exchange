@@ -4,6 +4,7 @@ use uuid::Uuid;
 use crate::domain::orders::{Order, OrderRepository};
 use crate::error::{AppError, Result};
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 
 pub struct PostgresOrderRepository {
     pool: PgPool,
@@ -25,11 +26,11 @@ struct OrderRow {
     #[sqlx(rename = "instrumentId")]
     instrument_id: Uuid,
     side: String,
-    quantity: f64,
-    price: f64,
+    quantity: Decimal,
+    price: Decimal,
     status: String,
     #[sqlx(rename = "quantityFilled")]
-    filled_quantity: f64,
+    filled_quantity: Decimal,
     meta: Option<serde_json::Value>,
     #[sqlx(rename = "createdAt")]
     created_at: DateTime<Utc>,
@@ -49,7 +50,7 @@ impl From<OrderRow> for Order {
             price: row.price,
             status: row.status,
             filled_quantity: row.filled_quantity,
-            average_fill_price: 0.0,
+            average_fill_price: Decimal::ZERO,
             meta: row.meta.unwrap_or(serde_json::json!({})),
             created_at: row.created_at,
             updated_at: row.updated_at,
@@ -93,7 +94,7 @@ impl OrderRepository for PostgresOrderRepository {
     async fn get(&self, id: Uuid) -> Result<Option<Order>> {
         let rec: Option<OrderRow> = sqlx::query_as(
             r#"
-            SELECT id, "tenantId", "accountId", "instrumentId", side, CAST(quantity AS FLOAT8), CAST(price AS FLOAT8), status, CAST("quantityFilled" AS FLOAT8), meta, "createdAt", "updatedAt"
+            SELECT id, "tenantId", "accountId", "instrumentId", side, quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt"
             FROM "Order"
             WHERE id = $1
             "#
@@ -124,21 +125,17 @@ impl OrderRepository for PostgresOrderRepository {
         Ok(())
     }
 
-    async fn update_filled_amount(&self, id: Uuid, filled_delta: f64) -> Result<()> {
+    async fn update_filled_amount(&self, id: Uuid, filled: Decimal) -> Result<()> {
         let result = sqlx::query(
             r#"
             UPDATE "Order" 
-            SET "quantityFilled" = "quantityFilled" + $2,
-                status = CASE 
-                    WHEN "quantityFilled" + $2 >= quantity THEN 'filled' 
-                    ELSE 'partial' 
-                END,
+            SET "quantityFilled" = $2,
                 "updatedAt" = $3
             WHERE id = $1
             "#
         )
         .bind(id)
-        .bind(filled_delta)
+        .bind(filled)
         .bind(chrono::Utc::now())
         .execute(&self.pool)
         .await
@@ -153,7 +150,7 @@ impl OrderRepository for PostgresOrderRepository {
     async fn list_open(&self) -> Result<Vec<Order>> {
         let recs: Vec<OrderRow> = sqlx::query_as(
             r#"
-            SELECT id, "tenantId", "accountId", "instrumentId", side, CAST(quantity AS FLOAT8), CAST(price AS FLOAT8), status, CAST("quantityFilled" AS FLOAT8), meta, "createdAt", "updatedAt"
+            SELECT id, "tenantId", "accountId", "instrumentId", side, quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt"
             FROM "Order"
             WHERE status = 'new' OR status = 'partial' OR status = 'open'
             "#

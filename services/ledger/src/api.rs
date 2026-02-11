@@ -1,4 +1,3 @@
-pub mod hello;
 pub mod orders;
 pub mod accounts;
 pub mod users;

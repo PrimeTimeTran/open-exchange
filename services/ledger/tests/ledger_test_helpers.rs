@@ -1,12 +1,15 @@
-use ledger::domain::orders::model::Order;
-use ledger::proto::common::{Trade, Instrument};
 use uuid::Uuid;
 use chrono::Utc;
+use ledger::error::Result;
 use std::sync::{Arc, Mutex};
 use async_trait::async_trait;
+use ledger::domain::orders::model::Order;
+use ledger::proto::common::{Trade, Instrument};
 use ledger::domain::orders::repository::OrderRepository;
 use ledger::infra::repositories::InstrumentRepository;
-use ledger::error::Result;
+use rust_decimal::Decimal;
+use rust_decimal::prelude::FromPrimitive;
+use sqlx::{Transaction, Postgres};
 
 #[derive(Debug)]
 pub struct MockOrderRepository {
@@ -39,7 +42,11 @@ impl OrderRepository for MockOrderRepository {
         Ok(())
     }
 
-    async fn update_filled_amount(&self, _id: Uuid, _filled: f64) -> Result<()> {
+    async fn update_filled_amount(&self, id: Uuid, filled: Decimal) -> Result<()> {
+        let mut orders = self.orders.lock().unwrap();
+        if let Some(order) = orders.iter_mut().find(|o| o.id == id) {
+            order.filled_quantity = filled;
+        }
         Ok(())
     }
 
@@ -85,9 +92,150 @@ impl InstrumentRepository for MockInstrumentRepository {
     }
 }
 
+#[derive(Debug)]
+pub struct MockWalletRepository {
+    wallets: Mutex<Vec<ledger::domain::wallets::Wallet>>,
+}
+
+impl MockWalletRepository {
+    pub fn new() -> Self {
+        Self { wallets: Mutex::new(Vec::new()) }
+    }
+
+    #[allow(dead_code)]
+    pub fn add(&self, wallet: ledger::domain::wallets::Wallet) {
+        self.wallets.lock().unwrap().push(wallet);
+    }
+}
+
+#[async_trait]
+impl ledger::domain::wallets::WalletRepository for MockWalletRepository {
+    async fn create(&self, wallet: ledger::domain::wallets::Wallet) -> Result<ledger::domain::wallets::Wallet> {
+        self.wallets.lock().unwrap().push(wallet.clone());
+        Ok(wallet)
+    }
+
+    async fn get(&self, id: Uuid) -> Result<Option<ledger::domain::wallets::Wallet>> {
+        let wallets = self.wallets.lock().unwrap();
+        Ok(wallets.iter().find(|w| w.id == id.to_string()).cloned())
+    }
+
+    async fn get_by_account_and_asset(&self, account_id: &str, asset_id: &str) -> Result<Option<ledger::domain::wallets::Wallet>> {
+        let wallets = self.wallets.lock().unwrap();
+        Ok(wallets.iter().find(|w| w.account_id == account_id && w.asset_id == asset_id).cloned())
+    }
+
+    async fn get_by_account_and_asset_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, account_id: &str, asset_id: &str) -> Result<Option<ledger::domain::wallets::Wallet>> {
+        self.get_by_account_and_asset(account_id, asset_id).await
+    }
+
+    async fn update(&self, wallet: ledger::domain::wallets::Wallet) -> Result<ledger::domain::wallets::Wallet> {
+        let mut wallets = self.wallets.lock().unwrap();
+        if let Some(w) = wallets.iter_mut().find(|w| w.id == wallet.id) {
+            *w = wallet.clone();
+            Ok(wallet)
+        } else {
+            Err(ledger::error::AppError::NotFound("Wallet not found".to_string()))
+        }
+    }
+
+    async fn update_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, wallet: ledger::domain::wallets::Wallet) -> Result<ledger::domain::wallets::Wallet> {
+        self.update(wallet).await
+    }
+
+    async fn delete(&self, id: Uuid) -> Result<()> {
+        let mut wallets = self.wallets.lock().unwrap();
+        wallets.retain(|w| w.id != id.to_string());
+        Ok(())
+    }
+
+    async fn list_by_account(&self, account_id: &str) -> Result<Vec<ledger::domain::wallets::Wallet>> {
+        let wallets = self.wallets.lock().unwrap();
+        Ok(wallets.iter().filter(|w| w.account_id == account_id).cloned().collect())
+    }
+}
+
+#[derive(Debug)]
+pub struct MockFillRepository {
+    fills: Mutex<Vec<ledger::domain::fills::Fill>>,
+}
+
+impl MockFillRepository {
+    pub fn new() -> Self {
+        Self { fills: Mutex::new(Vec::new()) }
+    }
+}
+
+#[async_trait]
+impl ledger::domain::fills::FillRepository for MockFillRepository {
+    async fn create(&self, fill: ledger::domain::fills::Fill) -> Result<ledger::domain::fills::Fill> {
+        self.fills.lock().unwrap().push(fill.clone());
+        Ok(fill)
+    }
+
+    async fn create_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, fill: ledger::domain::fills::Fill) -> Result<ledger::domain::fills::Fill> {
+        self.create(fill).await
+    }
+
+    async fn list_by_order(&self, order_id: Uuid) -> Result<Vec<ledger::domain::fills::Fill>> {
+        let fills = self.fills.lock().unwrap();
+        Ok(fills.iter().filter(|f| f.order_id == order_id).cloned().collect())
+    }
+}
+
+#[derive(Debug)]
+pub struct MockLedgerRepository {
+    events: Mutex<Vec<ledger::proto::common::LedgerEvent>>,
+    entries: Mutex<Vec<ledger::proto::common::LedgerEntry>>,
+}
+
+impl MockLedgerRepository {
+    pub fn new() -> Self {
+        Self {
+            events: Mutex::new(Vec::new()),
+            entries: Mutex::new(Vec::new()),
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn get_events(&self) -> Vec<ledger::proto::common::LedgerEvent> {
+        self.events.lock().unwrap().clone()
+    }
+
+    #[allow(dead_code)]
+    pub fn get_entries(&self) -> Vec<ledger::proto::common::LedgerEntry> {
+        self.entries.lock().unwrap().clone()
+    }
+}
+
+#[async_trait]
+impl ledger::domain::ledger::repository::LedgerRepository for MockLedgerRepository {
+    async fn save_event(&self, event: ledger::proto::common::LedgerEvent) -> Result<ledger::proto::common::LedgerEvent> {
+        self.events.lock().unwrap().push(event.clone());
+        Ok(event)
+    }
+
+    async fn save_event_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, event: ledger::proto::common::LedgerEvent) -> Result<ledger::proto::common::LedgerEvent> {
+        self.save_event(event).await
+    }
+
+    async fn save_entries(&self, entries: Vec<ledger::proto::common::LedgerEntry>) -> Result<Vec<ledger::proto::common::LedgerEntry>> {
+        let mut store = self.entries.lock().unwrap();
+        store.extend(entries.clone());
+        Ok(entries)
+    }
+
+    async fn save_entries_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, entries: Vec<ledger::proto::common::LedgerEntry>) -> Result<Vec<ledger::proto::common::LedgerEntry>> {
+        self.save_entries(entries).await
+    }
+}
+
 pub struct LedgerTestContext {
     pub repo: Arc<MockOrderRepository>,
     pub instrument_repo: Arc<MockInstrumentRepository>,
+    pub wallet_repo: Arc<MockWalletRepository>,
+    pub fill_repo: Arc<MockFillRepository>,
+    pub ledger_repo: Arc<MockLedgerRepository>,
     pub tenant_id: Uuid,
     pub account_a: Uuid,
     pub account_b: Uuid,
@@ -98,6 +246,9 @@ impl LedgerTestContext {
     pub fn new() -> Self {
         let instrument_id = Uuid::new_v4();
         let instrument_repo = Arc::new(MockInstrumentRepository::new());
+        let wallet_repo = Arc::new(MockWalletRepository::new());
+        let fill_repo = Arc::new(MockFillRepository::new());
+        let ledger_repo = Arc::new(MockLedgerRepository::new());
         
         // Add default BTC-USD instrument
         instrument_repo.add(Instrument {
@@ -116,6 +267,9 @@ impl LedgerTestContext {
         Self {
             repo: Arc::new(MockOrderRepository::new()),
             instrument_repo,
+            wallet_repo,
+            fill_repo,
+            ledger_repo,
             tenant_id: Uuid::new_v4(),
             account_a: Uuid::new_v4(),
             account_b: Uuid::new_v4(),
@@ -136,11 +290,11 @@ impl LedgerTestContext {
             account_id,
             instrument_id: self.instrument_id,
             side: side.to_string(),
-            quantity,
-            price,
+            quantity: Decimal::from_f64(quantity).unwrap_or(Decimal::ZERO),
+            price: Decimal::from_f64(price).unwrap_or(Decimal::ZERO),
             status: "open".to_string(),
-            filled_quantity: 0.0,
-            average_fill_price: 0.0,
+            filled_quantity: Decimal::ZERO,
+            average_fill_price: Decimal::ZERO,
             meta: serde_json::json!({}),
             created_at: Utc::now(),
             updated_at: Utc::now(),
@@ -159,7 +313,7 @@ impl LedgerTestContext {
         Trade {
             id: Uuid::new_v4().to_string(),
             tenant_id: self.tenant_id.to_string(),
-            instrument_id: "BTC-USD".to_string(), // Can be parameterized if needed
+            instrument_id: self.instrument_id.to_string(),
             buy_order_id: buy_order_id.to_string(),
             sell_order_id: sell_order_id.to_string(),
             price: price.to_string(),
@@ -168,5 +322,33 @@ impl LedgerTestContext {
             created_at: Utc::now().timestamp_millis(),
             updated_at: Utc::now().timestamp_millis(),
         }
+    }
+
+    #[allow(dead_code)]
+    pub fn create_wallet(
+        &self,
+        account_id: Uuid,
+        asset_id: &str,
+        available: f64,
+        locked: f64,
+        total: f64,
+    ) -> ledger::domain::wallets::Wallet {
+        let wallet = ledger::domain::wallets::Wallet {
+            id: Uuid::new_v4().to_string(),
+            account_id: account_id.to_string(),
+            asset_id: asset_id.to_string(),
+            available: available.to_string(),
+            locked: locked.to_string(),
+            total: total.to_string(),
+            tenant_id: self.tenant_id.to_string(),
+            user_id: "".to_string(),
+            version: 1,
+            status: "active".to_string(),
+            meta: "{}".to_string(),
+            created_at: Utc::now().timestamp_millis(),
+            updated_at: Utc::now().timestamp_millis(),
+        };
+        self.wallet_repo.add(wallet.clone());
+        wallet
     }
 }

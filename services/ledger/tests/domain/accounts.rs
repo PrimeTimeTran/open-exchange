@@ -108,8 +108,8 @@ async fn test_order_validation_sufficient_funds() {
     let get_wallet_req = Request::new(GetWalletRequest { wallet_id: usd_wallet_id });
     let wallet = ctx.wallet_service.get_wallet(get_wallet_req).await.unwrap().into_inner().wallet.unwrap();
 
-    assert_eq!(wallet.available, "100000"); // 5,100,000 - 5,000,000
-    assert_eq!(wallet.locked, "5000000");
+    super::common::assert_decimal(&wallet.available, "100000"); // 5,100,000 - 5,000,000
+    super::common::assert_decimal(&wallet.locked, "5000000");
 }
 
 #[tokio::test]

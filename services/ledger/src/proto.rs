@@ -1,7 +1,4 @@
 // Centralized module for generated Protobuf code
-pub mod hello_world {
-    tonic::include_proto!("helloworld");
-}
 
 #[allow(dead_code)]
 pub mod common {

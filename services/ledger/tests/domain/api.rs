@@ -123,8 +123,8 @@ async fn test_cancel_order() {
     let get_wallet_req = Request::new(ledger::proto::ledger::GetWalletRequest { wallet_id: usd_wallet_id.clone() });
     let w_locked = ctx.wallet_service.get_wallet(get_wallet_req).await.unwrap().into_inner().wallet.unwrap();
     // 10,000,000 - 5,000,000 = 5,000,000 Available
-    assert_eq!(w_locked.available, "5000000");
-    assert_eq!(w_locked.locked, "5000000");
+    super::common::assert_decimal(&w_locked.available, "5000000");
+    super::common::assert_decimal(&w_locked.locked, "5000000");
 
     // Cancel Order
     let cancel_req = Request::new(CancelOrderRequest {

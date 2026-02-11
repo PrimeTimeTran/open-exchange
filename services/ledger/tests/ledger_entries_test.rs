@@ -1,5 +1,5 @@
-use ledger::domain::ledger::service::LedgerService;
 use std::sync::Arc;
+use ledger::domain::ledger::service::LedgerService;
 
 mod ledger_test_helpers;
 use ledger_test_helpers::LedgerTestContext;
@@ -33,37 +33,41 @@ async fn test_process_trade_creates_entries() {
     // Verify Entries (Expect 6 entries)
     assert_eq!(entries.len(), 6, "Expected 6 ledger entries");
 
-    // Helper to find entry
-    let find_entry = |account_id: String, amount: String, partial_meta: &str| {
-        entries.iter().find(|e| 
+    // Helper to find entry (Updated to handle Decimal string format)
+    let find_entry = |account_id: String, amount: &str, partial_meta: &str| {
+        entries.iter().find(|e| {
+            // Normalize decimal strings by parsing
+            let e_amount: f64 = e.amount.parse().unwrap_or(0.0);
+            let target_amount: f64 = amount.parse().unwrap_or(0.0);
+            
             e.account_id == account_id && 
-            e.amount == amount && 
+            (e_amount - target_amount).abs() < 0.000001 &&
             e.meta.contains(partial_meta)
-        )
+        })
     };
 
     // 1. User A (Buyer) receives +1 BTC
-    let entry_a_btc = find_entry(ctx.account_a.to_string(), "1".to_string(), "BTC");
+    let entry_a_btc = find_entry(ctx.account_a.to_string(), "1", "BTC");
     assert!(entry_a_btc.is_some(), "Missing Entry: User A receives +1 BTC");
 
     // 2. User A (Buyer) pays -30,000 USD
-    let entry_a_usd = find_entry(ctx.account_a.to_string(), "-30000".to_string(), "USD");
+    let entry_a_usd = find_entry(ctx.account_a.to_string(), "-30000", "USD");
     assert!(entry_a_usd.is_some(), "Missing Entry: User A pays -30,000 USD");
 
     // 3. User A (Buyer) pays -30 USD Fee (0.1%)
-    let entry_a_fee = find_entry(ctx.account_a.to_string(), "-30".to_string(), "fee");
+    let entry_a_fee = find_entry(ctx.account_a.to_string(), "-30", "fee");
     assert!(entry_a_fee.is_some(), "Missing Entry: User A pays -30 USD Fee");
 
     // 4. User B (Seller) pays -1 BTC
-    let entry_b_btc = find_entry(ctx.account_b.to_string(), "-1".to_string(), "BTC");
+    let entry_b_btc = find_entry(ctx.account_b.to_string(), "-1", "BTC");
     assert!(entry_b_btc.is_some(), "Missing Entry: User B pays -1 BTC");
 
     // 5. User B (Seller) receives +30,000 USD
-    let entry_b_usd = find_entry(ctx.account_b.to_string(), "30000".to_string(), "USD");
+    let entry_b_usd = find_entry(ctx.account_b.to_string(), "30000", "USD");
     assert!(entry_b_usd.is_some(), "Missing Entry: User B receives +30,000 USD");
 
     // 6. Exchange receives +30 USD Fee Revenue
-    let entry_exchange = find_entry("exchange-account-id".to_string(), "30".to_string(), "revenue");
+    let entry_exchange = find_entry("exchange-account-id".to_string(), "30", "revenue");
     assert!(entry_exchange.is_some(), "Missing Entry: Exchange receives +30 USD Fee Revenue");
 
     println!("All ledger entries verified successfully!");
@@ -159,8 +163,6 @@ async fn test_order_placement_locks_funds() {
 
 #[tokio::test]
 async fn test_trade_processor_flow() {
-    // This test verifies the TradeProcessor orchestration
-    
     // 1. Setup Context
     let ctx = LedgerTestContext::new();
     
@@ -169,7 +171,10 @@ async fn test_trade_processor_flow() {
     let trade_processor = ledger::domain::trade::processor::TradeProcessor::new(
         ctx.repo.clone(),
         ctx.instrument_repo.clone(),
-        ledger_service.clone()
+        ledger_service.clone(),
+        Arc::new(ledger::domain::wallets::WalletService::new(ctx.wallet_repo.clone())),
+        ctx.fill_repo.clone(),
+        ctx.ledger_repo.clone(),
     );
     
     // 3. Data

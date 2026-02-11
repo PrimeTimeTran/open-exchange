@@ -2,6 +2,8 @@ use tonic::{Request, Response, Status};
 use crate::proto::ledger::*;
 use crate::domain::deposits::DepositService;
 use crate::domain::wallets::WalletService;
+use rust_decimal::Decimal;
+use std::str::FromStr;
 
 pub async fn create_deposit(
     deposit_service: &DepositService,
@@ -18,9 +20,9 @@ pub async fn create_deposit(
 
     // Update Wallet Balance
     if let Some(mut wallet) = wallet_service.get_wallet(&req.wallet_id).await.unwrap_or(None) {
-        let current_avail: f64 = wallet.available.parse().unwrap_or(0.0);
-        let deposit_amount: f64 = req.amount.parse().unwrap_or(0.0);
-        let current_total: f64 = wallet.total.parse().unwrap_or(0.0);
+        let current_avail = Decimal::from_str(&wallet.available).unwrap_or_default();
+        let deposit_amount = Decimal::from_str(&req.amount).unwrap_or_default();
+        let current_total = Decimal::from_str(&wallet.total).unwrap_or_default();
         
         wallet.available = (current_avail + deposit_amount).to_string();
         wallet.total = (current_total + deposit_amount).to_string();

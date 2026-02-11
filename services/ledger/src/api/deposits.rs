@@ -4,6 +4,8 @@ use crate::proto::ledger::deposit_service_server::DepositService;
 use crate::domain::deposits::DepositService as DepositDomainService;
 use crate::domain::wallets::WalletService;
 use std::sync::Arc;
+use rust_decimal::Decimal;
+use std::str::FromStr;
 
 pub struct DepositServiceImpl {
     deposit_service: Arc<DepositDomainService>,
@@ -32,9 +34,9 @@ impl DepositService for DepositServiceImpl {
 
         // Update Wallet Balance
         if let Some(mut wallet) = self.wallet_service.get_wallet(&req.wallet_id).await.unwrap_or(None) {
-            let current_avail: f64 = wallet.available.parse().unwrap_or(0.0);
-            let deposit_amount: f64 = req.amount.parse().unwrap_or(0.0);
-            let current_total: f64 = wallet.total.parse().unwrap_or(0.0);
+            let current_avail = Decimal::from_str(&wallet.available).unwrap_or_default();
+            let deposit_amount = Decimal::from_str(&req.amount).unwrap_or_default();
+            let current_total = Decimal::from_str(&wallet.total).unwrap_or_default();
             
             wallet.available = (current_avail + deposit_amount).to_string();
             wallet.total = (current_total + deposit_amount).to_string();

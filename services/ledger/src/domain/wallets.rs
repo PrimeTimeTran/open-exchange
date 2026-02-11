@@ -1,10 +1,16 @@
 use crate::proto::common;
 pub use common::Wallet;
+use common::LedgerEntry;
 use std::sync::Arc;
 use uuid::Uuid;
 use chrono::Utc;
 use async_trait::async_trait;
 use crate::error::Result;
+use serde_json::Value;
+use rust_decimal::Decimal;
+use std::str::FromStr;
+use sqlx::{Transaction, Postgres};
+use crate::error::AppError;
 
 use std::fmt::Debug;
 
@@ -13,7 +19,9 @@ pub trait WalletRepository: Send + Sync + Debug {
     async fn create(&self, wallet: Wallet) -> Result<Wallet>;
     async fn get(&self, id: Uuid) -> Result<Option<Wallet>>;
     async fn get_by_account_and_asset(&self, account_id: &str, asset_id: &str) -> Result<Option<Wallet>>;
+    async fn get_by_account_and_asset_with_tx(&self, tx: &mut Transaction<'_, Postgres>, account_id: &str, asset_id: &str) -> Result<Option<Wallet>>;
     async fn update(&self, wallet: Wallet) -> Result<Wallet>;
+    async fn update_with_tx(&self, tx: &mut Transaction<'_, Postgres>, wallet: Wallet) -> Result<Wallet>;
     async fn delete(&self, id: Uuid) -> Result<()>;
     async fn list_by_account(&self, account_id: &str) -> Result<Vec<Wallet>>;
 }
@@ -72,5 +80,58 @@ impl WalletService {
 
     pub async fn list_wallets(&self, account_id: &str) -> Result<Vec<Wallet>> {
         self.repo.list_by_account(account_id).await
+    }
+
+    pub async fn process_ledger_entry(&self, entry: LedgerEntry) -> Result<()> {
+        let meta: Value = serde_json::from_str(&entry.meta).unwrap_or(serde_json::json!({}));
+        let asset = meta["asset"].as_str().unwrap_or("USD");
+        let entry_type = meta["type"].as_str().unwrap_or("unknown");
+
+        if let Some(mut wallet) = self.get_wallet_by_account_and_asset(&entry.account_id, asset).await? {
+            let entry_amount = Decimal::from_str(&entry.amount).map_err(|_| AppError::ValidationError("Invalid ledger entry amount".into()))?;
+            let current_available = Decimal::from_str(&wallet.available).unwrap_or(Decimal::ZERO);
+            let current_locked = Decimal::from_str(&wallet.locked).unwrap_or(Decimal::ZERO);
+            let current_total = Decimal::from_str(&wallet.total).unwrap_or(Decimal::ZERO);
+
+            match entry_type {
+                "available" => {
+                    wallet.available = (current_available + entry_amount).to_string();
+                    wallet.total = (current_total + entry_amount).to_string();
+                },
+                "locked" => {
+                    wallet.locked = (current_locked + entry_amount).to_string();
+                    wallet.total = (current_total + entry_amount).to_string();
+                },
+                "fee" => {
+                    wallet.available = (current_available + entry_amount).to_string();
+                    wallet.total = (current_total + entry_amount).to_string();
+                },
+                "credit" | "revenue" => {
+                    wallet.available = (current_available + entry_amount).to_string();
+                    wallet.total = (current_total + entry_amount).to_string();
+                },
+                "debit" => {
+                    wallet.locked = (current_locked + entry_amount).to_string();
+                    wallet.total = (current_total + entry_amount).to_string();
+                },
+                _ => {
+                     // Legacy/Default Fallback
+                    if entry_amount < Decimal::ZERO {
+                         // Default to debiting locked
+                         wallet.locked = (current_locked + entry_amount).to_string();
+                         wallet.total = (current_total + entry_amount).to_string();
+                    } else {
+                         // Default to crediting available
+                         wallet.available = (current_available + entry_amount).to_string();
+                         wallet.total = (current_total + entry_amount).to_string();
+                    }
+                }
+            }
+
+            self.update_wallet(wallet).await?;
+        } else {
+            log::warn!("Wallet not found for account {} asset {}", entry.account_id, asset);
+        }
+        Ok(())
     }
 }
