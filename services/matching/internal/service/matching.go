@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -34,6 +35,8 @@ type Store interface {
 	SaveOrderBook(ctx context.Context, ob *engine.OrderBook) error
 	LoadOrderBook(ctx context.Context, instrumentID string) (*engine.OrderBook, error)
 	ListOrderBooks(ctx context.Context) ([]string, error)
+	EnqueueMatches(ctx context.Context, matches interface{}) error
+	DequeueMatches(ctx context.Context) ([]byte, error)
 }
 
 type MatchingService struct {
@@ -45,12 +48,70 @@ type MatchingService struct {
 }
 
 func NewMatchingService(engine *engine.Engine, ledgerClient LedgerClientInterface, settlementClient SettlementClientInterface, publisher events.Publisher, store Store) *MatchingService {
-	return &MatchingService{
+	s := &MatchingService{
 		Engine:           engine,
 		LedgerClient:     ledgerClient,
 		SettlementClient: settlementClient,
 		Publisher:        publisher,
 		Store:            store,
+	}
+	go s.startSettlementWorker()
+	return s
+}
+
+func (s *MatchingService) startSettlementWorker() {
+	log.Println("Settlement Worker Started")
+	ctx := context.Background()
+	for {
+		data, err := s.Store.DequeueMatches(ctx)
+		if err != nil {
+			log.Printf("Settlement Worker: Dequeue failed: %v", err)
+			time.Sleep(1 * time.Second)
+			continue
+		}
+
+		var req ledger.CommitRequest
+		// We actually stored matches slice, but let's see how we encode it.
+		// Assuming we enqueue the whole CommitRequest or just matches.
+		// Let's assume we enqueue just the matches slice for now, OR better, the CommitRequest itself.
+		// Let's modify PlaceOrder to enqueue CommitRequest.
+		
+		// But wait, we need to unmarshal.
+		// If we store []Match, we need to wrap it.
+		
+		// Correction: Let's store the whole CommitRequest for simplicity.
+		if err := json.Unmarshal(data, &req); err != nil {
+			log.Printf("Settlement Worker: Unmarshal failed: %v", err)
+			continue
+		}
+
+		log.Printf("Settlement Worker: Committing %d matches to Ledger...", len(req.Matches))
+		
+		// Retry Loop for Commit
+		backoff := 1 * time.Second
+		maxBackoff := 30 * time.Second
+
+		for {
+			resp, err := s.SettlementClient.Commit(ctx, &req)
+			if err != nil {
+				log.Printf("Settlement Worker: Commit failed (Transport): %v. Retrying in %v...", err, backoff)
+				time.Sleep(backoff)
+				backoff *= 2
+				if backoff > maxBackoff {
+					backoff = maxBackoff
+				}
+				continue
+			}
+			if !resp.Success {
+				log.Printf("Settlement Worker: Commit failed (Logic): %s. CRITICAL: State Corruption Detected.", resp.ErrorMessage)
+				// CRITICAL: The Matching Engine (memory) and Ledger (truth) are now divergent.
+				// The Engine executed a trade that the Ledger says is invalid.
+				// We MUST crash to force a restart and state recovery (reloading orders from Ledger).
+				panic(fmt.Sprintf("CRITICAL: Settlement Logic Error: %s. Forcing restart to recover state.", resp.ErrorMessage))
+			}
+			log.Printf("Settlement Worker: Commit Success. Trade IDs: %v", resp.TradeIds)
+			break
+		}
 	}
 }
 
@@ -82,18 +143,18 @@ func (s *MatchingService) PlaceOrder(ctx context.Context, order *common.Order) (
 		}
 
 		log.Printf("Committing %d trades to Ledger (Settlement)...", len(matches))
-		resp, err := s.SettlementClient.Commit(ctx, &ledger.CommitRequest{
+		
+		commitReq := &ledger.CommitRequest{
 			Matches:  matches,
 			TenantId: "default",
-		})
-
-		if err != nil {
-			// CRITICAL: Engine state updated but Ledger commit failed (Transport Error).
-			log.Printf("CRITICAL: Failed to commit trades to ledger: %v. State may be inconsistent.", err)
-		} else if !resp.Success {
-			// CRITICAL: Ledger processed request but reported failure.
-			log.Printf("CRITICAL: Ledger commit failed: %s. State may be inconsistent.", resp.ErrorMessage)
 		}
+		
+		// 5. The "Outbox" Pattern (Persist & Retry)
+		if err := s.Store.EnqueueMatches(ctx, commitReq); err != nil {
+			log.Printf("CRITICAL: Failed to enqueue matches for settlement: %v. Data risk!", err)
+			return "", fmt.Errorf("failed to persist matches: %w", err)
+		}
+		log.Println("Matches enqueued for settlement.")
 	}
 
 	// 3. Broadcast Order Book Events

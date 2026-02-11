@@ -6,7 +6,13 @@ use async_trait::async_trait;
 use ledger::domain::orders::model::Order;
 use ledger::proto::common::{Trade, Instrument};
 use ledger::domain::orders::repository::OrderRepository;
-use ledger::infra::repositories::InstrumentRepository;
+use ledger::infra::repositories::{InstrumentRepository, AssetRepository};
+use ledger::domain::ledger::service::LedgerService;
+use ledger::domain::wallets::WalletService;
+use ledger::domain::settlement::service::SettlementService;
+use ledger::domain::orders::service::OrderService;
+use ledger::domain::assets::AssetService;
+use ledger::domain::fills::service::FillService;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 use sqlx::{Transaction, Postgres};
@@ -42,12 +48,20 @@ impl OrderRepository for MockOrderRepository {
         Ok(())
     }
 
+    async fn update_status_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, id: Uuid, status: String) -> Result<()> {
+        self.update_status(id, status).await
+    }
+
     async fn update_filled_amount(&self, id: Uuid, filled: Decimal) -> Result<()> {
         let mut orders = self.orders.lock().unwrap();
         if let Some(order) = orders.iter_mut().find(|o| o.id == id) {
             order.filled_quantity = filled;
         }
         Ok(())
+    }
+
+    async fn update_filled_amount_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, id: Uuid, filled: Decimal) -> Result<()> {
+        self.update_filled_amount(id, filled).await
     }
 
     async fn list_open(&self) -> Result<Vec<Order>> {
@@ -89,6 +103,45 @@ impl InstrumentRepository for MockInstrumentRepository {
     async fn create(&self, instrument: Instrument) -> Result<Instrument> {
         self.add(instrument.clone());
         Ok(instrument)
+    }
+}
+
+#[derive(Debug)]
+pub struct MockAssetRepository {
+    assets: Mutex<Vec<ledger::proto::common::Asset>>,
+}
+
+impl MockAssetRepository {
+    pub fn new() -> Self {
+        Self { assets: Mutex::new(Vec::new()) }
+    }
+
+    #[allow(dead_code)]
+    pub fn add(&self, asset: ledger::proto::common::Asset) {
+        self.assets.lock().unwrap().push(asset);
+    }
+}
+
+#[async_trait]
+impl AssetRepository for MockAssetRepository {
+    async fn create(&self, asset: ledger::proto::common::Asset) -> Result<ledger::proto::common::Asset> {
+        self.assets.lock().unwrap().push(asset.clone());
+        Ok(asset)
+    }
+
+    async fn get(&self, id: Uuid) -> Result<Option<ledger::proto::common::Asset>> {
+        let assets = self.assets.lock().unwrap();
+        Ok(assets.iter().find(|a| a.id == id.to_string()).cloned())
+    }
+
+    async fn get_by_symbol(&self, symbol: &str) -> Result<Option<ledger::proto::common::Asset>> {
+        let assets = self.assets.lock().unwrap();
+        Ok(assets.iter().find(|a| a.symbol == symbol).cloned())
+    }
+
+    async fn list(&self) -> Result<Vec<ledger::proto::common::Asset>> {
+        let assets = self.assets.lock().unwrap();
+        Ok(assets.clone())
     }
 }
 
@@ -233,6 +286,7 @@ impl ledger::domain::ledger::repository::LedgerRepository for MockLedgerReposito
 pub struct LedgerTestContext {
     pub repo: Arc<MockOrderRepository>,
     pub instrument_repo: Arc<MockInstrumentRepository>,
+    pub asset_repo: Arc<MockAssetRepository>,
     pub wallet_repo: Arc<MockWalletRepository>,
     pub fill_repo: Arc<MockFillRepository>,
     pub ledger_repo: Arc<MockLedgerRepository>,
@@ -246,6 +300,7 @@ impl LedgerTestContext {
     pub fn new() -> Self {
         let instrument_id = Uuid::new_v4();
         let instrument_repo = Arc::new(MockInstrumentRepository::new());
+        let asset_repo = Arc::new(MockAssetRepository::new());
         let wallet_repo = Arc::new(MockWalletRepository::new());
         let fill_repo = Arc::new(MockFillRepository::new());
         let ledger_repo = Arc::new(MockLedgerRepository::new());
@@ -267,6 +322,7 @@ impl LedgerTestContext {
         Self {
             repo: Arc::new(MockOrderRepository::new()),
             instrument_repo,
+            asset_repo,
             wallet_repo,
             fill_repo,
             ledger_repo,
@@ -350,5 +406,26 @@ impl LedgerTestContext {
         };
         self.wallet_repo.add(wallet.clone());
         wallet
+    }
+    
+    #[allow(dead_code)]
+    pub fn init_test_services(&self) -> (SettlementService, Arc<WalletService>) {
+        let ledger_service = Arc::new(LedgerService::new(self.repo.clone(), self.instrument_repo.clone()));
+        let wallet_service = Arc::new(WalletService::new(self.wallet_repo.clone()));
+        let asset_service = Arc::new(AssetService::new(self.asset_repo.clone(), self.instrument_repo.clone()));
+        let order_service = Arc::new(OrderService::new(self.repo.clone(), wallet_service.clone(), asset_service));
+        let fill_service = Arc::new(FillService::new(self.fill_repo.clone()));
+
+        let settlement_service = SettlementService::new(
+            None,
+            order_service,
+            self.instrument_repo.clone(),
+            ledger_service,
+            wallet_service.clone(),
+            fill_service,
+            self.ledger_repo.clone(),
+        );
+
+        (settlement_service, wallet_service)
     }
 }

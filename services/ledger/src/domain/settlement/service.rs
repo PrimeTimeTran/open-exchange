@@ -1,3 +1,7 @@
+use sqlx::{Transaction, Postgres, PgPool};
+use rust_decimal::Decimal;
+use std::str::FromStr;
+use crate::domain::ledger::repository::LedgerRepository;
 use uuid::Uuid;
 use std::sync::Arc;
 use crate::error::{Result, AppError};
@@ -6,42 +10,38 @@ use crate::proto::common::{Trade, OrderSide};
 use crate::domain::wallets::WalletService;
 use crate::infra::repositories::InstrumentRepository;
 use crate::domain::ledger::service::LedgerService;
-use crate::domain::orders::repository::OrderRepository;
-use crate::domain::fills::{Fill, FillRepository};
-use crate::domain::ledger::repository::LedgerRepository;
-use rust_decimal::Decimal;
-use std::str::FromStr;
-use sqlx::{PgPool, Transaction, Postgres};
+use crate::domain::orders::service::OrderService;
+use crate::domain::fills::service::FillService;
 
-pub struct TradeProcessor {
+pub struct SettlementService {
     pool: Option<PgPool>,
     #[allow(dead_code)]
-    order_repo: Arc<dyn OrderRepository>,
+    order_service: Arc<OrderService>,
     #[allow(dead_code)]
     instrument_repo: Arc<dyn InstrumentRepository>,
     ledger_service: Arc<LedgerService>,
     wallet_service: Arc<WalletService>,
-    fill_repo: Arc<dyn FillRepository>,
+    fill_service: Arc<FillService>,
     ledger_repo: Arc<dyn LedgerRepository>,
 }
 
-impl TradeProcessor {
+impl SettlementService {
     pub fn new(
         pool: Option<PgPool>,
-        order_repo: Arc<dyn OrderRepository>,
+        order_service: Arc<OrderService>,
         instrument_repo: Arc<dyn InstrumentRepository>,
         ledger_service: Arc<LedgerService>,
         wallet_service: Arc<WalletService>,
-        fill_repo: Arc<dyn FillRepository>,
+        fill_service: Arc<FillService>,
         ledger_repo: Arc<dyn LedgerRepository>,
     ) -> Self {
         Self {
             pool,
-            order_repo,
+            order_service,
             instrument_repo,
             ledger_service,
             wallet_service,
-            fill_repo,
+            fill_service,
             ledger_repo,
         }
     }
@@ -91,42 +91,11 @@ impl TradeProcessor {
     }
 
     async fn update_order_status(&self, order_id_str: &str, trade_qty: Decimal) -> Result<()> {
-        if let Ok(order_uuid) = Uuid::parse_str(order_id_str) {
-            if let Some(order) = self.order_repo.get(order_uuid).await? {
-                let current_filled = order.filled_quantity;
-                let new_filled = current_filled + trade_qty;
-                self.order_repo.update_filled_amount(order_uuid, new_filled).await?;
-                
-                let original_qty = order.quantity;
-                if new_filled >= original_qty {
-                    self.order_repo.update_status(order_uuid, "FILLED".to_string()).await?;
-                } else {
-                    self.order_repo.update_status(order_uuid, "PARTIALLY_FILLED".to_string()).await?;
-                }
-            }
-        }
-        Ok(())
+        self.order_service.update_status(order_id_str, trade_qty).await
     }
 
     async fn update_order_status_with_tx(&self, tx: &mut Transaction<'_, Postgres>, order_id_str: &str, trade_qty: Decimal) -> Result<()> {
-        if let Ok(order_uuid) = Uuid::parse_str(order_id_str) {
-            // Note: We use self.order_repo.get() which is outside the transaction context for reading.
-            // Ideally we should lock the row with FOR UPDATE, but OrderRepository doesn't expose that yet.
-            // Assuming for now it's acceptable for Phase 2 Item 1 (Atomicity), leaving Locking for Item 2.
-            if let Some(order) = self.order_repo.get(order_uuid).await? {
-                let current_filled = order.filled_quantity;
-                let new_filled = current_filled + trade_qty;
-                self.order_repo.update_filled_amount_with_tx(tx, order_uuid, new_filled).await?;
-                
-                let original_qty = order.quantity;
-                if new_filled >= original_qty {
-                    self.order_repo.update_status_with_tx(tx, order_uuid, "FILLED".to_string()).await?;
-                } else {
-                    self.order_repo.update_status_with_tx(tx, order_uuid, "PARTIALLY_FILLED".to_string()).await?;
-                }
-            }
-        }
-        Ok(())
+        self.order_service.update_status_with_tx(tx, order_id_str, trade_qty).await
     }
 
     pub async fn process_trade_event(&self, trade: Trade) -> Result<()> {
@@ -156,11 +125,11 @@ impl TradeProcessor {
             self.update_order_status_with_tx(&mut tx, &trade.buy_order_id, trade_qty).await?;
             self.update_order_status_with_tx(&mut tx, &trade.sell_order_id, trade_qty).await?;
 
-            let buy_fill = Self::create_fill(&trade, &trade.buy_order_id, "buy", "taker", trade_qty, &instrument.quote_asset_id)?;
-            let sell_fill = Self::create_fill(&trade, &trade.sell_order_id, "sell", "maker", trade_qty, &instrument.quote_asset_id)?;
+            let buy_fill = self.fill_service.create_fill_from_trade(&trade, &trade.buy_order_id, "buy", "taker", trade_qty, &instrument.quote_asset_id)?;
+            let sell_fill = self.fill_service.create_fill_from_trade(&trade, &trade.sell_order_id, "sell", "maker", trade_qty, &instrument.quote_asset_id)?;
 
-            self.fill_repo.create_with_tx(&mut tx, buy_fill).await?;
-            self.fill_repo.create_with_tx(&mut tx, sell_fill).await?;
+            self.fill_service.save_fill_with_tx(&mut tx, buy_fill).await?;
+            self.fill_service.save_fill_with_tx(&mut tx, sell_fill).await?;
 
             tx.commit().await.map_err(AppError::DatabaseError)?;
         } else {
@@ -178,31 +147,13 @@ impl TradeProcessor {
             self.update_order_status(&trade.buy_order_id, trade_qty).await?;
             self.update_order_status(&trade.sell_order_id, trade_qty).await?;
 
-            let buy_fill = Self::create_fill(&trade, &trade.buy_order_id, "buy", "taker", trade_qty, &instrument.quote_asset_id)?;
-            let sell_fill = Self::create_fill(&trade, &trade.sell_order_id, "sell", "maker", trade_qty, &instrument.quote_asset_id)?;
+            let buy_fill = self.fill_service.create_fill_from_trade(&trade, &trade.buy_order_id, "buy", "taker", trade_qty, &instrument.quote_asset_id)?;
+            let sell_fill = self.fill_service.create_fill_from_trade(&trade, &trade.sell_order_id, "sell", "maker", trade_qty, &instrument.quote_asset_id)?;
 
-            self.fill_repo.create(buy_fill).await?;
-            self.fill_repo.create(sell_fill).await?;
+            self.fill_service.save_fill(buy_fill).await?;
+            self.fill_service.save_fill(sell_fill).await?;
         }
 
         Ok(())
-    }
-
-    fn create_fill(trade: &Trade, order_id: &str, side: &str, role: &str, quantity: Decimal, fee_currency: &str) -> Result<Fill> {
-        Ok(Fill {
-            id: Uuid::new_v4(),
-            trade_id: Uuid::parse_str(&trade.id).map_err(|_| AppError::ValidationError("Invalid trade ID".into()))?,
-            order_id: Uuid::parse_str(order_id).map_err(|_| AppError::ValidationError("Invalid order ID".into()))?,
-            tenant_id: Uuid::parse_str(&trade.tenant_id).map_err(|_| AppError::ValidationError("Invalid tenant ID".into()))?,
-            instrument_id: Uuid::parse_str(&trade.instrument_id).map_err(|_| AppError::ValidationError("Invalid instrument ID".into()))?,
-            price: Decimal::from_str(&trade.price).map_err(|_| AppError::ValidationError("Invalid trade price".into()))?,
-            quantity,
-            fee: Decimal::ZERO, // TODO: Calculate fee
-            fee_currency: fee_currency.to_string(),
-            role: role.to_string(),
-            side: side.to_string(),
-            meta: serde_json::json!({}),
-            created_at: chrono::Utc::now(),
-        })
     }
 }

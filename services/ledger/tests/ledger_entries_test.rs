@@ -168,12 +168,26 @@ async fn test_trade_processor_flow() {
     
     // 2. Services
     let ledger_service = Arc::new(LedgerService::new(ctx.repo.clone(), ctx.instrument_repo.clone()));
-    let trade_processor = ledger::domain::trade::processor::TradeProcessor::new(
-        ctx.repo.clone(),
+    let wallet_service = Arc::new(ledger::domain::wallets::WalletService::new(ctx.wallet_repo.clone()));
+    let asset_service = Arc::new(ledger::domain::assets::AssetService::new(ctx.asset_repo.clone(), ctx.instrument_repo.clone()));
+    
+    // Explicitly coerce generic repo to trait object if needed, but implicit should work.
+    // However, OrderService expects Arc<dyn OrderRepository>.
+    let order_service = Arc::new(ledger::domain::orders::service::OrderService::new(
+        ctx.repo.clone(), 
+        wallet_service.clone(),
+        asset_service,
+    ));
+    
+    let fill_service = Arc::new(ledger::domain::fills::service::FillService::new(ctx.fill_repo.clone()));
+
+    let settlement_service = ledger::domain::settlement::service::SettlementService::new(
+        None,
+        order_service,
         ctx.instrument_repo.clone(),
         ledger_service.clone(),
-        Arc::new(ledger::domain::wallets::WalletService::new(ctx.wallet_repo.clone())),
-        ctx.fill_repo.clone(),
+        wallet_service,
+        fill_service,
         ctx.ledger_repo.clone(),
     );
     
@@ -183,7 +197,7 @@ async fn test_trade_processor_flow() {
     let trade = ctx.create_trade(buy_order.id, sell_order.id, 30000.0, 1.0);
     
     // 4. Execution
-    let result = trade_processor.process_trade_event(trade).await;
+    let result = settlement_service.process_trade_event(trade).await;
     
     // 5. Assertions
     assert!(result.is_ok(), "Trade processor failed: {:?}", result.err());

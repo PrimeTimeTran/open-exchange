@@ -28,13 +28,18 @@ impl LedgerService {
         entry_type: &str,
     ) -> LedgerEntry {
         let timestamp = Utc::now().timestamp_millis();
+        let meta = serde_json::json!({
+            "asset": asset,
+            "type": entry_type
+        }).to_string();
+
         LedgerEntry {
             id: Uuid::new_v4().to_string(),
             tenant_id: tenant_id.to_string(),
             event_id: event_id.to_string(),
             account_id: account_id.to_string(),
             amount,
-            meta: format!(r#"{{"asset": "{}", "type": "{}"}}"#, asset, entry_type),
+            meta,
             created_at: timestamp,
             updated_at: timestamp,
         }
@@ -146,7 +151,7 @@ impl LedgerService {
         let event_id = Uuid::new_v4().to_string();
 
         // 1. Fetch Instrument to determine Asset
-        let instrument_id = Uuid::parse_str(&order.instrument_id.to_string()).unwrap_or_default();
+        let instrument_id = order.instrument_id;
         let instrument = self.instrument_repo.get(instrument_id).await?
             .ok_or(AppError::NotFound(format!("Instrument {} not found", order.instrument_id)))?;
 
@@ -187,11 +192,109 @@ impl LedgerService {
 
         // Override meta to include action: lock
         for entry in &mut entries {
-            let mut meta_json: serde_json::Value = serde_json::from_str(&entry.meta).unwrap();
-            meta_json["action"] = serde_json::json!("lock");
+            let mut meta_json: serde_json::Value = serde_json::from_str(&entry.meta)
+                .map_err(|e| AppError::Internal(format!("Failed to parse meta json: {}", e)))?;
+            
+            if let Some(obj) = meta_json.as_object_mut() {
+                obj.insert("action".to_string(), serde_json::json!("lock"));
+            }
             entry.meta = meta_json.to_string();
         }
 
         Ok((event, entries))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::infra::repositories::{InMemoryOrderRepository, InMemoryInstrumentRepository};
+    use crate::proto::common::Instrument;
+    use crate::domain::orders::model::Order;
+    use rust_decimal::Decimal;
+
+    #[tokio::test]
+    async fn test_process_trade_events() {
+        let order_repo = Arc::new(InMemoryOrderRepository::new());
+        let instrument_repo = Arc::new(InMemoryInstrumentRepository::new());
+        let service = LedgerService::new(order_repo.clone(), instrument_repo.clone());
+
+        // Setup Data
+        let tenant_id = Uuid::new_v4();
+        let instrument_id = Uuid::new_v4();
+        let account_a = Uuid::new_v4(); // Buyer
+        let account_b = Uuid::new_v4(); // Seller
+        
+        let instrument = Instrument {
+            id: instrument_id.to_string(),
+            tenant_id: tenant_id.to_string(),
+            symbol: "BTC-USD".to_string(),
+            underlying_asset_id: "BTC".to_string(),
+            quote_asset_id: "USD".to_string(),
+            ..Default::default()
+        };
+        instrument_repo.create(instrument).await.unwrap();
+
+        let buy_order = Order {
+            id: Uuid::new_v4(),
+            tenant_id,
+            account_id: account_a,
+            instrument_id,
+            side: "buy".to_string(),
+            quantity: Decimal::new(10, 1),
+            price: Decimal::from(50000),
+            status: "new".to_string(),
+            filled_quantity: Decimal::ZERO,
+            average_fill_price: Decimal::ZERO,
+            meta: serde_json::json!({}),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        
+        let sell_order = Order {
+             id: Uuid::new_v4(),
+             tenant_id,
+             account_id: account_b,
+             instrument_id,
+             side: "sell".to_string(),
+             quantity: Decimal::new(10, 1),
+             price: Decimal::from(50000),
+             status: "new".to_string(),
+             filled_quantity: Decimal::ZERO,
+             average_fill_price: Decimal::ZERO,
+             meta: serde_json::json!({}),
+             created_at: Utc::now(),
+             updated_at: Utc::now(),
+        };
+
+        order_repo.create(buy_order.clone()).await.unwrap();
+        order_repo.create(sell_order.clone()).await.unwrap();
+
+        let trade = Trade {
+            id: Uuid::new_v4().to_string(),
+            tenant_id: tenant_id.to_string(),
+            instrument_id: instrument_id.to_string(),
+            buy_order_id: buy_order.id.to_string(),
+            sell_order_id: sell_order.id.to_string(),
+            price: "50000".to_string(),
+            quantity: "1.0".to_string(),
+            ..Default::default()
+        };
+
+        let result = service.process_trade(trade).await;
+        assert!(result.is_ok());
+        
+        let (event, entries) = result.unwrap();
+        assert_eq!(event.r#type, "trade");
+        
+        assert_eq!(entries.len(), 6);
+        
+        let buyer_btc = entries.iter().find(|e| e.account_id == account_a.to_string() && e.meta.contains("BTC") && e.meta.contains("credit"));
+        assert!(buyer_btc.is_some());
+        assert_eq!(buyer_btc.unwrap().amount, "1.0");
+
+        let buyer_usd = entries.iter().find(|e| e.account_id == account_a.to_string() && e.meta.contains("USD") && e.meta.contains("debit"));
+        assert!(buyer_usd.is_some());
+        assert_eq!(buyer_usd.unwrap().amount, "-50000.0");
     }
 }

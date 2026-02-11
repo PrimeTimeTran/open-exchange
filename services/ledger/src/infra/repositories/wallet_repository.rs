@@ -158,11 +158,11 @@ impl WalletRepository for PostgresWalletRepository {
     async fn update(&self, wallet: Wallet) -> Result<Wallet> {
         let id = Uuid::parse_str(&wallet.id).map_err(|_| AppError::ValidationError("Invalid wallet id".into()))?;
         
-        let rec: WalletRow = sqlx::query_as(
+        let rec = sqlx::query_as::<_, WalletRow>(
             r#"
             UPDATE "Wallet"
-            SET available = $2, locked = $3, total = $4, "updatedAt" = $5
-            WHERE id = $1
+            SET available = $2, locked = $3, total = $4, "updatedAt" = $5, version = version + 1
+            WHERE id = $1 AND version = $6
             RETURNING id, "tenantId", "accountId", "assetId", 
                       available, locked, total, 
                       version, meta, "createdAt", "updatedAt"
@@ -173,21 +173,25 @@ impl WalletRepository for PostgresWalletRepository {
         .bind(Decimal::from_str(&wallet.locked).unwrap_or_default())
         .bind(Decimal::from_str(&wallet.total).unwrap_or_default())
         .bind(chrono::Utc::now())
+        .bind(wallet.version)
         .fetch_one(&self.pool)
-        .await
-        .map_err(AppError::DatabaseError)?;
+        .await;
 
-        Ok(rec.into())
+        match rec {
+            Ok(row) => Ok(row.into()),
+            Err(sqlx::Error::RowNotFound) => Err(AppError::OptimisticLockingError(format!("Wallet {} version mismatch (expected {})", wallet.id, wallet.version))),
+            Err(e) => Err(AppError::DatabaseError(e)),
+        }
     }
 
     async fn update_with_tx(&self, tx: &mut Transaction<'_, Postgres>, wallet: Wallet) -> Result<Wallet> {
         let id = Uuid::parse_str(&wallet.id).map_err(|_| AppError::ValidationError("Invalid wallet id".into()))?;
         
-        let rec: WalletRow = sqlx::query_as(
+        let rec = sqlx::query_as::<_, WalletRow>(
             r#"
             UPDATE "Wallet"
-            SET available = $2, locked = $3, total = $4, "updatedAt" = $5
-            WHERE id = $1
+            SET available = $2, locked = $3, total = $4, "updatedAt" = $5, version = version + 1
+            WHERE id = $1 AND version = $6
             RETURNING id, "tenantId", "accountId", "assetId", 
                       available, locked, total, 
                       version, meta, "createdAt", "updatedAt"
@@ -198,11 +202,15 @@ impl WalletRepository for PostgresWalletRepository {
         .bind(Decimal::from_str(&wallet.locked).unwrap_or_default())
         .bind(Decimal::from_str(&wallet.total).unwrap_or_default())
         .bind(chrono::Utc::now())
+        .bind(wallet.version)
         .fetch_one(&mut **tx)
-        .await
-        .map_err(AppError::DatabaseError)?;
+        .await;
 
-        Ok(rec.into())
+        match rec {
+            Ok(row) => Ok(row.into()),
+            Err(sqlx::Error::RowNotFound) => Err(AppError::OptimisticLockingError(format!("Wallet {} version mismatch (expected {})", wallet.id, wallet.version))),
+            Err(e) => Err(AppError::DatabaseError(e)),
+        }
     }
 
     async fn delete(&self, id: Uuid) -> Result<()> {

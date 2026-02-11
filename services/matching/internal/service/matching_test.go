@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"fmt"
+
 	"github.com/open-exchange/matching_engine/internal/engine"
 	"github.com/open-exchange/matching_engine/internal/events"
 	"github.com/open-exchange/matching_engine/internal/testutil"
@@ -19,6 +21,9 @@ func setupServiceTest() (*MatchingService, *engine.Engine, *testutil.MockLedgerC
 	mockSettlement := new(testutil.MockSettlementClient)
 	mockPublisher := new(testutil.MockPublisher)
 	mockStore := new(testutil.MockStore)
+	
+	// Default mock behavior for background worker
+	mockStore.On("DequeueMatches", mock.Anything).Return([]byte(nil), fmt.Errorf("queue empty"))
 
 	svc := NewMatchingService(eng, mockLedger, mockSettlement, mockPublisher, mockStore)
 	return svc, eng, mockLedger, mockSettlement, mockPublisher, mockStore
@@ -51,16 +56,16 @@ func TestPlaceOrder_WithMatch(t *testing.T) {
 
 	order := testutil.NewOrder("buy_1", common.OrderSide_ORDER_SIDE_BUY, 50000, 0.5)
 
-	mockSettlement.On("Commit", mock.Anything, mock.MatchedBy(func(req *ledger.CommitRequest) bool {
+	mockStore.On("EnqueueMatches", mock.Anything, mock.MatchedBy(func(req *ledger.CommitRequest) bool {
 		if len(req.Matches) != 1 {
 			return false
 		}
 		match := req.Matches[0]
 		// Updated to 8 decimal places to match new formatting
 		return match.MakerOrderId == "sell_1" && match.TakerOrderId == "buy_1" && match.Quantity == "0.50000000"
-	}), mock.Anything).Return(&ledger.CommitResponse{
-		Success: true,
-	}, nil)
+	})).Return(nil)
+	
+	mockSettlement.AssertNotCalled(t, "Commit")
 
 	mockPublisher.On("PublishOrderBookEvent", mock.Anything, mock.Anything).Return(nil)
 
@@ -75,7 +80,7 @@ func TestPlaceOrder_WithMatch(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "buy_1", id)
 
-	mockSettlement.AssertExpectations(t)
+	mockStore.AssertExpectations(t)
 	mockPublisher.AssertExpectations(t)
 }
 

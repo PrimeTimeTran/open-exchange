@@ -119,3 +119,16 @@ func (m *MockSettlementClient) Commit(ctx context.Context, in *ledger.CommitRequ
 	}
 	return args.Get(0).(*ledger.CommitResponse), args.Error(1)
 }
+
+func (m *MockStore) EnqueueMatches(ctx context.Context, matches interface{}) error {
+	args := m.Called(ctx, matches)
+	return args.Error(0)
+}
+
+func (m *MockStore) DequeueMatches(ctx context.Context) ([]byte, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]byte), args.Error(1)
+}

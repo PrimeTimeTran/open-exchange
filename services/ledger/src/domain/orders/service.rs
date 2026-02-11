@@ -7,6 +7,7 @@ use crate::domain::wallets::WalletService;
 use crate::domain::assets::AssetService;
 use rust_decimal::Decimal;
 use std::str::FromStr;
+use sqlx::{Transaction, Postgres};
 
 use std::fmt;
 
@@ -44,7 +45,7 @@ impl OrderService {
 
     pub async fn validate_and_reserve_funds(&self, order: &Order) -> Result<()> {
         let instr_uuid = order.instrument_id.to_string();
-        if let Some(instrument) = self.asset_service.get_instrument(&instr_uuid).await {
+        if let Some(instrument) = self.asset_service.get_instrument(&instr_uuid).await? {
             let (required_asset_id, required_amount) = if order.side == "buy" {
                 (instrument.quote_asset_id.clone(), order.price * order.quantity)
             } else {
@@ -58,7 +59,9 @@ impl OrderService {
                 .map_err(|e| AppError::Internal(e.to_string()))?;
 
             if let Some(mut wallet) = wallet_opt {
-                let available = Decimal::from_str(&wallet.available).unwrap_or(Decimal::ZERO);
+                let available = Decimal::from_str(&wallet.available)
+                    .map_err(|_| AppError::Internal("Invalid available balance".into()))?;
+                
                 if available < required_amount {
                     return Err(AppError::ValidationError(format!(
                         "Insufficient funds. Required: {}, Available: {}", 
@@ -67,7 +70,8 @@ impl OrderService {
                 }
 
                 // Lock funds
-                let locked = Decimal::from_str(&wallet.locked).unwrap_or(Decimal::ZERO);
+                let locked = Decimal::from_str(&wallet.locked)
+                    .map_err(|_| AppError::Internal("Invalid locked balance".into()))?;
                 wallet.available = (available - required_amount).to_string();
                 wallet.locked = (locked + required_amount).to_string();
                 wallet.updated_at = chrono::Utc::now().timestamp_millis();
@@ -112,6 +116,45 @@ impl OrderService {
             // TODO: Update wallet balances (unlock funds, transfer assets)
             // For this task, we focus on order status updates as requested by the tests.
         }
+        Ok(())
+    }
+
+    pub async fn update_status_with_tx(&self, tx: &mut Transaction<'_, Postgres>, order_id_str: &str, trade_qty: Decimal) -> Result<()> {
+        let order_uuid = Uuid::parse_str(order_id_str).map_err(|_| AppError::ValidationError("Invalid order ID".into()))?;
+        
+        // Read order (Note: outside transaction if repo doesn't support reading inside tx yet, but ideally inside)
+        // Assuming we use optimistic concurrency or just accept it for now as per previous code.
+        if let Some(order) = self.repo.get(order_uuid).await? {
+            let current_filled = order.filled_quantity;
+                let new_filled = current_filled + trade_qty;
+                
+                self.repo.update_filled_amount_with_tx(tx, order_uuid, new_filled).await?;
+                
+                let original_qty = order.quantity;
+                if new_filled >= original_qty {
+                    self.repo.update_status_with_tx(tx, order_uuid, "FILLED".to_string()).await?;
+                } else {
+                    self.repo.update_status_with_tx(tx, order_uuid, "PARTIALLY_FILLED".to_string()).await?;
+                }
+            }
+        Ok(())
+    }
+
+    pub async fn update_status(&self, order_id_str: &str, trade_qty: Decimal) -> Result<()> {
+        let order_uuid = Uuid::parse_str(order_id_str).map_err(|_| AppError::ValidationError("Invalid order ID".into()))?;
+
+        if let Some(order) = self.repo.get(order_uuid).await? {
+            let current_filled = order.filled_quantity;
+            let new_filled = current_filled + trade_qty;
+                self.repo.update_filled_amount(order_uuid, new_filled).await?;
+                
+                let original_qty = order.quantity;
+                if new_filled >= original_qty {
+                    self.repo.update_status(order_uuid, "FILLED".to_string()).await?;
+                } else {
+                    self.repo.update_status(order_uuid, "PARTIALLY_FILLED".to_string()).await?;
+                }
+            }
         Ok(())
     }
 }

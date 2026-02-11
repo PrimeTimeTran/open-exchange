@@ -1,7 +1,3 @@
-use std::sync::Arc;
-use ledger::domain::wallets::WalletService;
-use ledger::domain::ledger::service::LedgerService;
-use ledger::domain::trade::processor::TradeProcessor;
 use rust_decimal::Decimal;
 use std::str::FromStr;
 
@@ -37,22 +33,13 @@ async fn test_settlement_basic_buy_sell() {
     let sell_order = ctx.create_order(ctx.account_b, "sell", 50000.0, 1.0);
 
     // 4. Initialize Services
-    let ledger_service = Arc::new(LedgerService::new(ctx.repo.clone(), ctx.instrument_repo.clone()));
-    let wallet_service = Arc::new(WalletService::new(ctx.wallet_repo.clone()));
-    let processor = TradeProcessor::new(
-        ctx.repo.clone(),
-        ctx.instrument_repo.clone(),
-        ledger_service,
-        wallet_service.clone(),
-        ctx.fill_repo.clone(),
-        ctx.ledger_repo.clone(),
-    );
+    let (settlement_service, wallet_service) = ctx.init_test_services();
 
     // 5. Create Trade
     let trade = ctx.create_trade(buy_order.id, sell_order.id, 50000.0, 1.0);
 
     // 6. Process Trade
-    processor.process_trade_event(trade.clone()).await.unwrap();
+    settlement_service.process_trade_event(trade.clone()).await.unwrap();
 
     // 7. Verify Wallets
     let b_usd = wallet_service.get_wallet_by_account_and_asset(&ctx.account_a.to_string(), "USD").await.unwrap().unwrap();
@@ -115,20 +102,11 @@ async fn test_settlement_partial_fill() {
     let buy_order = ctx.create_order(ctx.account_a, "buy", 50000.0, 2.0);
     let sell_order = ctx.create_order(ctx.account_b, "sell", 50000.0, 1.0);
 
-    let ledger_service = Arc::new(LedgerService::new(ctx.repo.clone(), ctx.instrument_repo.clone()));
-    let wallet_service = Arc::new(WalletService::new(ctx.wallet_repo.clone()));
-    let processor = TradeProcessor::new(
-        ctx.repo.clone(),
-        ctx.instrument_repo.clone(),
-        ledger_service,
-        wallet_service.clone(),
-        ctx.fill_repo.clone(),
-        ctx.ledger_repo.clone(),
-    );
+    let (settlement_service, wallet_service) = ctx.init_test_services();
 
     let trade = ctx.create_trade(buy_order.id, sell_order.id, 50000.0, 1.0);
 
-    processor.process_trade_event(trade.clone()).await.unwrap();
+    settlement_service.process_trade_event(trade.clone()).await.unwrap();
 
     // Verify Buyer Wallet (Partially filled)
     let b_usd = wallet_service.get_wallet_by_account_and_asset(&ctx.account_a.to_string(), "USD").await.unwrap().unwrap();
@@ -173,21 +151,12 @@ async fn test_settlement_insufficient_funds() {
     let buy_order = ctx.create_order(ctx.account_a, "buy", 50000.0, 1.0);
     let sell_order = ctx.create_order(ctx.account_b, "sell", 50000.0, 1.0);
 
-    let ledger_service = Arc::new(LedgerService::new(ctx.repo.clone(), ctx.instrument_repo.clone()));
-    let wallet_service = Arc::new(WalletService::new(ctx.wallet_repo.clone()));
-    let processor = TradeProcessor::new(
-        ctx.repo.clone(),
-        ctx.instrument_repo.clone(),
-        ledger_service,
-        wallet_service.clone(),
-        ctx.fill_repo.clone(),
-        ctx.ledger_repo.clone(),
-    );
+    let (settlement_service, wallet_service) = ctx.init_test_services();
 
     let trade = ctx.create_trade(buy_order.id, sell_order.id, 50000.0, 1.0);
 
     // This should succeed technically, but result in negative balance
-    processor.process_trade_event(trade.clone()).await.unwrap();
+    settlement_service.process_trade_event(trade.clone()).await.unwrap();
 
     let b_usd = wallet_service.get_wallet_by_account_and_asset(&ctx.account_a.to_string(), "USD").await.unwrap().unwrap();
     
@@ -227,24 +196,15 @@ async fn test_settlement_multiple_matches() {
     let sell_order = ctx.create_order(ctx.account_b, "sell", 50000.0, 2.0);
 
     // 3. Initialize Services
-    let ledger_service = Arc::new(LedgerService::new(ctx.repo.clone(), ctx.instrument_repo.clone()));
-    let wallet_service = Arc::new(WalletService::new(ctx.wallet_repo.clone()));
-    let processor = TradeProcessor::new(
-        ctx.repo.clone(),
-        ctx.instrument_repo.clone(),
-        ledger_service,
-        wallet_service.clone(),
-        ctx.fill_repo.clone(),
-        ctx.ledger_repo.clone(),
-    );
+    let (settlement_service, wallet_service) = ctx.init_test_services();
 
     // 4. Create and Process Trade 1
     let trade1 = ctx.create_trade(buy_order.id, sell_order.id, 50000.0, 1.0);
-    processor.process_trade_event(trade1.clone()).await.unwrap();
+    settlement_service.process_trade_event(trade1.clone()).await.unwrap();
 
     // 5. Create and Process Trade 2
     let trade2 = ctx.create_trade(buy_order.id, sell_order.id, 50000.0, 1.0);
-    processor.process_trade_event(trade2.clone()).await.unwrap();
+    settlement_service.process_trade_event(trade2.clone()).await.unwrap();
 
     // 6. Verify Wallets
     let b_usd = wallet_service.get_wallet_by_account_and_asset(&ctx.account_a.to_string(), "USD").await.unwrap().unwrap();

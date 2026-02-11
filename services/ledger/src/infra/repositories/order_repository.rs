@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use sqlx::{PgPool, FromRow};
+use sqlx::{PgPool, FromRow, Transaction, Postgres};
 use uuid::Uuid;
 use crate::domain::orders::{Order, OrderRepository};
 use crate::error::{AppError, Result};
@@ -125,6 +125,24 @@ impl OrderRepository for PostgresOrderRepository {
         Ok(())
     }
 
+    async fn update_status_with_tx(&self, tx: &mut Transaction<'_, Postgres>, id: Uuid, status: String) -> Result<()> {
+        let result = sqlx::query(
+            r#"UPDATE "Order" SET status = $2, "updatedAt" = $3 WHERE id = $1"#
+        )
+        .bind(id)
+        .bind(status)
+        .bind(chrono::Utc::now())
+        .execute(&mut **tx)
+        .await
+        .map_err(AppError::DatabaseError)?;
+
+        if result.rows_affected() == 0 {
+            return Err(AppError::NotFound(format!("Order {} not found", id)));
+        }
+
+        Ok(())
+    }
+
     async fn update_filled_amount(&self, id: Uuid, filled: Decimal) -> Result<()> {
         let result = sqlx::query(
             r#"
@@ -138,6 +156,28 @@ impl OrderRepository for PostgresOrderRepository {
         .bind(filled)
         .bind(chrono::Utc::now())
         .execute(&self.pool)
+        .await
+        .map_err(AppError::DatabaseError)?;
+
+        if result.rows_affected() == 0 {
+             return Err(AppError::NotFound(format!("Order {} not found", id)));
+        }
+        Ok(())
+    }
+
+    async fn update_filled_amount_with_tx(&self, tx: &mut Transaction<'_, Postgres>, id: Uuid, filled: Decimal) -> Result<()> {
+        let result = sqlx::query(
+            r#"
+            UPDATE "Order" 
+            SET "quantityFilled" = $2,
+                "updatedAt" = $3
+            WHERE id = $1
+            "#
+        )
+        .bind(id)
+        .bind(filled)
+        .bind(chrono::Utc::now())
+        .execute(&mut **tx)
         .await
         .map_err(AppError::DatabaseError)?;
 

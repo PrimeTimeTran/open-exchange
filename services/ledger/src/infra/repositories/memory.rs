@@ -104,6 +104,10 @@ impl OrderRepository for InMemoryOrderRepository {
         }
     }
 
+    async fn update_status_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, id: Uuid, status: String) -> Result<()> {
+        self.update_status(id, status).await
+    }
+
     async fn update_filled_amount(&self, id: Uuid, filled: Decimal) -> Result<()> {
         let mut orders = self.orders.lock().unwrap();
         if let Some(order) = orders.iter_mut().find(|o| o.id == id) {
@@ -113,6 +117,10 @@ impl OrderRepository for InMemoryOrderRepository {
         } else {
             Err(AppError::NotFound(format!("Order {} not found", id)))
         }
+    }
+
+    async fn update_filled_amount_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, id: Uuid, filled: Decimal) -> Result<()> {
+        self.update_filled_amount(id, filled).await
     }
 
     async fn list_open(&self) -> Result<Vec<Order>> {
@@ -162,9 +170,15 @@ impl WalletRepository for InMemoryWalletRepository {
         self.get_by_account_and_asset(account_id, asset_id).await
     }
 
-    async fn update(&self, wallet: Wallet) -> Result<Wallet> {
+    async fn update(&self, mut wallet: Wallet) -> Result<Wallet> {
         let mut wallets = self.wallets.lock().unwrap();
         if let Some(pos) = wallets.iter().position(|w| w.id == wallet.id) {
+            let existing = &wallets[pos];
+            if existing.version != wallet.version {
+                return Err(AppError::OptimisticLockingError(format!("Wallet {} version mismatch (expected {}, found {})", wallet.id, wallet.version, existing.version)));
+            }
+            wallet.version += 1;
+            wallet.updated_at = chrono::Utc::now().timestamp_millis();
             wallets[pos] = wallet.clone();
             Ok(wallet)
         } else {

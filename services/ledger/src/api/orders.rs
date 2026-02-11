@@ -44,17 +44,27 @@ impl OrderService for OrderServiceImpl {
                 Uuid::parse_str(&proto_order.id).map_err(|_| Status::invalid_argument("Invalid order ID"))?
             };
 
-            let tenant_id = Uuid::parse_str(&proto_order.tenant_id).unwrap_or_default();
-            let account_id = Uuid::parse_str(&proto_order.account_id).unwrap_or_default();
-            let instrument_id = Uuid::parse_str(&proto_order.instrument_id).unwrap_or_default();
+            let tenant_id = Uuid::parse_str(&proto_order.tenant_id).map_err(|_| Status::invalid_argument("Invalid tenant ID"))?;
+            let account_id = Uuid::parse_str(&proto_order.account_id).map_err(|_| Status::invalid_argument("Invalid account ID"))?;
+            let instrument_id = Uuid::parse_str(&proto_order.instrument_id).map_err(|_| Status::invalid_argument("Invalid instrument ID"))?;
 
             // Fetch instrument and assets for scaling
-            let (quantity_scaled, price_scaled) = if let Some(instrument) = self.asset_service.get_instrument(&proto_order.instrument_id).await {
-                let base_decimals = self.asset_service.get_asset(&instrument.underlying_asset_id).await.unwrap_or(None).map(|a| a.decimals).unwrap_or(0);
-                let quote_decimals = self.asset_service.get_asset(&instrument.quote_asset_id).await.unwrap_or(None).map(|a| a.decimals).unwrap_or(0);
+            let (quantity_scaled, price_scaled) = if let Some(instrument) = self.asset_service.get_instrument(&proto_order.instrument_id).await.map_err(|e| Status::internal(e.to_string()))? {
+                let base_asset = self.asset_service.get_asset(&instrument.underlying_asset_id).await
+                    .map_err(|e| Status::internal(format!("Failed to fetch base asset: {}", e)))?
+                    .ok_or_else(|| Status::not_found(format!("Base asset {} not found", instrument.underlying_asset_id)))?;
                 
-                let quantity_raw = Decimal::from_str(&proto_order.quantity).unwrap_or(Decimal::ZERO);
-                let price_raw = Decimal::from_str(&proto_order.price).unwrap_or(Decimal::ZERO);
+                let quote_asset = self.asset_service.get_asset(&instrument.quote_asset_id).await
+                    .map_err(|e| Status::internal(format!("Failed to fetch quote asset: {}", e)))?
+                    .ok_or_else(|| Status::not_found(format!("Quote asset {} not found", instrument.quote_asset_id)))?;
+
+                let base_decimals = base_asset.decimals;
+                let quote_decimals = quote_asset.decimals;
+                
+                let quantity_raw = Decimal::from_str(&proto_order.quantity)
+                    .map_err(|_| Status::invalid_argument("Invalid quantity format"))?;
+                let price_raw = Decimal::from_str(&proto_order.price)
+                    .map_err(|_| Status::invalid_argument("Invalid price format"))?;
                 
                 // Scaling logic:
                 // Quantity (atomic) = Quantity (major) * 10^base_decimals
@@ -189,9 +199,17 @@ impl OrderService for OrderServiceImpl {
         let mut proto_orders = Vec::new();
 
         for o in orders {
-            let (quantity, price, quantity_filled) = if let Some(instrument) = self.asset_service.get_instrument(&o.instrument_id.to_string()).await {
-                let base_decimals = self.asset_service.get_asset(&instrument.underlying_asset_id).await.unwrap_or(None).map(|a| a.decimals).unwrap_or(0);
-                let quote_decimals = self.asset_service.get_asset(&instrument.quote_asset_id).await.unwrap_or(None).map(|a| a.decimals).unwrap_or(0);
+            let (quantity, price, quantity_filled) = if let Some(instrument) = self.asset_service.get_instrument(&o.instrument_id.to_string()).await.map_err(|e| Status::internal(e.to_string()))? {
+                let base_asset = self.asset_service.get_asset(&instrument.underlying_asset_id).await
+                    .map_err(|e| Status::internal(format!("Failed to fetch base asset: {}", e)))?
+                    .ok_or_else(|| Status::not_found(format!("Base asset {} not found", instrument.underlying_asset_id)))?;
+                
+                let quote_asset = self.asset_service.get_asset(&instrument.quote_asset_id).await
+                    .map_err(|e| Status::internal(format!("Failed to fetch quote asset: {}", e)))?
+                    .ok_or_else(|| Status::not_found(format!("Quote asset {} not found", instrument.quote_asset_id)))?;
+
+                let base_decimals = base_asset.decimals;
+                let quote_decimals = quote_asset.decimals;
                 
                 let base_scale = Decimal::from(10).powi(base_decimals as i64);
                 let quote_scale = Decimal::from(10).powi(quote_decimals as i64);
@@ -253,12 +271,22 @@ impl OrderService for OrderServiceImpl {
         let taker_order_id = Uuid::parse_str(&req.taker_order_id).map_err(|_| Status::invalid_argument("Invalid taker order ID"))?;
         
         // Fetch instrument and assets for scaling
-        let (quantity, price) = if let Some(instrument) = self.asset_service.get_instrument(&req.instrument_id).await {
-            let base_decimals = self.asset_service.get_asset(&instrument.underlying_asset_id).await.unwrap_or(None).map(|a| a.decimals).unwrap_or(0);
-            let quote_decimals = self.asset_service.get_asset(&instrument.quote_asset_id).await.unwrap_or(None).map(|a| a.decimals).unwrap_or(0);
+        let (quantity, price) = if let Some(instrument) = self.asset_service.get_instrument(&req.instrument_id).await.map_err(|e| Status::internal(e.to_string()))? {
+            let base_asset = self.asset_service.get_asset(&instrument.underlying_asset_id).await
+                .map_err(|e| Status::internal(format!("Failed to fetch base asset: {}", e)))?
+                .ok_or_else(|| Status::not_found(format!("Base asset {} not found", instrument.underlying_asset_id)))?;
             
-            let quantity_raw = Decimal::from_str(&req.quantity).unwrap_or(Decimal::ZERO);
-            let price_raw = Decimal::from_str(&req.price).unwrap_or(Decimal::ZERO);
+            let quote_asset = self.asset_service.get_asset(&instrument.quote_asset_id).await
+                .map_err(|e| Status::internal(format!("Failed to fetch quote asset: {}", e)))?
+                .ok_or_else(|| Status::not_found(format!("Quote asset {} not found", instrument.quote_asset_id)))?;
+
+            let base_decimals = base_asset.decimals;
+            let quote_decimals = quote_asset.decimals;
+            
+            let quantity_raw = Decimal::from_str(&req.quantity)
+                .map_err(|_| Status::invalid_argument("Invalid quantity format"))?;
+            let price_raw = Decimal::from_str(&req.price)
+                .map_err(|_| Status::invalid_argument("Invalid price format"))?;
             
             let base_scale = Decimal::from(10).powi(base_decimals as i64);
             let quote_scale = Decimal::from(10).powi(quote_decimals as i64);

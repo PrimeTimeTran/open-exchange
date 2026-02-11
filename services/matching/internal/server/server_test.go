@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"testing"
 
@@ -28,6 +29,9 @@ func setupTestServer(t *testing.T) (pb.MatchingClient, *testutil.MockLedgerClien
 	mockSettlement := new(testutil.MockSettlementClient)
 	mockPublisher := new(testutil.MockPublisher)
 	mockStore := new(testutil.MockStore)
+	
+	// Default mock behavior for background worker
+	mockStore.On("DequeueMatches", mock.Anything).Return([]byte(nil), fmt.Errorf("queue empty"))
 
 	svc := service.NewMatchingService(eng, mockLedger, mockSettlement, mockPublisher, mockStore)
 	serverImpl := NewMatchingServer(svc)
@@ -131,13 +135,15 @@ func TestMatchingServer_PlaceOrder_MatchSuccess(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	mockSettlement.On("Commit", mock.Anything, mock.MatchedBy(func(req *ledger.CommitRequest) bool {
+	mockStore.On("EnqueueMatches", mock.Anything, mock.MatchedBy(func(req *ledger.CommitRequest) bool {
 		if len(req.Matches) != 1 {
 			return false
 		}
 		match := req.Matches[0]
 		return match.MakerOrderId == "maker_sell" && match.TakerOrderId == "taker_buy"
-	}), mock.Anything).Return(&ledger.CommitResponse{Success: true}, nil)
+	})).Return(nil)
+	
+	mockSettlement.AssertNotCalled(t, "Commit")
 	
 	mockPublisher.On("PublishTrade", mock.Anything, mock.Anything).Return(nil)
 	
@@ -216,8 +222,11 @@ func TestMatchingServer_PlaceOrder_TradeLedgerFailure(t *testing.T) {
 	// 2. Execute: Place a Buy Order (Taker) that matches
 	// Expectations: Ledger returns actual ERROR for Commit
 	// But since we are optimistic, we still publish the trade because it happened in the engine.
-	mockSettlement.On("Commit", mock.Anything, mock.Anything, mock.Anything).Return((*ledger.CommitResponse)(nil), assert.AnError)
-	mockPublisher.On("PublishTrade", mock.Anything, mock.Anything).Return(nil)
+	mockStore.On("EnqueueMatches", mock.Anything, mock.Anything).Return(assert.AnError)
+	mockSettlement.AssertNotCalled(t, "Commit")
+
+	// PublishTrade is NOT called because EnqueueMatches fails critical path
+	// mockPublisher.On("PublishTrade", mock.Anything, mock.Anything).Return(nil)
 
 	takerOrder := testutil.NewOrder("taker_buy", common.OrderSide_ORDER_SIDE_BUY, 50000, 1.0)
 	takerOrder.AccountId = "user2"
@@ -228,10 +237,10 @@ func TestMatchingServer_PlaceOrder_TradeLedgerFailure(t *testing.T) {
 	resp, err := client.PlaceOrder(ctx, req)
 
 	assert.NoError(t, err)
-	// Update: With optimistic matching, failure to commit to ledger is a background critical error,
-	// but the order is considered "placed/filled" in the engine.
-	assert.True(t, resp.Success)
+	// Update: With optimistic matching, failure to enqueue (persist) to ledger is a critical error,
+	// and we should report failure to the client.
+	assert.False(t, resp.Success)
 	
-	mockSettlement.AssertExpectations(t)
+	mockStore.AssertExpectations(t)
     mockPublisher.AssertExpectations(t)
 }

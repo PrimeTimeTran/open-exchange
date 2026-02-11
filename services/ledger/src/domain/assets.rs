@@ -20,7 +20,7 @@ impl AssetService {
     }
 
     pub async fn get_asset(&self, id: &str) -> Result<Option<common::Asset>> {
-        let uuid = Uuid::parse_str(id).unwrap_or_default(); // TODO: handle error
+        let uuid = Uuid::parse_str(id).map_err(|_| crate::error::AppError::ValidationError("Invalid asset ID".into()))?;
         self.repo.get(uuid).await
     }
 
@@ -70,12 +70,9 @@ impl AssetService {
         self.instrument_repo.create(instrument.clone()).await.unwrap_or(instrument)
     }
 
-    pub async fn get_instrument(&self, id: &str) -> Option<common::Instrument> {
-        if let Ok(uuid) = Uuid::parse_str(id) {
-            self.instrument_repo.get(uuid).await.unwrap_or(None)
-        } else {
-            None
-        }
+    pub async fn get_instrument(&self, id: &str) -> Result<Option<common::Instrument>> {
+        let uuid = Uuid::parse_str(id).map_err(|_| crate::error::AppError::ValidationError("Invalid instrument ID".into()))?;
+        self.instrument_repo.get(uuid).await
     }
 }
 

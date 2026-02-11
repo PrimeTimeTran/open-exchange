@@ -107,3 +107,19 @@ func (s *RedisStore) ListOrderBooks(ctx context.Context) ([]string, error) {
 	
 	return instruments, nil
 }
+
+func (s *RedisStore) EnqueueMatches(ctx context.Context, matches interface{}) error {
+	data, err := json.Marshal(matches)
+	if err != nil {
+		return fmt.Errorf("failed to marshal matches: %w", err)
+	}
+	return s.client.RPush(ctx, "settlement_queue", data).Err()
+}
+
+func (s *RedisStore) DequeueMatches(ctx context.Context) ([]byte, error) {
+	result, err := s.client.BLPop(ctx, 0, "settlement_queue").Result()
+	if err != nil {
+		return nil, err
+	}
+	return []byte(result[1]), nil
+}

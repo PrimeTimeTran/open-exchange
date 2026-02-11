@@ -23,7 +23,8 @@ use ledger::domain::{
     withdrawals::WithdrawalService,
     users::UserService,
     ledger::service::LedgerService,
-    trade::processor::TradeProcessor,
+    settlement::service::SettlementService,
+    fills::service::FillService,
 };
 use ledger::infra::repositories::{
     PostgresOrderRepository, 
@@ -85,12 +86,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // Domain Services
     let ledger_service = Arc::new(LedgerService::new(order_repo.clone(), instrument_repo.clone()));
-    let trade_processor = Arc::new(TradeProcessor::new(
-        order_repo.clone(), 
+    let fill_service = Arc::new(FillService::new(fill_repo.clone()));
+    let settlement_service = Arc::new(SettlementService::new(
+        Some(db_pool.clone()),
+        order_service.clone(), 
         instrument_repo.clone(), 
         ledger_service.clone(),
         wallet_service.clone(),
-        fill_repo.clone(),
+        fill_service.clone(),
         ledger_repo.clone(),
     ));
 
@@ -130,7 +133,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let deposit_impl = DepositServiceImpl::new(deposit_service, wallet_service.clone());
     let withdrawal_impl = WithdrawalServiceImpl::new(withdrawal_service);
     let user_impl = UserServiceImpl::new(user_service);
-    let settlement_impl = SettlementServiceImpl::new(trade_processor);
+    let settlement_impl = SettlementServiceImpl::new(settlement_service);
 
     println!("LedgerService listening on {}", addr);
 

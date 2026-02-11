@@ -68,7 +68,9 @@ func TestMatchingScenarios_SingleMatch(t *testing.T) {
 
 	// Expectations
 	// Should create exactly 1 Match
-	mockSettlement.On("Commit", mock.Anything, mock.MatchedBy(func(req *ledger.CommitRequest) bool {
+	// With Outbox Pattern, we now enqueue instead of calling Commit directly.
+	mockSettlement.AssertNotCalled(t, "Commit")
+	mockStore.On("EnqueueMatches", mock.Anything, mock.MatchedBy(func(req *ledger.CommitRequest) bool {
 		if len(req.Matches) != 1 {
 			return false
 		}
@@ -79,7 +81,7 @@ func TestMatchingScenarios_SingleMatch(t *testing.T) {
 		       match.TakerOrderId == "bid_50k" && 
 			   match.Price == "49000.00000000" && 
 			   match.Quantity == "1.00000000"
-	}), mock.Anything).Return(&ledger.CommitResponse{Success: true}, nil)
+	})).Return(nil)
 
 	mockPublisher.On("PublishOrderBookEvent", mock.Anything, mock.Anything).Return(nil)
 	mockPublisher.On("PublishTrade", mock.Anything, mock.Anything).Return(nil)
@@ -93,7 +95,7 @@ func TestMatchingScenarios_SingleMatch(t *testing.T) {
 	assert.Empty(t, book.Bids)
 	assert.Empty(t, book.Asks)
 
-	mockSettlement.AssertExpectations(t)
+	mockStore.AssertExpectations(t)
 }
 
 // Test 3: Multiple Matches
@@ -114,7 +116,8 @@ func TestMatchingScenarios_MultiMatch(t *testing.T) {
 
 	// Expectations
 	// Should create 2 Matches
-	mockSettlement.On("Commit", mock.Anything, mock.MatchedBy(func(req *ledger.CommitRequest) bool {
+	mockSettlement.AssertNotCalled(t, "Commit")
+	mockStore.On("EnqueueMatches", mock.Anything, mock.MatchedBy(func(req *ledger.CommitRequest) bool {
 		if len(req.Matches) != 2 {
 			return false
 		}
@@ -128,7 +131,7 @@ func TestMatchingScenarios_MultiMatch(t *testing.T) {
 		}
 		
 		return found1 && found2
-	}), mock.Anything).Return(&ledger.CommitResponse{Success: true}, nil)
+	})).Return(nil)
 
 	mockPublisher.On("PublishOrderBookEvent", mock.Anything, mock.Anything).Return(nil)
 	// Expect 2 Trade Events to be published
@@ -143,5 +146,5 @@ func TestMatchingScenarios_MultiMatch(t *testing.T) {
 	assert.Empty(t, book.Bids)
 	assert.Empty(t, book.Asks)
 
-	mockSettlement.AssertExpectations(t)
+	mockStore.AssertExpectations(t)
 }

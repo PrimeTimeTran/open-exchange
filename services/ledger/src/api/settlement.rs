@@ -3,15 +3,15 @@ use tonic::{Request, Response, Status};
 
 use crate::proto::ledger::settlement_server::Settlement;
 use crate::proto::ledger::{CommitRequest, CommitResponse};
-use crate::domain::trade::processor::TradeProcessor;
+use crate::domain::settlement::service::SettlementService;
 
 pub struct SettlementServiceImpl {
-    trade_processor: Arc<TradeProcessor>,
+    settlement_service: Arc<SettlementService>,
 }
 
 impl SettlementServiceImpl {
-    pub fn new(trade_processor: Arc<TradeProcessor>) -> Self {
-        Self { trade_processor }
+    pub fn new(settlement_service: Arc<SettlementService>) -> Self {
+        Self { settlement_service }
     }
 }
 
@@ -29,7 +29,7 @@ impl Settlement for SettlementServiceImpl {
             return Err(Status::invalid_argument("No matches provided"));
         }
 
-        let (trade_ids, errors) = self.trade_processor.process_matches(matches, tenant_id).await;
+        let (trade_ids, errors) = self.settlement_service.process_matches(matches, tenant_id).await;
 
         if !errors.is_empty() {
             Ok(Response::new(CommitResponse {

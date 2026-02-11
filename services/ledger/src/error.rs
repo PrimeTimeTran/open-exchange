@@ -7,6 +7,7 @@ pub enum AppError {
     DatabaseError(sqlx::Error),
     ValidationError(String),
     Internal(String),
+    OptimisticLockingError(String),
 }
 
 impl fmt::Display for AppError {
@@ -16,6 +17,7 @@ impl fmt::Display for AppError {
             AppError::DatabaseError(err) => write!(f, "Database Error: {}", err),
             AppError::ValidationError(msg) => write!(f, "Validation Error: {}", msg),
             AppError::Internal(msg) => write!(f, "Internal Error: {}", msg),
+            AppError::OptimisticLockingError(msg) => write!(f, "Optimistic Locking Error: {}", msg),
         }
     }
 }
