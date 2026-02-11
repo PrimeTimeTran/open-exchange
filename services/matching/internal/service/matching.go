@@ -20,7 +20,7 @@ import (
 type LedgerClientInterface interface {
 	RecordOrder(ctx context.Context, in *ledger.RecordOrderRequest, opts ...grpc.CallOption) (*ledger.RecordOrderResponse, error)
 	GetOpenOrders(ctx context.Context, in *ledger.GetOpenOrdersRequest, opts ...grpc.CallOption) (*ledger.GetOpenOrdersResponse, error)
-	RecordTrade(ctx context.Context, in *ledger.RecordTradeRequest, opts ...grpc.CallOption) (*ledger.RecordTradeResponse, error)
+	ProcessTrade(ctx context.Context, in *ledger.ProcessTradeRequest, opts ...grpc.CallOption) (*ledger.ProcessTradeResponse, error)
 	CancelOrder(ctx context.Context, in *ledger.CancelOrderRequest, opts ...grpc.CallOption) (*ledger.CancelOrderResponse, error)
 }
 
@@ -62,7 +62,7 @@ func (s *MatchingService) PlaceOrder(ctx context.Context, order *common.Order) (
 	trades, bookEvents, err := s.Engine.ProcessOrder(internalOrder, func(trade engine.Trade) error {
 		// Validate/Record trade with Ledger BEFORE committing to engine
 		log.Printf("Validating trade with Ledger: %v", trade)
-		_, err := s.LedgerClient.RecordTrade(ctx, &ledger.RecordTradeRequest{
+		_, err := s.LedgerClient.ProcessTrade(ctx, &ledger.ProcessTradeRequest{
 			MakerOrderId: trade.MakerOrderID,
 			TakerOrderId: trade.TakerOrderID,
 			Price:        fmt.Sprintf("%f", trade.Price),

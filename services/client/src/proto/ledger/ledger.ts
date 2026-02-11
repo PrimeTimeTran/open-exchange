@@ -67,7 +67,7 @@ export interface GetOpenOrdersResponse {
   orders?: Order[] | undefined;
 }
 
-export interface RecordTradeRequest {
+export interface ProcessTradeRequest {
   makerOrderId?: string | undefined;
   takerOrderId?: string | undefined;
   price?: string | undefined;
@@ -76,7 +76,7 @@ export interface RecordTradeRequest {
   instrumentId?: string | undefined;
 }
 
-export interface RecordTradeResponse {
+export interface ProcessTradeResponse {
   transactionId?: string | undefined;
   success?: boolean | undefined;
 }
@@ -921,12 +921,12 @@ export const GetOpenOrdersResponse: MessageFns<GetOpenOrdersResponse> = {
   },
 };
 
-function createBaseRecordTradeRequest(): RecordTradeRequest {
+function createBaseProcessTradeRequest(): ProcessTradeRequest {
   return { makerOrderId: "", takerOrderId: "", price: "", quantity: "", timestamp: "0", instrumentId: "" };
 }
 
-export const RecordTradeRequest: MessageFns<RecordTradeRequest> = {
-  encode(message: RecordTradeRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const ProcessTradeRequest: MessageFns<ProcessTradeRequest> = {
+  encode(message: ProcessTradeRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.makerOrderId !== undefined && message.makerOrderId !== "") {
       writer.uint32(10).string(message.makerOrderId);
     }
@@ -948,10 +948,10 @@ export const RecordTradeRequest: MessageFns<RecordTradeRequest> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): RecordTradeRequest {
+  decode(input: BinaryReader | Uint8Array, length?: number): ProcessTradeRequest {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseRecordTradeRequest();
+    const message = createBaseProcessTradeRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -1012,7 +1012,7 @@ export const RecordTradeRequest: MessageFns<RecordTradeRequest> = {
     return message;
   },
 
-  fromJSON(object: any): RecordTradeRequest {
+  fromJSON(object: any): ProcessTradeRequest {
     return {
       makerOrderId: isSet(object.makerOrderId)
         ? globalThis.String(object.makerOrderId)
@@ -1035,7 +1035,7 @@ export const RecordTradeRequest: MessageFns<RecordTradeRequest> = {
     };
   },
 
-  toJSON(message: RecordTradeRequest): unknown {
+  toJSON(message: ProcessTradeRequest): unknown {
     const obj: any = {};
     if (message.makerOrderId !== undefined && message.makerOrderId !== "") {
       obj.makerOrderId = message.makerOrderId;
@@ -1058,11 +1058,11 @@ export const RecordTradeRequest: MessageFns<RecordTradeRequest> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<RecordTradeRequest>, I>>(base?: I): RecordTradeRequest {
-    return RecordTradeRequest.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<ProcessTradeRequest>, I>>(base?: I): ProcessTradeRequest {
+    return ProcessTradeRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<RecordTradeRequest>, I>>(object: I): RecordTradeRequest {
-    const message = createBaseRecordTradeRequest();
+  fromPartial<I extends Exact<DeepPartial<ProcessTradeRequest>, I>>(object: I): ProcessTradeRequest {
+    const message = createBaseProcessTradeRequest();
     message.makerOrderId = object.makerOrderId ?? "";
     message.takerOrderId = object.takerOrderId ?? "";
     message.price = object.price ?? "";
@@ -1073,12 +1073,12 @@ export const RecordTradeRequest: MessageFns<RecordTradeRequest> = {
   },
 };
 
-function createBaseRecordTradeResponse(): RecordTradeResponse {
+function createBaseProcessTradeResponse(): ProcessTradeResponse {
   return { transactionId: "", success: false };
 }
 
-export const RecordTradeResponse: MessageFns<RecordTradeResponse> = {
-  encode(message: RecordTradeResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const ProcessTradeResponse: MessageFns<ProcessTradeResponse> = {
+  encode(message: ProcessTradeResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.transactionId !== undefined && message.transactionId !== "") {
       writer.uint32(10).string(message.transactionId);
     }
@@ -1088,10 +1088,10 @@ export const RecordTradeResponse: MessageFns<RecordTradeResponse> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): RecordTradeResponse {
+  decode(input: BinaryReader | Uint8Array, length?: number): ProcessTradeResponse {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseRecordTradeResponse();
+    const message = createBaseProcessTradeResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -1120,7 +1120,7 @@ export const RecordTradeResponse: MessageFns<RecordTradeResponse> = {
     return message;
   },
 
-  fromJSON(object: any): RecordTradeResponse {
+  fromJSON(object: any): ProcessTradeResponse {
     return {
       transactionId: isSet(object.transactionId)
         ? globalThis.String(object.transactionId)
@@ -1131,7 +1131,7 @@ export const RecordTradeResponse: MessageFns<RecordTradeResponse> = {
     };
   },
 
-  toJSON(message: RecordTradeResponse): unknown {
+  toJSON(message: ProcessTradeResponse): unknown {
     const obj: any = {};
     if (message.transactionId !== undefined && message.transactionId !== "") {
       obj.transactionId = message.transactionId;
@@ -1142,11 +1142,11 @@ export const RecordTradeResponse: MessageFns<RecordTradeResponse> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<RecordTradeResponse>, I>>(base?: I): RecordTradeResponse {
-    return RecordTradeResponse.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<ProcessTradeResponse>, I>>(base?: I): ProcessTradeResponse {
+    return ProcessTradeResponse.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<RecordTradeResponse>, I>>(object: I): RecordTradeResponse {
-    const message = createBaseRecordTradeResponse();
+  fromPartial<I extends Exact<DeepPartial<ProcessTradeResponse>, I>>(object: I): ProcessTradeResponse {
+    const message = createBaseProcessTradeResponse();
     message.transactionId = object.transactionId ?? "";
     message.success = object.success ?? false;
     return message;
@@ -5270,14 +5270,15 @@ export const OrderServiceService = {
       Buffer.from(GetOpenOrdersResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): GetOpenOrdersResponse => GetOpenOrdersResponse.decode(value),
   },
-  recordTrade: {
-    path: "/ledger.OrderService/RecordTrade",
+  processTrade: {
+    path: "/ledger.OrderService/ProcessTrade",
     requestStream: false,
     responseStream: false,
-    requestSerialize: (value: RecordTradeRequest): Buffer => Buffer.from(RecordTradeRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): RecordTradeRequest => RecordTradeRequest.decode(value),
-    responseSerialize: (value: RecordTradeResponse): Buffer => Buffer.from(RecordTradeResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): RecordTradeResponse => RecordTradeResponse.decode(value),
+    requestSerialize: (value: ProcessTradeRequest): Buffer => Buffer.from(ProcessTradeRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ProcessTradeRequest => ProcessTradeRequest.decode(value),
+    responseSerialize: (value: ProcessTradeResponse): Buffer =>
+      Buffer.from(ProcessTradeResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ProcessTradeResponse => ProcessTradeResponse.decode(value),
   },
 } as const;
 
@@ -5286,7 +5287,7 @@ export interface OrderServiceServer extends UntypedServiceImplementation {
   cancelOrder: handleUnaryCall<CancelOrderRequest, CancelOrderResponse>;
   deleteOrder: handleUnaryCall<DeleteOrderRequest, DeleteOrderResponse>;
   getOpenOrders: handleUnaryCall<GetOpenOrdersRequest, GetOpenOrdersResponse>;
-  recordTrade: handleUnaryCall<RecordTradeRequest, RecordTradeResponse>;
+  processTrade: handleUnaryCall<ProcessTradeRequest, ProcessTradeResponse>;
 }
 
 export interface OrderServiceClient extends Client {
@@ -5350,20 +5351,20 @@ export interface OrderServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: GetOpenOrdersResponse) => void,
   ): ClientUnaryCall;
-  recordTrade(
-    request: RecordTradeRequest,
-    callback: (error: ServiceError | null, response: RecordTradeResponse) => void,
+  processTrade(
+    request: ProcessTradeRequest,
+    callback: (error: ServiceError | null, response: ProcessTradeResponse) => void,
   ): ClientUnaryCall;
-  recordTrade(
-    request: RecordTradeRequest,
+  processTrade(
+    request: ProcessTradeRequest,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: RecordTradeResponse) => void,
+    callback: (error: ServiceError | null, response: ProcessTradeResponse) => void,
   ): ClientUnaryCall;
-  recordTrade(
-    request: RecordTradeRequest,
+  processTrade(
+    request: ProcessTradeRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: RecordTradeResponse) => void,
+    callback: (error: ServiceError | null, response: ProcessTradeResponse) => void,
   ): ClientUnaryCall;
 }
 

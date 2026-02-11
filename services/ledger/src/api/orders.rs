@@ -179,7 +179,22 @@ impl OrderService for OrderServiceImpl {
         let orders = self.order_service.list_open_orders().await
             .map_err(|e| Status::internal(e.to_string()))?;
             
-        let proto_orders = orders.into_iter().map(|o| {
+        let mut proto_orders = Vec::new();
+
+        for o in orders {
+            let (quantity, price, quantity_filled) = if let Some(instrument) = self.asset_service.get_instrument(&o.instrument_id.to_string()).await {
+                let base_decimals = self.asset_service.get_asset(&instrument.underlying_asset_id).await.unwrap_or(None).map(|a| a.decimals).unwrap_or(0);
+                let quote_decimals = self.asset_service.get_asset(&instrument.quote_asset_id).await.unwrap_or(None).map(|a| a.decimals).unwrap_or(0);
+                
+                let q_unscaled = o.quantity / 10f64.powi(base_decimals);
+                let p_unscaled = o.price / 10f64.powi(quote_decimals - base_decimals);
+                let f_unscaled = o.filled_quantity / 10f64.powi(base_decimals);
+                
+                (q_unscaled.to_string(), p_unscaled.to_string(), f_unscaled.to_string())
+            } else {
+                (o.quantity.to_string(), o.price.to_string(), o.filled_quantity.to_string())
+            };
+
             let side_enum = match o.side.as_str() {
                 "buy" => OrderSide::Buy,
                 "sell" => OrderSide::Sell,
@@ -195,33 +210,33 @@ impl OrderService for OrderServiceImpl {
                 _ => OrderStatus::Unspecified,
             };
 
-            crate::proto::common::Order {
+            proto_orders.push(crate::proto::common::Order {
                 id: o.id.to_string(),
                 tenant_id: o.tenant_id.to_string(),
                 account_id: o.account_id.to_string(),
                 instrument_id: o.instrument_id.to_string(),
                 side: side_enum as i32,
-                quantity: o.quantity.to_string(),
-                price: o.price.to_string(),
+                quantity,
+                price,
                 status: status_enum as i32,
-                quantity_filled: o.filled_quantity.to_string(),
+                quantity_filled,
                 meta: o.meta.to_string(),
                 created_at: o.created_at.timestamp_millis(),
                 updated_at: o.updated_at.timestamp_millis(),
-                r#type: 0, // Default or map if stored
-                time_in_force: 0, // Default or map if stored
-            }
-        }).collect();
+                r#type: 0, 
+                time_in_force: 0, 
+            });
+        }
 
         Ok(Response::new(GetOpenOrdersResponse {
             orders: proto_orders,
         }))
     }
     
-    async fn record_trade(
+    async fn process_trade(
         &self,
-        request: Request<RecordTradeRequest>,
-    ) -> Result<Response<RecordTradeResponse>, Status> {
+        request: Request<ProcessTradeRequest>,
+    ) -> Result<Response<ProcessTradeResponse>, Status> {
         let req = request.into_inner();
 
         let maker_order_id = Uuid::parse_str(&req.maker_order_id).map_err(|_| Status::invalid_argument("Invalid maker order ID"))?;
@@ -252,7 +267,7 @@ impl OrderService for OrderServiceImpl {
         self.order_service.fill_order(taker_order_id, quantity, price).await
             .map_err(|e| Status::internal(e.to_string()))?;
 
-        Ok(Response::new(RecordTradeResponse {
+        Ok(Response::new(ProcessTradeResponse {
             transaction_id: Uuid::new_v4().to_string(),
             success: true,
         }))

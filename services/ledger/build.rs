@@ -12,6 +12,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let protos = &[
         "../../proto/helloworld/helloworld.proto",
         "../../proto/common/order.proto",
+        "../../proto/common/ledger_entry.proto",
+        "../../proto/common/ledger_event.proto",
+        "../../proto/common/trade.proto",
         "../../proto/ledger/ledger.proto",
         "../../proto/matching/engine.proto",
         // Add more protos here

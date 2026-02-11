@@ -80,12 +80,12 @@ func (m *MockLedgerClient) GetOpenOrders(ctx context.Context, in *ledger.GetOpen
 	return args.Get(0).(*ledger.GetOpenOrdersResponse), args.Error(1)
 }
 
-func (m *MockLedgerClient) RecordTrade(ctx context.Context, in *ledger.RecordTradeRequest, opts ...grpc.CallOption) (*ledger.RecordTradeResponse, error) {
+func (m *MockLedgerClient) ProcessTrade(ctx context.Context, in *ledger.ProcessTradeRequest, opts ...grpc.CallOption) (*ledger.ProcessTradeResponse, error) {
 	args := m.Called(ctx, in, opts)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*ledger.RecordTradeResponse), args.Error(1)
+	return args.Get(0).(*ledger.ProcessTradeResponse), args.Error(1)
 }
 
 func (m *MockLedgerClient) CancelOrder(ctx context.Context, in *ledger.CancelOrderRequest, opts ...grpc.CallOption) (*ledger.CancelOrderResponse, error) {

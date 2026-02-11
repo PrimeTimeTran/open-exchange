@@ -71,10 +71,10 @@ func TestPlaceOrder_WithMatch(t *testing.T) {
 	// 	Success: true,
 	// }, nil)
 
-	// Expect RecordTrade to be called once
-	mockLedger.On("RecordTrade", mock.Anything, mock.MatchedBy(func(req *ledger.RecordTradeRequest) bool {
+	// Expect ProcessTrade to be called once
+	mockLedger.On("ProcessTrade", mock.Anything, mock.MatchedBy(func(req *ledger.ProcessTradeRequest) bool {
 		return req.MakerOrderId == "sell_1" && req.TakerOrderId == "buy_1" && req.Quantity == "0.500000"
-	}), mock.Anything).Return(&ledger.RecordTradeResponse{
+	}), mock.Anything).Return(&ledger.ProcessTradeResponse{
 		Success: true,
 	}, nil)
 
@@ -94,7 +94,7 @@ func TestPlaceOrder_WithMatch(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "buy_1", id)
 
-	// Verify RecordTrade was called
+	// Verify ProcessTrade was called
 	mockLedger.AssertExpectations(t)
 	mockPublisher.AssertExpectations(t)
 }

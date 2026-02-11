@@ -1,6 +1,6 @@
 use uuid::Uuid;
 use tonic::Request;
-use ledger::proto::ledger::{RecordOrderRequest, RecordTradeRequest, GetOpenOrdersRequest};
+use ledger::proto::ledger::{RecordOrderRequest, ProcessTradeRequest, GetOpenOrdersRequest};
 use ledger::proto::common::{OrderSide, OrderStatus};
 use crate::common::{TestContext, create_asset, create_instrument, create_account, create_wallet, deposit_funds, create_order_object};
 // Import traits to use service methods
@@ -34,7 +34,6 @@ async fn test_create_order_flow() {
 
     // Verify Order is Open
     let open_orders = ctx.order_service.get_open_orders(Request::new(GetOpenOrdersRequest::default())).await.unwrap().into_inner().orders;
-    // list_open_orders only returns Open, Partial, New
     assert!(open_orders.iter().any(|o| o.id == order.id && o.status == OrderStatus::Open as i32));
 }
 
@@ -70,7 +69,7 @@ async fn test_match_orders_market() {
     ctx.order_service.record_order(Request::new(RecordOrderRequest { order: Some(order_b.clone()) })).await.unwrap();
 
     // 6. Simulate Match (RecordTrade)
-    let trade_req = RecordTradeRequest {
+    let trade_req = ProcessTradeRequest {
         maker_order_id: order_a.id.clone(),
         taker_order_id: order_b.id.clone(),
         price: "50000.0".to_string(),
@@ -79,7 +78,7 @@ async fn test_match_orders_market() {
         instrument_id: instr_id.clone(),
     };
     
-    let trade_resp = ctx.order_service.record_trade(Request::new(trade_req)).await.expect("Failed to record trade");
+    let trade_resp = ctx.order_service.process_trade(Request::new(trade_req)).await.expect("Failed to record trade");
     assert!(trade_resp.into_inner().success);
 
     // 7. Verify Orders are Filled
@@ -119,7 +118,7 @@ async fn test_partial_fill() {
     ctx.order_service.record_order(Request::new(RecordOrderRequest { order: Some(order_b.clone()) })).await.unwrap();
 
     // Simulate Match (0.5 BTC)
-    let trade_req = RecordTradeRequest {
+    let trade_req = ProcessTradeRequest {
         maker_order_id: order_a.id.clone(),
         taker_order_id: order_b.id.clone(),
         price: "50000.0".to_string(),
@@ -128,13 +127,13 @@ async fn test_partial_fill() {
         instrument_id: instr_id.clone(),
     };
     
-    ctx.order_service.record_trade(Request::new(trade_req)).await.expect("Failed to record trade");
+    ctx.order_service.process_trade(Request::new(trade_req)).await.expect("Failed to record trade");
 
     // Verify Order A is Partially Filled
     let open_orders = ctx.order_service.get_open_orders(Request::new(GetOpenOrdersRequest::default())).await.unwrap().into_inner().orders;
     let order_a_found = open_orders.iter().find(|o| o.id == order_a.id).expect("Order A should be open/partial");
     assert_eq!(order_a_found.status, OrderStatus::PartiallyFilled as i32);
-    assert_eq!(order_a_found.quantity_filled, "50000000");
+    assert_eq!(order_a_found.quantity_filled.parse::<f64>().unwrap(), 0.5);
 
     // Verify Order B is Filled
     let order_b_found = open_orders.iter().find(|o| o.id.to_string() == order_b.id);
@@ -181,7 +180,7 @@ async fn test_multi_fill() {
     ctx.order_service.record_order(Request::new(RecordOrderRequest { order: Some(order_c.clone()) })).await.unwrap();
 
     // Match A and C (1 BTC)
-    let trade_req_ac = RecordTradeRequest {
+    let trade_req_ac = ProcessTradeRequest {
         maker_order_id: order_a.id.clone(),
         taker_order_id: order_c.id.clone(),
         price: "50000.0".to_string(),
@@ -189,10 +188,10 @@ async fn test_multi_fill() {
         timestamp: 1234567890,
         instrument_id: instr_id.clone(),
     };
-    ctx.order_service.record_trade(Request::new(trade_req_ac)).await.expect("Failed to record trade A-C");
+    ctx.order_service.process_trade(Request::new(trade_req_ac)).await.expect("Failed to record trade A-C");
 
     // Match B and C (1 BTC)
-    let trade_req_bc = RecordTradeRequest {
+    let trade_req_bc = ProcessTradeRequest {
         maker_order_id: order_b.id.clone(),
         taker_order_id: order_c.id.clone(),
         price: "50000.0".to_string(),
@@ -200,7 +199,7 @@ async fn test_multi_fill() {
         timestamp: 1234567891,
         instrument_id: instr_id.clone(),
     };
-    ctx.order_service.record_trade(Request::new(trade_req_bc)).await.expect("Failed to record trade B-C");
+    ctx.order_service.process_trade(Request::new(trade_req_bc)).await.expect("Failed to record trade B-C");
 
     // Verify All Filled
     let open_orders = ctx.order_service.get_open_orders(Request::new(GetOpenOrdersRequest::default())).await.unwrap().into_inner().orders;

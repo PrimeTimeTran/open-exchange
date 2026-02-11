@@ -22,7 +22,7 @@ service OrderService {
   rpc CancelOrder(CancelOrderRequest) returns (CancelOrderResponse);
   rpc DeleteOrder(DeleteOrderRequest) returns (DeleteOrderResponse);
   rpc GetOpenOrders(GetOpenOrdersRequest) returns (GetOpenOrdersResponse);
-  rpc RecordTrade(RecordTradeRequest) returns (RecordTradeResponse);
+  rpc ProcessTrade(ProcessTradeRequest) returns (ProcessTradeResponse);
 }
 
 service UserService {
@@ -113,7 +113,7 @@ message GetOpenOrdersResponse {
   repeated common.Order orders = 1;
 }
 
-message RecordTradeRequest {
+message ProcessTradeRequest {
   string maker_order_id = 1;
   string taker_order_id = 2;
   string price = 3;
@@ -122,7 +122,7 @@ message RecordTradeRequest {
   string instrument_id = 6;
 }
 
-message RecordTradeResponse {
+message ProcessTradeResponse {
   string transaction_id = 1;
   bool success = 2;
 }

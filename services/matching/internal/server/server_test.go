@@ -148,7 +148,7 @@ func TestMatchingServer_CancelOrder_Success(t *testing.T) {
 }
 
 func TestMatchingServer_PlaceOrder_MatchSuccess(t *testing.T) {
-	// Verifies that when an order matches, RecordTrade is called on the Ledger service.
+	// Verifies that when an order matches, ProcessTrade is called on the Ledger service.
 	client, mockLedger, mockPublisher, mockStore, cleanup := setupTestServer(t)
 	defer cleanup()
 
@@ -166,11 +166,11 @@ func TestMatchingServer_PlaceOrder_MatchSuccess(t *testing.T) {
 	assert.NoError(t, err)
 
 	// 2. Execute: Place a Buy Order (Taker) that matches
-	// Expect RecordTrade to be called
-	mockLedger.On("RecordTrade", mock.Anything, mock.MatchedBy(func(req *ledger.RecordTradeRequest) bool {
+	// Expect ProcessTrade to be called
+	mockLedger.On("ProcessTrade", mock.Anything, mock.MatchedBy(func(req *ledger.ProcessTradeRequest) bool {
 		// Note: Prices/Quantities are strings in proto
 		return req.MakerOrderId == "maker_sell" && req.TakerOrderId == "taker_buy"
-	}), mock.Anything).Return(&ledger.RecordTradeResponse{Success: true}, nil)
+	}), mock.Anything).Return(&ledger.ProcessTradeResponse{Success: true}, nil)
 	
 	// Expect Trade Event
 	mockPublisher.On("PublishTrade", mock.Anything, mock.Anything).Return(nil)
@@ -266,9 +266,8 @@ func TestMatchingServer_PlaceOrder_TradeLedgerFailure(t *testing.T) {
 	assert.NoError(t, err)
 
     // 2. Execute: Place a Buy Order (Taker) that matches
-	// Expectations: Ledger returns actual ERROR for RecordTrade
-	mockLedger.On("RecordTrade", mock.Anything, mock.Anything, mock.Anything).Return((*ledger.RecordTradeResponse)(nil), assert.AnError)
-
+	// Expectations: Ledger returns actual ERROR for ProcessTrade
+	mockLedger.On("ProcessTrade", mock.Anything, mock.Anything, mock.Anything).Return((*ledger.ProcessTradeResponse)(nil), assert.AnError)
 	takerOrder := testutil.NewOrder("taker_buy", common.OrderSide_ORDER_SIDE_BUY, 50000, 1.0)
 	takerOrder.AccountId = "user2"
 	req := &pb.PlaceOrderRequest{

@@ -23,7 +23,7 @@ const (
 	OrderService_CancelOrder_FullMethodName   = "/ledger.OrderService/CancelOrder"
 	OrderService_DeleteOrder_FullMethodName   = "/ledger.OrderService/DeleteOrder"
 	OrderService_GetOpenOrders_FullMethodName = "/ledger.OrderService/GetOpenOrders"
-	OrderService_RecordTrade_FullMethodName   = "/ledger.OrderService/RecordTrade"
+	OrderService_ProcessTrade_FullMethodName  = "/ledger.OrderService/ProcessTrade"
 )
 
 // OrderServiceClient is the client API for OrderService service.
@@ -34,7 +34,7 @@ type OrderServiceClient interface {
 	CancelOrder(ctx context.Context, in *CancelOrderRequest, opts ...grpc.CallOption) (*CancelOrderResponse, error)
 	DeleteOrder(ctx context.Context, in *DeleteOrderRequest, opts ...grpc.CallOption) (*DeleteOrderResponse, error)
 	GetOpenOrders(ctx context.Context, in *GetOpenOrdersRequest, opts ...grpc.CallOption) (*GetOpenOrdersResponse, error)
-	RecordTrade(ctx context.Context, in *RecordTradeRequest, opts ...grpc.CallOption) (*RecordTradeResponse, error)
+	ProcessTrade(ctx context.Context, in *ProcessTradeRequest, opts ...grpc.CallOption) (*ProcessTradeResponse, error)
 }
 
 type orderServiceClient struct {
@@ -81,9 +81,9 @@ func (c *orderServiceClient) GetOpenOrders(ctx context.Context, in *GetOpenOrder
 	return out, nil
 }
 
-func (c *orderServiceClient) RecordTrade(ctx context.Context, in *RecordTradeRequest, opts ...grpc.CallOption) (*RecordTradeResponse, error) {
-	out := new(RecordTradeResponse)
-	err := c.cc.Invoke(ctx, OrderService_RecordTrade_FullMethodName, in, out, opts...)
+func (c *orderServiceClient) ProcessTrade(ctx context.Context, in *ProcessTradeRequest, opts ...grpc.CallOption) (*ProcessTradeResponse, error) {
+	out := new(ProcessTradeResponse)
+	err := c.cc.Invoke(ctx, OrderService_ProcessTrade_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ type OrderServiceServer interface {
 	CancelOrder(context.Context, *CancelOrderRequest) (*CancelOrderResponse, error)
 	DeleteOrder(context.Context, *DeleteOrderRequest) (*DeleteOrderResponse, error)
 	GetOpenOrders(context.Context, *GetOpenOrdersRequest) (*GetOpenOrdersResponse, error)
-	RecordTrade(context.Context, *RecordTradeRequest) (*RecordTradeResponse, error)
+	ProcessTrade(context.Context, *ProcessTradeRequest) (*ProcessTradeResponse, error)
 	mustEmbedUnimplementedOrderServiceServer()
 }
 
@@ -118,8 +118,8 @@ func (UnimplementedOrderServiceServer) DeleteOrder(context.Context, *DeleteOrder
 func (UnimplementedOrderServiceServer) GetOpenOrders(context.Context, *GetOpenOrdersRequest) (*GetOpenOrdersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOpenOrders not implemented")
 }
-func (UnimplementedOrderServiceServer) RecordTrade(context.Context, *RecordTradeRequest) (*RecordTradeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RecordTrade not implemented")
+func (UnimplementedOrderServiceServer) ProcessTrade(context.Context, *ProcessTradeRequest) (*ProcessTradeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ProcessTrade not implemented")
 }
 func (UnimplementedOrderServiceServer) mustEmbedUnimplementedOrderServiceServer() {}
 
@@ -206,20 +206,20 @@ func _OrderService_GetOpenOrders_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OrderService_RecordTrade_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RecordTradeRequest)
+func _OrderService_ProcessTrade_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ProcessTradeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrderServiceServer).RecordTrade(ctx, in)
+		return srv.(OrderServiceServer).ProcessTrade(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: OrderService_RecordTrade_FullMethodName,
+		FullMethod: OrderService_ProcessTrade_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrderServiceServer).RecordTrade(ctx, req.(*RecordTradeRequest))
+		return srv.(OrderServiceServer).ProcessTrade(ctx, req.(*ProcessTradeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -248,8 +248,8 @@ var OrderService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _OrderService_GetOpenOrders_Handler,
 		},
 		{
-			MethodName: "RecordTrade",
-			Handler:    _OrderService_RecordTrade_Handler,
+			MethodName: "ProcessTrade",
+			Handler:    _OrderService_ProcessTrade_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
