@@ -220,8 +220,41 @@ impl OrderService for OrderServiceImpl {
     
     async fn record_trade(
         &self,
-        _request: Request<RecordTradeRequest>,
+        request: Request<RecordTradeRequest>,
     ) -> Result<Response<RecordTradeResponse>, Status> {
-        Err(Status::unimplemented("record_trade not implemented"))
+        let req = request.into_inner();
+
+        let maker_order_id = Uuid::parse_str(&req.maker_order_id).map_err(|_| Status::invalid_argument("Invalid maker order ID"))?;
+        let taker_order_id = Uuid::parse_str(&req.taker_order_id).map_err(|_| Status::invalid_argument("Invalid taker order ID"))?;
+        
+        // Fetch instrument and assets for scaling
+        let (quantity, price) = if let Some(instrument) = self.asset_service.get_instrument(&req.instrument_id).await {
+            let base_decimals = self.asset_service.get_asset(&instrument.underlying_asset_id).await.unwrap_or(None).map(|a| a.decimals).unwrap_or(0);
+            let quote_decimals = self.asset_service.get_asset(&instrument.quote_asset_id).await.unwrap_or(None).map(|a| a.decimals).unwrap_or(0);
+            
+            let quantity_raw = req.quantity.parse::<f64>().unwrap_or(0.0);
+            let price_raw = req.price.parse::<f64>().unwrap_or(0.0);
+            
+            let q_scaled = (quantity_raw * 10f64.powi(base_decimals)).round();
+            let p_scaled = price_raw * 10f64.powi(quote_decimals - base_decimals);
+            
+            (q_scaled, p_scaled)
+        } else {
+             // Fallback if instrument not found
+             (req.quantity.parse().unwrap_or(0.0), req.price.parse().unwrap_or(0.0))
+        };
+
+        // Update Maker Order
+        self.order_service.fill_order(maker_order_id, quantity, price).await
+            .map_err(|e| Status::internal(e.to_string()))?;
+
+        // Update Taker Order
+        self.order_service.fill_order(taker_order_id, quantity, price).await
+            .map_err(|e| Status::internal(e.to_string()))?;
+
+        Ok(Response::new(RecordTradeResponse {
+            transaction_id: Uuid::new_v4().to_string(),
+            success: true,
+        }))
     }
 }

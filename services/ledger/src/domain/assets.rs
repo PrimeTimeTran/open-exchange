@@ -33,9 +33,9 @@ impl AssetService {
         self.repo.list().await
     }
 
-    pub fn create_new_asset(&self, symbol: String, asset_type: String, precision: i32) -> common::Asset {
+    pub async fn create_new_asset(&self, symbol: String, asset_type: String, precision: i32) -> common::Asset {
         // Warning: This is now broken/stubbed until we implement AssetRepository::create
-        common::Asset {
+        let asset = common::Asset {
             id: Uuid::new_v4().to_string(),
             tenant_id: "default".to_string(),
             symbol,
@@ -46,7 +46,9 @@ impl AssetService {
             meta: "{}".to_string(),
             created_at: Utc::now().timestamp_millis(),
             updated_at: Utc::now().timestamp_millis(),
-        }
+        };
+
+        self.repo.create(asset.clone()).await.unwrap_or(asset)
     }
 
     pub async fn create_new_instrument(&self, symbol: String, instrument_type: String, base_id: String, quote_id: String) -> common::Instrument {

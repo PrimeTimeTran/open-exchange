@@ -12,6 +12,10 @@ export async function seedOrders(
     where: {
       symbol: { in: ['BTC_USD', 'ETH_USD', 'AAPL_USD'] },
     },
+    include: {
+      underlyingAsset: true,
+      quoteAsset: true,
+    },
   });
 
   const btc = instruments.find((i) => i.symbol === 'BTC_USD');
@@ -47,6 +51,25 @@ export async function seedOrders(
     qty: number,
     filled: number = 0,
   ) => {
+    const inst = instruments.find((i) => i.id === instId);
+    let finalPrice = price;
+    let finalQty = qty;
+    let finalFilled = filled;
+
+    if (inst && inst.underlyingAsset && inst.quoteAsset) {
+      const baseDec = inst.underlyingAsset.decimals;
+      const quoteDec = inst.quoteAsset.decimals;
+
+      // Price Atomic = Price Major * 10^(Q-B)
+      const priceScale = Math.pow(10, quoteDec - baseDec);
+      finalPrice = price * priceScale;
+
+      // Qty Atomic = Qty Major * 10^B
+      const qtyScale = Math.pow(10, baseDec);
+      finalQty = qty * qtyScale;
+      finalFilled = filled * qtyScale;
+    }
+
     return prisma.order.create({
       data: {
         ...commonData,
@@ -54,17 +77,22 @@ export async function seedOrders(
         side,
         type,
         status,
-        price,
-        quantity: qty,
-        quantityFilled: filled,
+        price: finalPrice,
+        quantity: finalQty,
+        quantityFilled: finalFilled,
         createdAt: new Date(),
       },
     });
   };
 
   // BTC Orders
-  if (btc) {
+  if (btc && btc.underlyingAsset && btc.quoteAsset) {
     console.log('Seeding BTC orders...');
+    const btcBase = btc.underlyingAsset.decimals;
+    const btcQuote = btc.quoteAsset.decimals;
+    const btcPScale = Math.pow(10, btcQuote - btcBase);
+    const btcQScale = Math.pow(10, btcBase);
+
     // Open Bids (Buy Limit) - Order Book Depth
     await createOrder(btc.id, 'buy', 'limit', 'open', 64500, 0.5);
     await createOrder(btc.id, 'buy', 'limit', 'open', 64200, 1.2);
@@ -75,6 +103,54 @@ export async function seedOrders(
     await createOrder(btc.id, 'sell', 'limit', 'open', 65800, 0.8);
     await createOrder(btc.id, 'sell', 'limit', 'open', 66000, 1.5);
 
+    // AI Requested Orders
+    console.log('Seeding requested AI orders...');
+
+    // 3. Limit Bid Order for 10 BTC at $50,000 (Filled)
+    // To simulate a "filled" order in history, we create it as 'filled' and add a trade record.
+    const filledBid = await createOrder(
+      btc.id,
+      'buy',
+      'limit',
+      'filled',
+      50000,
+      10,
+      10,
+    );
+
+    await prisma.trade.create({
+      data: {
+        tenantId,
+        instrumentId: btc.id,
+        price: 50000 * btcPScale,
+        quantity: 10 * btcQScale,
+        buyOrderId: { connect: { id: filledBid.id } },
+        // Ideally we'd connect a sell order too, but for history we can leave it nullable or create a dummy counterparty order.
+        // For simplicity, just recording the trade associated with this user's order.
+        createdAt: new Date(),
+        createdByMembershipId: membershipId,
+        updatedByMembershipId: membershipId,
+        createdByUserId: userId,
+        updatedByUserId: userId,
+        fills: {
+          create: {
+            tenantId,
+            side: 'buy',
+            price: 50000 * btcPScale,
+            quantity: 10 * btcQScale,
+            fee: 0,
+            createdByMembershipId: membershipId,
+            updatedByMembershipId: membershipId,
+            createdByUserId: userId,
+            updatedByUserId: userId,
+          },
+        },
+      },
+    });
+
+    // 4. Sell Order of 10 BTC at $100,000 (Open)
+    await createOrder(btc.id, 'sell', 'limit', 'open', 100000, 10);
+
     // Filled Orders (History)
     const filledOrder = await prisma.order.create({
       data: {
@@ -83,9 +159,9 @@ export async function seedOrders(
         side: 'buy',
         type: 'limit',
         status: 'filled',
-        price: 60000,
-        quantity: 0.1,
-        quantityFilled: 0.1,
+        price: 60000 * btcPScale,
+        quantity: 0.1 * btcQScale,
+        quantityFilled: 0.1 * btcQScale,
         createdAt: new Date(Date.now() - 86400000), // 1 day ago
       },
     });
@@ -94,8 +170,8 @@ export async function seedOrders(
       data: {
         tenantId,
         instrumentId: btc.id,
-        price: 60000,
-        quantity: 0.1,
+        price: 60000 * btcPScale,
+        quantity: 0.1 * btcQScale,
         buyOrderId: { connect: { id: filledOrder.id } },
         createdAt: new Date(Date.now() - 86400000),
         createdByMembershipId: membershipId,
@@ -106,8 +182,8 @@ export async function seedOrders(
           create: {
             tenantId,
             side: 'buy',
-            price: 60000,
-            quantity: 0.1,
+            price: 60000 * btcPScale,
+            quantity: 0.1 * btcQScale,
             fee: 5.0,
             createdByMembershipId: membershipId,
             updatedByMembershipId: membershipId,
@@ -132,8 +208,13 @@ export async function seedOrders(
   }
 
   // AAPL Orders
-  if (aapl) {
+  if (aapl && aapl.underlyingAsset && aapl.quoteAsset) {
     console.log('Seeding AAPL orders...');
+    const aaplBase = aapl.underlyingAsset.decimals;
+    const aaplQuote = aapl.quoteAsset.decimals;
+    const aaplPScale = Math.pow(10, aaplQuote - aaplBase);
+    const aaplQScale = Math.pow(10, aaplBase);
+
     // Open Bids
     await createOrder(aapl.id, 'buy', 'limit', 'open', 215.5, 100);
     await createOrder(aapl.id, 'buy', 'limit', 'open', 215.0, 500);
@@ -152,8 +233,8 @@ export async function seedOrders(
         side: 'sell',
         type: 'limit',
         status: 'cancelled',
-        price: 220.0,
-        quantity: 50,
+        price: 220.0 * aaplPScale,
+        quantity: 50 * aaplQScale,
         quantityFilled: 0,
         createdAt: new Date(Date.now() - 3600000),
       },

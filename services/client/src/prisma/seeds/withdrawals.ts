@@ -14,6 +14,12 @@ export async function seedWithdrawals(
     { asset: 'ETH', amount: 2.5, status: 'pending', txHash: '0x222bbb' },
     {
       asset: 'USD',
+      amount: 1000000.0, // 1M USD
+      status: 'completed',
+      txHash: 'large_seed_withdrawal_usd',
+    },
+    {
+      asset: 'USD',
       amount: 1000.0,
       status: 'completed',
       txHash: 'bank_transfer_withdrawal_001',

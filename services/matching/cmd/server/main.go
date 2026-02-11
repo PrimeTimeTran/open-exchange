@@ -18,6 +18,7 @@ import (
 	"github.com/open-exchange/matching_engine/internal/events"
 	"github.com/open-exchange/matching_engine/internal/server"
 	"github.com/open-exchange/matching_engine/internal/service"
+	"github.com/open-exchange/matching_engine/internal/storage"
 	"github.com/open-exchange/matching_engine/internal/system"
 	"github.com/open-exchange/matching_engine/proto/helloworld"
 	ledger "github.com/open-exchange/matching_engine/proto/ledger"
@@ -31,33 +32,51 @@ var (
 func main() {
 	flag.Parse()
 
-	// 1. Connect to Ledger Service
-	ledgerAddr := os.Getenv("LEDGER_URL")
-	if ledgerAddr == "" {
-		ledgerAddr = "ledger:50052"
-	}
+	// 1. Configuration
+	ledgerAddr := getEnv("LEDGER_URL", "ledger:50052")
+	redisAddr := getEnv("REDIS_URL", "redis:6379")
 
-	log.Printf("Connecting to Ledger Service at %s...", ledgerAddr)
-	conn, err := grpc.NewClient(ledgerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	// 2. Infrastructure Setup
+	ledgerConn, ledgerClient, greeterClient := connectToLedger(ledgerAddr)
+	defer ledgerConn.Close()
+
+	publisher := setupPublisher(redisAddr)
+	redisStore := setupRedisStore(redisAddr)
+
+	// 3. Service Initialization
+	eng := engine.NewEngine()
+	svc := service.NewMatchingService(eng, ledgerClient, publisher, redisStore)
+
+	// 4. State Recovery
+	recoverState(svc)
+
+	// 5. Server Startup
+	startServer(svc, greeterClient)
+}
+
+// -----------------------------------------------------------------------------
+// Helper Functions
+// -----------------------------------------------------------------------------
+
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
+
+func connectToLedger(addr string) (*grpc.ClientConn, ledger.OrderServiceClient, helloworld.GreeterClient) {
+	log.Printf("Connecting to Ledger Service at %s...", addr)
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect to ledger: %v", err)
 	}
-	defer conn.Close()
-	ledgerClient := ledger.NewOrderServiceClient(conn)
-	greeterClient := helloworld.NewGreeterClient(conn)
+	return conn, ledger.NewOrderServiceClient(conn), helloworld.NewGreeterClient(conn)
+}
 
-	// 2. Initialize Engine and Service
-	eng := engine.NewEngine()
-
-	// Initialize Publisher
-	// Always use LogPublisher for visibility
+func setupPublisher(redisAddr string) events.Publisher {
 	publishers := []events.Publisher{
 		events.NewLogPublisher(),
-	}
-
-	redisAddr := os.Getenv("REDIS_URL")
-	if redisAddr == "" {
-		redisAddr = "redis:6379"
 	}
 
 	redisPub, err := events.NewRedisPublisher(redisAddr)
@@ -68,53 +87,57 @@ func main() {
 		publishers = append(publishers, redisPub)
 	}
 
-	publisher := events.NewMultiPublisher(publishers...)
+	return events.NewMultiPublisher(publishers...)
+}
 
-	svc := service.NewMatchingService(eng, ledgerClient, publisher)
+func setupRedisStore(addr string) *storage.RedisStore {
+	store, err := storage.NewRedisStore(addr)
+	if err != nil {
+		log.Fatalf("Failed to connect to Redis for persistence: %v", err)
+	}
+	return store
+}
 
-	// 2.5 Startup Recovery
-	// We do this in a goroutine or before serving. Before serving is safer to ensure state is consistent.
+func recoverState(svc *service.MatchingService) {
 	ctx := context.Background()
-	// Retry recovery indefinitely until successful
 	retryInterval := 3 * time.Second
+
 	for {
 		err := svc.RecoverState(ctx)
 		if err == nil {
-			log.Printf("Successfully recovered state from Ledger.")
+			log.Printf("Successfully recovered state.")
 			break
 		}
 		
-		log.Printf("WARNING: Failed to recover state from Ledger: %v. Retrying in %v...", err, retryInterval)
+		log.Printf("WARNING: Failed to recover state: %v. Retrying in %v...", err, retryInterval)
 		time.Sleep(retryInterval)
 	}
+}
 
-	// 3. Start Matching Engine Server
+func startServer(svc *service.MatchingService, greeterClient helloworld.GreeterClient) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
 	s := grpc.NewServer()
-	matchingServer := server.NewMatchingServer(svc)
-	pb.RegisterMatchingServer(s, matchingServer)
-
-	greeterServer := server.NewGreeterServer(greeterClient)
-	helloworld.RegisterGreeterServer(s, greeterServer)
-
-	log.Printf("Matching Engine listening at %v", lis.Addr())
 	
-	// Start HTTP Health Check Server
+	// Register services
+	pb.RegisterMatchingServer(s, server.NewMatchingServer(svc))
+	helloworld.RegisterGreeterServer(s, server.NewGreeterServer(greeterClient))
+
+	// Start Health Check
 	go system.StartHealthServer(":8080")
 
-	// 4. Graceful Shutdown
+	// Start gRPC Server
 	go func() {
+		log.Printf("Matching Engine listening at %v", lis.Addr())
 		if err := s.Serve(lis); err != nil {
 			log.Fatalf("failed to serve: %v", err)
 		}
 	}()
 
-	// Wait for interrupt signal to gracefully shutdown the server with
-	// a timeout of 5 seconds.
+	// Graceful Shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit

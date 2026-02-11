@@ -93,8 +93,8 @@ async fn test_order_validation_sufficient_funds() {
     
     let usd_wallet_id = create_wallet(&ctx.wallet_service, &usd_account_id, &usd_asset_id).await;
 
-    // Deposit Funds: $51,000
-    deposit_funds(&ctx.deposit_service, &usd_wallet_id, "51000").await;
+    // Deposit Funds: $51,000 (5,100,000 cents)
+    deposit_funds(&ctx.deposit_service, &usd_wallet_id, "5100000").await;
 
     // Attempt Order
     let order = create_order_object(&ctx, &usd_account_id, &instrument_id, OrderSide::Buy, "1", "50000").await;
@@ -108,8 +108,8 @@ async fn test_order_validation_sufficient_funds() {
     let get_wallet_req = Request::new(GetWalletRequest { wallet_id: usd_wallet_id });
     let wallet = ctx.wallet_service.get_wallet(get_wallet_req).await.unwrap().into_inner().wallet.unwrap();
 
-    assert_eq!(wallet.available, "1000"); // 51000 - 50000
-    assert_eq!(wallet.locked, "50000");
+    assert_eq!(wallet.available, "100000"); // 5,100,000 - 5,000,000
+    assert_eq!(wallet.locked, "5000000");
 }
 
 #[tokio::test]

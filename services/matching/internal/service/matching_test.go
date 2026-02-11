@@ -13,17 +13,18 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func setupServiceTest() (*MatchingService, *engine.Engine, *testutil.MockLedgerClient, *testutil.MockPublisher) {
+func setupServiceTest() (*MatchingService, *engine.Engine, *testutil.MockLedgerClient, *testutil.MockPublisher, *testutil.MockStore) {
 	eng := engine.NewEngine()
 	mockLedger := new(testutil.MockLedgerClient)
 	mockPublisher := new(testutil.MockPublisher)
-	svc := NewMatchingService(eng, mockLedger, mockPublisher)
-	return svc, eng, mockLedger, mockPublisher
+	mockStore := new(testutil.MockStore)
+	svc := NewMatchingService(eng, mockLedger, mockPublisher, mockStore)
+	return svc, eng, mockLedger, mockPublisher, mockStore
 }
 
 func TestPlaceOrder(t *testing.T) {
 	// Setup
-	svc, eng, _, mockPublisher := setupServiceTest()
+	svc, eng, _, mockPublisher, mockStore := setupServiceTest()
 
 	order := testutil.NewOrder("new_order", common.OrderSide_ORDER_SIDE_BUY, 55000, 0.5)
 
@@ -35,6 +36,7 @@ func TestPlaceOrder(t *testing.T) {
 
 	// Expect PublishOrderBookEvent
 	mockPublisher.On("PublishOrderBookEvent", mock.Anything, mock.Anything).Return(nil)
+	mockStore.On("SaveOrderBook", mock.Anything, mock.Anything).Return(nil)
 
 	// Execute
 	id, err := svc.PlaceOrder(context.Background(), order)
@@ -52,7 +54,7 @@ func TestPlaceOrder(t *testing.T) {
 
 func TestPlaceOrder_WithMatch(t *testing.T) {
 	// Setup
-	svc, eng, mockLedger, mockPublisher := setupServiceTest()
+	svc, eng, mockLedger, mockPublisher, mockStore := setupServiceTest()
 
 	// Pre-fill the engine with a sell order
 	sellOrder := testutil.NewOrder("sell_1", common.OrderSide_ORDER_SIDE_SELL, 50000, 1.0)
@@ -78,6 +80,7 @@ func TestPlaceOrder_WithMatch(t *testing.T) {
 
 	// Expect PublishOrderBookEvent (likely multiple times, for match and partial fill remaining)
 	mockPublisher.On("PublishOrderBookEvent", mock.Anything, mock.Anything).Return(nil)
+	mockStore.On("SaveOrderBook", mock.Anything, mock.Anything).Return(nil)
 
 	// Expect PublishTrade to be called once
 	mockPublisher.On("PublishTrade", mock.Anything, mock.MatchedBy(func(event events.TradeEvent) bool {
@@ -98,7 +101,7 @@ func TestPlaceOrder_WithMatch(t *testing.T) {
 
 func TestCancelOrder(t *testing.T) {
 	// Setup
-	svc, eng, mockLedger, mockPublisher := setupServiceTest()
+	svc, eng, mockLedger, mockPublisher, mockStore := setupServiceTest()
 
 	// Pre-fill
 	eng.ProcessOrder(engine.NewOrderFromProto(testutil.NewOrder("order_to_cancel", common.OrderSide_ORDER_SIDE_BUY, 50000, 1.0)), nil)
@@ -113,6 +116,8 @@ func TestCancelOrder(t *testing.T) {
 	mockPublisher.On("PublishOrderCancelled", mock.Anything, mock.MatchedBy(func(event events.OrderCancelledEvent) bool {
 		return event.OrderID == "order_to_cancel" && event.InstrumentID == "BTC-USD"
 	})).Return(nil)
+
+	mockStore.On("SaveOrderBook", mock.Anything, mock.Anything).Return(nil)
 
 	// Execute
 	err := svc.CancelOrder(context.Background(), "order_to_cancel", "BTC-USD")
@@ -130,7 +135,7 @@ func TestCancelOrder(t *testing.T) {
 
 func TestRecoverState(t *testing.T) {
 	// Setup
-	svc, eng, mockLedger, _ := setupServiceTest()
+	svc, eng, mockLedger, _, mockStore := setupServiceTest()
 
 	// Mock Data: 2 existing orders
 	existingOrders := []*common.Order{
@@ -139,6 +144,10 @@ func TestRecoverState(t *testing.T) {
 	}
 
 	// Expectations
+	// Mock Store to return empty list so we fall back to Ledger
+	mockStore.On("ListOrderBooks", mock.Anything).Return([]string{}, nil)
+	mockStore.On("SaveOrderBook", mock.Anything, mock.Anything).Return(nil)
+
 	// RecoverState passes explicit empty string for InstrumentId
 	mockLedger.On("GetOpenOrders", mock.Anything, &ledger.GetOpenOrdersRequest{
 		InstrumentId: "",
@@ -164,9 +173,10 @@ func TestRecoverState(t *testing.T) {
 
 func TestRecoverState_LedgerError(t *testing.T) {
 	// Setup
-	svc, _, mockLedger, _ := setupServiceTest()
+	svc, _, mockLedger, _, mockStore := setupServiceTest()
 
 	// Expectations
+	mockStore.On("ListOrderBooks", mock.Anything).Return([]string{}, nil)
 	mockLedger.On("GetOpenOrders", mock.Anything, mock.Anything, mock.Anything).Return(nil, assert.AnError)
 
 	// Execute

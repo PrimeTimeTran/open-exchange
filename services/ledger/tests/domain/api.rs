@@ -19,7 +19,7 @@ async fn test_record_order_success() {
     let btc_asset_id = create_asset(&ctx.asset_service, "BTC", "crypto", 8).await;
     let instrument_id = create_instrument(&ctx.asset_service, "BTC_USD", &btc_asset_id, &usd_asset_id).await;
     let usd_wallet_id = create_wallet(&ctx.wallet_service, &usd_account_id, &usd_asset_id).await;
-    deposit_funds(&ctx.deposit_service, &usd_wallet_id, "100000").await;
+    deposit_funds(&ctx.deposit_service, &usd_wallet_id, "1000000000").await;
 
     let order_id = Uuid::new_v4().to_string();
     let order = Order {
@@ -95,7 +95,7 @@ async fn test_cancel_order() {
     let btc_asset_id = create_asset(&ctx.asset_service, "BTC", "crypto", 8).await;
     let instrument_id = create_instrument(&ctx.asset_service, "BTC_USD", &btc_asset_id, &usd_asset_id).await;
     let usd_wallet_id = create_wallet(&ctx.wallet_service, &usd_account_id, &usd_asset_id).await;
-    deposit_funds(&ctx.deposit_service, &usd_wallet_id, "100000").await;
+    deposit_funds(&ctx.deposit_service, &usd_wallet_id, "10000000").await;
 
     let order = Order {
         id: order_id.clone(),
@@ -122,9 +122,9 @@ async fn test_cancel_order() {
     // Verify Funds Locked
     let get_wallet_req = Request::new(ledger::proto::ledger::GetWalletRequest { wallet_id: usd_wallet_id.clone() });
     let w_locked = ctx.wallet_service.get_wallet(get_wallet_req).await.unwrap().into_inner().wallet.unwrap();
-    // 100,000 - 50,000 = 50,000 Available
-    assert_eq!(w_locked.available, "50000");
-    assert_eq!(w_locked.locked, "50000");
+    // 10,000,000 - 5,000,000 = 5,000,000 Available
+    assert_eq!(w_locked.available, "5000000");
+    assert_eq!(w_locked.locked, "5000000");
 
     // Cancel Order
     let cancel_req = Request::new(CancelOrderRequest {

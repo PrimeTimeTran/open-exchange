@@ -1,40 +1,58 @@
 import { prisma } from '@/prisma';
 import { matchingClient } from '@/services/MatchingClient';
 import { GetOrderBookResponse } from '@/proto/matching/engine';
+import { OrderTable } from './components/OrderTable';
+import { Button } from '@/components/ui/button';
 
-async function getOrderBook(
-  instrumentId: string,
-): Promise<GetOrderBookResponse> {
-  // Resolve instrument symbol to UUID if possible
-  // Check if it's already a UUID
+async function getInstrumentWithAssets(instrumentId: string) {
   const isUuid =
     /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
       instrumentId,
     );
 
-  let targetInstrumentId = instrumentId;
+  let instrument = null;
 
-  if (!isUuid) {
-    let instrument = await prisma.instrument.findFirst({
+  if (isUuid) {
+    instrument = await prisma.instrument.findUnique({
+      where: { id: instrumentId },
+      include: {
+        underlyingAsset: true,
+        quoteAsset: true,
+      },
+    });
+  } else {
+    // Try by symbol
+    instrument = await prisma.instrument.findFirst({
       where: { symbol: instrumentId },
+      include: {
+        underlyingAsset: true,
+        quoteAsset: true,
+      },
     });
 
     if (!instrument) {
-      // Try replacing - with _ (e.g. BTC-USD -> BTC_USD)
+      // Try with underscore
       const underscoreSymbol = instrumentId.replace(/-/g, '_');
       instrument = await prisma.instrument.findFirst({
         where: { symbol: underscoreSymbol },
+        include: {
+          underlyingAsset: true,
+          quoteAsset: true,
+        },
       });
     }
-    if (instrument) {
-      targetInstrumentId = instrument.id;
-    } else {
-      console.warn(`Instrument not found for symbol: ${instrumentId}`);
-    }
   }
-  return await matchingClient.getOrderBook({
-    instrumentId: targetInstrumentId,
-  });
+  return instrument;
+}
+
+function formatAtomic(
+  value: string | undefined | null,
+  decimals: number,
+): string {
+  if (!value) return '0';
+  const floatVal = parseFloat(value);
+  if (isNaN(floatVal)) return value;
+  return (floatVal / Math.pow(10, decimals)).toString();
 }
 
 export default async function OrdersPage({
@@ -42,9 +60,18 @@ export default async function OrdersPage({
 }: {
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const instrumentId = (searchParams.instrument_id as string) || 'BTC-USD';
+  const instrumentIdParam = (searchParams.instrument_id as string) || 'BTC-USD';
   let orderBook: GetOrderBookResponse | null = null;
   let error: string | null = null;
+
+  // 1. Fetch Instrument Details (with assets for decimals)
+  const instrument = await getInstrumentWithAssets(instrumentIdParam);
+  const targetInstrumentId = instrument?.id || instrumentIdParam;
+
+  // Decimals
+  const baseDecimals = instrument?.underlyingAsset?.decimals || 8; // Default to 8 (BTC) if unknown
+  const quoteDecimals = instrument?.quoteAsset?.decimals || 2; // Default to 2 (USD) if unknown
+  const priceDecimals = quoteDecimals - baseDecimals; // For price unscaling
 
   // Fetch all available instruments for the dropdown
   const instruments = await prisma.instrument.findMany({
@@ -58,7 +85,10 @@ export default async function OrdersPage({
   });
 
   try {
-    orderBook = await getOrderBook(instrumentId);
+    // 2. Fetch Order Book
+    orderBook = await matchingClient.getOrderBook({
+      instrumentId: targetInstrumentId,
+    });
   } catch (e: any) {
     console.error('Failed to fetch order book:', e);
     error = e.message || 'Failed to fetch order book';
@@ -66,7 +96,9 @@ export default async function OrdersPage({
 
   return (
     <div className="p-8 bg-background min-h-screen text-foreground">
-      <h1 className="text-2xl font-bold mb-6">Order Book: {instrumentId}</h1>
+      <h1 className="text-2xl font-bold mb-6">
+        Order Book: {instrument?.symbol || instrumentIdParam}
+      </h1>
 
       {error && (
         <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded relative mb-4">
@@ -78,7 +110,7 @@ export default async function OrdersPage({
       <form className="mb-8 flex gap-4">
         <select
           name="instrument_id"
-          defaultValue={instrumentId}
+          defaultValue={instrumentIdParam}
           className="border border-input bg-background p-2 rounded w-64 text-foreground"
         >
           {instruments.length > 0 ? (
@@ -95,122 +127,24 @@ export default async function OrdersPage({
             </>
           )}
         </select>
-        <button
-          type="submit"
-          className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-2 px-4 rounded"
-        >
-          Load
-        </button>
+        <Button variant="primary">Load</Button>
       </form>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* BIDS */}
-        <div className="border border-border rounded shadow-sm bg-card text-card-foreground">
-          <h2 className="bg-muted/50 p-4 font-bold border-b border-border">
-            Bids (Buy)
-          </h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="px-4 py-2 text-left">Price</th>
-                  <th className="px-4 py-2 text-right">Qty</th>
-                  <th className="px-4 py-2 text-right">Filled</th>
-                  <th className="px-4 py-2 text-right">ID</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orderBook?.bids?.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="p-4 text-center text-muted-foreground"
-                    >
-                      No bids
-                    </td>
-                  </tr>
-                ) : (
-                  orderBook?.bids?.map((order) => (
-                    <tr
-                      key={order.id}
-                      className="border-b border-border hover:bg-muted/50"
-                    >
-                      <td className="px-4 py-2 font-mono text-green-600">
-                        {order.price}
-                      </td>
-                      <td className="px-4 py-2 text-right font-mono text-muted-foreground">
-                        {order.quantity || '0'}
-                      </td>
-                      <td className="px-4 py-2 text-right font-mono text-muted-foreground">
-                        {order.quantityFilled || '0'}
-                      </td>
-                      <td
-                        className="px-4 py-2 text-right text-xs text-muted-foreground/80 font-mono truncate max-w-[100px]"
-                        title={order.id}
-                      >
-                        {order.id}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* ASKS */}
-        <div className="border border-border rounded shadow-sm bg-card text-card-foreground">
-          <h2 className="bg-muted/50 p-4 font-bold border-b border-border">
-            Asks (Sell)
-          </h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="px-4 py-2 text-left">Price</th>
-                  <th className="px-4 py-2 text-right">Qty</th>
-                  <th className="px-4 py-2 text-right">Filled</th>
-                  <th className="px-4 py-2 text-right">ID</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orderBook?.asks?.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="p-4 text-center text-muted-foreground"
-                    >
-                      No asks
-                    </td>
-                  </tr>
-                ) : (
-                  orderBook?.asks?.map((order) => (
-                    <tr
-                      key={order.id}
-                      className="border-b border-border hover:bg-muted/50"
-                    >
-                      <td className="px-4 py-2 font-mono text-destructive">
-                        {order.price}
-                      </td>
-                      <td className="px-4 py-2 text-right font-mono text-muted-foreground">
-                        {order.quantity}
-                      </td>
-                      <td className="px-4 py-2 text-right font-mono text-muted-foreground">
-                        {order.quantityFilled || '0'}
-                      </td>
-                      <td
-                        className="px-4 py-2 text-right text-xs text-muted-foreground/80 font-mono truncate max-w-[100px]"
-                        title={order.id}
-                      >
-                        {order.id}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <OrderTable
+          title="Bids (Buy)"
+          orders={orderBook?.bids || []}
+          baseDecimals={baseDecimals}
+          quoteDecimals={quoteDecimals}
+          priceClass="text-green-600"
+        />
+        <OrderTable
+          title="Asks (Sell)"
+          orders={orderBook?.asks || []}
+          baseDecimals={baseDecimals}
+          quoteDecimals={quoteDecimals}
+          priceClass="text-destructive"
+        />
       </div>
     </div>
   );

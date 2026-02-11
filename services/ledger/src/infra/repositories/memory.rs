@@ -202,6 +202,12 @@ impl InMemoryAssetRepository {
 
 #[async_trait]
 impl AssetRepository for InMemoryAssetRepository {
+    async fn create(&self, asset: common::Asset) -> Result<common::Asset> {
+        let mut assets = self.assets.lock().unwrap();
+        assets.push(asset.clone());
+        Ok(asset)
+    }
+
     async fn get(&self, id: Uuid) -> Result<Option<common::Asset>> {
         let assets = self.assets.lock().unwrap();
         Ok(assets.iter().find(|a| a.id == id.to_string()).cloned())

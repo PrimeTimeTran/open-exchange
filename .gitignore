@@ -11,6 +11,7 @@ target
 **/.env.test
 **/.env.local
 **/tmp
+**/.vscode
 
 admin_leg
 notes

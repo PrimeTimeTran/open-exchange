@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -23,17 +24,25 @@ type LedgerClientInterface interface {
 	CancelOrder(ctx context.Context, in *ledger.CancelOrderRequest, opts ...grpc.CallOption) (*ledger.CancelOrderResponse, error)
 }
 
+type Store interface {
+	SaveOrderBook(ctx context.Context, ob *engine.OrderBook) error
+	LoadOrderBook(ctx context.Context, instrumentID string) (*engine.OrderBook, error)
+	ListOrderBooks(ctx context.Context) ([]string, error)
+}
+
 type MatchingService struct {
 	Engine       *engine.Engine
 	LedgerClient LedgerClientInterface
 	Publisher    events.Publisher
+	Store        Store
 }
 
-func NewMatchingService(engine *engine.Engine, ledgerClient LedgerClientInterface, publisher events.Publisher) *MatchingService {
+func NewMatchingService(engine *engine.Engine, ledgerClient LedgerClientInterface, publisher events.Publisher, store Store) *MatchingService {
 	return &MatchingService{
 		Engine:       engine,
 		LedgerClient: ledgerClient,
 		Publisher:    publisher,
+		Store:        store,
 	}
 }
 
@@ -111,6 +120,11 @@ func (s *MatchingService) PlaceOrder(ctx context.Context, order *common.Order) (
 			log.Printf("ERROR: Failed to publish trade event: %v", err)
 		}
 	}
+	
+	// 5. Persist State
+	if err := s.Store.SaveOrderBook(ctx, s.Engine.GetOrderBook(order.InstrumentId)); err != nil {
+		log.Printf("ERROR: Failed to save orderbook state to Redis: %v", err)
+	}
 
 	return order.Id, nil
 }
@@ -145,6 +159,11 @@ func (s *MatchingService) CancelOrder(ctx context.Context, orderID, instrumentID
 	if err != nil {
 		log.Printf("ERROR: Failed to publish order cancelled event: %v", err)
 	}
+	
+	// 4. Persist State
+	if err := s.Store.SaveOrderBook(ctx, s.Engine.GetOrderBook(instrumentID)); err != nil {
+		log.Printf("ERROR: Failed to save orderbook state to Redis: %v", err)
+	}
 
 	return nil
 }
@@ -174,11 +193,40 @@ func (s *MatchingService) GetOrderBook(ctx context.Context, instrumentID string)
 	return protoBids, protoAsks, nil
 }
 
-// RecoverState fetches open orders from the Ledger and repopulates the engine.
+// RecoverState fetches open orders from Redis (or Ledger as fallback) and repopulates the engine.
 func (s *MatchingService) RecoverState(ctx context.Context) error {
 	log.Println("Matching Service: Starting State Recovery...")
 
-	// 1. Fetch Open Orders from Ledger
+	forceRebuild := os.Getenv("FORCE_REBUILD_FROM_LEDGER") == "true"
+	if forceRebuild {
+		log.Println("Forcing rebuild from Ledger due to FORCE_REBUILD_FROM_LEDGER=true. Skipping Redis load.")
+	}
+
+	// 1. Try Recover from Redis
+	if !forceRebuild {
+		instruments, err := s.Store.ListOrderBooks(ctx)
+		if err == nil && len(instruments) > 0 {
+			log.Printf("Found %d orderbooks in Redis. Loading...", len(instruments))
+			for _, instrumentID := range instruments {
+				ob, err := s.Store.LoadOrderBook(ctx, instrumentID)
+				if err != nil {
+					log.Printf("Failed to load orderbook %s from Redis: %v", instrumentID, err)
+					continue
+				}
+				s.Engine.OrderBooks[instrumentID] = ob
+			}
+			log.Println("Matching Service: State Recovery from Redis Complete.")
+			return nil
+		}
+
+		if err != nil {
+			log.Printf("Warning: Redis recovery failed: %v. Falling back to Ledger.", err)
+		} else {
+			log.Println("Redis is empty. Falling back to Ledger for initial population.")
+		}
+	}
+
+	// 2. Fetch Open Orders from Ledger (Fallback)
 	// Passing empty instrument_id to get all orders
 	resp, err := s.LedgerClient.GetOpenOrders(ctx, &ledger.GetOpenOrdersRequest{
 		InstrumentId: "", 
@@ -187,9 +235,9 @@ func (s *MatchingService) RecoverState(ctx context.Context) error {
 		return fmt.Errorf("failed to fetch open orders from ledger: %w", err)
 	}
 
-	log.Printf("Matching Service: Found %d open orders to recover.", len(resp.Orders))
+	log.Printf("Matching Service: Found %d open orders to recover from Ledger.", len(resp.Orders))
 
-	// 2. Repopulate Engine
+	// 3. Repopulate Engine
 	for _, orderProto := range resp.Orders {
 		// Normalize instrument ID
 		if strings.Contains(orderProto.InstrumentId, "_") {
@@ -197,10 +245,6 @@ func (s *MatchingService) RecoverState(ctx context.Context) error {
 		}
 		
 		order := engine.NewOrderFromProto(orderProto)
-		// ProcessOrder usually triggers matching. For recovery, we ideally just want to ADD to the book.
-		// However, since we are recovering existing state, these orders should already be resting (no crosses).
-		// If they do cross, it means the state was inconsistent, and they SHOULD match.
-		// So calling ProcessOrder is generally safe and correct for a simple recovery.
 		trades, _, err := s.Engine.ProcessOrder(order, nil)
 		if err != nil {
 			log.Printf("ERROR: Failed to recover order %s: %v", order.ID, err)
@@ -208,6 +252,14 @@ func (s *MatchingService) RecoverState(ctx context.Context) error {
 		}
 		if len(trades) > 0 {
 			log.Printf("WARNING: Recovery triggered %d trades for order %s. This implies inconsistent state.", len(trades), order.ID)
+		}
+	}
+	
+	// 4. Save populated state to Redis for next time
+	log.Println("Saving recovered state to Redis...")
+	for _, ob := range s.Engine.OrderBooks {
+		if err := s.Store.SaveOrderBook(ctx, ob); err != nil {
+			log.Printf("Failed to save recovered orderbook %s to Redis: %v", ob.InstrumentID, err)
 		}
 	}
 

@@ -3,11 +3,38 @@ package testutil
 import (
 	"context"
 
+	"github.com/open-exchange/matching_engine/internal/engine"
 	"github.com/open-exchange/matching_engine/internal/events"
 	ledger "github.com/open-exchange/matching_engine/proto/ledger"
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc"
 )
+
+// MockStore is a mock implementation of service.Store
+type MockStore struct {
+	mock.Mock
+}
+
+func (m *MockStore) SaveOrderBook(ctx context.Context, ob *engine.OrderBook) error {
+	args := m.Called(ctx, ob)
+	return args.Error(0)
+}
+
+func (m *MockStore) LoadOrderBook(ctx context.Context, instrumentID string) (*engine.OrderBook, error) {
+	args := m.Called(ctx, instrumentID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*engine.OrderBook), args.Error(1)
+}
+
+func (m *MockStore) ListOrderBooks(ctx context.Context) ([]string, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]string), args.Error(1)
+}
 
 // MockPublisher is a mock implementation of events.Publisher
 type MockPublisher struct {

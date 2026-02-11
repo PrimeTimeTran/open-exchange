@@ -14,6 +14,12 @@ export async function seedDeposits(
     { asset: 'ETH', amount: 10.0, status: 'completed', txHash: '0x456def' },
     {
       asset: 'USD',
+      amount: 10000000.0, // 10M USD
+      status: 'completed',
+      txHash: 'large_seed_deposit_usd',
+    },
+    {
+      asset: 'USD',
       amount: 5000.0,
       status: 'completed',
       txHash: 'bank_transfer_001',

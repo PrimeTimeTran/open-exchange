@@ -80,8 +80,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matching_engine_url = std::env::var("MATCHING_ENGINE_URL")
         .unwrap_or_else(|_| "http://matching:50051".to_string());
     println!("Connecting to Matching Engine at: {}", matching_engine_url);
+
+    // Using Option<MatchingClient> but populated later if needed, or we just connect once and clone.
+    // Ideally we want to start serving even if matching engine is down.
+    // But OrderServiceImpl needs the client.
+    // Let's rely on tonic's lazy connection or make the connection retry loop not block main.
     
-    let matching_client = system::connect_to_matching_engine(&matching_engine_url).await;
+    // For now, let's just create the channel lazily.
+    // system::connect_to_matching_engine blocks, which prevents the server from starting.
+    // We should make it non-blocking or just use endpoint connect which is lazy.
+    
+    // Changing strategy: Don't block on matching engine connection.
+    let channel = tonic::transport::Endpoint::from_shared(matching_engine_url.clone())?
+        .connect_lazy();
+    let matching_client = Some(ledger::proto::matching::matching_client::MatchingClient::new(channel));
+    println!("Lazy connected to Matching Engine at {}", matching_engine_url);
 
     // Start HTTP Health Server
     let health_port = 8081;

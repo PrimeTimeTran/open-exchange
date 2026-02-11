@@ -12,12 +12,12 @@ import { seedWithdrawals } from './withdrawals';
 import { seedOrders } from './orders';
 import { seedSystemAccounts } from './systemAccounts';
 import { seedJobs } from './jobs';
+import { seedSecondUser } from './secondUser';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('Seeding development data...');
-
   const tenant = await seedTenant(prisma);
   const user = await seedUser(prisma);
   const membership = await seedMembership(prisma, user.id, tenant.id);
@@ -27,6 +27,9 @@ async function main() {
   await seedDeposits(prisma, tenant.id, membership.id, user.id, assetsMap);
   await seedWithdrawals(prisma, tenant.id, membership.id, user.id, assetsMap);
   await seedOrders(prisma, tenant.id, membership.id, user.id);
+
+  await seedSecondUser(prisma, tenant.id, assetsMap);
+
   await seedSystemAccounts(
     prisma,
     tenant.id,

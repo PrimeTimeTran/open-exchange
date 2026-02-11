@@ -33,6 +33,10 @@ pub async fn record_order(
             
             let quantity_raw = proto_order.quantity.parse::<f64>().unwrap_or(0.0);
             let price_raw = proto_order.price.parse::<f64>().unwrap_or(0.0);
+
+            println!("Ledger [Scaling]: Instrument ID: {}", proto_order.instrument_id);
+            println!("Ledger [Scaling]: Base Decimals: {}, Quote Decimals: {}", base_decimals, quote_decimals);
+            println!("Ledger [Scaling]: Quantity Raw: {}, Price Raw: {}", quantity_raw, price_raw);
             
             // Scaling logic:
             // Quantity (atomic) = Quantity (major) * 10^base_decimals
@@ -41,6 +45,8 @@ pub async fn record_order(
             let q_scaled = (quantity_raw * 10f64.powi(base_decimals)).round();
             let p_scaled = price_raw * 10f64.powi(quote_decimals - base_decimals);
             
+            println!("Ledger [Scaling]: Scaled Quantity: {}, Scaled Price: {}", q_scaled, p_scaled);
+
             (q_scaled, p_scaled)
         } else {
                 // Fallback if instrument not found
@@ -101,6 +107,7 @@ pub async fn record_order(
             Ok(_) => {
                 // Call Matching Engine
                 if let Some(client) = matching_client {
+                    println!("Ledger [Sending]: Sending order to matching engine: {:?}", order_for_matching);
                     let mut matching_client = client.clone();
                     let request = tonic::Request::new(crate::proto::matching::PlaceOrderRequest {
                         order: Some(order_for_matching),

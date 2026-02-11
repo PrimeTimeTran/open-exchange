@@ -27,7 +27,7 @@ const bufSize = 1024 * 1024
 
 // setupTestServer spins up an in-memory gRPC server with the Matching service registered.
 // It returns the client to talk to this server, the mock dependencies to set expectations, and a cleanup function.
-func setupTestServer(t *testing.T) (pb.MatchingClient, *testutil.MockLedgerClient, *testutil.MockPublisher, func()) {
+func setupTestServer(t *testing.T) (pb.MatchingClient, *testutil.MockLedgerClient, *testutil.MockPublisher, *testutil.MockStore, func()) {
 	// 1. Create In-Memory Listener
 	lis := bufconn.Listen(bufSize)
 
@@ -35,9 +35,10 @@ func setupTestServer(t *testing.T) (pb.MatchingClient, *testutil.MockLedgerClien
 	eng := engine.NewEngine()
 	mockLedger := new(testutil.MockLedgerClient)
 	mockPublisher := new(testutil.MockPublisher)
+	mockStore := new(testutil.MockStore)
 
 	// 3. Create Service & Server
-	svc := service.NewMatchingService(eng, mockLedger, mockPublisher)
+	svc := service.NewMatchingService(eng, mockLedger, mockPublisher, mockStore)
 	serverImpl := NewMatchingServer(svc)
 
 	// 4. Create and Start gRPC Server
@@ -69,12 +70,12 @@ func setupTestServer(t *testing.T) (pb.MatchingClient, *testutil.MockLedgerClien
 		lis.Close()
 	}
 
-	return client, mockLedger, mockPublisher, cleanup
+	return client, mockLedger, mockPublisher, mockStore, cleanup
 }
 
 func TestMatchingServer_PlaceOrder_Success(t *testing.T) {
 	// Verifies that PlaceOrder gRPC call is correctly routed to the service, dependencies are called, and response is returned.
-	client, mockLedger, mockPublisher, cleanup := setupTestServer(t)
+	client, mockLedger, mockPublisher, mockStore, cleanup := setupTestServer(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -83,6 +84,7 @@ func TestMatchingServer_PlaceOrder_Success(t *testing.T) {
 	// RecordOrder is no longer called
 	// mockLedger.On("RecordOrder", mock.Anything, mock.Anything).Return(&ledger.RecordOrderResponse{Success: true}, nil)
 	mockPublisher.On("PublishOrderBookEvent", mock.Anything, mock.Anything).Return(nil)
+	mockStore.On("SaveOrderBook", mock.Anything, mock.Anything).Return(nil)
 
 	// Request
 	req := &pb.PlaceOrderRequest{
@@ -104,7 +106,7 @@ func TestMatchingServer_PlaceOrder_Success(t *testing.T) {
 
 func TestMatchingServer_CancelOrder_Success(t *testing.T) {
 	// Verifies that CancelOrder gRPC call is correctly processed.
-	client, mockLedger, mockPublisher, cleanup := setupTestServer(t)
+	client, mockLedger, mockPublisher, mockStore, cleanup := setupTestServer(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -116,6 +118,7 @@ func TestMatchingServer_CancelOrder_Success(t *testing.T) {
 	// Expectations for Placement
 	// mockLedger.On("RecordOrder", mock.Anything, mock.Anything).Return(&ledger.RecordOrderResponse{Success: true}, nil)
 	mockPublisher.On("PublishOrderBookEvent", mock.Anything, mock.Anything).Return(nil)
+	mockStore.On("SaveOrderBook", mock.Anything, mock.Anything).Return(nil)
 
 	_, err := client.PlaceOrder(ctx, &pb.PlaceOrderRequest{
 		Order: testutil.NewOrder("order_to_cancel", common.OrderSide_ORDER_SIDE_BUY, 50000, 1.0),
@@ -146,13 +149,14 @@ func TestMatchingServer_CancelOrder_Success(t *testing.T) {
 
 func TestMatchingServer_PlaceOrder_MatchSuccess(t *testing.T) {
 	// Verifies that when an order matches, RecordTrade is called on the Ledger service.
-	client, mockLedger, mockPublisher, cleanup := setupTestServer(t)
+	client, mockLedger, mockPublisher, mockStore, cleanup := setupTestServer(t)
 	defer cleanup()
 
 	ctx := context.Background()
 
 	// 1. Setup: Place a Sell Order (Maker)
 	mockPublisher.On("PublishOrderBookEvent", mock.Anything, mock.Anything).Return(nil)
+	mockStore.On("SaveOrderBook", mock.Anything, mock.Anything).Return(nil)
 
 	makerOrder := testutil.NewOrder("maker_sell", common.OrderSide_ORDER_SIDE_SELL, 50000, 1.0)
 	makerOrder.AccountId = "user1"
@@ -188,7 +192,7 @@ func TestMatchingServer_PlaceOrder_MatchSuccess(t *testing.T) {
 
 func TestMatchingServer_PlaceOrder_InvalidInput(t *testing.T) {
 	// Verifies that PlaceOrder returns failure when input validation fails (e.g., missing InstrumentID).
-	client, mockLedger, _, cleanup := setupTestServer(t)
+	client, mockLedger, _, _, cleanup := setupTestServer(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -217,7 +221,7 @@ func TestMatchingServer_PlaceOrder_InvalidInput(t *testing.T) {
 
 func TestMatchingServer_CancelOrder_NotFound(t *testing.T) {
 	// Verifies that CancelOrder returns failure when the order does not exist in the engine.
-	client, mockLedger, _, cleanup := setupTestServer(t)
+	client, mockLedger, _, _, cleanup := setupTestServer(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -245,13 +249,14 @@ func TestMatchingServer_CancelOrder_NotFound(t *testing.T) {
 
 func TestMatchingServer_PlaceOrder_TradeLedgerFailure(t *testing.T) {
 	// Verifies that if Ledger service fails to record a trade, the PlaceOrder request fails.
-	client, mockLedger, mockPublisher, cleanup := setupTestServer(t)
+	client, mockLedger, mockPublisher, mockStore, cleanup := setupTestServer(t)
 	defer cleanup()
 
 	ctx := context.Background()
 
     // 1. Setup: Place a Sell Order (Maker)
 	mockPublisher.On("PublishOrderBookEvent", mock.Anything, mock.Anything).Return(nil)
+	mockStore.On("SaveOrderBook", mock.Anything, mock.Anything).Return(nil)
 
 	makerOrder := testutil.NewOrder("maker_sell", common.OrderSide_ORDER_SIDE_SELL, 50000, 1.0)
 	makerOrder.AccountId = "user1"

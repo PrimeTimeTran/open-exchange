@@ -59,7 +59,7 @@ impl AssetService for AssetServiceImpl {
             req.symbol,
             req.klass,
             req.precision,
-        );
+        ).await;
 
         Ok(Response::new(CreateAssetResponse {
             asset: Some(asset),
