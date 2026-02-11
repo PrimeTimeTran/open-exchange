@@ -1646,3 +1646,93 @@ var AssetService_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "ledger/ledger.proto",
 }
+
+const (
+	Settlement_Commit_FullMethodName = "/ledger.Settlement/Commit"
+)
+
+// SettlementClient is the client API for Settlement service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type SettlementClient interface {
+	Commit(ctx context.Context, in *CommitRequest, opts ...grpc.CallOption) (*CommitResponse, error)
+}
+
+type settlementClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewSettlementClient(cc grpc.ClientConnInterface) SettlementClient {
+	return &settlementClient{cc}
+}
+
+func (c *settlementClient) Commit(ctx context.Context, in *CommitRequest, opts ...grpc.CallOption) (*CommitResponse, error) {
+	out := new(CommitResponse)
+	err := c.cc.Invoke(ctx, Settlement_Commit_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// SettlementServer is the server API for Settlement service.
+// All implementations must embed UnimplementedSettlementServer
+// for forward compatibility
+type SettlementServer interface {
+	Commit(context.Context, *CommitRequest) (*CommitResponse, error)
+	mustEmbedUnimplementedSettlementServer()
+}
+
+// UnimplementedSettlementServer must be embedded to have forward compatible implementations.
+type UnimplementedSettlementServer struct {
+}
+
+func (UnimplementedSettlementServer) Commit(context.Context, *CommitRequest) (*CommitResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Commit not implemented")
+}
+func (UnimplementedSettlementServer) mustEmbedUnimplementedSettlementServer() {}
+
+// UnsafeSettlementServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to SettlementServer will
+// result in compilation errors.
+type UnsafeSettlementServer interface {
+	mustEmbedUnimplementedSettlementServer()
+}
+
+func RegisterSettlementServer(s grpc.ServiceRegistrar, srv SettlementServer) {
+	s.RegisterService(&Settlement_ServiceDesc, srv)
+}
+
+func _Settlement_Commit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CommitRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SettlementServer).Commit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Settlement_Commit_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SettlementServer).Commit(ctx, req.(*CommitRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// Settlement_ServiceDesc is the grpc.ServiceDesc for Settlement service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Settlement_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "ledger.Settlement",
+	HandlerType: (*SettlementServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Commit",
+			Handler:    _Settlement_Commit_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "ledger/ledger.proto",
+}

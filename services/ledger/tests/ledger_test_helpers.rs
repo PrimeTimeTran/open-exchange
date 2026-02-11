@@ -1,5 +1,5 @@
 use ledger::domain::orders::model::Order;
-use ledger::proto::common::{Trade, OrderSide, OrderStatus, OrderType, TimeInForce, Instrument};
+use ledger::proto::common::{Trade, Instrument};
 use uuid::Uuid;
 use chrono::Utc;
 use std::sync::{Arc, Mutex};

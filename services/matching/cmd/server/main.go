@@ -20,7 +20,6 @@ import (
 	"github.com/open-exchange/matching_engine/internal/service"
 	"github.com/open-exchange/matching_engine/internal/storage"
 	"github.com/open-exchange/matching_engine/internal/system"
-	"github.com/open-exchange/matching_engine/proto/helloworld"
 	ledger "github.com/open-exchange/matching_engine/proto/ledger"
 	pb "github.com/open-exchange/matching_engine/proto/matching"
 )
@@ -37,7 +36,7 @@ func main() {
 	redisAddr := getEnv("REDIS_URL", "redis:6379")
 
 	// 2. Infrastructure Setup
-	ledgerConn, ledgerClient, greeterClient := connectToLedger(ledgerAddr)
+	ledgerConn, ledgerClient, settlementClient := connectToLedger(ledgerAddr)
 	defer ledgerConn.Close()
 
 	publisher := setupPublisher(redisAddr)
@@ -45,13 +44,13 @@ func main() {
 
 	// 3. Service Initialization
 	eng := engine.NewEngine()
-	svc := service.NewMatchingService(eng, ledgerClient, publisher, redisStore)
+	svc := service.NewMatchingService(eng, ledgerClient, settlementClient, publisher, redisStore)
 
 	// 4. State Recovery
 	recoverState(svc)
 
 	// 5. Server Startup
-	startServer(svc, greeterClient)
+	startServer(svc)
 }
 
 // -----------------------------------------------------------------------------
@@ -65,13 +64,13 @@ func getEnv(key, fallback string) string {
 	return fallback
 }
 
-func connectToLedger(addr string) (*grpc.ClientConn, ledger.OrderServiceClient, helloworld.GreeterClient) {
+func connectToLedger(addr string) (*grpc.ClientConn, ledger.OrderServiceClient, ledger.SettlementClient) {
 	log.Printf("Connecting to Ledger Service at %s...", addr)
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect to ledger: %v", err)
 	}
-	return conn, ledger.NewOrderServiceClient(conn), helloworld.NewGreeterClient(conn)
+	return conn, ledger.NewOrderServiceClient(conn), ledger.NewSettlementClient(conn)
 }
 
 func setupPublisher(redisAddr string) events.Publisher {
@@ -114,7 +113,7 @@ func recoverState(svc *service.MatchingService) {
 	}
 }
 
-func startServer(svc *service.MatchingService, greeterClient helloworld.GreeterClient) {
+func startServer(svc *service.MatchingService) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
@@ -124,7 +123,6 @@ func startServer(svc *service.MatchingService, greeterClient helloworld.GreeterC
 	
 	// Register services
 	pb.RegisterMatchingServer(s, server.NewMatchingServer(svc))
-	helloworld.RegisterGreeterServer(s, server.NewGreeterServer(greeterClient))
 
 	// Start Health Check
 	go system.StartHealthServer(":8080")

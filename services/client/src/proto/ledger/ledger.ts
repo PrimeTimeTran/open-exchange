@@ -22,7 +22,7 @@ import { Account } from "../common/account";
 import { Asset } from "../common/asset";
 import { Deposit } from "../common/deposit";
 import { Instrument } from "../common/instrument";
-import { Order } from "../common/order";
+import { Order, OrderSide, orderSideFromJSON, orderSideToJSON } from "../common/order";
 import { SystemAccount } from "../common/system_account";
 import { User } from "../common/user";
 import { Wallet } from "../common/wallet";
@@ -358,6 +358,49 @@ export interface GetSystemAccountRequest {
 
 export interface GetSystemAccountResponse {
   account?: SystemAccount | undefined;
+}
+
+/**
+ * Represents a single execution between a Maker and a Taker.
+ * A single Taker order may result in multiple Matches if it walks the book.
+ */
+export interface Match {
+  matchId?:
+    | string
+    | undefined;
+  /** Passive order (resting on book) */
+  makerOrderId?:
+    | string
+    | undefined;
+  /** Aggressive order (incoming) */
+  takerOrderId?: string | undefined;
+  instrumentId?: string | undefined;
+  price?: string | undefined;
+  quantity?:
+    | string
+    | undefined;
+  /** Side of the Taker (Buy or Sell) */
+  takerSide?: OrderSide | undefined;
+  matchedAt?: string | undefined;
+}
+
+export interface CommitRequest {
+  matches?: Match[] | undefined;
+  tenantId?: string | undefined;
+}
+
+export interface CommitResponse {
+  success?: boolean | undefined;
+  tradeIds?:
+    | string[]
+    | undefined;
+  /**
+   * Deprecated single status fields, or change to map/list?
+   * For now, let's remove specific order status as it's complex for batch.
+   * Or keep them as "resulting status of the primary order" if we assume one taker.
+   * But let's simplify for now.
+   */
+  errorMessage?: string | undefined;
 }
 
 function createBaseRecordOrderRequest(): RecordOrderRequest {
@@ -5231,6 +5274,401 @@ export const GetSystemAccountResponse: MessageFns<GetSystemAccountResponse> = {
   },
 };
 
+function createBaseMatch(): Match {
+  return {
+    matchId: "",
+    makerOrderId: "",
+    takerOrderId: "",
+    instrumentId: "",
+    price: "",
+    quantity: "",
+    takerSide: 0,
+    matchedAt: "0",
+  };
+}
+
+export const Match: MessageFns<Match> = {
+  encode(message: Match, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.matchId !== undefined && message.matchId !== "") {
+      writer.uint32(10).string(message.matchId);
+    }
+    if (message.makerOrderId !== undefined && message.makerOrderId !== "") {
+      writer.uint32(18).string(message.makerOrderId);
+    }
+    if (message.takerOrderId !== undefined && message.takerOrderId !== "") {
+      writer.uint32(26).string(message.takerOrderId);
+    }
+    if (message.instrumentId !== undefined && message.instrumentId !== "") {
+      writer.uint32(34).string(message.instrumentId);
+    }
+    if (message.price !== undefined && message.price !== "") {
+      writer.uint32(42).string(message.price);
+    }
+    if (message.quantity !== undefined && message.quantity !== "") {
+      writer.uint32(50).string(message.quantity);
+    }
+    if (message.takerSide !== undefined && message.takerSide !== 0) {
+      writer.uint32(56).int32(message.takerSide);
+    }
+    if (message.matchedAt !== undefined && message.matchedAt !== "0") {
+      writer.uint32(64).int64(message.matchedAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): Match {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseMatch();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.matchId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.makerOrderId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.takerOrderId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.instrumentId = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.price = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.quantity = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.takerSide = reader.int32() as any;
+          continue;
+        }
+        case 8: {
+          if (tag !== 64) {
+            break;
+          }
+
+          message.matchedAt = reader.int64().toString();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Match {
+    return {
+      matchId: isSet(object.matchId)
+        ? globalThis.String(object.matchId)
+        : isSet(object.match_id)
+        ? globalThis.String(object.match_id)
+        : "",
+      makerOrderId: isSet(object.makerOrderId)
+        ? globalThis.String(object.makerOrderId)
+        : isSet(object.maker_order_id)
+        ? globalThis.String(object.maker_order_id)
+        : "",
+      takerOrderId: isSet(object.takerOrderId)
+        ? globalThis.String(object.takerOrderId)
+        : isSet(object.taker_order_id)
+        ? globalThis.String(object.taker_order_id)
+        : "",
+      instrumentId: isSet(object.instrumentId)
+        ? globalThis.String(object.instrumentId)
+        : isSet(object.instrument_id)
+        ? globalThis.String(object.instrument_id)
+        : "",
+      price: isSet(object.price) ? globalThis.String(object.price) : "",
+      quantity: isSet(object.quantity) ? globalThis.String(object.quantity) : "",
+      takerSide: isSet(object.takerSide)
+        ? orderSideFromJSON(object.takerSide)
+        : isSet(object.taker_side)
+        ? orderSideFromJSON(object.taker_side)
+        : 0,
+      matchedAt: isSet(object.matchedAt)
+        ? globalThis.String(object.matchedAt)
+        : isSet(object.matched_at)
+        ? globalThis.String(object.matched_at)
+        : "0",
+    };
+  },
+
+  toJSON(message: Match): unknown {
+    const obj: any = {};
+    if (message.matchId !== undefined && message.matchId !== "") {
+      obj.matchId = message.matchId;
+    }
+    if (message.makerOrderId !== undefined && message.makerOrderId !== "") {
+      obj.makerOrderId = message.makerOrderId;
+    }
+    if (message.takerOrderId !== undefined && message.takerOrderId !== "") {
+      obj.takerOrderId = message.takerOrderId;
+    }
+    if (message.instrumentId !== undefined && message.instrumentId !== "") {
+      obj.instrumentId = message.instrumentId;
+    }
+    if (message.price !== undefined && message.price !== "") {
+      obj.price = message.price;
+    }
+    if (message.quantity !== undefined && message.quantity !== "") {
+      obj.quantity = message.quantity;
+    }
+    if (message.takerSide !== undefined && message.takerSide !== 0) {
+      obj.takerSide = orderSideToJSON(message.takerSide);
+    }
+    if (message.matchedAt !== undefined && message.matchedAt !== "0") {
+      obj.matchedAt = message.matchedAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Match>, I>>(base?: I): Match {
+    return Match.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<Match>, I>>(object: I): Match {
+    const message = createBaseMatch();
+    message.matchId = object.matchId ?? "";
+    message.makerOrderId = object.makerOrderId ?? "";
+    message.takerOrderId = object.takerOrderId ?? "";
+    message.instrumentId = object.instrumentId ?? "";
+    message.price = object.price ?? "";
+    message.quantity = object.quantity ?? "";
+    message.takerSide = object.takerSide ?? 0;
+    message.matchedAt = object.matchedAt ?? "0";
+    return message;
+  },
+};
+
+function createBaseCommitRequest(): CommitRequest {
+  return { matches: [], tenantId: "" };
+}
+
+export const CommitRequest: MessageFns<CommitRequest> = {
+  encode(message: CommitRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.matches !== undefined && message.matches.length !== 0) {
+      for (const v of message.matches) {
+        Match.encode(v!, writer.uint32(10).fork()).join();
+      }
+    }
+    if (message.tenantId !== undefined && message.tenantId !== "") {
+      writer.uint32(18).string(message.tenantId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CommitRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCommitRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          const el = Match.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.matches!.push(el);
+          }
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.tenantId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CommitRequest {
+    return {
+      matches: globalThis.Array.isArray(object?.matches) ? object.matches.map((e: any) => Match.fromJSON(e)) : [],
+      tenantId: isSet(object.tenantId)
+        ? globalThis.String(object.tenantId)
+        : isSet(object.tenant_id)
+        ? globalThis.String(object.tenant_id)
+        : "",
+    };
+  },
+
+  toJSON(message: CommitRequest): unknown {
+    const obj: any = {};
+    if (message.matches?.length) {
+      obj.matches = message.matches.map((e) => Match.toJSON(e));
+    }
+    if (message.tenantId !== undefined && message.tenantId !== "") {
+      obj.tenantId = message.tenantId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CommitRequest>, I>>(base?: I): CommitRequest {
+    return CommitRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CommitRequest>, I>>(object: I): CommitRequest {
+    const message = createBaseCommitRequest();
+    message.matches = object.matches?.map((e) => Match.fromPartial(e)) || [];
+    message.tenantId = object.tenantId ?? "";
+    return message;
+  },
+};
+
+function createBaseCommitResponse(): CommitResponse {
+  return { success: false, tradeIds: [], errorMessage: "" };
+}
+
+export const CommitResponse: MessageFns<CommitResponse> = {
+  encode(message: CommitResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== undefined && message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.tradeIds !== undefined && message.tradeIds.length !== 0) {
+      for (const v of message.tradeIds) {
+        writer.uint32(18).string(v!);
+      }
+    }
+    if (message.errorMessage !== undefined && message.errorMessage !== "") {
+      writer.uint32(26).string(message.errorMessage);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CommitResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCommitResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          const el = reader.string();
+          if (el !== undefined) {
+            message.tradeIds!.push(el);
+          }
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.errorMessage = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CommitResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      tradeIds: globalThis.Array.isArray(object?.tradeIds)
+        ? object.tradeIds.map((e: any) => globalThis.String(e))
+        : globalThis.Array.isArray(object?.trade_ids)
+        ? object.trade_ids.map((e: any) => globalThis.String(e))
+        : [],
+      errorMessage: isSet(object.errorMessage)
+        ? globalThis.String(object.errorMessage)
+        : isSet(object.error_message)
+        ? globalThis.String(object.error_message)
+        : "",
+    };
+  },
+
+  toJSON(message: CommitResponse): unknown {
+    const obj: any = {};
+    if (message.success !== undefined && message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.tradeIds?.length) {
+      obj.tradeIds = message.tradeIds;
+    }
+    if (message.errorMessage !== undefined && message.errorMessage !== "") {
+      obj.errorMessage = message.errorMessage;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CommitResponse>, I>>(base?: I): CommitResponse {
+    return CommitResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CommitResponse>, I>>(object: I): CommitResponse {
+    const message = createBaseCommitResponse();
+    message.success = object.success ?? false;
+    message.tradeIds = object.tradeIds?.map((e) => e) || [];
+    message.errorMessage = object.errorMessage ?? "";
+    return message;
+  },
+};
+
 export type OrderServiceService = typeof OrderServiceService;
 export const OrderServiceService = {
   recordOrder: {
@@ -6234,6 +6672,47 @@ export const AssetServiceClient = makeGenericClientConstructor(
 ) as unknown as {
   new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): AssetServiceClient;
   service: typeof AssetServiceService;
+  serviceName: string;
+};
+
+export type SettlementService = typeof SettlementService;
+export const SettlementService = {
+  commit: {
+    path: "/ledger.Settlement/Commit",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CommitRequest): Buffer => Buffer.from(CommitRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CommitRequest => CommitRequest.decode(value),
+    responseSerialize: (value: CommitResponse): Buffer => Buffer.from(CommitResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CommitResponse => CommitResponse.decode(value),
+  },
+} as const;
+
+export interface SettlementServer extends UntypedServiceImplementation {
+  commit: handleUnaryCall<CommitRequest, CommitResponse>;
+}
+
+export interface SettlementClient extends Client {
+  commit(
+    request: CommitRequest,
+    callback: (error: ServiceError | null, response: CommitResponse) => void,
+  ): ClientUnaryCall;
+  commit(
+    request: CommitRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CommitResponse) => void,
+  ): ClientUnaryCall;
+  commit(
+    request: CommitRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CommitResponse) => void,
+  ): ClientUnaryCall;
+}
+
+export const SettlementClient = makeGenericClientConstructor(SettlementService, "ledger.Settlement") as unknown as {
+  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): SettlementClient;
+  service: typeof SettlementService;
   serviceName: string;
 };
 

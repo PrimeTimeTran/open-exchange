@@ -47,7 +47,7 @@ find "$PROTO_DIR" -name "*.proto" | xargs protoc \
 # ------------------------------------------
 echo "⚙️  [Matching] Generating Go code..."
 # Generates Go code for all protos as the Matching Engine is the central core
-# Includes: common, matching, ledger, helloworld
+# Includes: common, matching, ledger
 find "$PROTO_DIR" -name "*.proto" | xargs protoc \
   --go_out="${MATCHING_OUT_DIR}" \
   --go_opt=paths=source_relative \

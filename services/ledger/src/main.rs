@@ -13,6 +13,7 @@ use ledger::api::{
     deposits::DepositServiceImpl,
     withdrawals::WithdrawalServiceImpl,
     users::UserServiceImpl,
+    settlement::SettlementServiceImpl,
 };
 use ledger::domain::{
     orders::OrderService,
@@ -42,6 +43,7 @@ use ledger::proto::{
         deposit_service_server::DepositServiceServer,
         withdrawal_service_server::WithdrawalServiceServer,
         user_service_server::UserServiceServer,
+        settlement_server::SettlementServer,
     },
 };
 
@@ -123,6 +125,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let deposit_impl = DepositServiceImpl::new(deposit_service, wallet_service.clone());
     let withdrawal_impl = WithdrawalServiceImpl::new(withdrawal_service);
     let user_impl = UserServiceImpl::new(user_service);
+    let settlement_impl = SettlementServiceImpl::new(trade_processor);
 
     println!("LedgerService listening on {}", addr);
 
@@ -135,6 +138,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .add_service(DepositServiceServer::new(deposit_impl))
         .add_service(WithdrawalServiceServer::new(withdrawal_impl))
         .add_service(UserServiceServer::new(user_impl))
+        .add_service(SettlementServer::new(settlement_impl))
         .serve(addr)
         .await?;
 

@@ -34,15 +34,7 @@ func (e *Engine) ProcessOrder(order *Order, onMatch func(Trade) error) ([]Trade,
 	}
 
 	ob := e.GetOrderBook(order.InstrumentID)
-	// Note: In a real high-perf engine, we'd lock the specific orderbook, not the whole map for getting it.
-	// But here, since GetOrderBook locks the map, we are safe to access the returned pointer.
-	// However, ProcessOrder modifies the orderbook, so we need concurrency control on the orderbook itself.
-	// For simplicity, we can assume single-threaded processing per orderbook or add a lock to OrderBook.
-	
-	// Let's add a lock to OrderBook? Or just lock here for MVP.
-	// Given the code structure, I'll assume sequential processing for now or add a mutex to OrderBook if needed.
-	// For this scaffold, I'll rely on the fact that we are just implementing the logic.
-	
+	// The OrderBook handles its own concurrency via ob.mu, so this is thread-safe.
 	return ob.ProcessOrder(order, onMatch)
 }
 
@@ -68,6 +60,5 @@ func (e *Engine) CancelOrder(instrumentID, orderID string) (*Order, error) {
 }
 
 func (e *Engine) GetOrderBookSnapshot(instrumentID string) (*OrderBook, error) {
-	// Use GetOrderBook to ensure it exists
 	return e.GetOrderBook(instrumentID), nil
 }

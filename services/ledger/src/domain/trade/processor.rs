@@ -7,7 +7,9 @@ use crate::infra::repositories::InstrumentRepository;
 use crate::domain::ledger::service::LedgerService;
 
 pub struct TradeProcessor {
+    #[allow(dead_code)]
     order_repo: Arc<dyn OrderRepository>,
+    #[allow(dead_code)]
     instrument_repo: Arc<dyn InstrumentRepository>,
     ledger_service: Arc<LedgerService>,
 }
@@ -31,7 +33,7 @@ impl TradeProcessor {
 
         // 1. Generate Ledger Entries (Accounting)
         // This is pure calculation/data transformation logic delegate to LedgerService
-        let (event, entries) = self.ledger_service.process_trade(trade.clone()).await?;
+        let (_event, entries) = self.ledger_service.process_trade(trade.clone()).await?;
 
         // 2. Persist Ledger Event & Entries
         // TODO: Persist these to DB (LedgerRepository not implemented yet)

@@ -75,6 +75,10 @@ service AssetService {
   rpc CreateInstrument(CreateInstrumentRequest) returns (CreateInstrumentResponse);
 }
 
+service Settlement {
+  rpc Commit(CommitRequest) returns (CommitResponse);
+}
+
 // --- Order Messages ---
 
 message RecordOrderRequest {
@@ -400,6 +404,36 @@ message GetSystemAccountRequest {
 
 message GetSystemAccountResponse {
   common.SystemAccount account = 1;
+}
+
+// --- Settlement Messages ---
+
+// Represents a single execution between a Maker and a Taker.
+// A single Taker order may result in multiple Matches if it walks the book.
+message Match {
+  string match_id = 1;
+  string maker_order_id = 2; // Passive order (resting on book)
+  string taker_order_id = 3; // Aggressive order (incoming)
+  string instrument_id = 4;
+  string price = 5;
+  string quantity = 6;
+  common.OrderSide taker_side = 7; // Side of the Taker (Buy or Sell)
+  int64 matched_at = 8;
+}
+
+message CommitRequest {
+  repeated Match matches = 1;
+  string tenant_id = 2;
+}
+
+message CommitResponse {
+  bool success = 1;
+  repeated string trade_ids = 2;
+  string error_message = 3;
+  // Deprecated single status fields, or change to map/list?
+  // For now, let's remove specific order status as it's complex for batch. 
+  // Or keep them as "resulting status of the primary order" if we assume one taker.
+  // But let's simplify for now.
 }
 
 

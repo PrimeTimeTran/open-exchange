@@ -13,8 +13,7 @@ func TestEngine_ProcessOrder_Limit_AddsToBook(t *testing.T) {
 
 	// 1. Create a BTC-USD order
 	// createOrder is defined in orderbook_test.go which is in the same package
-	order := createOrder("btc_order_1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 50000.0, 1.5)
-	order.InstrumentID = "BTC-USD"
+	order := createOrder("btc_order_1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 50000.0, 1.5, "BTC-USD", "user_1")
 
 	// 2. Process the order
 	trades, _, err := eng.ProcessOrder(order, nil)
@@ -41,13 +40,11 @@ func TestEngine_ProcessOrder_Isolation_MultipleInstruments(t *testing.T) {
 	eng := NewEngine()
 
 	// BTC Order
-	btcOrder := createOrder("btc_1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 60000.0, 2.0)
-	btcOrder.InstrumentID = "BTC-USD"
+	btcOrder := createOrder("btc_1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 60000.0, 2.0, "BTC-USD", "user_btc")
 	eng.ProcessOrder(btcOrder, nil)
 
 	// ETH Order
-	ethOrder := createOrder("eth_1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 3000.0, 10.0)
-	ethOrder.InstrumentID = "ETH-USD"
+	ethOrder := createOrder("eth_1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 3000.0, 10.0, "ETH-USD", "user_eth")
 	eng.ProcessOrder(ethOrder, nil)
 
 	// Verify BTC Book
@@ -69,8 +66,7 @@ func TestEngine_CancelOrder_Success(t *testing.T) {
 	instrumentID := "SOL-USD"
 
 	// 1. Place Order
-	order := createOrder("order_to_cancel", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 20.0, 100.0)
-	order.InstrumentID = instrumentID
+	order := createOrder("order_to_cancel", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 20.0, 100.0, instrumentID, "user_cancel")
 	eng.ProcessOrder(order, nil)
 
 	// Verify exists
@@ -100,18 +96,14 @@ func TestEngine_ProcessOrder_Limit_Match_SellMaker_BuyTaker(t *testing.T) {
 	instrumentID := "ETH-USD"
 
 	// 1. Sell Order: Sell 10 items @ $100 (Maker)
-	sellOrder := createOrder("sell_order_1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0)
-	sellOrder.InstrumentID = instrumentID
-	sellOrder.AccountID = "user1"
+	sellOrder := createOrder("sell_order_1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0, instrumentID, "user1")
 	
 	trades, _, err := eng.ProcessOrder(sellOrder, nil)
 	assert.NoError(t, err)
 	assert.Empty(t, trades, "Sell order should rest in the book")
 
 	// 2. Buy Order: Buy 5 items @ $100 (Taker)
-	buyOrder := createOrder("buy_order_1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 5.0)
-	buyOrder.InstrumentID = instrumentID
-	buyOrder.AccountID = "user2"
+	buyOrder := createOrder("buy_order_1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 5.0, instrumentID, "user2")
 
 	trades, _, err = eng.ProcessOrder(buyOrder, nil)
 	assert.NoError(t, err)
@@ -150,18 +142,14 @@ func TestEngine_ProcessOrder_Limit_Match_BuyMaker_SellTaker(t *testing.T) {
 	instrumentID := "BTC-USD"
 
 	// 1. Buy Order: Buy 10 items @ $50,000 (Maker)
-	buyOrder := createOrder("buy_order_rest", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 50000.0, 10.0)
-	buyOrder.InstrumentID = instrumentID
-	buyOrder.AccountID = "user1"
+	buyOrder := createOrder("buy_order_rest", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 50000.0, 10.0, instrumentID, "user1")
 
 	trades, _, err := eng.ProcessOrder(buyOrder, nil)
 	assert.NoError(t, err)
 	assert.Empty(t, trades, "Buy order should rest in the book")
 
 	// 2. Sell Order: Sell 5 items @ $50,000 (Taker)
-	sellOrder := createOrder("sell_order_take", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 50000.0, 5.0)
-	sellOrder.InstrumentID = instrumentID
-	sellOrder.AccountID = "user2"
+	sellOrder := createOrder("sell_order_take", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 50000.0, 5.0, instrumentID, "user2")
 
 	trades, _, err = eng.ProcessOrder(sellOrder, nil)
 	assert.NoError(t, err)
@@ -201,22 +189,16 @@ func TestEngine_ProcessOrder_Limit_Match_MultiLevel_Buy(t *testing.T) {
 
 	// 1. Setup: Ladder of Sell Orders
 	// Level 1: Best Price
-	sell1 := createOrder("sell_cheap", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 50.0, 10.0)
-	sell1.InstrumentID = instrumentID
-	sell1.AccountID = "user1"
+	sell1 := createOrder("sell_cheap", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 50.0, 10.0, instrumentID, "user1")
 	eng.ProcessOrder(sell1, nil)
 
 	// Level 2: Worse Price
-	sell2 := createOrder("sell_expensive", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 51.0, 10.0)
-	sell2.InstrumentID = instrumentID
-	sell2.AccountID = "user1"
+	sell2 := createOrder("sell_expensive", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 51.0, 10.0, instrumentID, "user1")
 	eng.ProcessOrder(sell2, nil)
 
 	// 2. Action: Big Buy Order clearing Level 1 and eating into Level 2
 	// Buy 15 @ $55 (Enough price to cover both)
-	buy := createOrder("buy_whale", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 55.0, 15.0)
-	buy.InstrumentID = instrumentID
-	buy.AccountID = "user2"
+	buy := createOrder("buy_whale", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 55.0, 15.0, instrumentID, "user2")
 
 	trades, _, err := eng.ProcessOrder(buy, nil)
 	assert.NoError(t, err)
@@ -252,22 +234,16 @@ func TestEngine_ProcessOrder_Limit_Match_MultiLevel_Sell(t *testing.T) {
 
 	// 1. Setup: Ladder of Buy Orders (Bids)
 	// Level 1: Best Price (Highest Bid)
-	bid1 := createOrder("bid_high", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 60.0, 10.0)
-	bid1.InstrumentID = instrumentID
-	bid1.AccountID = "user1"
+	bid1 := createOrder("bid_high", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 60.0, 10.0, instrumentID, "user1")
 	eng.ProcessOrder(bid1, nil)
 
 	// Level 2: Lower Price
-	bid2 := createOrder("bid_low", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 59.0, 10.0)
-	bid2.InstrumentID = instrumentID
-	bid2.AccountID = "user1"
+	bid2 := createOrder("bid_low", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 59.0, 10.0, instrumentID, "user1")
 	eng.ProcessOrder(bid2, nil)
 
 	// 2. Action: Big Sell Order clearing Level 1 and eating into Level 2
 	// Sell 15 @ $55 (Willing to sell low, matches highest bids first)
-	sell := createOrder("sell_whale", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 55.0, 15.0)
-	sell.InstrumentID = instrumentID
-	sell.AccountID = "user2"
+	sell := createOrder("sell_whale", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 55.0, 15.0, instrumentID, "user2")
 
 	trades, _, err := eng.ProcessOrder(sell, nil)
 	assert.NoError(t, err)
@@ -308,23 +284,17 @@ func TestEngine_ProcessOrder_Limit_Priority_PriceTime(t *testing.T) {
 
 	// 1. Setup: Two Sell Orders at SAME Price
 	// Sell 1: Earlier
-	sell1 := createOrder("sell_early", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0)
-	sell1.InstrumentID = instrumentID
+	sell1 := createOrder("sell_early", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0, instrumentID, "user1")
 	sell1.Timestamp = 1000 // Explicit timestamp
-	sell1.AccountID = "user1"
 	eng.ProcessOrder(sell1, nil)
 
 	// Sell 2: Later
-	sell2 := createOrder("sell_late", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0)
-	sell2.InstrumentID = instrumentID
+	sell2 := createOrder("sell_late", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0, instrumentID, "user1")
 	sell2.Timestamp = 2000 // Explicit later timestamp
-	sell2.AccountID = "user1"
 	eng.ProcessOrder(sell2, nil)
 
 	// 2. Action: Buy Order matches only one of them
-	buy := createOrder("buy_aggressive", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0)
-	buy.InstrumentID = instrumentID
-	buy.AccountID = "user2"
+	buy := createOrder("buy_aggressive", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0, instrumentID, "user2")
 	
 	trades, _, err := eng.ProcessOrder(buy, nil)
 	assert.NoError(t, err)
@@ -349,15 +319,11 @@ func TestEngine_ProcessOrder_Limit_PriceImprovement(t *testing.T) {
 	instrumentID := "ETH-USD"
 
 	// 1. Setup: Sell Limit at $100 (Maker)
-	sell := createOrder("sell_100", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 5.0)
-	sell.InstrumentID = instrumentID
-	sell.AccountID = "user1"
+	sell := createOrder("sell_100", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 5.0, instrumentID, "user1")
 	eng.ProcessOrder(sell, nil)
 
 	// 2. Action: Buy Limit Aggressive at $105 (Taker is willing to pay more)
-	buy := createOrder("buy_105", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 105.0, 5.0)
-	buy.InstrumentID = instrumentID
-	buy.AccountID = "user2"
+	buy := createOrder("buy_105", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 105.0, 5.0, instrumentID, "user2")
 
 	trades, _, err := eng.ProcessOrder(buy, nil)
 	assert.NoError(t, err)
@@ -373,8 +339,7 @@ func TestEngine_ProcessOrder_Market_NoLiquidity(t *testing.T) {
 	instrumentID := "DOGE-USD"
 
 	// 1. Market Buy with Empty Book
-	buy := createOrder("market_buy_empty", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_MARKET, 0, 10.0)
-	buy.InstrumentID = instrumentID
+	buy := createOrder("market_buy_empty", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_MARKET, 0, 10.0, instrumentID, "user_market")
 
 	trades, _, err := eng.ProcessOrder(buy, nil)
 	assert.NoError(t, err)
@@ -401,13 +366,11 @@ func TestEngine_ProcessOrder_Market_PartialLiquidity(t *testing.T) {
 	instrumentID := "DOGE-USD"
 
 	// 1. Setup: Sell Limit 5 @ $100
-	sell := createOrder("sell_limit", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 5.0)
-	sell.InstrumentID = instrumentID
+	sell := createOrder("sell_limit", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 5.0, instrumentID, "user_sell")
 	eng.ProcessOrder(sell, nil)
 
 	// 2. Action: Market Buy 10 (Demand > Supply)
-	buy := createOrder("market_buy_partial", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_MARKET, 0, 10.0)
-	buy.InstrumentID = instrumentID
+	buy := createOrder("market_buy_partial", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_MARKET, 0, 10.0, instrumentID, "user_buy")
 
 	trades, _, err := eng.ProcessOrder(buy, nil)
 	assert.NoError(t, err)
@@ -432,13 +395,11 @@ func TestEngine_CancelOrder_AlreadyFilled(t *testing.T) {
 	instrumentID := "ADA-USD"
 
 	// 1. Place Limit Sell
-	sell := createOrder("sell_1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0)
-	sell.InstrumentID = instrumentID
+	sell := createOrder("sell_1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0, instrumentID, "user_sell")
 	eng.ProcessOrder(sell, nil)
 
 	// 2. Place Limit Buy (Fully Matches)
-	buy := createOrder("buy_1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0)
-	buy.InstrumentID = instrumentID
+	buy := createOrder("buy_1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0, instrumentID, "user_buy")
 	eng.ProcessOrder(buy, nil)
 
 	// 3. Try to Cancel the Sell Order (which is now filled and gone)
@@ -456,8 +417,7 @@ func TestEngine_ProcessOrder_Invalid_ZeroQuantity(t *testing.T) {
 	instrumentID := "DOT-USD"
 
 	// 1. Place Zero Qty Order
-	order := createOrder("zero_qty", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 0.0)
-	order.InstrumentID = instrumentID
+	order := createOrder("zero_qty", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 0.0, instrumentID, "user_zero")
 
 	// Assuming engine validation handles this, or it processes as "filled" instantly?
 	// Ideally should error or do nothing.

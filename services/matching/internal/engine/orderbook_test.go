@@ -8,16 +8,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func createOrder(id string, side common.OrderSide, orderType common.OrderType, price, qty float64) *Order {
+func createOrder(id string, side common.OrderSide, orderType common.OrderType, price, qty float64, instrumentID, accountID string) *Order {
 	return &Order{
 		ID:           id,
 		Side:         side,
 		Type:         orderType,
 		Price:        price,
 		Quantity:     qty,
-		InstrumentID: "BTC-USD",
+		InstrumentID: instrumentID,
 		Timestamp:    time.Now().UnixNano(),
-		AccountID:    "user_" + id, // Ensure unique AccountID to prevent Self-Trade Prevention in tests
+		AccountID:    accountID,
 	}
 }
 
@@ -25,11 +25,11 @@ func TestLimitOrder_MatchBuy(t *testing.T) {
 	ob := NewOrderBook("BTC-USD")
 
 	// Setup: Add a sell order (Ask)
-	askOrder := createOrder("ask1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0)
+	askOrder := createOrder("ask1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0, "BTC-USD", "user_ask1")
 	ob.ProcessOrder(askOrder, nil)
 
 	// Action: Add a matching buy order
-	buyOrder := createOrder("buy1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 5.0)
+	buyOrder := createOrder("buy1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 5.0, "BTC-USD", "user_buy1")
 	trades, _, _ := ob.ProcessOrder(buyOrder, nil)
 
 	// Assert
@@ -49,11 +49,11 @@ func TestLimitOrder_MatchSell(t *testing.T) {
 	ob := NewOrderBook("BTC-USD")
 
 	// Setup: Add a buy order (Bid)
-	bidOrder := createOrder("bid1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0)
+	bidOrder := createOrder("bid1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0, "BTC-USD", "user_bid1")
 	ob.ProcessOrder(bidOrder, nil)
 
 	// Action: Add a matching sell order
-	sellOrder := createOrder("sell1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 5.0)
+	sellOrder := createOrder("sell1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 5.0, "BTC-USD", "user_sell1")
 	trades, _, _ := ob.ProcessOrder(sellOrder, nil)
 
 	// Assert
@@ -73,7 +73,7 @@ func TestLimitOrder_NoMatch_AddToBook(t *testing.T) {
 	ob := NewOrderBook("BTC-USD")
 
 	// Action: Add a buy order (Bid)
-	bidOrder := createOrder("bid1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 99.0, 10.0)
+	bidOrder := createOrder("bid1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 99.0, 10.0, "BTC-USD", "user_bid1")
 	trades, _, _ := ob.ProcessOrder(bidOrder, nil)
 
 	// Assert
@@ -82,7 +82,7 @@ func TestLimitOrder_NoMatch_AddToBook(t *testing.T) {
 	assert.Equal(t, "bid1", ob.Bids[0].ID)
 
 	// Action: Add a sell order (Ask) higher than bid
-	askOrder := createOrder("ask1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 101.0, 10.0)
+	askOrder := createOrder("ask1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 101.0, 10.0, "BTC-USD", "user_ask1")
 	trades2, _, _ := ob.ProcessOrder(askOrder, nil)
 
 	// Assert
@@ -95,7 +95,7 @@ func TestOrderBook_CancelOrder(t *testing.T) {
 	ob := NewOrderBook("BTC-USD")
 
 	// Add Order
-	order := createOrder("bid1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0)
+	order := createOrder("bid1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0, "BTC-USD", "user_bid1")
 	ob.ProcessOrder(order, nil)
 
 	// Assert it's there
@@ -116,9 +116,9 @@ func TestOrderBook_Sorting(t *testing.T) {
 	ob := NewOrderBook("BTC-USD")
 
 	// Add Bids: 100, 102, 101
-	ob.ProcessOrder(createOrder("bid1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0), nil)
-	ob.ProcessOrder(createOrder("bid2", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 102.0, 10.0), nil)
-	ob.ProcessOrder(createOrder("bid3", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 101.0, 10.0), nil)
+	ob.ProcessOrder(createOrder("bid1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0, "BTC-USD", "user_bid1"), nil)
+	ob.ProcessOrder(createOrder("bid2", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 102.0, 10.0, "BTC-USD", "user_bid2"), nil)
+	ob.ProcessOrder(createOrder("bid3", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 101.0, 10.0, "BTC-USD", "user_bid3"), nil)
 
 	// Expected Bids Order: 102, 101, 100 (DESC)
 	assert.Len(t, ob.Bids, 3)
@@ -127,9 +127,9 @@ func TestOrderBook_Sorting(t *testing.T) {
 	assert.Equal(t, 100.0, ob.Bids[2].Price)
 
 	// Add Asks: 105, 103, 104
-	ob.ProcessOrder(createOrder("ask1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 105.0, 10.0), nil)
-	ob.ProcessOrder(createOrder("ask2", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 103.0, 10.0), nil)
-	ob.ProcessOrder(createOrder("ask3", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 104.0, 10.0), nil)
+	ob.ProcessOrder(createOrder("ask1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 105.0, 10.0, "BTC-USD", "user_ask1"), nil)
+	ob.ProcessOrder(createOrder("ask2", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 103.0, 10.0, "BTC-USD", "user_ask2"), nil)
+	ob.ProcessOrder(createOrder("ask3", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 104.0, 10.0, "BTC-USD", "user_ask3"), nil)
 
 	// Expected Asks Order: 103, 104, 105 (ASC)
 	assert.Len(t, ob.Asks, 3)
@@ -142,11 +142,11 @@ func TestMarketOrder_Match(t *testing.T) {
 	ob := NewOrderBook("BTC-USD")
 
 	// Setup: Add asks at different prices
-	ob.ProcessOrder(createOrder("ask1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 5.0), nil)
-	ob.ProcessOrder(createOrder("ask2", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 101.0, 5.0), nil)
+	ob.ProcessOrder(createOrder("ask1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 5.0, "BTC-USD", "user_ask1"), nil)
+	ob.ProcessOrder(createOrder("ask2", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 101.0, 5.0, "BTC-USD", "user_ask2"), nil)
 
 	// Action: Market Buy for 8.0 units
-	marketBuy := createOrder("buy1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_MARKET, 0, 8.0)
+	marketBuy := createOrder("buy1", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_MARKET, 0, 8.0, "BTC-USD", "user_buy1")
 	trades, _, _ := ob.ProcessOrder(marketBuy, nil)
 
 	// Assert

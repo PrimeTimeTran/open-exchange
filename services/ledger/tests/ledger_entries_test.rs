@@ -1,6 +1,4 @@
 use ledger::domain::ledger::service::LedgerService;
-use ledger::error::Result;
-use uuid::Uuid;
 use std::sync::Arc;
 
 mod ledger_test_helpers;

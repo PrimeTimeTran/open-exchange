@@ -103,5 +103,19 @@ func (m *MockLedgerClient) DeleteOrder(ctx context.Context, in *ledger.DeleteOrd
 	}
 	return args.Get(0).(*ledger.DeleteOrderResponse), args.Error(1)
 }
-func (m *MockLedgerClient) CreateInstrument(ctx context.Context, in *ledger.CreateInstrumentRequest, opts ...grpc.CallOption) (*ledger.CreateInstrumentResponse, error) { return nil, nil }
-func (m *MockLedgerClient) GetSystemAccount(ctx context.Context, in *ledger.GetSystemAccountRequest, opts ...grpc.CallOption) (*ledger.GetSystemAccountResponse, error) { return nil, nil }
+
+// MockSettlementClient is a mock implementation of ledger.SettlementClient
+type MockSettlementClient struct {
+	mock.Mock
+}
+
+// Ensure MockSettlementClient implements the interface
+var _ ledger.SettlementClient = (*MockSettlementClient)(nil)
+
+func (m *MockSettlementClient) Commit(ctx context.Context, in *ledger.CommitRequest, opts ...grpc.CallOption) (*ledger.CommitResponse, error) {
+	args := m.Called(ctx, in, opts)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*ledger.CommitResponse), args.Error(1)
+}

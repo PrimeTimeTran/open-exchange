@@ -6,3 +6,4 @@ pub mod wallets;
 pub mod assets;
 pub mod deposits;
 pub mod withdrawals;
+pub mod settlement;

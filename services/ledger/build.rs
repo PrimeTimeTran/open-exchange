@@ -10,7 +10,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // List of protos to compile
     let protos = &[
-        "../../proto/helloworld/helloworld.proto",
         "../../proto/common/order.proto",
         "../../proto/common/ledger_entry.proto",
         "../../proto/common/ledger_event.proto",

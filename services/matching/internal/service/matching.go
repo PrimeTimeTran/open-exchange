@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/open-exchange/matching_engine/internal/engine"
 	"github.com/open-exchange/matching_engine/internal/events"
 	common "github.com/open-exchange/matching_engine/proto/common"
@@ -24,6 +25,11 @@ type LedgerClientInterface interface {
 	CancelOrder(ctx context.Context, in *ledger.CancelOrderRequest, opts ...grpc.CallOption) (*ledger.CancelOrderResponse, error)
 }
 
+// SettlementClientInterface defines the subset of SettlementService methods we use.
+type SettlementClientInterface interface {
+	Commit(ctx context.Context, in *ledger.CommitRequest, opts ...grpc.CallOption) (*ledger.CommitResponse, error)
+}
+
 type Store interface {
 	SaveOrderBook(ctx context.Context, ob *engine.OrderBook) error
 	LoadOrderBook(ctx context.Context, instrumentID string) (*engine.OrderBook, error)
@@ -31,66 +37,63 @@ type Store interface {
 }
 
 type MatchingService struct {
-	Engine       *engine.Engine
-	LedgerClient LedgerClientInterface
-	Publisher    events.Publisher
-	Store        Store
+	Engine           *engine.Engine
+	LedgerClient     LedgerClientInterface
+	SettlementClient SettlementClientInterface
+	Publisher        events.Publisher
+	Store            Store
 }
 
-func NewMatchingService(engine *engine.Engine, ledgerClient LedgerClientInterface, publisher events.Publisher, store Store) *MatchingService {
+func NewMatchingService(engine *engine.Engine, ledgerClient LedgerClientInterface, settlementClient SettlementClientInterface, publisher events.Publisher, store Store) *MatchingService {
 	return &MatchingService{
-		Engine:       engine,
-		LedgerClient: ledgerClient,
-		Publisher:    publisher,
-		Store:        store,
+		Engine:           engine,
+		LedgerClient:     ledgerClient,
+		SettlementClient: settlementClient,
+		Publisher:        publisher,
+		Store:            store,
 	}
 }
 
 func (s *MatchingService) PlaceOrder(ctx context.Context, order *common.Order) (string, error) {
-	// 1. Forward to Ledger - SKIPPED (Ledger calls us now)
-	// log.Printf("Matching Service: Forwarding order %s to Ledger...", order.Id)
-	// _, err := s.LedgerClient.RecordOrder(ctx, &ledger.RecordOrderRequest{
-	// 	Order: order,
-	// })
-	// if err != nil {
-	// 	return "", fmt.Errorf("failed to record order in ledger: %w", err)
-	// }
-    log.Printf("Matching Service: Received order %s (assumed valid from Ledger)", order.Id)
-
-	// 2. Process in Engine
+	log.Printf("Matching Service: Received order %s (assumed valid from Ledger)", order.Id)
 	internalOrder := engine.NewOrderFromProto(order)
-	trades, bookEvents, err := s.Engine.ProcessOrder(internalOrder, func(trade engine.Trade) error {
-		// Validate/Record trade with Ledger BEFORE committing to engine
-		log.Printf("Validating trade with Ledger: %v", trade)
-		_, err := s.LedgerClient.ProcessTrade(ctx, &ledger.ProcessTradeRequest{
-			MakerOrderId: trade.MakerOrderID,
-			TakerOrderId: trade.TakerOrderID,
-			Price:        fmt.Sprintf("%f", trade.Price),
-			Quantity:     fmt.Sprintf("%f", trade.Quantity),
-			Timestamp:    trade.Timestamp,
-			InstrumentId: order.InstrumentId,
-		})
-		if err != nil {
-			log.Printf("ERROR: Failed to record trade in ledger: %v. Aborting match.", err)
-			return fmt.Errorf("failed to record trade in ledger: %w", err)
-		}
-		return nil
-	})
-
+	// Process matches in memory first (Optimistic Matching)
+	trades, bookEvents, err := s.Engine.ProcessOrder(internalOrder, nil)
 	log.Printf("Engine.ProcessOrder returned: trades=%d err=%v", len(trades), err)
 
 	if err != nil {
-		// If it's a ledger error during matching, we still might have partial trades returned.
-		log.Printf("ProcessOrder finished with error (likely ledger rejection): %v", err)
-		log.Printf("DEBUG: len(trades)=%d err=%v", len(trades), err)
-		
-		// If no trades were generated, it means the order failed completely (validation or first match rejection).
-		if len(trades) == 0 {
-			return "", err
+		return "", err
+	}
+
+	// Batch Commit trades to Ledger
+	if len(trades) > 0 {
+		var matches []*ledger.Match
+		for _, trade := range trades {
+			matches = append(matches, &ledger.Match{
+				MatchId:      uuid.New().String(),
+				MakerOrderId: trade.MakerOrderID,
+				TakerOrderId: trade.TakerOrderID,
+				InstrumentId: order.InstrumentId,
+				Price:        fmt.Sprintf("%.8f", trade.Price),
+				Quantity:     fmt.Sprintf("%.8f", trade.Quantity),
+				TakerSide:    order.Side,
+				MatchedAt:    trade.Timestamp,
+			})
 		}
-		
-		// If trades > 0, we had partial fills but stopped due to error.
-		// We log the error but return success with the OrderID, as the order is now effectively placed (partially filled).
+
+		log.Printf("Committing %d trades to Ledger (Settlement)...", len(matches))
+		resp, err := s.SettlementClient.Commit(ctx, &ledger.CommitRequest{
+			Matches:  matches,
+			TenantId: "default",
+		})
+
+		if err != nil {
+			// CRITICAL: Engine state updated but Ledger commit failed (Transport Error).
+			log.Printf("CRITICAL: Failed to commit trades to ledger: %v. State may be inconsistent.", err)
+		} else if !resp.Success {
+			// CRITICAL: Ledger processed request but reported failure.
+			log.Printf("CRITICAL: Ledger commit failed: %s. State may be inconsistent.", resp.ErrorMessage)
+		}
 	}
 
 	// 3. Broadcast Order Book Events
@@ -130,24 +133,28 @@ func (s *MatchingService) PlaceOrder(ctx context.Context, order *common.Order) (
 }
 
 func (s *MatchingService) CancelOrder(ctx context.Context, orderID, instrumentID string) error {
-	// 1. Remove from Engine
-	// 1. Forward to Ledger (to release locked funds)
+	// 1. Remove from Engine first (to prevent further matching)
+	// We need to know if it was actually in the engine to decide whether to call Ledger.
+	_, err := s.Engine.CancelOrder(instrumentID, orderID)
+	if err != nil {
+		// If not found in engine, it might be already filled or cancelled.
+		// We shouldn't try to cancel in Ledger if Engine says it's gone (assuming Engine is source of truth for active orders).
+		// However, if we want to be safe and ensure Ledger is clear, we could proceed, but usually Engine is the authority.
+		return fmt.Errorf("failed to cancel order in engine: %w", err)
+	}
+
+	// 2. Forward to Ledger (to release locked funds)
 	resp, err := s.LedgerClient.CancelOrder(ctx, &ledger.CancelOrderRequest{
 		OrderId: orderID,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to cancel order in ledger: %w", err)
+		// Critical: Order removed from book but funds might still be locked.
+		log.Printf("CRITICAL: Order %s removed from engine but Ledger CancelOrder failed: %v", orderID, err)
+		return fmt.Errorf("failed to cancel order in ledger (funds may be locked): %w", err)
 	}
 	if !resp.Success {
+		log.Printf("CRITICAL: Order %s removed from engine but Ledger refused cancel: %s", orderID, resp.Message)
 		return fmt.Errorf("ledger refused to cancel order: %s", resp.Message)
-	}
-
-	// 2. Remove from Engine
-	_, err = s.Engine.CancelOrder(instrumentID, orderID)
-	if err != nil {
-		// Ledger cancelled but Engine failed. This is a critical state inconsistency.
-		log.Printf("CRITICAL: Failed to cancel order in engine after ledger success: %v", err)
-		return fmt.Errorf("failed to cancel order in engine: %w", err)
 	}
 
 	// 3. Publish Event
