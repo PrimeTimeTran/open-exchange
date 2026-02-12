@@ -10,6 +10,7 @@ pub struct Order {
     pub account_id: Uuid,
     pub instrument_id: Uuid,
     pub side: String, // "buy" or "sell"
+    pub r#type: String, // "limit" or "market"
     pub quantity: Decimal,
     pub price: Decimal,
     pub status: String,
@@ -26,6 +27,7 @@ impl Order {
         account_id: Uuid,
         instrument_id: Uuid,
         side: String,
+        r#type: String,
         quantity: Decimal,
         price: Decimal,
     ) -> Self {
@@ -35,6 +37,7 @@ impl Order {
             account_id,
             instrument_id,
             side,
+            r#type,
             quantity,
             price,
             status: "new".to_string(),

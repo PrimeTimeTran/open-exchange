@@ -71,7 +71,6 @@ async function main() {
             side: 'buy',
             price: 20_000,
             quantity: 5,
-            type: 'limit',
           },
           {
             instrumentId: btc.id,
@@ -79,7 +78,6 @@ async function main() {
             side: 'buy',
             price: 15_000,
             quantity: 10,
-            type: 'limit',
           },
           {
             instrumentId: btc.id,
@@ -87,7 +85,6 @@ async function main() {
             side: 'buy',
             price: 10_000,
             quantity: 20,
-            type: 'limit',
           },
           {
             instrumentId: eth.id,
@@ -95,7 +92,6 @@ async function main() {
             side: 'buy',
             price: 2_000, // Fixed: Price closer to market value
             quantity: 10, // Fixed: Quantity reasonable for ETH
-            type: 'limit',
           },
           {
             instrumentId: aapl.id,
@@ -103,7 +99,6 @@ async function main() {
             side: 'buy',
             price: 175,
             quantity: 500,
-            type: 'limit',
           },
           {
             instrumentId: tsla.id,
@@ -111,7 +106,6 @@ async function main() {
             side: 'buy',
             price: 150,
             quantity: 500,
-            type: 'limit',
           },
         ],
       },

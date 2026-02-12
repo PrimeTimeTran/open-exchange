@@ -26,6 +26,7 @@ struct OrderRow {
     #[sqlx(rename = "instrumentId")]
     instrument_id: Uuid,
     side: String,
+    r#type: Option<String>,
     quantity: Decimal,
     price: Decimal,
     status: String,
@@ -46,6 +47,7 @@ impl From<OrderRow> for Order {
             account_id: row.account_id,
             instrument_id: row.instrument_id,
             side: row.side,
+            r#type: row.r#type.unwrap_or_else(|| "limit".to_string()),
             quantity: row.quantity,
             price: row.price,
             status: row.status,
@@ -63,8 +65,8 @@ impl OrderRepository for PostgresOrderRepository {
     async fn create(&self, order: Order) -> Result<Order> {
         let (created_at, updated_at): (DateTime<Utc>, DateTime<Utc>) = sqlx::query_as(
             r#"
-            INSERT INTO "Order" (id, "tenantId", "accountId", "instrumentId", side, quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "createdByMembershipId", "updatedByMembershipId")
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NULL, NULL, NULL, NULL)
+            INSERT INTO "Order" (id, "tenantId", "accountId", "instrumentId", side, type, quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "createdByMembershipId", "updatedByMembershipId")
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NULL, NULL, NULL, NULL)
             RETURNING "createdAt", "updatedAt"
             "#
         )
@@ -73,6 +75,7 @@ impl OrderRepository for PostgresOrderRepository {
         .bind(order.account_id)
         .bind(order.instrument_id)
         .bind(&order.side)
+        .bind(&order.r#type)
         .bind(order.quantity)
         .bind(order.price)
         .bind(&order.status)
@@ -94,7 +97,7 @@ impl OrderRepository for PostgresOrderRepository {
     async fn get(&self, id: Uuid) -> Result<Option<Order>> {
         let rec: Option<OrderRow> = sqlx::query_as(
             r#"
-            SELECT id, "tenantId", "accountId", "instrumentId", side, quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt"
+            SELECT id, "tenantId", "accountId", "instrumentId", side, type as "type", quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt"
             FROM "Order"
             WHERE id = $1
             "#
@@ -190,7 +193,7 @@ impl OrderRepository for PostgresOrderRepository {
     async fn list_open(&self) -> Result<Vec<Order>> {
         let recs: Vec<OrderRow> = sqlx::query_as(
             r#"
-            SELECT id, "tenantId", "accountId", "instrumentId", side, quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt"
+            SELECT id, "tenantId", "accountId", "instrumentId", side, type as "type", quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt"
             FROM "Order"
             WHERE status = 'new' OR status = 'partial' OR status = 'open'
             "#

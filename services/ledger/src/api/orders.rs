@@ -99,12 +99,19 @@ impl OrderService for OrderServiceImpl {
                 _ => "unspecified",
             }.to_string();
 
+            let type_str = match crate::proto::common::OrderType::try_from(proto_order.r#type).unwrap_or(crate::proto::common::OrderType::Unspecified) {
+                crate::proto::common::OrderType::Limit => "limit",
+                crate::proto::common::OrderType::Market => "market",
+                _ => "unspecified",
+            }.to_string();
+
             let order = Order {
                 id: order_id,
                 tenant_id,
                 account_id,
                 instrument_id,
                 side: side_str,
+                r#type: type_str,
                 quantity: quantity_scaled,
                 price: price_scaled,
                 status: status_str,
@@ -238,6 +245,13 @@ impl OrderService for OrderServiceImpl {
                 _ => OrderStatus::Unspecified,
             };
 
+            let type_enum = match o.r#type.as_str() {
+                "ORDER_TYPE_LIMIT" | "limit" => crate::proto::common::OrderType::Limit,
+                "ORDER_TYPE_MARKET" | "market" => crate::proto::common::OrderType::Market,
+                _ => crate::proto::common::OrderType::Unspecified,
+            };
+            let time_in_force_enum = crate::proto::common::TimeInForce::Gtc;
+
             proto_orders.push(crate::proto::common::Order {
                 id: o.id.to_string(),
                 tenant_id: o.tenant_id.to_string(),
@@ -251,8 +265,8 @@ impl OrderService for OrderServiceImpl {
                 meta: o.meta.to_string(),
                 created_at: o.created_at.timestamp_millis(),
                 updated_at: o.updated_at.timestamp_millis(),
-                r#type: 0, 
-                time_in_force: 0, 
+                r#type: type_enum as i32, 
+                time_in_force: time_in_force_enum as i32, 
             });
         }
 

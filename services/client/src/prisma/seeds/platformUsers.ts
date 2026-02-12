@@ -1,3 +1,5 @@
+import { OrderType } from '@/proto/common/order'; // Import Enum
+
 import { PrismaClient, Prisma } from '@prisma/client';
 import { seedUser } from './user';
 import {
@@ -24,7 +26,6 @@ export const seedUserWithData = async (
       side: string;
       price: number;
       quantity: number;
-      type: string;
     }[];
   },
   tenantId: string,
@@ -259,13 +260,15 @@ export const seedUserWithData = async (
         }
       }
 
+      // ...
+
       await prisma.order.create({
         data: {
           tenantId,
           accountId: mainAccount.id,
           instrumentId: inst.id,
           side: order.side,
-          type: 'limit',
+          type: OrderType[OrderType.ORDER_TYPE_LIMIT],
           status: order.status,
           price: finalPrice,
           quantity: finalQty,
