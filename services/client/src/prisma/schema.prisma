@@ -507,7 +507,7 @@ model Order {
 
   side String?
   type String?
-  price Decimal? @db.Decimal(72, 30)
+  price Decimal? @db.Decimal(72, 20)
   quantity Decimal? @db.Decimal(72, 0)
   quantityFilled Decimal? @db.Decimal(72, 0)
   status String?
@@ -546,7 +546,7 @@ model Fill {
   importHash            String?     @unique
 
   side String
-  price Decimal @db.Decimal(72, 30)
+  price Decimal @db.Decimal(72, 20)
   quantity Decimal @db.Decimal(72, 0)
   fee Decimal? @db.Decimal(72, 0)
   meta Json?
@@ -575,7 +575,7 @@ model Trade {
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
 
-  price Decimal? @db.Decimal(72, 30)
+  price Decimal? @db.Decimal(72, 20)
   quantity Decimal? @db.Decimal(72, 0)
   meta Json?
   buyOrderId Order[] @relation("buyOrderId_buys")
@@ -648,22 +648,16 @@ model Instrument {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   symbol String
   type String?
   status String?
   meta Json?
   underlyingAssetId String? @db.Uuid
   underlyingAsset Asset? @relation("baseInstruments_underlyingAsset", fields: [underlyingAssetId], references: [id])
-
   quoteAssetId String? @db.Uuid
   quoteAsset Asset? @relation("quoteAsset_quoteInstruments", fields: [quoteAssetId], references: [id])
-
   orders Order[] @relation("instrument_orders")
-
   trades Trade[] @relation("instrument_trades")
-
-
   @@unique([symbol, tenantId])
   @@unique([id, tenantId])
 }

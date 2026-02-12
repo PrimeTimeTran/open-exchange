@@ -12,6 +12,8 @@ services:
       - ./proto:/app/proto
     ports:
       - '3000:3000'
+    env_file:
+      - .env
     environment:
       - MATCHING_ENGINE_URL=matching:50051
       - MARKET_SERVICE_URL=market:50053

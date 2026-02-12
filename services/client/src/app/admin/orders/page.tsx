@@ -2,6 +2,7 @@ import { prisma } from '@/prisma';
 import { matchingClient } from '@/services/MatchingClient';
 import { GetOrderBookResponse } from '@/proto/matching/engine';
 import { OrderTable } from './components/OrderTable';
+import { InstrumentSelect } from './components/InstrumentSelect';
 import { Button } from '@/components/ui/button';
 
 async function getInstrumentWithAssets(instrumentId: string) {
@@ -45,16 +46,6 @@ async function getInstrumentWithAssets(instrumentId: string) {
   return instrument;
 }
 
-function formatAtomic(
-  value: string | undefined | null,
-  decimals: number,
-): string {
-  if (!value) return '0';
-  const floatVal = parseFloat(value);
-  if (isNaN(floatVal)) return value;
-  return (floatVal / Math.pow(10, decimals)).toString();
-}
-
 export default async function OrdersPage({
   searchParams,
 }: {
@@ -96,9 +87,10 @@ export default async function OrdersPage({
 
   return (
     <div className="p-8 bg-background min-h-screen text-foreground">
-      <h1 className="text-2xl font-bold mb-6">
-        Order Book: {instrument?.symbol || instrumentIdParam}
-      </h1>
+      <h1 className="text-2xl font-bold mb-6">Order Book</h1>
+      <h2 className="text-2xl font-bold mb-6">
+        InstrumentID: {instrument?.symbol || instrumentIdParam}
+      </h2>
 
       {error && (
         <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded relative mb-4">
@@ -108,26 +100,16 @@ export default async function OrdersPage({
       )}
 
       <form className="mb-8 flex gap-4">
-        <select
-          name="instrument_id"
+        <InstrumentSelect
+          instruments={instruments.map((i) => ({
+            id: i.id,
+            symbol: i.symbol,
+          }))}
           defaultValue={instrumentIdParam}
-          className="border border-input bg-background p-2 rounded w-64 text-foreground"
-        >
-          {instruments.length > 0 ? (
-            instruments.map((i) => (
-              <option key={i.id} value={i.symbol}>
-                {i.symbol.replace(/_/g, '-')}
-              </option>
-            ))
-          ) : (
-            <>
-              <option value="BTC-USD">BTC-USD</option>
-              <option value="ETH-USD">ETH-USD</option>
-              <option value="AAPL-USD">AAPL-USD</option>
-            </>
-          )}
-        </select>
-        <Button variant="primary">Load</Button>
+        />
+        <noscript>
+          <Button variant="primary">Load</Button>
+        </noscript>
       </form>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

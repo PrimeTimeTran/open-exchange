@@ -24,6 +24,16 @@ const getStatusLabel = (status: OrderStatus) => {
   }
 };
 
+function formatAtomic(
+  value: string | undefined | null,
+  decimals: number,
+): string {
+  if (!value) return '0';
+  const floatVal = parseFloat(value);
+  if (isNaN(floatVal)) return value;
+  return (floatVal / Math.pow(10, decimals)).toString();
+}
+
 const getStatusBadgeClass = (status: OrderStatus) => {
   switch (status) {
     case OrderStatus.ORDER_STATUS_OPEN:
@@ -80,18 +90,18 @@ export function OrderTable({
   quoteDecimals,
   priceClass,
 }: OrderTableProps) {
-  const unscaleQty = (val: string | undefined) => {
-    if (!val) return '0';
-    const num = parseFloat(val);
-    if (isNaN(num)) return val;
-    return (num / Math.pow(10, baseDecimals)).toString();
-  };
-
   const unscalePrice = (val: string | undefined) => {
     if (!val) return '0';
-    const num = parseFloat(val);
-    if (isNaN(num)) return val;
-    return (num / Math.pow(10, quoteDecimals - baseDecimals)).toString();
+    return parseFloat(val).toLocaleString(undefined, {
+      maximumFractionDigits: 10,
+    });
+  };
+
+  const unscaleQty = (val: string | undefined) => {
+    if (!val) return '0';
+    return parseFloat(val).toLocaleString(undefined, {
+      maximumFractionDigits: 10,
+    });
   };
 
   return (

@@ -1,8 +1,10 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
-export async function seedUser(prisma: PrismaClient) {
-  const email = 'primetimetran@gmail.com';
+export async function seedUser(
+  prisma: PrismaClient,
+  email: string = 'primetimetran@gmail.com',
+) {
   let user = await prisma.user.findUnique({
     where: { email },
   });
