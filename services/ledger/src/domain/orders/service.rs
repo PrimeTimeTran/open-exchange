@@ -115,7 +115,7 @@ impl OrderService {
             let status = if new_filled >= order.quantity {
                 "filled"
             } else {
-                "partial"
+                "partial_fill"
             };
 
             self.repo.update_filled_amount(id, new_filled).await?;
@@ -140,9 +140,9 @@ impl OrderService {
                 
                 let original_qty = order.quantity;
                 if new_filled >= original_qty {
-                    self.repo.update_status_with_tx(tx, order_uuid, "FILLED".to_string()).await?;
+                    self.repo.update_status_with_tx(tx, order_uuid, "filled".to_string()).await?;
                 } else {
-                    self.repo.update_status_with_tx(tx, order_uuid, "PARTIALLY_FILLED".to_string()).await?;
+                    self.repo.update_status_with_tx(tx, order_uuid, "partial_fill".to_string()).await?;
                 }
             }
         Ok(())
@@ -158,9 +158,9 @@ impl OrderService {
                 
                 let original_qty = order.quantity;
                 if new_filled >= original_qty {
-                    self.repo.update_status(order_uuid, "FILLED".to_string()).await?;
+                    self.repo.update_status(order_uuid, "filled".to_string()).await?;
                 } else {
-                    self.repo.update_status(order_uuid, "PARTIALLY_FILLED".to_string()).await?;
+                    self.repo.update_status(order_uuid, "partial_fill".to_string()).await?;
                 }
             }
         Ok(())

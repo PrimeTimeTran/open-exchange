@@ -126,9 +126,9 @@ impl OrderRepository for InMemoryOrderRepository {
 
     async fn list_open(&self) -> Result<Vec<Order>> {
         let orders = self.orders.lock().unwrap();
-        // Assuming "open", "partial", "new" are considered open
+        // Assuming "open", "partial_fill", "new" are considered open
         Ok(orders.iter()
-            .filter(|o| o.status == "open" || o.status == "partial" || o.status == "new")
+            .filter(|o| o.status == "open" || o.status == "partial_fill" || o.status == "new")
             .cloned()
             .collect())
     }

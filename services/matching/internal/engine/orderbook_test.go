@@ -40,7 +40,7 @@ func TestLimitOrder_MatchBuy(t *testing.T) {
 	assert.Equal(t, 5.0, trades[0].Quantity)
 
 	// Check Order Book State
-	assert.Len(t, ob.Asks, 1) // Partially filled ask remains
+	assert.Len(t, ob.Asks, 1) // Partial Fill ask remains
 	assert.Equal(t, 5.0, ob.Asks[0].Remaining())
 	assert.Len(t, ob.Bids, 0) // Buy order fully filled
 }
@@ -64,7 +64,7 @@ func TestLimitOrder_MatchSell(t *testing.T) {
 	assert.Equal(t, 5.0, trades[0].Quantity)
 
 	// Check Order Book State
-	assert.Len(t, ob.Bids, 1) // Partially filled bid remains
+	assert.Len(t, ob.Bids, 1) // Partial Fill bid remains
 	assert.Equal(t, 5.0, ob.Bids[0].Remaining())
 	assert.Len(t, ob.Asks, 0) // Sell order fully filled
 }

@@ -130,8 +130,8 @@ function mapOrderStatus(status: string | null | undefined): OrderStatus {
   switch (status) {
     case 'open':
       return OrderStatus.ORDER_STATUS_OPEN;
-    case 'partially_filled':
-      return OrderStatus.ORDER_STATUS_PARTIALLY_FILLED;
+    case 'partial_fill':
+      return OrderStatus.ORDER_STATUS_PARTIAL_FILL;
     case 'filled':
       return OrderStatus.ORDER_STATUS_FILLED;
     case 'cancelled':

@@ -195,7 +195,7 @@ impl OrderRepository for PostgresOrderRepository {
             r#"
             SELECT id, "tenantId", "accountId", "instrumentId", side, type as "type", quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt"
             FROM "Order"
-            WHERE status = 'new' OR status = 'partial' OR status = 'open'
+            WHERE status = 'new' OR status = 'partial_fill' OR status = 'open'
             "#
         )
         .fetch_all(&self.pool)

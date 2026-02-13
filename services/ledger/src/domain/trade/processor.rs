@@ -100,9 +100,9 @@ impl TradeProcessor {
                 
                 let original_qty = order.quantity;
                 if new_filled >= original_qty {
-                    self.order_repo.update_status(order_uuid, "FILLED".to_string()).await?;
+                    self.order_repo.update_status(order_uuid, "filled".to_string()).await?;
                 } else {
-                    self.order_repo.update_status(order_uuid, "PARTIALLY_FILLED".to_string()).await?;
+                    self.order_repo.update_status(order_uuid, "partial_fill".to_string()).await?;
                 }
             }
         }
@@ -121,9 +121,9 @@ impl TradeProcessor {
                 
                 let original_qty = order.quantity;
                 if new_filled >= original_qty {
-                    self.order_repo.update_status_with_tx(tx, order_uuid, "FILLED".to_string()).await?;
+                    self.order_repo.update_status_with_tx(tx, order_uuid, "filled".to_string()).await?;
                 } else {
-                    self.order_repo.update_status_with_tx(tx, order_uuid, "PARTIALLY_FILLED".to_string()).await?;
+                    self.order_repo.update_status_with_tx(tx, order_uuid, "partial_fill".to_string()).await?;
                 }
             }
         }

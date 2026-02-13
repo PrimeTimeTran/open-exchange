@@ -90,7 +90,7 @@ export function orderTypeToJSON(object: OrderType): string {
 export enum OrderStatus {
   ORDER_STATUS_UNSPECIFIED = 0,
   ORDER_STATUS_OPEN = 1,
-  ORDER_STATUS_PARTIALLY_FILLED = 2,
+  ORDER_STATUS_PARTIAL_FILL = 2,
   ORDER_STATUS_FILLED = 3,
   ORDER_STATUS_CANCELLED = 4,
   ORDER_STATUS_REJECTED = 5,
@@ -106,8 +106,8 @@ export function orderStatusFromJSON(object: any): OrderStatus {
     case "ORDER_STATUS_OPEN":
       return OrderStatus.ORDER_STATUS_OPEN;
     case 2:
-    case "ORDER_STATUS_PARTIALLY_FILLED":
-      return OrderStatus.ORDER_STATUS_PARTIALLY_FILLED;
+    case "ORDER_STATUS_PARTIAL_FILL":
+      return OrderStatus.ORDER_STATUS_PARTIAL_FILL;
     case 3:
     case "ORDER_STATUS_FILLED":
       return OrderStatus.ORDER_STATUS_FILLED;
@@ -130,8 +130,8 @@ export function orderStatusToJSON(object: OrderStatus): string {
       return "ORDER_STATUS_UNSPECIFIED";
     case OrderStatus.ORDER_STATUS_OPEN:
       return "ORDER_STATUS_OPEN";
-    case OrderStatus.ORDER_STATUS_PARTIALLY_FILLED:
-      return "ORDER_STATUS_PARTIALLY_FILLED";
+    case OrderStatus.ORDER_STATUS_PARTIAL_FILL:
+      return "ORDER_STATUS_PARTIAL_FILL";
     case OrderStatus.ORDER_STATUS_FILLED:
       return "ORDER_STATUS_FILLED";
     case OrderStatus.ORDER_STATUS_CANCELLED:

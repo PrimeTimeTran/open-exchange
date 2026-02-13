@@ -1,6 +1,4 @@
 const dictionary = {
-  
-
   projectName: 'Proyecto',
 
   shared: {
@@ -1008,9 +1006,7 @@ const dictionary = {
       snapshots: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   order: {
@@ -1116,7 +1112,8 @@ const dictionary = {
       quantity: '',
       quantityFilled: '',
       status: '',
-      timeInFore: 'good_til_cancelled, immediate_or_cancel, fill_or_kill, day_order',
+      timeInFore:
+        'good_til_cancelled, immediate_or_cancel, fill_or_kill, day_order',
       meta: '',
       account: '',
       instrument: '',
@@ -1141,7 +1138,7 @@ const dictionary = {
 
       status: {
         open: 'Open',
-        partially_filled: 'Partially_filled',
+        partial_fill: 'Partial_fill',
         filled: 'Filled',
         cancelled: 'Cancelled',
       },
@@ -1363,9 +1360,7 @@ const dictionary = {
       fills: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   asset: {
@@ -1715,7 +1710,6 @@ const dictionary = {
       accountId: '',
       instrumentId: '',
       meta: '',
-
     },
 
     enumerators: {
@@ -1764,13 +1758,15 @@ const dictionary = {
 
     restore: {
       success: 'BalanceSnapshot restaurado con éxito',
-      noSelection: 'Debe seleccionar al menos un balancesnapshot para restaurar.',
+      noSelection:
+        'Debe seleccionar al menos un balancesnapshot para restaurar.',
       confirmTitle: '¿Restaurar BalanceSnapshot?',
     },
 
     restoreMany: {
       success: 'BalanceSnapshot(es) restaurado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un balancesnapshot para restaurar.',
+      noSelection:
+        'Debe seleccionar al menos un balancesnapshot para restaurar.',
       confirmTitle: '¿Restaurar BalanceSnapshot(es)?',
       confirmDescription:
         '¿Está seguro de que desea restaurar los {0} balancesnapshot(es) seleccionados?',
@@ -1778,7 +1774,8 @@ const dictionary = {
 
     archiveMany: {
       success: 'BalanceSnapshot(es) archivado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un balancesnapshot para archivar.',
+      noSelection:
+        'Debe seleccionar al menos un balancesnapshot para archivar.',
       confirmTitle: '¿Archivar BalanceSnapshot(es)?',
       confirmDescription:
         '¿Está seguro de que desea archivar los {0} balancesnapshot(es) seleccionados?',
@@ -1786,13 +1783,15 @@ const dictionary = {
 
     archive: {
       success: 'BalanceSnapshot archivado con éxito',
-      noSelection: 'Debe seleccionar al menos un balancesnapshot para archivar.',
+      noSelection:
+        'Debe seleccionar al menos un balancesnapshot para archivar.',
       confirmTitle: '¿Archivar BalanceSnapshot?',
     },
 
     destroyMany: {
       success: 'BalanceSnapshot(s) eliminado(s) con éxito',
-      noSelection: 'Debes seleccionar al menos un BalanceSnapshot para eliminar.',
+      noSelection:
+        'Debes seleccionar al menos un BalanceSnapshot para eliminar.',
       confirmTitle: '¿Eliminar BalanceSnapshot(s)?',
       confirmDescription:
         '¿Estás seguro de que quieres eliminar los {0} BalanceSnapshot(s) seleccionados?',
@@ -1800,7 +1799,8 @@ const dictionary = {
 
     destroy: {
       success: 'BalanceSnapshot eliminado con éxito',
-      noSelection: 'Debes seleccionar al menos un BalanceSnapshot para eliminar.',
+      noSelection:
+        'Debes seleccionar al menos un BalanceSnapshot para eliminar.',
       confirmTitle: '¿Eliminar BalanceSnapshot?',
     },
 
@@ -1832,9 +1832,7 @@ const dictionary = {
       asset: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   systemAccount: {
@@ -1933,7 +1931,6 @@ const dictionary = {
       description: '',
       isActive: '',
       meta: '',
-
     },
 
     enumerators: {
@@ -2052,7 +2049,6 @@ const dictionary = {
       rewardCurrency: '',
       rewardedAt: '',
       meta: '',
-
     },
 
     enumerators: {
@@ -2200,7 +2196,6 @@ const dictionary = {
       reviewedBy: '',
       notes: '',
       meta: '',
-
     },
 
     enumerators: {
@@ -2470,7 +2465,6 @@ const dictionary = {
       notesInternal: '',
       specialOrderTypes: '',
       minFeeAmount: '',
-
     },
 
     enumerators: {
@@ -2737,9 +2731,7 @@ const dictionary = {
       event: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   article: {
@@ -2843,9 +2835,7 @@ const dictionary = {
       user: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   post: {
@@ -2949,9 +2939,7 @@ const dictionary = {
       user: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   comment: {
@@ -3051,9 +3039,7 @@ const dictionary = {
       user: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   chat: {
@@ -3155,9 +3141,7 @@ const dictionary = {
       chaters: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   chater: {
@@ -3374,9 +3358,7 @@ const dictionary = {
       sender: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   notification: {
@@ -3550,13 +3532,15 @@ const dictionary = {
 
     restore: {
       success: 'UserNotification restaurado con éxito',
-      noSelection: 'Debe seleccionar al menos un usernotification para restaurar.',
+      noSelection:
+        'Debe seleccionar al menos un usernotification para restaurar.',
       confirmTitle: '¿Restaurar UserNotification?',
     },
 
     restoreMany: {
       success: 'UserNotification(es) restaurado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un usernotification para restaurar.',
+      noSelection:
+        'Debe seleccionar al menos un usernotification para restaurar.',
       confirmTitle: '¿Restaurar UserNotification(es)?',
       confirmDescription:
         '¿Está seguro de que desea restaurar los {0} usernotification(es) seleccionados?',
@@ -3564,7 +3548,8 @@ const dictionary = {
 
     archiveMany: {
       success: 'UserNotification(es) archivado(s) con éxito',
-      noSelection: 'Debe seleccionar al menos un usernotification para archivar.',
+      noSelection:
+        'Debe seleccionar al menos un usernotification para archivar.',
       confirmTitle: '¿Archivar UserNotification(es)?',
       confirmDescription:
         '¿Está seguro de que desea archivar los {0} usernotification(es) seleccionados?',
@@ -3572,13 +3557,15 @@ const dictionary = {
 
     archive: {
       success: 'UserNotification archivado con éxito',
-      noSelection: 'Debe seleccionar al menos un usernotification para archivar.',
+      noSelection:
+        'Debe seleccionar al menos un usernotification para archivar.',
       confirmTitle: '¿Archivar UserNotification?',
     },
 
     destroyMany: {
       success: 'UserNotification(s) eliminado(s) con éxito',
-      noSelection: 'Debes seleccionar al menos un UserNotification para eliminar.',
+      noSelection:
+        'Debes seleccionar al menos un UserNotification para eliminar.',
       confirmTitle: '¿Eliminar UserNotification(s)?',
       confirmDescription:
         '¿Estás seguro de que quieres eliminar los {0} UserNotification(s) seleccionados?',
@@ -3586,7 +3573,8 @@ const dictionary = {
 
     destroy: {
       success: 'UserNotification eliminado con éxito',
-      noSelection: 'Debes seleccionar al menos un UserNotification para eliminar.',
+      noSelection:
+        'Debes seleccionar al menos un UserNotification para eliminar.',
       confirmTitle: '¿Eliminar UserNotification?',
     },
 
@@ -3743,7 +3731,6 @@ const dictionary = {
       seniority: '',
       currency: '',
       meta: '',
-
     },
 
     enumerators: {
@@ -3884,12 +3871,9 @@ const dictionary = {
       resumeUrl: '',
       resume: '',
       meta: '',
-
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   auditLog: {

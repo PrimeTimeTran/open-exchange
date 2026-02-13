@@ -68,7 +68,7 @@ func TestSelfTradePrevention_LimitBuy(t *testing.T) {
 	// Expect:
 	// 1. OrderCancelled (ask1)
 	// 2. OrderUpdated (ask2 - partial fill) OR OrderFilled (if buy matched full ask2)
-	// In this case, buy=5, ask2=10. So ask2 is partially filled.
+	// In this case, buy=5, ask2=10. So ask2 is partial fill.
 
 	// Check for Cancellation Event
 	foundCancel := false

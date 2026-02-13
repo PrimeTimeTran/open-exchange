@@ -76,7 +76,7 @@ pub async fn record_order(
 
         let status_str = match OrderStatus::try_from(proto_order.status).unwrap_or(OrderStatus::Unspecified) {
             OrderStatus::Open => "open",
-            OrderStatus::PartiallyFilled => "partial",
+            OrderStatus::PartialFill => "partial_fill",
             OrderStatus::Filled => "filled",
             OrderStatus::Cancelled => "cancelled",
             OrderStatus::Rejected => "rejected",
@@ -183,7 +183,7 @@ pub async fn get_open_orders(
         
         let status_enum = match o.status.as_str() {
             "open" => OrderStatus::Open,
-            "partial" => OrderStatus::PartiallyFilled,
+            "partial_fill" => OrderStatus::PartialFill,
             "filled" => OrderStatus::Filled,
             "cancelled" => OrderStatus::Cancelled,
             "rejected" => OrderStatus::Rejected,

@@ -23,7 +23,7 @@
     "**/.next": true,
     "**/.swc": true,
     "**/dist": true,
-    "**/proto": true,
+    
     "**/.github": true,
     "**/Dockerfile": true,
     "**/Dockerfile.dev": true,
@@ -47,7 +47,8 @@
     "**/next.config.js": true,
     "**/tsconfig.json": true,
     "**/public": true,
-    "proto": true,
+    // "**/proto": true,
+    // "proto": true,
   },
   "search.exclude": {
     "services/admin/src/proto": true,

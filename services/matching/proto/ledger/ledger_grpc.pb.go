@@ -24,6 +24,7 @@ const (
 	OrderService_DeleteOrder_FullMethodName   = "/ledger.OrderService/DeleteOrder"
 	OrderService_GetOpenOrders_FullMethodName = "/ledger.OrderService/GetOpenOrders"
 	OrderService_ProcessTrade_FullMethodName  = "/ledger.OrderService/ProcessTrade"
+	OrderService_GetTrades_FullMethodName     = "/ledger.OrderService/GetTrades"
 )
 
 // OrderServiceClient is the client API for OrderService service.
@@ -35,6 +36,7 @@ type OrderServiceClient interface {
 	DeleteOrder(ctx context.Context, in *DeleteOrderRequest, opts ...grpc.CallOption) (*DeleteOrderResponse, error)
 	GetOpenOrders(ctx context.Context, in *GetOpenOrdersRequest, opts ...grpc.CallOption) (*GetOpenOrdersResponse, error)
 	ProcessTrade(ctx context.Context, in *ProcessTradeRequest, opts ...grpc.CallOption) (*ProcessTradeResponse, error)
+	GetTrades(ctx context.Context, in *GetTradesRequest, opts ...grpc.CallOption) (*GetTradesResponse, error)
 }
 
 type orderServiceClient struct {
@@ -90,6 +92,15 @@ func (c *orderServiceClient) ProcessTrade(ctx context.Context, in *ProcessTradeR
 	return out, nil
 }
 
+func (c *orderServiceClient) GetTrades(ctx context.Context, in *GetTradesRequest, opts ...grpc.CallOption) (*GetTradesResponse, error) {
+	out := new(GetTradesResponse)
+	err := c.cc.Invoke(ctx, OrderService_GetTrades_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrderServiceServer is the server API for OrderService service.
 // All implementations must embed UnimplementedOrderServiceServer
 // for forward compatibility
@@ -99,6 +110,7 @@ type OrderServiceServer interface {
 	DeleteOrder(context.Context, *DeleteOrderRequest) (*DeleteOrderResponse, error)
 	GetOpenOrders(context.Context, *GetOpenOrdersRequest) (*GetOpenOrdersResponse, error)
 	ProcessTrade(context.Context, *ProcessTradeRequest) (*ProcessTradeResponse, error)
+	GetTrades(context.Context, *GetTradesRequest) (*GetTradesResponse, error)
 	mustEmbedUnimplementedOrderServiceServer()
 }
 
@@ -120,6 +132,9 @@ func (UnimplementedOrderServiceServer) GetOpenOrders(context.Context, *GetOpenOr
 }
 func (UnimplementedOrderServiceServer) ProcessTrade(context.Context, *ProcessTradeRequest) (*ProcessTradeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ProcessTrade not implemented")
+}
+func (UnimplementedOrderServiceServer) GetTrades(context.Context, *GetTradesRequest) (*GetTradesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTrades not implemented")
 }
 func (UnimplementedOrderServiceServer) mustEmbedUnimplementedOrderServiceServer() {}
 
@@ -224,6 +239,24 @@ func _OrderService_ProcessTrade_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrderService_GetTrades_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTradesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderServiceServer).GetTrades(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrderService_GetTrades_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderServiceServer).GetTrades(ctx, req.(*GetTradesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OrderService_ServiceDesc is the grpc.ServiceDesc for OrderService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -250,6 +283,10 @@ var OrderService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ProcessTrade",
 			Handler:    _OrderService_ProcessTrade_Handler,
+		},
+		{
+			MethodName: "GetTrades",
+			Handler:    _OrderService_GetTrades_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

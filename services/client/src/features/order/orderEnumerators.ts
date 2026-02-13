@@ -15,7 +15,7 @@ export const orderEnumerators = {
 
   status: {
     open: 'open',
-    partially_filled: 'partially_filled',
+    partial_fill: 'partial_fill',
     filled: 'filled',
     cancelled: 'cancelled',
   },

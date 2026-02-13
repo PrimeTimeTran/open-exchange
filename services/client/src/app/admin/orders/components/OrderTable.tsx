@@ -11,7 +11,7 @@ const getStatusLabel = (status: OrderStatus) => {
   switch (status) {
     case OrderStatus.ORDER_STATUS_OPEN:
       return 'Open';
-    case OrderStatus.ORDER_STATUS_PARTIALLY_FILLED:
+    case OrderStatus.ORDER_STATUS_PARTIAL_FILL:
       return 'Partial';
     case OrderStatus.ORDER_STATUS_FILLED:
       return 'Filled';
@@ -38,7 +38,7 @@ const getStatusBadgeClass = (status: OrderStatus) => {
   switch (status) {
     case OrderStatus.ORDER_STATUS_OPEN:
       return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-    case OrderStatus.ORDER_STATUS_PARTIALLY_FILLED:
+    case OrderStatus.ORDER_STATUS_PARTIAL_FILL:
       return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
     case OrderStatus.ORDER_STATUS_FILLED:
       return 'bg-green-500/10 text-green-500 border-green-500/20';

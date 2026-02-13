@@ -114,9 +114,7 @@ export function OverviewTab({
                   <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="open">Open</SelectItem>
                   <SelectItem value="filled">Filled</SelectItem>
-                  <SelectItem value="partially_filled">
-                    Partially Filled
-                  </SelectItem>
+                  <SelectItem value="partial_fill">Partial Fill</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -1,6 +1,4 @@
 const dictionary = {
-  
-
   projectName: 'Projeto',
 
   shared: {
@@ -801,13 +799,15 @@ const dictionary = {
 
     restore: {
       success: 'Withdrawal restaurado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um withdrawal para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um withdrawal para restaurar.',
       confirmTitle: 'Restaurar Withdrawal?',
     },
 
     restoreMany: {
       success: 'Withdrawal(es) restaurado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um withdrawal para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um withdrawal para restaurar.',
       confirmTitle: 'Restaurar Withdrawal(es)?',
       confirmDescription:
         'Tem certeza de que deseja restaurar os {0} withdrawal(es) selecionados?',
@@ -815,7 +815,8 @@ const dictionary = {
 
     archiveMany: {
       success: 'Withdrawal(es) arquivado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um withdrawal para arquivar.',
+      noSelection:
+        'Você deve selecionar pelo menos um withdrawal para arquivar.',
       confirmTitle: 'Arquivar Withdrawal(es)?',
       confirmDescription:
         'Tem certeza de que deseja arquivar os {0} withdrawal(es) selecionados?',
@@ -823,13 +824,15 @@ const dictionary = {
 
     archive: {
       success: 'Withdrawal arquivado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um withdrawal para arquivar.',
+      noSelection:
+        'Você deve selecionar pelo menos um withdrawal para arquivar.',
       confirmTitle: 'Arquivar Withdrawal?',
     },
 
     destroyMany: {
       success: 'Withdrawal(es) excluído(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um Withdrawal para excluir.',
+      noSelection:
+        'Você deve selecionar pelo menos um Withdrawal para excluir.',
       confirmTitle: 'Excluir Withdrawal(es)?',
       confirmDescription:
         'Tem certeza de que deseja excluir os {0} Withdrawal(es) selecionados?',
@@ -837,7 +840,8 @@ const dictionary = {
 
     destroy: {
       success: 'Withdrawal excluído com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um Withdrawal para excluir.',
+      noSelection:
+        'Você deve selecionar pelo menos um Withdrawal para excluir.',
       confirmTitle: 'Excluir Withdrawal?',
     },
 
@@ -1008,9 +1012,7 @@ const dictionary = {
       snapshots: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   order: {
@@ -1116,7 +1118,8 @@ const dictionary = {
       quantity: '',
       quantityFilled: '',
       status: '',
-      timeInFore: 'good_til_cancelled, immediate_or_cancel, fill_or_kill, day_order',
+      timeInFore:
+        'good_til_cancelled, immediate_or_cancel, fill_or_kill, day_order',
       meta: '',
       account: '',
       instrument: '',
@@ -1141,7 +1144,7 @@ const dictionary = {
 
       status: {
         open: 'Open',
-        partially_filled: 'Partially_filled',
+        partial_fill: 'Partial_fill',
         filled: 'Filled',
         cancelled: 'Cancelled',
       },
@@ -1363,9 +1366,7 @@ const dictionary = {
       fills: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   asset: {
@@ -1525,13 +1526,15 @@ const dictionary = {
 
     restore: {
       success: 'Instrument restaurado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um instrument para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um instrument para restaurar.',
       confirmTitle: 'Restaurar Instrument?',
     },
 
     restoreMany: {
       success: 'Instrument(es) restaurado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um instrument para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um instrument para restaurar.',
       confirmTitle: 'Restaurar Instrument(es)?',
       confirmDescription:
         'Tem certeza de que deseja restaurar os {0} instrument(es) selecionados?',
@@ -1539,7 +1542,8 @@ const dictionary = {
 
     archiveMany: {
       success: 'Instrument(es) arquivado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um instrument para arquivar.',
+      noSelection:
+        'Você deve selecionar pelo menos um instrument para arquivar.',
       confirmTitle: 'Arquivar Instrument(es)?',
       confirmDescription:
         'Tem certeza de que deseja arquivar os {0} instrument(es) selecionados?',
@@ -1547,13 +1551,15 @@ const dictionary = {
 
     archive: {
       success: 'Instrument arquivado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um instrument para arquivar.',
+      noSelection:
+        'Você deve selecionar pelo menos um instrument para arquivar.',
       confirmTitle: 'Arquivar Instrument?',
     },
 
     destroyMany: {
       success: 'Instrument(es) excluído(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um Instrument para excluir.',
+      noSelection:
+        'Você deve selecionar pelo menos um Instrument para excluir.',
       confirmTitle: 'Excluir Instrument(es)?',
       confirmDescription:
         'Tem certeza de que deseja excluir os {0} Instrument(es) selecionados?',
@@ -1561,7 +1567,8 @@ const dictionary = {
 
     destroy: {
       success: 'Instrument excluído com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um Instrument para excluir.',
+      noSelection:
+        'Você deve selecionar pelo menos um Instrument para excluir.',
       confirmTitle: 'Excluir Instrument?',
     },
 
@@ -1644,13 +1651,15 @@ const dictionary = {
 
     restore: {
       success: 'FeeSchedule restaurado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um feeschedule para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um feeschedule para restaurar.',
       confirmTitle: 'Restaurar FeeSchedule?',
     },
 
     restoreMany: {
       success: 'FeeSchedule(es) restaurado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um feeschedule para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um feeschedule para restaurar.',
       confirmTitle: 'Restaurar FeeSchedule(es)?',
       confirmDescription:
         'Tem certeza de que deseja restaurar os {0} feeschedule(es) selecionados?',
@@ -1658,7 +1667,8 @@ const dictionary = {
 
     archiveMany: {
       success: 'FeeSchedule(es) arquivado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um feeschedule para arquivar.',
+      noSelection:
+        'Você deve selecionar pelo menos um feeschedule para arquivar.',
       confirmTitle: 'Arquivar FeeSchedule(es)?',
       confirmDescription:
         'Tem certeza de que deseja arquivar os {0} feeschedule(es) selecionados?',
@@ -1666,13 +1676,15 @@ const dictionary = {
 
     archive: {
       success: 'FeeSchedule arquivado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um feeschedule para arquivar.',
+      noSelection:
+        'Você deve selecionar pelo menos um feeschedule para arquivar.',
       confirmTitle: 'Arquivar FeeSchedule?',
     },
 
     destroyMany: {
       success: 'FeeSchedule(es) excluído(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um FeeSchedule para excluir.',
+      noSelection:
+        'Você deve selecionar pelo menos um FeeSchedule para excluir.',
       confirmTitle: 'Excluir FeeSchedule(es)?',
       confirmDescription:
         'Tem certeza de que deseja excluir os {0} FeeSchedule(es) selecionados?',
@@ -1680,7 +1692,8 @@ const dictionary = {
 
     destroy: {
       success: 'FeeSchedule excluído com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um FeeSchedule para excluir.',
+      noSelection:
+        'Você deve selecionar pelo menos um FeeSchedule para excluir.',
       confirmTitle: 'Excluir FeeSchedule?',
     },
 
@@ -1715,7 +1728,6 @@ const dictionary = {
       accountId: '',
       instrumentId: '',
       meta: '',
-
     },
 
     enumerators: {
@@ -1764,13 +1776,15 @@ const dictionary = {
 
     restore: {
       success: 'BalanceSnapshot restaurado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um balancesnapshot para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um balancesnapshot para restaurar.',
       confirmTitle: 'Restaurar BalanceSnapshot?',
     },
 
     restoreMany: {
       success: 'BalanceSnapshot(es) restaurado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um balancesnapshot para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um balancesnapshot para restaurar.',
       confirmTitle: 'Restaurar BalanceSnapshot(es)?',
       confirmDescription:
         'Tem certeza de que deseja restaurar os {0} balancesnapshot(es) selecionados?',
@@ -1778,7 +1792,8 @@ const dictionary = {
 
     archiveMany: {
       success: 'BalanceSnapshot(es) arquivado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um balancesnapshot para arquivar.',
+      noSelection:
+        'Você deve selecionar pelo menos um balancesnapshot para arquivar.',
       confirmTitle: 'Arquivar BalanceSnapshot(es)?',
       confirmDescription:
         'Tem certeza de que deseja arquivar os {0} balancesnapshot(es) selecionados?',
@@ -1786,13 +1801,15 @@ const dictionary = {
 
     archive: {
       success: 'BalanceSnapshot arquivado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um balancesnapshot para arquivar.',
+      noSelection:
+        'Você deve selecionar pelo menos um balancesnapshot para arquivar.',
       confirmTitle: 'Arquivar BalanceSnapshot?',
     },
 
     destroyMany: {
       success: 'BalanceSnapshot(es) excluído(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um BalanceSnapshot para excluir.',
+      noSelection:
+        'Você deve selecionar pelo menos um BalanceSnapshot para excluir.',
       confirmTitle: 'Excluir BalanceSnapshot(es)?',
       confirmDescription:
         'Tem certeza de que deseja excluir os {0} BalanceSnapshot(es) selecionados?',
@@ -1800,7 +1817,8 @@ const dictionary = {
 
     destroy: {
       success: 'BalanceSnapshot excluído com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um BalanceSnapshot para excluir.',
+      noSelection:
+        'Você deve selecionar pelo menos um BalanceSnapshot para excluir.',
       confirmTitle: 'Excluir BalanceSnapshot?',
     },
 
@@ -1832,9 +1850,7 @@ const dictionary = {
       asset: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   systemAccount: {
@@ -1872,13 +1888,15 @@ const dictionary = {
 
     restore: {
       success: 'SystemAccount restaurado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um systemaccount para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um systemaccount para restaurar.',
       confirmTitle: 'Restaurar SystemAccount?',
     },
 
     restoreMany: {
       success: 'SystemAccount(es) restaurado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um systemaccount para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um systemaccount para restaurar.',
       confirmTitle: 'Restaurar SystemAccount(es)?',
       confirmDescription:
         'Tem certeza de que deseja restaurar os {0} systemaccount(es) selecionados?',
@@ -1886,7 +1904,8 @@ const dictionary = {
 
     archiveMany: {
       success: 'SystemAccount(es) arquivado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um systemaccount para arquivar.',
+      noSelection:
+        'Você deve selecionar pelo menos um systemaccount para arquivar.',
       confirmTitle: 'Arquivar SystemAccount(es)?',
       confirmDescription:
         'Tem certeza de que deseja arquivar os {0} systemaccount(es) selecionados?',
@@ -1894,13 +1913,15 @@ const dictionary = {
 
     archive: {
       success: 'SystemAccount arquivado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um systemaccount para arquivar.',
+      noSelection:
+        'Você deve selecionar pelo menos um systemaccount para arquivar.',
       confirmTitle: 'Arquivar SystemAccount?',
     },
 
     destroyMany: {
       success: 'SystemAccount(es) excluído(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um SystemAccount para excluir.',
+      noSelection:
+        'Você deve selecionar pelo menos um SystemAccount para excluir.',
       confirmTitle: 'Excluir SystemAccount(es)?',
       confirmDescription:
         'Tem certeza de que deseja excluir os {0} SystemAccount(es) selecionados?',
@@ -1908,7 +1929,8 @@ const dictionary = {
 
     destroy: {
       success: 'SystemAccount excluído com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um SystemAccount para excluir.',
+      noSelection:
+        'Você deve selecionar pelo menos um SystemAccount para excluir.',
       confirmTitle: 'Excluir SystemAccount?',
     },
 
@@ -1933,7 +1955,6 @@ const dictionary = {
       description: '',
       isActive: '',
       meta: '',
-
     },
 
     enumerators: {
@@ -1981,13 +2002,15 @@ const dictionary = {
 
     restore: {
       success: 'Referral restaurado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um referral para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um referral para restaurar.',
       confirmTitle: 'Restaurar Referral?',
     },
 
     restoreMany: {
       success: 'Referral(es) restaurado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um referral para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um referral para restaurar.',
       confirmTitle: 'Restaurar Referral(es)?',
       confirmDescription:
         'Tem certeza de que deseja restaurar os {0} referral(es) selecionados?',
@@ -2052,7 +2075,6 @@ const dictionary = {
       rewardCurrency: '',
       rewardedAt: '',
       meta: '',
-
     },
 
     enumerators: {
@@ -2200,7 +2222,6 @@ const dictionary = {
       reviewedBy: '',
       notes: '',
       meta: '',
-
     },
 
     enumerators: {
@@ -2254,13 +2275,15 @@ const dictionary = {
 
     restore: {
       success: 'Feedback restaurado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um feedback para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um feedback para restaurar.',
       confirmTitle: 'Restaurar Feedback?',
     },
 
     restoreMany: {
       success: 'Feedback(es) restaurado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um feedback para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um feedback para restaurar.',
       confirmTitle: 'Restaurar Feedback(es)?',
       confirmDescription:
         'Tem certeza de que deseja restaurar os {0} feedback(es) selecionados?',
@@ -2371,13 +2394,15 @@ const dictionary = {
 
     restore: {
       success: 'MarketMaker restaurado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um marketmaker para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um marketmaker para restaurar.',
       confirmTitle: 'Restaurar MarketMaker?',
     },
 
     restoreMany: {
       success: 'MarketMaker(es) restaurado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um marketmaker para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um marketmaker para restaurar.',
       confirmTitle: 'Restaurar MarketMaker(es)?',
       confirmDescription:
         'Tem certeza de que deseja restaurar os {0} marketmaker(es) selecionados?',
@@ -2385,7 +2410,8 @@ const dictionary = {
 
     archiveMany: {
       success: 'MarketMaker(es) arquivado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um marketmaker para arquivar.',
+      noSelection:
+        'Você deve selecionar pelo menos um marketmaker para arquivar.',
       confirmTitle: 'Arquivar MarketMaker(es)?',
       confirmDescription:
         'Tem certeza de que deseja arquivar os {0} marketmaker(es) selecionados?',
@@ -2393,13 +2419,15 @@ const dictionary = {
 
     archive: {
       success: 'MarketMaker arquivado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um marketmaker para arquivar.',
+      noSelection:
+        'Você deve selecionar pelo menos um marketmaker para arquivar.',
       confirmTitle: 'Arquivar MarketMaker?',
     },
 
     destroyMany: {
       success: 'MarketMaker(es) excluído(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um MarketMaker para excluir.',
+      noSelection:
+        'Você deve selecionar pelo menos um MarketMaker para excluir.',
       confirmTitle: 'Excluir MarketMaker(es)?',
       confirmDescription:
         'Tem certeza de que deseja excluir os {0} MarketMaker(es) selecionados?',
@@ -2407,7 +2435,8 @@ const dictionary = {
 
     destroy: {
       success: 'MarketMaker excluído com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um MarketMaker para excluir.',
+      noSelection:
+        'Você deve selecionar pelo menos um MarketMaker para excluir.',
       confirmTitle: 'Excluir MarketMaker?',
     },
 
@@ -2470,7 +2499,6 @@ const dictionary = {
       notesInternal: '',
       specialOrderTypes: '',
       minFeeAmount: '',
-
     },
 
     enumerators: {
@@ -2548,13 +2576,15 @@ const dictionary = {
 
     restore: {
       success: 'LedgerEvent restaurado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um ledgerevent para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um ledgerevent para restaurar.',
       confirmTitle: 'Restaurar LedgerEvent?',
     },
 
     restoreMany: {
       success: 'LedgerEvent(es) restaurado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um ledgerevent para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um ledgerevent para restaurar.',
       confirmTitle: 'Restaurar LedgerEvent(es)?',
       confirmDescription:
         'Tem certeza de que deseja restaurar os {0} ledgerevent(es) selecionados?',
@@ -2562,7 +2592,8 @@ const dictionary = {
 
     archiveMany: {
       success: 'LedgerEvent(es) arquivado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um ledgerevent para arquivar.',
+      noSelection:
+        'Você deve selecionar pelo menos um ledgerevent para arquivar.',
       confirmTitle: 'Arquivar LedgerEvent(es)?',
       confirmDescription:
         'Tem certeza de que deseja arquivar os {0} ledgerevent(es) selecionados?',
@@ -2570,13 +2601,15 @@ const dictionary = {
 
     archive: {
       success: 'LedgerEvent arquivado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um ledgerevent para arquivar.',
+      noSelection:
+        'Você deve selecionar pelo menos um ledgerevent para arquivar.',
       confirmTitle: 'Arquivar LedgerEvent?',
     },
 
     destroyMany: {
       success: 'LedgerEvent(es) excluído(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um LedgerEvent para excluir.',
+      noSelection:
+        'Você deve selecionar pelo menos um LedgerEvent para excluir.',
       confirmTitle: 'Excluir LedgerEvent(es)?',
       confirmDescription:
         'Tem certeza de que deseja excluir os {0} LedgerEvent(es) selecionados?',
@@ -2584,7 +2617,8 @@ const dictionary = {
 
     destroy: {
       success: 'LedgerEvent excluído com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um LedgerEvent para excluir.',
+      noSelection:
+        'Você deve selecionar pelo menos um LedgerEvent para excluir.',
       confirmTitle: 'Excluir LedgerEvent?',
     },
 
@@ -2677,13 +2711,15 @@ const dictionary = {
 
     restore: {
       success: 'LedgerEntry restaurado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um ledgerentry para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um ledgerentry para restaurar.',
       confirmTitle: 'Restaurar LedgerEntry?',
     },
 
     restoreMany: {
       success: 'LedgerEntry(es) restaurado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um ledgerentry para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um ledgerentry para restaurar.',
       confirmTitle: 'Restaurar LedgerEntry(es)?',
       confirmDescription:
         'Tem certeza de que deseja restaurar os {0} ledgerentry(es) selecionados?',
@@ -2691,7 +2727,8 @@ const dictionary = {
 
     archiveMany: {
       success: 'LedgerEntry(es) arquivado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um ledgerentry para arquivar.',
+      noSelection:
+        'Você deve selecionar pelo menos um ledgerentry para arquivar.',
       confirmTitle: 'Arquivar LedgerEntry(es)?',
       confirmDescription:
         'Tem certeza de que deseja arquivar os {0} ledgerentry(es) selecionados?',
@@ -2699,13 +2736,15 @@ const dictionary = {
 
     archive: {
       success: 'LedgerEntry arquivado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um ledgerentry para arquivar.',
+      noSelection:
+        'Você deve selecionar pelo menos um ledgerentry para arquivar.',
       confirmTitle: 'Arquivar LedgerEntry?',
     },
 
     destroyMany: {
       success: 'LedgerEntry(es) excluído(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um LedgerEntry para excluir.',
+      noSelection:
+        'Você deve selecionar pelo menos um LedgerEntry para excluir.',
       confirmTitle: 'Excluir LedgerEntry(es)?',
       confirmDescription:
         'Tem certeza de que deseja excluir os {0} LedgerEntry(es) selecionados?',
@@ -2713,7 +2752,8 @@ const dictionary = {
 
     destroy: {
       success: 'LedgerEntry excluído com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um LedgerEntry para excluir.',
+      noSelection:
+        'Você deve selecionar pelo menos um LedgerEntry para excluir.',
       confirmTitle: 'Excluir LedgerEntry?',
     },
 
@@ -2737,9 +2777,7 @@ const dictionary = {
       event: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   article: {
@@ -2843,9 +2881,7 @@ const dictionary = {
       user: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   post: {
@@ -2949,9 +2985,7 @@ const dictionary = {
       user: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   comment: {
@@ -3051,9 +3085,7 @@ const dictionary = {
       user: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   chat: {
@@ -3155,9 +3187,7 @@ const dictionary = {
       chaters: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   chater: {
@@ -3374,9 +3404,7 @@ const dictionary = {
       sender: '',
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   notification: {
@@ -3414,13 +3442,15 @@ const dictionary = {
 
     restore: {
       success: 'Notification restaurado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um notification para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um notification para restaurar.',
       confirmTitle: 'Restaurar Notification?',
     },
 
     restoreMany: {
       success: 'Notification(es) restaurado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um notification para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um notification para restaurar.',
       confirmTitle: 'Restaurar Notification(es)?',
       confirmDescription:
         'Tem certeza de que deseja restaurar os {0} notification(es) selecionados?',
@@ -3428,7 +3458,8 @@ const dictionary = {
 
     archiveMany: {
       success: 'Notification(es) arquivado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um notification para arquivar.',
+      noSelection:
+        'Você deve selecionar pelo menos um notification para arquivar.',
       confirmTitle: 'Arquivar Notification(es)?',
       confirmDescription:
         'Tem certeza de que deseja arquivar os {0} notification(es) selecionados?',
@@ -3436,13 +3467,15 @@ const dictionary = {
 
     archive: {
       success: 'Notification arquivado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um notification para arquivar.',
+      noSelection:
+        'Você deve selecionar pelo menos um notification para arquivar.',
       confirmTitle: 'Arquivar Notification?',
     },
 
     destroyMany: {
       success: 'Notification(es) excluído(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um Notification para excluir.',
+      noSelection:
+        'Você deve selecionar pelo menos um Notification para excluir.',
       confirmTitle: 'Excluir Notification(es)?',
       confirmDescription:
         'Tem certeza de que deseja excluir os {0} Notification(es) selecionados?',
@@ -3450,7 +3483,8 @@ const dictionary = {
 
     destroy: {
       success: 'Notification excluído com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um Notification para excluir.',
+      noSelection:
+        'Você deve selecionar pelo menos um Notification para excluir.',
       confirmTitle: 'Excluir Notification?',
     },
 
@@ -3550,13 +3584,15 @@ const dictionary = {
 
     restore: {
       success: 'UserNotification restaurado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um usernotification para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um usernotification para restaurar.',
       confirmTitle: 'Restaurar UserNotification?',
     },
 
     restoreMany: {
       success: 'UserNotification(es) restaurado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um usernotification para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um usernotification para restaurar.',
       confirmTitle: 'Restaurar UserNotification(es)?',
       confirmDescription:
         'Tem certeza de que deseja restaurar os {0} usernotification(es) selecionados?',
@@ -3564,7 +3600,8 @@ const dictionary = {
 
     archiveMany: {
       success: 'UserNotification(es) arquivado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um usernotification para arquivar.',
+      noSelection:
+        'Você deve selecionar pelo menos um usernotification para arquivar.',
       confirmTitle: 'Arquivar UserNotification(es)?',
       confirmDescription:
         'Tem certeza de que deseja arquivar os {0} usernotification(es) selecionados?',
@@ -3572,13 +3609,15 @@ const dictionary = {
 
     archive: {
       success: 'UserNotification arquivado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um usernotification para arquivar.',
+      noSelection:
+        'Você deve selecionar pelo menos um usernotification para arquivar.',
       confirmTitle: 'Arquivar UserNotification?',
     },
 
     destroyMany: {
       success: 'UserNotification(es) excluído(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um UserNotification para excluir.',
+      noSelection:
+        'Você deve selecionar pelo menos um UserNotification para excluir.',
       confirmTitle: 'Excluir UserNotification(es)?',
       confirmDescription:
         'Tem certeza de que deseja excluir os {0} UserNotification(es) selecionados?',
@@ -3586,7 +3625,8 @@ const dictionary = {
 
     destroy: {
       success: 'UserNotification excluído com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um UserNotification para excluir.',
+      noSelection:
+        'Você deve selecionar pelo menos um UserNotification para excluir.',
       confirmTitle: 'Excluir UserNotification?',
     },
 
@@ -3743,7 +3783,6 @@ const dictionary = {
       seniority: '',
       currency: '',
       meta: '',
-
     },
 
     enumerators: {
@@ -3807,13 +3846,15 @@ const dictionary = {
 
     restore: {
       success: 'Candidate restaurado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um candidate para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um candidate para restaurar.',
       confirmTitle: 'Restaurar Candidate?',
     },
 
     restoreMany: {
       success: 'Candidate(es) restaurado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um candidate para restaurar.',
+      noSelection:
+        'Você deve selecionar pelo menos um candidate para restaurar.',
       confirmTitle: 'Restaurar Candidate(es)?',
       confirmDescription:
         'Tem certeza de que deseja restaurar os {0} candidate(es) selecionados?',
@@ -3821,7 +3862,8 @@ const dictionary = {
 
     archiveMany: {
       success: 'Candidate(es) arquivado(s) com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um candidate para arquivar.',
+      noSelection:
+        'Você deve selecionar pelo menos um candidate para arquivar.',
       confirmTitle: 'Arquivar Candidate(es)?',
       confirmDescription:
         'Tem certeza de que deseja arquivar os {0} candidate(es) selecionados?',
@@ -3829,7 +3871,8 @@ const dictionary = {
 
     archive: {
       success: 'Candidate arquivado com sucesso',
-      noSelection: 'Você deve selecionar pelo menos um candidate para arquivar.',
+      noSelection:
+        'Você deve selecionar pelo menos um candidate para arquivar.',
       confirmTitle: 'Arquivar Candidate?',
     },
 
@@ -3884,12 +3927,9 @@ const dictionary = {
       resumeUrl: '',
       resume: '',
       meta: '',
-
     },
 
-    enumerators: {
-
-    },
+    enumerators: {},
   },
 
   auditLog: {

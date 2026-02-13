@@ -24,6 +24,7 @@ import { Deposit } from "../common/deposit";
 import { Instrument } from "../common/instrument";
 import { Order, OrderSide, orderSideFromJSON, orderSideToJSON } from "../common/order";
 import { SystemAccount } from "../common/system_account";
+import { Trade } from "../common/trade";
 import { User } from "../common/user";
 import { Wallet } from "../common/wallet";
 import { Withdrawal } from "../common/withdrawal";
@@ -79,6 +80,22 @@ export interface ProcessTradeRequest {
 export interface ProcessTradeResponse {
   transactionId?: string | undefined;
   success?: boolean | undefined;
+}
+
+export interface GetTradesRequest {
+  instrumentId?:
+    | string
+    | undefined;
+  /** Unix timestamp in milliseconds */
+  startTime?:
+    | string
+    | undefined;
+  /** Unix timestamp in milliseconds */
+  endTime?: string | undefined;
+}
+
+export interface GetTradesResponse {
+  trades?: Trade[] | undefined;
 }
 
 export interface CreateUserRequest {
@@ -1192,6 +1209,173 @@ export const ProcessTradeResponse: MessageFns<ProcessTradeResponse> = {
     const message = createBaseProcessTradeResponse();
     message.transactionId = object.transactionId ?? "";
     message.success = object.success ?? false;
+    return message;
+  },
+};
+
+function createBaseGetTradesRequest(): GetTradesRequest {
+  return { instrumentId: "", startTime: "0", endTime: "0" };
+}
+
+export const GetTradesRequest: MessageFns<GetTradesRequest> = {
+  encode(message: GetTradesRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.instrumentId !== undefined && message.instrumentId !== "") {
+      writer.uint32(10).string(message.instrumentId);
+    }
+    if (message.startTime !== undefined && message.startTime !== "0") {
+      writer.uint32(16).int64(message.startTime);
+    }
+    if (message.endTime !== undefined && message.endTime !== "0") {
+      writer.uint32(24).int64(message.endTime);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetTradesRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetTradesRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.instrumentId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.startTime = reader.int64().toString();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.endTime = reader.int64().toString();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetTradesRequest {
+    return {
+      instrumentId: isSet(object.instrumentId)
+        ? globalThis.String(object.instrumentId)
+        : isSet(object.instrument_id)
+        ? globalThis.String(object.instrument_id)
+        : "",
+      startTime: isSet(object.startTime)
+        ? globalThis.String(object.startTime)
+        : isSet(object.start_time)
+        ? globalThis.String(object.start_time)
+        : "0",
+      endTime: isSet(object.endTime)
+        ? globalThis.String(object.endTime)
+        : isSet(object.end_time)
+        ? globalThis.String(object.end_time)
+        : "0",
+    };
+  },
+
+  toJSON(message: GetTradesRequest): unknown {
+    const obj: any = {};
+    if (message.instrumentId !== undefined && message.instrumentId !== "") {
+      obj.instrumentId = message.instrumentId;
+    }
+    if (message.startTime !== undefined && message.startTime !== "0") {
+      obj.startTime = message.startTime;
+    }
+    if (message.endTime !== undefined && message.endTime !== "0") {
+      obj.endTime = message.endTime;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetTradesRequest>, I>>(base?: I): GetTradesRequest {
+    return GetTradesRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetTradesRequest>, I>>(object: I): GetTradesRequest {
+    const message = createBaseGetTradesRequest();
+    message.instrumentId = object.instrumentId ?? "";
+    message.startTime = object.startTime ?? "0";
+    message.endTime = object.endTime ?? "0";
+    return message;
+  },
+};
+
+function createBaseGetTradesResponse(): GetTradesResponse {
+  return { trades: [] };
+}
+
+export const GetTradesResponse: MessageFns<GetTradesResponse> = {
+  encode(message: GetTradesResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.trades !== undefined && message.trades.length !== 0) {
+      for (const v of message.trades) {
+        Trade.encode(v!, writer.uint32(10).fork()).join();
+      }
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetTradesResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetTradesResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          const el = Trade.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.trades!.push(el);
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetTradesResponse {
+    return { trades: globalThis.Array.isArray(object?.trades) ? object.trades.map((e: any) => Trade.fromJSON(e)) : [] };
+  },
+
+  toJSON(message: GetTradesResponse): unknown {
+    const obj: any = {};
+    if (message.trades?.length) {
+      obj.trades = message.trades.map((e) => Trade.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetTradesResponse>, I>>(base?: I): GetTradesResponse {
+    return GetTradesResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetTradesResponse>, I>>(object: I): GetTradesResponse {
+    const message = createBaseGetTradesResponse();
+    message.trades = object.trades?.map((e) => Trade.fromPartial(e)) || [];
     return message;
   },
 };
@@ -5718,6 +5902,15 @@ export const OrderServiceService = {
       Buffer.from(ProcessTradeResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): ProcessTradeResponse => ProcessTradeResponse.decode(value),
   },
+  getTrades: {
+    path: "/ledger.OrderService/GetTrades",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetTradesRequest): Buffer => Buffer.from(GetTradesRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetTradesRequest => GetTradesRequest.decode(value),
+    responseSerialize: (value: GetTradesResponse): Buffer => Buffer.from(GetTradesResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetTradesResponse => GetTradesResponse.decode(value),
+  },
 } as const;
 
 export interface OrderServiceServer extends UntypedServiceImplementation {
@@ -5726,6 +5919,7 @@ export interface OrderServiceServer extends UntypedServiceImplementation {
   deleteOrder: handleUnaryCall<DeleteOrderRequest, DeleteOrderResponse>;
   getOpenOrders: handleUnaryCall<GetOpenOrdersRequest, GetOpenOrdersResponse>;
   processTrade: handleUnaryCall<ProcessTradeRequest, ProcessTradeResponse>;
+  getTrades: handleUnaryCall<GetTradesRequest, GetTradesResponse>;
 }
 
 export interface OrderServiceClient extends Client {
@@ -5803,6 +5997,21 @@ export interface OrderServiceClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: ProcessTradeResponse) => void,
+  ): ClientUnaryCall;
+  getTrades(
+    request: GetTradesRequest,
+    callback: (error: ServiceError | null, response: GetTradesResponse) => void,
+  ): ClientUnaryCall;
+  getTrades(
+    request: GetTradesRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetTradesResponse) => void,
+  ): ClientUnaryCall;
+  getTrades(
+    request: GetTradesRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetTradesResponse) => void,
   ): ClientUnaryCall;
 }
 

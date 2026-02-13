@@ -96,7 +96,7 @@ async function matchSingleOrder(
 
       const status = filled.greaterThanOrEqualTo(total)
         ? 'filled'
-        : 'partially_filled';
+        : 'partial_fill';
 
       if (updatedOrder.status !== status) {
         await tx.order.update({
@@ -404,7 +404,7 @@ export async function seedMatchedTrades(
             instrumentId: btcInstrument.id,
             side: 'sell',
             price: 150_000,
-            status: 'open',
+            status: { in: ['open', 'partial_fill'] },
           },
         });
         const buyerOrder150k = await prisma.order.findFirst({
@@ -447,7 +447,7 @@ export async function seedMatchedTrades(
             instrumentId: ethInstrument.id,
             side: 'sell',
             price: 10_000,
-            status: 'open',
+            status: { in: ['open', 'partial_fill'] },
           },
         });
         const buyerOrderEth = await prisma.order.findFirst({

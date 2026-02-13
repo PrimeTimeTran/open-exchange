@@ -1135,7 +1135,7 @@ const dictionary = {
 
       status: {
         open: 'Open',
-        partially_filled: 'Partially_filled',
+        partial_fill: 'partial_fill',
         filled: 'Filled',
         cancelled: 'Cancelled',
       },

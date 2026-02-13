@@ -108,7 +108,7 @@ async fn test_settlement_partial_fill() {
 
     settlement_service.process_trade_event(trade.clone()).await.unwrap();
 
-    // Verify Buyer Wallet (Partially filled)
+    // Verify Buyer Wallet (Partial Fill)
     let b_usd = wallet_service.get_wallet_by_account_and_asset(&ctx.account_a.to_string(), "USD").await.unwrap().unwrap();
     // 50k used (trade) -> 100k - 50k = 50k locked
     // Fee 50 USD deducted from available (0) -> -50

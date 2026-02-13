@@ -110,7 +110,7 @@ WITH OrderLocks AS (
     FROM "Order" o
     JOIN "Instrument" i ON o."instrumentId" = i.id
     JOIN "Asset" qa ON i."quoteAssetId" = qa.id
-    WHERE o.side = '"'buy'"' AND o.status IN ('"'open'"', '"'partially_filled'"') AND i.type = '"'spot'"'
+    WHERE o.side = '"'buy'"' AND o.status IN ('"'open'"', '"'partial_fill'"') AND i.type = '"'spot'"'
     GROUP BY o."accountId", i."quoteAssetId"
 
     UNION ALL
@@ -123,7 +123,7 @@ WITH OrderLocks AS (
     FROM "Order" o
     JOIN "Instrument" i ON o."instrumentId" = i.id
     JOIN "Asset" ba ON i."underlyingAssetId" = ba.id
-    WHERE o.side = '"'sell'"' AND o.status IN ('"'open'"', '"'partially_filled'"') AND i.type = '"'spot'"'
+    WHERE o.side = '"'sell'"' AND o.status IN ('"'open'"', '"'partial_fill'"') AND i.type = '"'spot'"'
     GROUP BY o."accountId", i."underlyingAssetId"
 ),
 AggregatedLocks AS (

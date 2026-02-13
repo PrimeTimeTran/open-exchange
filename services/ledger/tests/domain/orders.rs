@@ -129,10 +129,10 @@ async fn test_partial_fill() {
     
     ctx.order_service.process_trade(Request::new(trade_req)).await.expect("Failed to record trade");
 
-    // Verify Order A is Partially Filled
+    // Verify Order A is Partial Fill
     let open_orders = ctx.order_service.get_open_orders(Request::new(GetOpenOrdersRequest::default())).await.unwrap().into_inner().orders;
     let order_a_found = open_orders.iter().find(|o| o.id == order_a.id).expect("Order A should be open/partial");
-    assert_eq!(order_a_found.status, OrderStatus::PartiallyFilled as i32);
+    assert_eq!(order_a_found.status, OrderStatus::PartialFill as i32);
     assert_eq!(order_a_found.quantity_filled.parse::<f64>().unwrap(), 0.5);
 
     // Verify Order B is Filled

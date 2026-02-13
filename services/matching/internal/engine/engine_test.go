@@ -126,7 +126,7 @@ func TestEngine_ProcessOrder_Limit_Match_SellMaker_BuyTaker(t *testing.T) {
 	remainingSell := book.Asks[0]
 	assert.Equal(t, "sell_order_1", remainingSell.ID)
 	assert.Equal(t, 5.0, remainingSell.Quantity-remainingSell.QuantityFilled, "Sell order should have 5 items remaining")
-	assert.False(t, remainingSell.Filled(), "Sell order should be PARTIALLY_FILLED")
+	assert.False(t, remainingSell.Filled(), "Sell order should be PARTIAL_FILL")
 
 	// Buy side (Bids) should be empty because the buy order was fully filled
 	assert.Len(t, book.Bids, 0, "Buy order should be fully filled and removed from book")
@@ -172,7 +172,7 @@ func TestEngine_ProcessOrder_Limit_Match_BuyMaker_SellTaker(t *testing.T) {
 	remainingBuy := book.Bids[0]
 	assert.Equal(t, "buy_order_rest", remainingBuy.ID)
 	assert.Equal(t, 5.0, remainingBuy.Quantity-remainingBuy.QuantityFilled, "Buy order should have 5 items remaining")
-	assert.False(t, remainingBuy.Filled(), "Buy order should be PARTIALLY_FILLED")
+	assert.False(t, remainingBuy.Filled(), "Buy order should be PARTIAL_FILL")
 
 	// Sell side (Asks) should be empty because the sell order was fully filled
 	assert.Len(t, book.Asks, 0, "Sell order should be fully filled and removed from book")
@@ -271,7 +271,7 @@ func TestEngine_ProcessOrder_Limit_Match_MultiLevel_Sell(t *testing.T) {
 	assert.True(t, sell.Filled())
 
 	// Bid 1 fully filled and removed
-	// Bid 2 partially filled (5 remaining)
+	// Bid 2 partial fill (5 remaining)
 	assert.Len(t, book.Bids, 1)
 	assert.Equal(t, "bid_low", book.Bids[0].ID)
 	assert.Equal(t, 5.0, book.Bids[0].Remaining())
