@@ -12,6 +12,10 @@ impl WalletServiceImpl {
     pub fn new(wallet_service: Arc<WalletDomainService>) -> Self {
         Self { wallet_service }
     }
+
+    pub async fn list_wallets_internal(&self, account_id: &str) -> Result<Vec<crate::domain::wallets::Wallet>, Status> {
+        self.wallet_service.list_wallets(account_id).await.map_err(|e| Status::internal(e.to_string()))
+    }
 }
 
 #[tonic::async_trait]

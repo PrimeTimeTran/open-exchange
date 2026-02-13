@@ -6,6 +6,7 @@ use crate::error::{Result, AppError};
 use crate::domain::wallets::WalletService;
 use crate::domain::assets::AssetService;
 use rust_decimal::Decimal;
+use rust_decimal::MathematicalOps;
 use std::str::FromStr;
 use sqlx::{Transaction, Postgres};
 
@@ -46,11 +47,18 @@ impl OrderService {
     pub async fn validate_and_reserve_funds(&self, order: &Order) -> Result<()> {
         let instr_uuid = order.instrument_id.to_string();
         if let Some(instrument) = self.asset_service.get_instrument(&instr_uuid).await? {
-            let (required_asset_id, required_amount) = if order.side == "buy" {
+            let (required_asset_id, raw_required_amount) = if order.side == "buy" {
                 (instrument.quote_asset_id.clone(), order.price * order.quantity)
             } else {
                 (instrument.underlying_asset_id.clone(), order.quantity)
             };
+
+            // Fetch asset to get decimals for scaling
+            let asset = self.asset_service.get_asset(&required_asset_id).await?
+                .ok_or_else(|| AppError::NotFound(format!("Asset {} not found", required_asset_id)))?;
+            
+            let scale_factor = Decimal::from(10).powi(asset.decimals as i64);
+            let required_amount_atomic = raw_required_amount * scale_factor;
 
             let account_uuid = order.account_id.to_string();
             // Fetch wallet (async)
@@ -62,18 +70,18 @@ impl OrderService {
                 let available = Decimal::from_str(&wallet.available)
                     .map_err(|_| AppError::Internal("Invalid available balance".into()))?;
                 
-                if available < required_amount {
+                if available < required_amount_atomic {
                     return Err(AppError::ValidationError(format!(
                         "Insufficient funds. Required: {}, Available: {}", 
-                        required_amount, available
+                        required_amount_atomic, available
                     )));
                 }
 
                 // Lock funds
                 let locked = Decimal::from_str(&wallet.locked)
                     .map_err(|_| AppError::Internal("Invalid locked balance".into()))?;
-                wallet.available = (available - required_amount).to_string();
-                wallet.locked = (locked + required_amount).to_string();
+                wallet.available = (available - required_amount_atomic).to_string();
+                wallet.locked = (locked + required_amount_atomic).to_string();
                 wallet.updated_at = chrono::Utc::now().timestamp_millis();
                 
                 self.wallet_service.update_wallet(wallet).await.map_err(|e| AppError::Internal(e.to_string()))?;

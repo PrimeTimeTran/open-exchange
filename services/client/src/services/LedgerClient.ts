@@ -150,6 +150,7 @@ export const ledgerClient = {
   recordOrder: async (
     request: RecordOrderRequest,
   ): Promise<RecordOrderResponse> => {
+    console.log('LedgerClient: recordOrder request:', request);
     return new Promise((resolve, reject) => {
       orderClient.recordOrder(request, (err, response) => {
         if (err) {

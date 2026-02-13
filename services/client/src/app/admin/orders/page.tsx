@@ -89,7 +89,10 @@ export default async function OrdersPage({
     <div className="p-8 bg-background min-h-screen text-foreground">
       <h1 className="text-2xl font-bold mb-6">Order Book</h1>
       <h2 className="text-2xl font-bold mb-6">
-        InstrumentID: {instrument?.symbol || instrumentIdParam}
+        InstrumentID: {instrument?.id || instrumentIdParam}
+      </h2>
+      <h2 className="text-2xl font-bold mb-6">
+        InstrumentSYM: {instrument?.symbol || instrumentIdParam}
       </h2>
 
       {error && (
