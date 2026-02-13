@@ -23,6 +23,7 @@ service OrderService {
   rpc DeleteOrder(DeleteOrderRequest) returns (DeleteOrderResponse);
   rpc GetOpenOrders(GetOpenOrdersRequest) returns (GetOpenOrdersResponse);
   rpc ProcessTrade(ProcessTradeRequest) returns (ProcessTradeResponse);
+  rpc GetTrades(GetTradesRequest) returns (GetTradesResponse);
 }
 
 service UserService {
@@ -129,6 +130,16 @@ message ProcessTradeRequest {
 message ProcessTradeResponse {
   string transaction_id = 1;
   bool success = 2;
+}
+
+message GetTradesRequest {
+  string instrument_id = 1;
+  int64 start_time = 2; // Unix timestamp in milliseconds
+  int64 end_time = 3;   // Unix timestamp in milliseconds
+}
+
+message GetTradesResponse {
+  repeated common.Trade trades = 1;
 }
 
 // --- User Messages ---

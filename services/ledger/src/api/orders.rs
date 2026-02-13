@@ -9,6 +9,7 @@ use crate::proto::ledger::order_service_server::OrderService;
 use crate::proto::matching::matching_client::MatchingClient;
 use crate::domain::orders::{OrderService as OrderDomainService, Order};
 use crate::domain::assets::AssetService;
+use crate::domain::fills::repository::FillRepository;
 use rust_decimal::Decimal;
 use rust_decimal::MathematicalOps;
 use std::str::FromStr;
@@ -16,6 +17,7 @@ use std::str::FromStr;
 pub struct OrderServiceImpl {
     order_service: Arc<OrderDomainService>,
     asset_service: Arc<AssetService>,
+    fill_repo: Arc<dyn FillRepository>,
     matching_client: Option<MatchingClient<Channel>>,
 }
 
@@ -23,9 +25,10 @@ impl OrderServiceImpl {
     pub fn new(
         order_service: Arc<OrderDomainService>,
         asset_service: Arc<AssetService>,
+        fill_repo: Arc<dyn FillRepository>,
         matching_client: Option<MatchingClient<Channel>>,
     ) -> Self {
-        Self { order_service, asset_service, matching_client }
+        Self { order_service, asset_service, fill_repo, matching_client }
     }
 }
 
@@ -327,5 +330,49 @@ impl OrderService for OrderServiceImpl {
             transaction_id: Uuid::new_v4().to_string(),
             success: true,
         }))
+    }
+
+    async fn get_trades(
+        &self,
+        request: Request<GetTradesRequest>,
+    ) -> Result<Response<GetTradesResponse>, Status> {
+        let req = request.into_inner();
+        
+        let instrument_id = Uuid::parse_str(&req.instrument_id)
+            .map_err(|_| Status::invalid_argument("Invalid instrument ID"))?;
+            
+        let start_time = chrono::DateTime::from_timestamp_millis(req.start_time)
+            .ok_or_else(|| Status::invalid_argument("Invalid start time"))?;
+            
+        let end_time = chrono::DateTime::from_timestamp_millis(req.end_time)
+            .ok_or_else(|| Status::invalid_argument("Invalid end time"))?;
+
+        let fills = self.fill_repo.list_by_instrument_and_time(instrument_id, start_time, end_time).await
+            .map_err(|e| Status::internal(e.to_string()))?;
+            
+        // Map Fills to Trades
+        // Note: Fills are split per side (buy/sell). A trade generates 2 fills.
+        // If we just list fills, we might double count or need to filter.
+        // Usually, we filter for a specific role or side to reconstruct trades uniquely.
+        // For public market data (candles), we generally only care about the PRICE and QUANTITY of the execution,
+        // so we can filter for 'taker' fills only, as every trade has exactly one taker.
+        
+        let trades = fills.into_iter()
+            .filter(|f| f.role == "taker")
+            .map(|f| crate::proto::common::Trade {
+                id: f.trade_id.to_string(),
+                tenant_id: f.tenant_id.to_string(),
+                instrument_id: f.instrument_id.to_string(),
+                buy_order_id: "".to_string(), // Not strictly needed for candles
+                sell_order_id: "".to_string(),
+                price: f.price.to_string(),
+                quantity: f.quantity.to_string(),
+                meta: f.meta.to_string(),
+                created_at: f.created_at.timestamp_millis(),
+                updated_at: f.created_at.timestamp_millis(),
+            })
+            .collect();
+
+        Ok(Response::new(GetTradesResponse { trades }))
     }
 }

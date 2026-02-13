@@ -10,11 +10,14 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type Store struct {
+type RedisStore struct {
 	client *redis.Client
 }
 
-func NewStore(redisUrl string) (*Store, error) {
+// Compile-time check to ensure RedisStore implements Store
+var _ Store = (*RedisStore)(nil)
+
+func NewStore(redisUrl string) (*RedisStore, error) {
 	opts, err := redis.ParseURL(redisUrl)
 	if err != nil {
 		return nil, err
@@ -29,14 +32,14 @@ func NewStore(redisUrl string) (*Store, error) {
 		return nil, err
 	}
 
-	return &Store{client: client}, nil
+	return &RedisStore{client: client}, nil
 }
 
 // SaveCandles stores candles in a Redis ZSET
 // Key: candles:{symbol}:{interval}
 // Score: Timestamp
 // Member: JSON(Candle)
-func (s *Store) SaveCandles(ctx context.Context, symbol string, interval string, candles []backfill.Candle) error {
+func (s *RedisStore) SaveCandles(ctx context.Context, symbol string, interval string, candles []backfill.Candle) error {
 	key := fmt.Sprintf("candles:%s:%s", symbol, interval)
 	
 	pipe := s.client.Pipeline()
@@ -58,7 +61,7 @@ func (s *Store) SaveCandles(ctx context.Context, symbol string, interval string,
 }
 
 // GetCandles retrieves candles from Redis ZSET
-func (s *Store) GetCandles(ctx context.Context, symbol string, interval string, start, end int64) ([]backfill.Candle, error) {
+func (s *RedisStore) GetCandles(ctx context.Context, symbol string, interval string, start, end int64) ([]backfill.Candle, error) {
 	key := fmt.Sprintf("candles:%s:%s", symbol, interval)
 	
 	// ZRangeByScore
@@ -84,7 +87,7 @@ func (s *Store) GetCandles(ctx context.Context, symbol string, interval string, 
 }
 
 // GetLatestCandle retrieves the most recent candle for a symbol/interval
-func (s *Store) GetLatestCandle(ctx context.Context, symbol string, interval string) (*backfill.Candle, error) {
+func (s *RedisStore) GetLatestCandle(ctx context.Context, symbol string, interval string) (*backfill.Candle, error) {
 	key := fmt.Sprintf("candles:%s:%s", symbol, interval)
 	
 	// Get the last element (highest score/timestamp)

@@ -1,9 +1,9 @@
+import 'src/styles/globals.css';
 import { ThemeProvider } from 'src/shared/components/ThemeProvider';
 import { cn } from 'src/shared/components/cn';
 import { fontSans } from 'src/shared/components/fonts';
 import { Toaster } from 'src/shared/components/ui/toaster';
 import { ClientProviders } from 'src/shared/components/ClientProviders';
-import 'src/styles/globals.css';
 import RQProvider from 'src/shared/components/reactQuery/RQProvider';
 import { getDictionary } from 'src/translation/getDictionary';
 import { defaultLocale } from 'src/translation/locales';
@@ -12,6 +12,9 @@ import { getLocaleFromCookies } from 'src/translation/getLocaleFromCookies';
 import { cookieGet } from 'src/shared/lib/cookie';
 import { Viewport } from 'next';
 import Script from 'next/script';
+import { Footer } from '@/components';
+import { PublicThemeProvider } from '@/components/theme-provider-public';
+import { PublicDesignSystem } from '@/providers/design-system-public';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -59,9 +62,26 @@ export default function RootLayout({
           <ClientProviders>
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
               <RQProvider>
-                <div className="relative flex min-h-screen flex-col">
-                  <div className="flex-1">{children}</div>
-                </div>
+                <PublicThemeProvider
+                  enableSystem
+                  attribute="class"
+                  defaultTheme="dark"
+                  disableTransitionOnChange
+                >
+                  <PublicDesignSystem>
+                    {/* 
+                          Todo:
+                          Fix Hydration error warning.
+                        */}
+                    {/* <PublicNavbar currentUser={context.currentUser} /> */}
+                    <main>
+                      <div className="relative flex min-h-screen flex-col">
+                        <div className="flex-1">{children}</div>
+                      </div>
+                    </main>
+                    <Footer />
+                  </PublicDesignSystem>
+                </PublicThemeProvider>
               </RQProvider>
             </ThemeProvider>
           </ClientProviders>

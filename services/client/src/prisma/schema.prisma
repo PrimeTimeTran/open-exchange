@@ -523,7 +523,7 @@ model Order {
 
   sells Trade[] @relation("sellOrderId_sells")
 
-
+  fills Fill[] @relation("order_fills")
 
   @@unique([id, tenantId])
 }
@@ -549,6 +549,12 @@ model Fill {
   price Decimal @db.Decimal(72, 20)
   quantity Decimal @db.Decimal(72, 0)
   fee Decimal? @db.Decimal(72, 0)
+  role String
+  feeCurrency String
+  instrumentId String @db.Uuid
+  instrument Instrument @relation("instrument_fills", fields: [instrumentId], references: [id])
+  orderId String @db.Uuid
+  order Order @relation("order_fills", fields: [orderId], references: [id])
   meta Json?
   tradeId String? @db.Uuid
   trade Trade? @relation("fills_trade", fields: [tradeId], references: [id])
@@ -658,6 +664,7 @@ model Instrument {
   quoteAsset Asset? @relation("quoteAsset_quoteInstruments", fields: [quoteAssetId], references: [id])
   orders Order[] @relation("instrument_orders")
   trades Trade[] @relation("instrument_trades")
+  fills Fill[] @relation("instrument_fills")
   @@unique([symbol, tenantId])
   @@unique([id, tenantId])
 }

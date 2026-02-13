@@ -234,6 +234,20 @@ impl ledger::domain::fills::FillRepository for MockFillRepository {
         let fills = self.fills.lock().unwrap();
         Ok(fills.iter().filter(|f| f.order_id == order_id).cloned().collect())
     }
+
+    async fn list_by_instrument_and_time(
+        &self,
+        instrument_id: Uuid,
+        start_time: chrono::DateTime<chrono::Utc>,
+        end_time: chrono::DateTime<chrono::Utc>,
+    ) -> Result<Vec<ledger::domain::fills::Fill>> {
+        let fills = self.fills.lock().unwrap();
+        Ok(fills.iter().filter(|f| {
+            f.instrument_id == instrument_id &&
+            f.created_at >= start_time &&
+            f.created_at <= end_time
+        }).cloned().collect())
+    }
 }
 
 #[derive(Debug)]
@@ -346,6 +360,7 @@ impl LedgerTestContext {
             account_id,
             instrument_id: self.instrument_id,
             side: side.to_string(),
+            r#type: "limit".to_string(),
             quantity: Decimal::from_f64(quantity).unwrap_or(Decimal::ZERO),
             price: Decimal::from_f64(price).unwrap_or(Decimal::ZERO),
             status: "open".to_string(),

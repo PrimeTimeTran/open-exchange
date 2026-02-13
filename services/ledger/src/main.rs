@@ -126,7 +126,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = format!("[::]:{}", config.port).parse()?;
 
     // API Services
-    let order_impl = OrderServiceImpl::new(order_service, asset_service.clone(), matching_client);
+    let order_impl = OrderServiceImpl::new(
+        order_service, 
+        asset_service.clone(), 
+        fill_service.repo().clone(),
+        matching_client
+    );
     let account_impl = AccountServiceImpl::new(account_service);
     let wallet_impl = WalletServiceImpl::new(wallet_service.clone());
     let asset_impl = AssetServiceImpl::new(asset_service);

@@ -2,8 +2,6 @@ import React from 'react';
 import { cookies } from 'next/headers';
 
 import { Navbar } from '@/components';
-import { ThemeProvider } from '@/components/theme-provider';
-import { DesignSystemProvider } from '@/providers/design-system';
 import { getDictionary } from '@/translation/getDictionary';
 import { getLocaleFromCookies } from '@/translation/getLocaleFromCookies';
 import { appContextForReact } from 'src/shared/controller/appContext';
@@ -33,19 +31,9 @@ export default async function DashboardLayout({
   const context = await appContextForReact(cookies());
 
   return (
-    <ThemeProvider
-      enableSystem
-      attribute="class"
-      defaultTheme="dark"
-      // defaultTheme="system"
-      disableTransitionOnChange
-    >
-      <DesignSystemProvider>
-        <LedgerProvider>
-          <Navbar currentUser={context.currentUser} />
-          <main className="min-h-screen bg-background">{children}</main>
-        </LedgerProvider>
-      </DesignSystemProvider>
-    </ThemeProvider>
+    <LedgerProvider>
+      <Navbar currentUser={context.currentUser} />
+      <main className="min-h-screen bg-background">{children}</main>
+    </LedgerProvider>
   );
 }

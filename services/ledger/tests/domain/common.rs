@@ -34,6 +34,7 @@ use ledger::infra::repositories::{
     InMemoryAccountRepository, 
     InMemoryOrderRepository,
     InMemoryWalletRepository,
+    InMemoryFillRepository,
     memory::InMemoryAssetRepository,
     memory::InMemoryInstrumentRepository
 };
@@ -68,6 +69,7 @@ impl TestContext {
         let wallet_repo = Arc::new(InMemoryWalletRepository::new());
         let asset_repo = Arc::new(InMemoryAssetRepository::new());
         let instrument_repo = Arc::new(InMemoryInstrumentRepository::new());
+        let fill_repo = Arc::new(InMemoryFillRepository::new());
 
         let account_service = Arc::new(AccountService::new(account_repo));
         let wallet_service = Arc::new(WalletService::new(wallet_repo));
@@ -83,7 +85,7 @@ impl TestContext {
         let withdrawal_service = Arc::new(WithdrawalService::new());
         let user_service = Arc::new(UserService::new());
 
-        let order_impl = OrderServiceImpl::new(order_service, asset_service.clone(), None);
+        let order_impl = OrderServiceImpl::new(order_service, asset_service.clone(), fill_repo, None);
         let account_impl = AccountServiceImpl::new(account_service);
         let wallet_impl = WalletServiceImpl::new(wallet_service.clone());
         let asset_impl = AssetServiceImpl::new(asset_service);

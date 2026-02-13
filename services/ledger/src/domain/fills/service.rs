@@ -18,6 +18,10 @@ impl FillService {
         Self { repo }
     }
 
+    pub fn repo(&self) -> &Arc<dyn FillRepository> {
+        &self.repo
+    }
+
     pub fn create_fill_from_trade(&self, trade: &Trade, order_id: &str, side: &str, role: &str, quantity: Decimal, fee_currency: &str) -> Result<Fill> {
         Ok(Fill {
             id: Uuid::new_v4(),

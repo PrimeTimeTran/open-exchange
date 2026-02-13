@@ -1,12 +1,16 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net"
 	"os"
 
+	"time"
+
 	"github.com/open-exchange/market/internal/service"
 	"github.com/open-exchange/market/internal/store"
+	"github.com/open-exchange/market/internal/worker"
 	pb "github.com/open-exchange/market/proto/market"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -23,8 +27,28 @@ func main() {
 	st, err := store.NewStore(redisUrl)
 	if err != nil {
 		log.Printf("Warning: Failed to connect to Redis: %v. Market data will be mocked.", err)
-		// We can still continue, passing nil store if we handle it in service, 
-		// but better to just fail or handle nil in NewMarketServer
+	} else {
+		// Start Aggregation Workers
+		// For MVP, we hardcode a few symbols. Ideally, fetch from DB or config.
+		// symbols := []string{"BTC_USD", "ETH_USD", "AAPL_USD", "GOOG_USD", "MSFT_USD", "TSLA_USD"}
+		symbols := []string{"BTC_USD", "AAPL_USD"}
+		for _, sym := range symbols {
+			// 1m -> 1h
+			w1h := worker.NewCandleWorker(st, sym, "1m", "1h", time.Hour)
+			go w1h.Start(context.Background())
+			
+			// 1h -> 4h
+			w4h := worker.NewCandleWorker(st, sym, "1h", "4h", 4*time.Hour)
+			go w4h.Start(context.Background())
+			
+			// 4h -> 1d
+			w1d := worker.NewCandleWorker(st, sym, "4h", "1d", 24*time.Hour)
+			go w1d.Start(context.Background())
+
+			// 1d -> 1w
+			w1w := worker.NewCandleWorker(st, sym, "1d", "1w", 7*24*time.Hour)
+			go w1w.Start(context.Background())
+		}
 	}
 
 	lis, err := net.Listen("tcp", port)

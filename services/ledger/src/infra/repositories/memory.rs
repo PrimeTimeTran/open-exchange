@@ -7,6 +7,7 @@ use uuid::Uuid;
 use crate::domain::accounts::{Account, AccountRepository};
 use crate::domain::orders::{Order, OrderRepository};
 use crate::domain::wallets::{Wallet, WalletRepository};
+use crate::domain::fills::{Fill, FillRepository};
 use crate::error::{AppError, Result};
 use rust_decimal::Decimal;
 use sqlx::{Transaction, Postgres};
@@ -245,5 +246,51 @@ impl AssetRepository for InMemoryAssetRepository {
     async fn list(&self) -> Result<Vec<common::Asset>> {
         let assets = self.assets.lock().unwrap();
         Ok(assets.clone())
+    }
+}
+
+// --- InMemoryFillRepository ---
+
+#[derive(Clone, Default)]
+pub struct InMemoryFillRepository {
+    fills: Arc<Mutex<Vec<Fill>>>,
+}
+
+impl InMemoryFillRepository {
+    pub fn new() -> Self {
+        Self {
+            fills: Arc::new(Mutex::new(Vec::new())),
+        }
+    }
+}
+
+#[async_trait]
+impl FillRepository for InMemoryFillRepository {
+    async fn create(&self, fill: Fill) -> Result<Fill> {
+        let mut fills = self.fills.lock().unwrap();
+        fills.push(fill.clone());
+        Ok(fill)
+    }
+
+    async fn create_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, fill: Fill) -> Result<Fill> {
+        self.create(fill).await
+    }
+
+    async fn list_by_order(&self, order_id: Uuid) -> Result<Vec<Fill>> {
+        let fills = self.fills.lock().unwrap();
+        Ok(fills.iter().filter(|f| f.order_id == order_id).cloned().collect())
+    }
+
+    async fn list_by_instrument_and_time(
+        &self,
+        instrument_id: Uuid,
+        start_time: chrono::DateTime<chrono::Utc>,
+        end_time: chrono::DateTime<chrono::Utc>,
+    ) -> Result<Vec<Fill>> {
+        let fills = self.fills.lock().unwrap();
+        Ok(fills.iter()
+            .filter(|f| f.instrument_id == instrument_id && f.created_at >= start_time && f.created_at <= end_time)
+            .cloned()
+            .collect())
     }
 }

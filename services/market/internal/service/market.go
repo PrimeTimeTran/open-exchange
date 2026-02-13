@@ -15,11 +15,11 @@ import (
 
 type MarketServer struct {
 	pb.UnimplementedMarketServiceServer
-	store *store.Store
+	store store.Store
 	mu    sync.Mutex
 }
 
-func NewMarketServer(s *store.Store) *MarketServer {
+func NewMarketServer(s store.Store) *MarketServer {
 	return &MarketServer{store: s}
 }
 
