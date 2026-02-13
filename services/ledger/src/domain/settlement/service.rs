@@ -6,12 +6,13 @@ use uuid::Uuid;
 use std::sync::Arc;
 use crate::error::{Result, AppError};
 use crate::proto::ledger::Match;
-use crate::proto::common::{Trade, OrderSide};
+use crate::proto::common::{Trade, OrderSide, LedgerEvent, LedgerEntry};
 use crate::domain::wallets::WalletService;
 use crate::infra::repositories::InstrumentRepository;
 use crate::domain::ledger::service::LedgerService;
 use crate::domain::orders::service::OrderService;
 use crate::domain::fills::service::FillService;
+use crate::domain::fills::Fill;
 
 pub struct SettlementService {
     pool: Option<PgPool>,
@@ -23,6 +24,65 @@ pub struct SettlementService {
     wallet_service: Arc<WalletService>,
     fill_service: Arc<FillService>,
     ledger_repo: Arc<dyn LedgerRepository>,
+}
+
+// Helper struct to abstract over Transaction vs No-Transaction
+struct SettlementContext<'a> {
+    tx: Option<Transaction<'a, Postgres>>,
+    service: &'a SettlementService,
+}
+
+impl<'a> SettlementContext<'a> {
+    fn new(service: &'a SettlementService, tx: Option<Transaction<'a, Postgres>>) -> Self {
+        Self { tx, service }
+    }
+
+    async fn commit(self) -> Result<()> {
+        if let Some(tx) = self.tx {
+            tx.commit().await.map_err(AppError::DatabaseError)?;
+        }
+        Ok(())
+    }
+
+    async fn save_ledger_event(&mut self, event: LedgerEvent) -> Result<LedgerEvent> {
+        if let Some(tx) = &mut self.tx {
+            self.service.ledger_repo.save_event_with_tx(tx, event).await
+        } else {
+            self.service.ledger_repo.save_event(event).await
+        }
+    }
+
+    async fn save_ledger_entries(&mut self, entries: Vec<LedgerEntry>) -> Result<Vec<LedgerEntry>> {
+        if let Some(tx) = &mut self.tx {
+            self.service.ledger_repo.save_entries_with_tx(tx, entries).await
+        } else {
+            self.service.ledger_repo.save_entries(entries).await
+        }
+    }
+
+    async fn process_wallet_entry(&mut self, entry: LedgerEntry) -> Result<()> {
+        if let Some(tx) = &mut self.tx {
+            self.service.wallet_service.process_ledger_entry_with_tx(tx, entry).await
+        } else {
+            self.service.wallet_service.process_ledger_entry(entry).await
+        }
+    }
+
+    async fn update_order_status(&mut self, order_id: &str, trade_qty: Decimal) -> Result<()> {
+        if let Some(tx) = &mut self.tx {
+            self.service.order_service.update_status_with_tx(tx, order_id, trade_qty).await
+        } else {
+            self.service.order_service.update_status(order_id, trade_qty).await
+        }
+    }
+
+    async fn save_fill(&mut self, fill: Fill) -> Result<Fill> {
+        if let Some(tx) = &mut self.tx {
+            self.service.fill_service.save_fill_with_tx(tx, fill).await
+        } else {
+            self.service.fill_service.save_fill(fill).await
+        }
+    }
 }
 
 impl SettlementService {
@@ -90,14 +150,6 @@ impl SettlementService {
         (trade_ids, errors)
     }
 
-    async fn update_order_status(&self, order_id_str: &str, trade_qty: Decimal) -> Result<()> {
-        self.order_service.update_status(order_id_str, trade_qty).await
-    }
-
-    async fn update_order_status_with_tx(&self, tx: &mut Transaction<'_, Postgres>, order_id_str: &str, trade_qty: Decimal) -> Result<()> {
-        self.order_service.update_status_with_tx(tx, order_id_str, trade_qty).await
-    }
-
     pub async fn process_trade_event(&self, trade: Trade) -> Result<()> {
         log::info!("Processing trade event: {}", trade.id);
         
@@ -108,51 +160,37 @@ impl SettlementService {
 
         let trade_qty = Decimal::from_str(&trade.quantity).map_err(|_| AppError::ValidationError("Invalid trade quantity".into()))?;
 
-        if let Some(pool) = &self.pool {
-            // Transactional Path
-            let mut tx = pool.begin().await.map_err(AppError::DatabaseError)?;
-
-            let (event, entries) = self.ledger_service.process_trade(trade.clone()).await?;
-            
-            self.ledger_repo.save_event_with_tx(&mut tx, event).await?;
-            self.ledger_repo.save_entries_with_tx(&mut tx, entries.clone()).await?;
-            
-            log::info!("Generated and Persisted {} ledger entries for trade {}", entries.len(), trade.id);
-            for entry in entries {
-                self.wallet_service.process_ledger_entry_with_tx(&mut tx, entry).await?;
-            }
-
-            self.update_order_status_with_tx(&mut tx, &trade.buy_order_id, trade_qty).await?;
-            self.update_order_status_with_tx(&mut tx, &trade.sell_order_id, trade_qty).await?;
-
-            let buy_fill = self.fill_service.create_fill_from_trade(&trade, &trade.buy_order_id, "buy", "taker", trade_qty, &instrument.quote_asset_id)?;
-            let sell_fill = self.fill_service.create_fill_from_trade(&trade, &trade.sell_order_id, "sell", "maker", trade_qty, &instrument.quote_asset_id)?;
-
-            self.fill_service.save_fill_with_tx(&mut tx, buy_fill).await?;
-            self.fill_service.save_fill_with_tx(&mut tx, sell_fill).await?;
-
-            tx.commit().await.map_err(AppError::DatabaseError)?;
+        // Initialize Context (Transactional or Non-Transactional)
+        let tx = if let Some(pool) = &self.pool {
+            Some(pool.begin().await.map_err(AppError::DatabaseError)?)
         } else {
-            // Non-Transactional Path (for tests with mocks)
-            let (event, entries) = self.ledger_service.process_trade(trade.clone()).await?;
-            
-            self.ledger_repo.save_event(event).await?;
-            self.ledger_repo.save_entries(entries.clone()).await?;
-            
-            log::info!("Generated and Persisted {} ledger entries for trade {}", entries.len(), trade.id);
-            for entry in entries {
-                self.wallet_service.process_ledger_entry(entry).await?;
-            }
+            None
+        };
+        
+        let mut ctx = SettlementContext::new(self, tx);
 
-            self.update_order_status(&trade.buy_order_id, trade_qty).await?;
-            self.update_order_status(&trade.sell_order_id, trade_qty).await?;
-
-            let buy_fill = self.fill_service.create_fill_from_trade(&trade, &trade.buy_order_id, "buy", "taker", trade_qty, &instrument.quote_asset_id)?;
-            let sell_fill = self.fill_service.create_fill_from_trade(&trade, &trade.sell_order_id, "sell", "maker", trade_qty, &instrument.quote_asset_id)?;
-
-            self.fill_service.save_fill(buy_fill).await?;
-            self.fill_service.save_fill(sell_fill).await?;
+        // Core Business Logic (Linear Flow)
+        let (event, entries) = self.ledger_service.process_trade(trade.clone()).await?;
+        
+        ctx.save_ledger_event(event).await?;
+        ctx.save_ledger_entries(entries.clone()).await?;
+        
+        log::info!("Generated and Persisted {} ledger entries for trade {}", entries.len(), trade.id);
+        for entry in entries {
+            ctx.process_wallet_entry(entry).await?;
         }
+
+        ctx.update_order_status(&trade.buy_order_id, trade_qty).await?;
+        ctx.update_order_status(&trade.sell_order_id, trade_qty).await?;
+
+        let buy_fill = self.fill_service.create_fill_from_trade(&trade, &trade.buy_order_id, "buy", "taker", trade_qty, &instrument.quote_asset_id)?;
+        let sell_fill = self.fill_service.create_fill_from_trade(&trade, &trade.sell_order_id, "sell", "maker", trade_qty, &instrument.quote_asset_id)?;
+
+        ctx.save_fill(buy_fill).await?;
+        ctx.save_fill(sell_fill).await?;
+
+        // Commit Transaction (if any)
+        ctx.commit().await?;
 
         Ok(())
     }

@@ -55,6 +55,7 @@ export function AssetClient({
       price?: string;
       timeInForce: string;
       asset: string;
+      side: 'buy' | 'sell';
     }) => {
       // Find the instrument ID first
       // Prefer Spot USD pair if no specific symbol provided
@@ -91,7 +92,7 @@ export function AssetClient({
 
       return await placeMatchingEngineOrder({
         instrumentId,
-        side: 'buy',
+        side: data.side,
         type: data.type,
         quantity: data.quantity,
         price: data.price,

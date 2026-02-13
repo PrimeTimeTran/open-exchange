@@ -58,7 +58,14 @@ export const seedUserWithData = async (
   }
 
   const usd = assetsMap.get('USD');
-  let mainAccount;
+  // Create/Ensure a single Main Trading Account for the user
+  const mainAccount = await ensureAccount(
+    prisma,
+    tenantId,
+    membership.id,
+    user.id,
+    'USD', // Use 'USD' to trigger the "USD" / "cash" account type creation which will serve as the main account
+  );
 
   // Process Deposits
   for (const deposit of initialData.deposits) {
@@ -68,17 +75,8 @@ export const seedUserWithData = async (
       continue;
     }
 
-    const account = await ensureAccount(
-      prisma,
-      tenantId,
-      membership.id,
-      user.id,
-      deposit.assetSymbol,
-    );
-
-    if (deposit.assetSymbol === 'USD') {
-      mainAccount = account;
-    }
+    // Always use the main account for all wallets
+    const account = mainAccount;
 
     if (deposit.amount > 0) {
       const amount = BigInt(
@@ -199,22 +197,10 @@ export const seedUserWithData = async (
         const baseDec = inst.underlyingAsset.decimals;
         const quoteDec = inst.quoteAsset.decimals;
 
-        // Fix: Use 20 decimal precision for calculation to avoid floating point issues
-        // Price Atomic = Price Major * 10^(Q-B)
-        // If Q-B is negative (e.g. 2-8 = -6), we are dividing by 10^6
-        // 20000 * 10^-6 = 0.02
+        // Note: We use Human Readable values for Order persistence (finalPrice, finalQty are already set correctly above)
+        // We only need scaling for Wallet Locking (Atomic Units).
 
-        const scaleFactor = quoteDec - baseDec;
-        if (scaleFactor >= 0) {
-          finalPrice = order.price * Math.pow(10, scaleFactor);
-        } else {
-          finalPrice = order.price / Math.pow(10, Math.abs(scaleFactor));
-        }
-
-        // Qty Atomic = Qty Major * 10^B
-        finalQty = order.quantity * Math.pow(10, baseDec);
-
-        console.log(`Scaled Values: Price=${finalPrice}, Qty=${finalQty}`);
+        console.log(`Order Values: Price=${finalPrice}, Qty=${finalQty}`);
 
         // Lock Funds Logic
         let lockedAmount = BigInt(0);
