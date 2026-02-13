@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use sqlx::{PgPool, Transaction, Postgres};
 use crate::error::Result;
-use crate::proto::common::{LedgerEvent, LedgerEntry};
+use crate::proto::common::{LedgerEvent, LedgerEntry, Trade};
 use crate::domain::ledger::repository::LedgerRepository;
 
 #[derive(Debug, Clone)]
@@ -40,5 +40,17 @@ impl LedgerRepository for PostgresLedgerRepository {
         // TODO: Implement actual DB persistence
         println!("PERSIST (TX): {} Ledger Entries created", entries.len());
         Ok(entries)
+    }
+
+    async fn save_trade_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, trade: Trade) -> Result<Trade> {
+        // TODO: Implement actual DB persistence
+        println!("PERSIST (TX): Trade created {:?}", trade);
+        Ok(trade)
+    }
+
+    async fn save_trade(&self, trade: Trade) -> Result<Trade> {
+        // TODO: Implement actual DB persistence
+        println!("PERSIST: Trade created {:?}", trade);
+        Ok(trade)
     }
 }

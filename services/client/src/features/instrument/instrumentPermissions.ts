@@ -26,7 +26,7 @@ export const instrumentPermissions = {
 
   instrumentAutocomplete: {
     id: 'instrumentAutocomplete',
-    allowedRoles: [roles.admin, roles.custom],
+    allowedRoles: [roles.admin, roles.custom, roles.user],
   },
 
   instrumentDestroy: {
@@ -43,5 +43,4 @@ export const instrumentPermissions = {
     id: 'instrumentRestore',
     allowedRoles: [],
   },
-
 };

@@ -33,7 +33,8 @@ use ledger::infra::repositories::{
     PostgresAssetRepository,
     PostgresInstrumentRepository,
     PostgresFillRepository,
-    PostgresLedgerRepository
+    PostgresLedgerRepository,
+    PostgresTradeRepository
 };
 use ledger::proto::{
     ledger::{
@@ -70,6 +71,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let fill_repo = Arc::new(PostgresFillRepository::new(db_pool.clone()));
 
     let ledger_repo = Arc::new(PostgresLedgerRepository::new(db_pool.clone()));
+    let trade_repo = Arc::new(PostgresTradeRepository::new(db_pool.clone()));
 
     // Services (Domain)
     let wallet_service = Arc::new(WalletService::new(wallet_repo));
@@ -95,6 +97,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         wallet_service.clone(),
         fill_service.clone(),
         ledger_repo.clone(),
+        trade_repo.clone(),
     ));
 
     // Matching Engine Connection

@@ -18,4 +18,5 @@ pub struct Fill {
     pub side: String, // "buy" or "sell"
     pub meta: serde_json::Value,
     pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }

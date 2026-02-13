@@ -146,7 +146,7 @@ func (s *MatchingService) PlaceOrder(ctx context.Context, order *common.Order) (
 		
 		commitReq := &ledger.CommitRequest{
 			Matches:  matches,
-			TenantId: "default",
+			TenantId: order.TenantId,
 		}
 		
 		// 5. The "Outbox" Pattern (Persist & Retry)

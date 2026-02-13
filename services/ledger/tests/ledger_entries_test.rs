@@ -1,5 +1,6 @@
 use std::sync::Arc;
 use ledger::domain::ledger::service::LedgerService;
+use uuid::Uuid;
 
 mod ledger_test_helpers;
 use ledger_test_helpers::LedgerTestContext;
@@ -67,7 +68,7 @@ async fn test_process_trade_creates_entries() {
     assert!(entry_b_usd.is_some(), "Missing Entry: User B receives +30,000 USD");
 
     // 6. Exchange receives +30 USD Fee Revenue
-    let entry_exchange = find_entry("exchange-account-id".to_string(), "30", "revenue");
+    let entry_exchange = find_entry(Uuid::nil().to_string(), "30", "revenue");
     assert!(entry_exchange.is_some(), "Missing Entry: Exchange receives +30 USD Fee Revenue");
 
     println!("All ledger entries verified successfully!");
@@ -189,6 +190,7 @@ async fn test_trade_processor_flow() {
         wallet_service,
         fill_service,
         ctx.ledger_repo.clone(),
+        ctx.trade_repo.clone(),
     );
     
     // 3. Data

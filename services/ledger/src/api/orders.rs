@@ -11,7 +11,6 @@ use crate::domain::orders::{OrderService as OrderDomainService, Order};
 use crate::domain::assets::AssetService;
 use crate::domain::fills::repository::FillRepository;
 use rust_decimal::Decimal;
-use rust_decimal::MathematicalOps;
 use std::str::FromStr;
 
 pub struct OrderServiceImpl {

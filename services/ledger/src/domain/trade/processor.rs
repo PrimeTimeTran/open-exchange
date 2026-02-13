@@ -12,6 +12,7 @@ use crate::domain::ledger::repository::LedgerRepository;
 use rust_decimal::Decimal;
 use std::str::FromStr;
 use sqlx::{PgPool, Transaction, Postgres};
+use chrono::Utc;
 
 pub struct TradeProcessor {
     pool: Option<PgPool>,
@@ -202,7 +203,8 @@ impl TradeProcessor {
             role: role.to_string(),
             side: side.to_string(),
             meta: serde_json::json!({}),
-            created_at: chrono::Utc::now(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         })
     }
 }

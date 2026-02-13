@@ -6,8 +6,10 @@ pub mod instrument_repository;
 pub mod fills;
 pub mod memory;
 
+pub mod trade_repository;
 pub mod ledger_repository;
 
+pub use trade_repository::PostgresTradeRepository;
 pub use ledger_repository::PostgresLedgerRepository;
 pub use account_repository::PostgresAccountRepository;
 pub use order_repository::PostgresOrderRepository;

@@ -35,7 +35,7 @@ export function OrderSidebar({
   const { wallets, loading } = useLedger();
   const [side, setSide] = useState<'buy' | 'sell'>('buy');
   const [quantity, setQuantity] = useState('1');
-  const [limitPrice, setLimitPrice] = useState('50000');
+  const [limitPrice, setLimitPrice] = useState('100000');
   const [timeInForce, setTimeInForce] = useState('gtc');
   const [orderType, setOrderType] = useState<'market' | 'limit'>('limit');
 

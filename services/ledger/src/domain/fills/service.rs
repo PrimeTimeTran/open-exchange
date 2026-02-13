@@ -37,6 +37,7 @@ impl FillService {
             side: side.to_string(),
             meta: serde_json::json!({}),
             created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
         })
     }
 

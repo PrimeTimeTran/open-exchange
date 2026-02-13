@@ -59,14 +59,32 @@ export const seedUserWithData = async (
 
   const usd = assetsMap.get('USD');
   // Create/Ensure a single Main Trading Account for the user
-  const mainAccount = await ensureAccount(
+  let mainAccount = await ensureAccount(
     prisma,
     tenantId,
     membership.id,
     user.id,
     'USD', // Use 'USD' to trigger the "USD" / "cash" account type creation which will serve as the main account
   );
+  // Ensure wallets exist for all assets in the system (initially 0 balance)
+  const assetIds = new Set<string>();
+  instruments.forEach((inst) => {
+    if (inst.underlyingAssetId) assetIds.add(inst.underlyingAssetId);
+    if (inst.quoteAssetId) assetIds.add(inst.quoteAssetId);
+  });
 
+  for (const assetId of Array.from(assetIds)) {
+    await ensureWallet(
+      prisma,
+      tenantId,
+      membership.id,
+      user.id,
+      mainAccount.id,
+      assetId,
+      0,
+      { increment: true },
+    );
+  }
   // Process Deposits
   for (const deposit of initialData.deposits) {
     const asset = assetsMap.get(deposit.assetSymbol);
@@ -121,13 +139,8 @@ export const seedUserWithData = async (
         continue;
       }
 
-      const account = await ensureAccount(
-        prisma,
-        tenantId,
-        membership.id,
-        user.id,
-        withdrawal.assetSymbol,
-      );
+      // Use the main account for withdrawals to match deposits
+      const account = mainAccount;
 
       if (withdrawal.amount > 0) {
         const amount = BigInt(
@@ -217,17 +230,7 @@ export const seedUserWithData = async (
             Math.floor(order.quantity * Math.pow(10, baseDec)),
           );
           lockAssetId = inst.underlyingAssetId;
-
-          const lockAssetSymbol = inst.underlyingAsset.symbol;
-          if (lockAssetSymbol !== 'USD') {
-            lockAccount = await ensureAccount(
-              prisma,
-              tenantId,
-              membership.id,
-              user.id,
-              lockAssetSymbol,
-            );
-          }
+          // lockAccount is already mainAccount, no need to switch
         }
 
         if (lockAccount && lockAssetId && lockedAmount > 0) {
@@ -245,8 +248,6 @@ export const seedUserWithData = async (
           });
         }
       }
-
-      // ...
 
       await prisma.order.create({
         data: {
@@ -337,6 +338,13 @@ export async function seedPlatformUsers(
         if (baseSymbol) {
           const current = initialFundsMap.get(baseSymbol) || 0;
           initialFundsMap.set(baseSymbol, current + quantity * 1.5); // Add 1.5x quantity to be safe
+        }
+      } else if (side === 'buy') {
+        const quoteSymbol = instrument.quoteAsset?.symbol;
+        if (quoteSymbol) {
+          const cost = price * quantity;
+          const current = initialFundsMap.get(quoteSymbol) || 0;
+          initialFundsMap.set(quoteSymbol, current + cost * 1.5); // Add 1.5x cost to be safe
         }
       }
 

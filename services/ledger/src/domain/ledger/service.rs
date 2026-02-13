@@ -138,9 +138,10 @@ impl LedgerService {
         ));
 
         // Entry 6: Exchange receives Fee (+FeeAmount)
-        let exchange_account_id = "exchange-account-id"; 
+        // Use Nil UUID for exchange account for now to pass validation
+        let exchange_account_id = Uuid::nil().to_string(); 
         entries.push(Self::create_entry(
-            &trade.tenant_id, &event_id, exchange_account_id,
+            &trade.tenant_id, &event_id, &exchange_account_id,
             format!("{}", fee_amount), &quote_asset_id, "revenue"
         ));
 

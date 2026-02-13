@@ -14,6 +14,8 @@ use crate::domain::orders::service::OrderService;
 use crate::domain::fills::service::FillService;
 use crate::domain::fills::Fill;
 
+use crate::domain::trade::TradeRepository;
+
 pub struct SettlementService {
     pool: Option<PgPool>,
     #[allow(dead_code)]
@@ -24,6 +26,7 @@ pub struct SettlementService {
     wallet_service: Arc<WalletService>,
     fill_service: Arc<FillService>,
     ledger_repo: Arc<dyn LedgerRepository>,
+    trade_repo: Arc<dyn TradeRepository>,
 }
 
 // Helper struct to abstract over Transaction vs No-Transaction
@@ -83,6 +86,14 @@ impl<'a> SettlementContext<'a> {
             self.service.fill_service.save_fill(fill).await
         }
     }
+
+    async fn save_trade(&mut self, trade: Trade) -> Result<Trade> {
+        if let Some(tx) = &mut self.tx {
+            self.service.trade_repo.create_with_tx(tx, trade).await
+        } else {
+            self.service.trade_repo.create(trade).await
+        }
+    }
 }
 
 impl SettlementService {
@@ -94,6 +105,7 @@ impl SettlementService {
         wallet_service: Arc<WalletService>,
         fill_service: Arc<FillService>,
         ledger_repo: Arc<dyn LedgerRepository>,
+        trade_repo: Arc<dyn TradeRepository>,
     ) -> Self {
         Self {
             pool,
@@ -103,6 +115,7 @@ impl SettlementService {
             wallet_service,
             fill_service,
             ledger_repo,
+            trade_repo,
         }
     }
 
@@ -162,7 +175,16 @@ impl SettlementService {
 
         // Initialize Context (Transactional or Non-Transactional)
         let tx = if let Some(pool) = &self.pool {
-            Some(pool.begin().await.map_err(AppError::DatabaseError)?)
+            let mut t = pool.begin().await.map_err(AppError::DatabaseError)?;
+            // Ledger Service is trusted, bypass RLS policies
+            // We set dummy empty strings. Triggers usually do NULLIF(value, '')::uuid, so this results in NULL, which is valid for nullable columns.
+            
+            sqlx::query("SET app.bypass_rls = 'on'").execute(&mut *t).await.map_err(AppError::DatabaseError)?;
+            sqlx::query("SET app.current_user_id = ''").execute(&mut *t).await.map_err(AppError::DatabaseError)?;
+            sqlx::query("SET app.current_tenant_id = ''").execute(&mut *t).await.map_err(AppError::DatabaseError)?;
+            sqlx::query("SET app.current_membership_id = ''").execute(&mut *t).await.map_err(AppError::DatabaseError)?;
+            
+            Some(t)
         } else {
             None
         };
@@ -170,6 +192,9 @@ impl SettlementService {
         let mut ctx = SettlementContext::new(self, tx);
 
         // Core Business Logic (Linear Flow)
+        // Persist Trade FIRST to satisfy FK constraints for Fills
+        ctx.save_trade(trade.clone()).await?;
+
         let (event, entries) = self.ledger_service.process_trade(trade.clone()).await?;
         
         ctx.save_ledger_event(event).await?;

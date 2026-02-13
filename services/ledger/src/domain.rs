@@ -10,6 +10,7 @@ pub mod withdrawals;
 pub mod assets;
 pub mod ledger;
 pub mod fills;
+pub mod trade;
 pub mod settlement;
 
 

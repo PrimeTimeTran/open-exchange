@@ -24,13 +24,14 @@ impl FillRepository for PostgresFillRepository {
             r#"
             INSERT INTO "Fill" (
                 id, "tradeId", "orderId", "tenantId", "instrumentId",
-                price, quantity, fee, "feeCurrency", role, side, meta, "createdAt"
+                price, quantity, fee, "feeCurrency", role, side, meta, "createdAt", "updatedAt"
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             RETURNING
                 id, "tradeId" as "trade_id!", "orderId" as "order_id!", "tenantId" as "tenant_id!",
                 "instrumentId" as "instrument_id!", price, quantity, fee as "fee!",
-                "feeCurrency" as "fee_currency!", role, side, meta, "createdAt" as created_at
+                "feeCurrency" as "fee_currency!", role, side, meta, "createdAt" as created_at,
+                "updatedAt" as updated_at
             "#,
             fill.id,
             fill.trade_id,
@@ -44,7 +45,8 @@ impl FillRepository for PostgresFillRepository {
             fill.role,
             fill.side,
             fill.meta,
-            fill.created_at
+            fill.created_at,
+            fill.updated_at
         )
         .fetch_one(&self.pool)
         .await
@@ -57,13 +59,14 @@ impl FillRepository for PostgresFillRepository {
             r#"
             INSERT INTO "Fill" (
                 id, "tradeId", "orderId", "tenantId", "instrumentId",
-                price, quantity, fee, "feeCurrency", role, side, meta, "createdAt"
+                price, quantity, fee, "feeCurrency", role, side, meta, "createdAt", "updatedAt"
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             RETURNING
                 id, "tradeId" as "trade_id!", "orderId" as "order_id!", "tenantId" as "tenant_id!",
                 "instrumentId" as "instrument_id!", price, quantity, fee as "fee!",
-                "feeCurrency" as "fee_currency!", role, side, meta, "createdAt" as created_at
+                "feeCurrency" as "fee_currency!", role, side, meta, "createdAt" as created_at,
+                "updatedAt" as updated_at
             "#,
             fill.id,
             fill.trade_id,
@@ -77,7 +80,8 @@ impl FillRepository for PostgresFillRepository {
             fill.role,
             fill.side,
             fill.meta,
-            fill.created_at
+            fill.created_at,
+            fill.updated_at
         )
         .fetch_one(&mut **tx)
         .await
@@ -91,7 +95,8 @@ impl FillRepository for PostgresFillRepository {
             SELECT 
                 id, "tradeId" as "trade_id!", "orderId" as "order_id!", "tenantId" as "tenant_id!",
                 "instrumentId" as "instrument_id!", price, quantity, fee as "fee!",
-                "feeCurrency" as "fee_currency!", role, side, meta, "createdAt" as created_at
+                "feeCurrency" as "fee_currency!", role, side, meta, "createdAt" as created_at,
+                "updatedAt" as updated_at
             FROM "Fill" 
             WHERE "orderId" = $1
             "#,
@@ -114,7 +119,8 @@ impl FillRepository for PostgresFillRepository {
             SELECT 
                 id, "tradeId" as "trade_id!", "orderId" as "order_id!", "tenantId" as "tenant_id!",
                 "instrumentId" as "instrument_id!", price, quantity, fee as "fee!",
-                "feeCurrency" as "fee_currency!", role, side, meta, "createdAt" as created_at
+                "feeCurrency" as "fee_currency!", role, side, meta, "createdAt" as created_at,
+                "updatedAt" as updated_at
             FROM "Fill" 
             WHERE "instrumentId" = $1 
             AND "createdAt" >= $2 

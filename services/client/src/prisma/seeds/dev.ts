@@ -75,6 +75,13 @@ async function main() {
           {
             instrumentId: btc.id,
             status: 'open',
+            side: 'sell',
+            price: 100_000,
+            quantity: 10,
+          },
+          {
+            instrumentId: btc.id,
+            status: 'open',
             side: 'buy',
             price: 15_000,
             quantity: 10,

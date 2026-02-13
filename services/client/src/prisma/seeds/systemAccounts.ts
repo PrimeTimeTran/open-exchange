@@ -63,7 +63,7 @@ export async function seedSystemAccounts(
           `Creating wallet for System Account ${accountData.name} (${accountData.asset})...`,
         );
 
-        await prisma.wallet.create({
+        const wallet = await prisma.wallet.create({
           data: {
             tenant: { connect: { id: tenantId } }, // Relation fix if tenant is a relation
             account: { connect: { id: account.id } }, // Relation fix
@@ -74,6 +74,24 @@ export async function seedSystemAccounts(
             version: 1,
             createdByMembership: { connect: { id: membershipId } }, // Relation fix
             updatedByMembership: { connect: { id: membershipId } }, // Relation fix
+            createdByUserId: userId,
+            updatedByUserId: userId,
+          },
+        });
+
+        console.log(
+          `Creating initial deposit for System Account ${accountData.name}...`,
+        );
+        await prisma.deposit.create({
+          data: {
+            tenant: { connect: { id: tenantId } },
+            asset: { connect: { id: asset.id } },
+            account: { connect: { id: account.id } },
+            amount: 100_000_000,
+            status: 'completed',
+            txHash: 'system_init',
+            createdByMembership: { connect: { id: membershipId } },
+            updatedByMembership: { connect: { id: membershipId } },
             createdByUserId: userId,
             updatedByUserId: userId,
           },

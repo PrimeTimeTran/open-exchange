@@ -9,7 +9,7 @@ export const orderPermissions = {
 
   orderCreate: {
     id: 'orderCreate',
-    allowedRoles: [roles.admin],
+    allowedRoles: [roles.admin, roles.user],
     allowedStorage: [],
   },
 
@@ -21,7 +21,7 @@ export const orderPermissions = {
 
   orderRead: {
     id: 'orderRead',
-    allowedRoles: [roles.admin, roles.custom],
+    allowedRoles: [roles.admin, roles.custom, roles.user],
   },
 
   orderAutocomplete: {
@@ -31,7 +31,7 @@ export const orderPermissions = {
 
   orderDestroy: {
     id: 'orderDestroy',
-    allowedRoles: [roles.admin],
+    allowedRoles: [roles.admin, roles.user],
   },
 
   orderArchive: {
@@ -43,5 +43,4 @@ export const orderPermissions = {
     id: 'orderRestore',
     allowedRoles: [],
   },
-
 };

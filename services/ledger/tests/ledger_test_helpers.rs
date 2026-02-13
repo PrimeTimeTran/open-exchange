@@ -295,6 +295,42 @@ impl ledger::domain::ledger::repository::LedgerRepository for MockLedgerReposito
     async fn save_entries_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, entries: Vec<ledger::proto::common::LedgerEntry>) -> Result<Vec<ledger::proto::common::LedgerEntry>> {
         self.save_entries(entries).await
     }
+
+    async fn save_trade_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, trade: Trade) -> Result<Trade> {
+        Ok(trade)
+    }
+
+    async fn save_trade(&self, trade: Trade) -> Result<Trade> {
+        Ok(trade)
+    }
+}
+
+#[derive(Debug)]
+pub struct MockTradeRepository {
+    trades: Mutex<Vec<Trade>>,
+}
+
+impl MockTradeRepository {
+    pub fn new() -> Self {
+        Self { trades: Mutex::new(Vec::new()) }
+    }
+    
+    #[allow(dead_code)]
+    pub fn get_trades(&self) -> Vec<Trade> {
+        self.trades.lock().unwrap().clone()
+    }
+}
+
+#[async_trait]
+impl ledger::domain::trade::repository::TradeRepository for MockTradeRepository {
+    async fn create(&self, trade: Trade) -> Result<Trade> {
+        self.trades.lock().unwrap().push(trade.clone());
+        Ok(trade)
+    }
+
+    async fn create_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, trade: Trade) -> Result<Trade> {
+        self.create(trade).await
+    }
 }
 
 pub struct LedgerTestContext {
@@ -304,6 +340,7 @@ pub struct LedgerTestContext {
     pub wallet_repo: Arc<MockWalletRepository>,
     pub fill_repo: Arc<MockFillRepository>,
     pub ledger_repo: Arc<MockLedgerRepository>,
+    pub trade_repo: Arc<MockTradeRepository>,
     pub tenant_id: Uuid,
     pub account_a: Uuid,
     pub account_b: Uuid,
@@ -318,6 +355,7 @@ impl LedgerTestContext {
         let wallet_repo = Arc::new(MockWalletRepository::new());
         let fill_repo = Arc::new(MockFillRepository::new());
         let ledger_repo = Arc::new(MockLedgerRepository::new());
+        let trade_repo = Arc::new(MockTradeRepository::new());
         
         // Add default BTC-USD instrument
         instrument_repo.add(Instrument {
@@ -340,6 +378,7 @@ impl LedgerTestContext {
             wallet_repo,
             fill_repo,
             ledger_repo,
+            trade_repo,
             tenant_id: Uuid::new_v4(),
             account_a: Uuid::new_v4(),
             account_b: Uuid::new_v4(),
@@ -439,6 +478,7 @@ impl LedgerTestContext {
             wallet_service.clone(),
             fill_service,
             self.ledger_repo.clone(),
+            self.trade_repo.clone(),
         );
 
         (settlement_service, wallet_service)
