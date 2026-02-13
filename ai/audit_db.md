@@ -7,7 +7,7 @@ The following files are important for testing, modeling, and seeding.
 
 - Auditing tests entrypoint `./tests/audit_books.sh`
 - DB models `services/client/src/prisma/schema.prisma`
-- DB seed entrypoint `services/client/src/prisma/seeds/dev.ts`
+- DB seed entrypoint `services/client/src/prisma/seeds/seed.ts`
 
 # Instructions
 

@@ -26,6 +26,7 @@ export const seedUserWithData = async (
       side: string;
       price: number;
       quantity: number;
+      quantityFilled?: number;
     }[];
   },
   tenantId: string,
@@ -237,41 +238,45 @@ export const seedUserWithData = async (
           }
         }
 
-        if (lockAccount && lockAssetId && lockedAmount.gt(0)) {
-          const decimalLock = lockedAmount;
-          await prisma.wallet.updateMany({
-            where: {
-              tenantId,
-              accountId: lockAccount.id,
-              assetId: lockAssetId,
-            },
+        await prisma.$transaction(async (tx) => {
+          await tx.$executeRaw`SELECT set_config('app.current_user_id', ${user.id}::text, true)`;
+          await tx.$executeRaw`SELECT set_config('app.current_tenant_id', ${tenantId}::text, true)`;
+          await tx.$executeRaw`SELECT set_config('app.current_membership_id', ${membership.id}::text, true)`;
+
+          if (lockAccount && lockAssetId && lockedAmount.gt(0)) {
+            const decimalLock = lockedAmount;
+            await tx.wallet.updateMany({
+              where: {
+                tenantId,
+                accountId: lockAccount.id,
+                assetId: lockAssetId,
+              },
+              data: {
+                locked: { increment: decimalLock },
+                available: { decrement: decimalLock },
+              },
+            });
+          }
+
+          await tx.order.create({
             data: {
-              available: { decrement: decimalLock },
-              locked: { increment: decimalLock },
+              tenant: { connect: { id: tenantId } },
+              account: { connect: { id: mainAccount.id } },
+              instrument: { connect: { id: inst.id } },
+              side: order.side,
+              status: order.status,
+              price: finalPrice,
+              quantity: finalQty,
+              timeInFore: 'gtc',
+              createdAt: new Date(),
+              createdByMembership: { connect: { id: membership.id } },
+              updatedByMembership: { connect: { id: membership.id } },
+              quantityFilled: order.quantityFilled || 0,
+              type: OrderType[OrderType.ORDER_TYPE_LIMIT],
             },
           });
-        }
+        });
       }
-
-      await prisma.order.create({
-        data: {
-          tenantId,
-          accountId: mainAccount.id,
-          instrumentId: inst.id,
-          side: order.side,
-          type: OrderType[OrderType.ORDER_TYPE_LIMIT],
-          status: order.status,
-          price: finalPrice,
-          quantity: finalQty,
-          quantityFilled: 0,
-          timeInFore: 'gtc',
-          createdAt: new Date(),
-          createdByMembershipId: membership.id,
-          updatedByMembershipId: membership.id,
-          createdByUserId: user.id,
-          updatedByUserId: user.id,
-        },
-      });
     }
   }
 
@@ -360,23 +365,56 @@ export async function seedPlatformUsers(
       }
 
       openOrders.push({
-        instrumentId: instrument.id,
-        status: 'open',
         side,
         price,
         quantity,
+        status: 'open',
+        instrumentId: instrument.id,
       });
     }
 
     // Ensure first two seeded users have explicit buy orders for BTC to be able to fill large sell
     const btcInstrument = instruments.find((it) => it.symbol.includes('BTC'));
-    if ((i === 1 || i === 2) && btcInstrument) {
-      // Each will place a buy order for 5 BTC at the super-user seed sell price (100_000)
+    const ethInstrument = instruments.find((it) => it.symbol.includes('ETH'));
+
+    if (i === 1 && btcInstrument) {
+      // 1. Match with 100k BTC sell order
       openOrders.push({
         instrumentId: btcInstrument.id,
         status: 'open',
         side: 'buy',
         price: 100_000,
+        quantity: 5,
+      });
+
+      // 2. Match with 150k BTC sell order (1 BTC)
+      openOrders.push({
+        instrumentId: btcInstrument.id,
+        status: 'open',
+        side: 'buy',
+        price: 150_000,
+        quantity: 1,
+      });
+    }
+
+    if (i === 2 && btcInstrument) {
+      // 1. Match with 100k BTC sell order
+      openOrders.push({
+        instrumentId: btcInstrument.id,
+        status: 'open',
+        side: 'buy',
+        price: 100_000,
+        quantity: 5,
+      });
+    }
+
+    if (i === 2 && ethInstrument) {
+      // 2. Match with 10k ETH sell order (5 ETH)
+      openOrders.push({
+        instrumentId: ethInstrument.id,
+        status: 'open',
+        side: 'buy',
+        price: 10_000,
         quantity: 5,
       });
     }

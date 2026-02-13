@@ -13,7 +13,6 @@ import { seedMatchedTrades } from './matching';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Seeding development data...');
   const tenant = await seedTenant(prisma);
   const user = await seedUser(prisma);
   const membership = await seedMembership(prisma, user.id, tenant.id);
@@ -141,13 +140,10 @@ async function main() {
 
   await seedPlatformUsers(prisma, tenant.id, assetsMap);
   await seedPlatformData(prisma, tenant.id, membership.id, user.id, assetsMap);
-  // Create matched fills/trade to match the super user's large BTC sell order
 
   if (btc && eth && aapl && tsla) {
-    await seedMatchedTrades(prisma, tenant.id, btc);
+    await seedMatchedTrades(prisma, tenant.id, btc, eth);
   }
-
-  console.log('Seeding completed.');
   await reportSeeding(prisma);
 }
 
