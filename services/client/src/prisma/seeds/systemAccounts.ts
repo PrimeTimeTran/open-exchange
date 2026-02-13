@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { createDeposit } from './seedUtils';
 
 export async function seedSystemAccounts(
   prisma: PrismaClient,
@@ -82,20 +83,16 @@ export async function seedSystemAccounts(
         console.log(
           `Creating initial deposit for System Account ${accountData.name}...`,
         );
-        await prisma.deposit.create({
-          data: {
-            tenant: { connect: { id: tenantId } },
-            asset: { connect: { id: asset.id } },
-            account: { connect: { id: account.id } },
-            amount: 100_000_000,
-            status: 'completed',
-            txHash: 'system_init',
-            createdByMembership: { connect: { id: membershipId } },
-            updatedByMembership: { connect: { id: membershipId } },
-            createdByUserId: userId,
-            updatedByUserId: userId,
-          },
-        });
+        await createDeposit(
+          prisma,
+          tenantId,
+          membershipId,
+          userId,
+          account.id,
+          asset.id,
+          100_000_000,
+          'system_init',
+        );
       } else {
         console.log(
           `Wallet for System Account ${accountData.name} (${accountData.asset}) already exists.`,

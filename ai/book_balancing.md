@@ -1,66 +1,47 @@
 # Testing Accounts/Ledgers/DB
 
-It's very important we ensure our DB is correct at all times.
-We want to maintain and expand upon a list of tests which help us to confidently
-move forward building out the system.
+We're building a Stock/Crypto/Options/Futures exchange.
+It's essential to our business that our books balance, we dont have money disappear or appear out of no where.
 
-The entrypoint to these test are `./tests/audit_books.sh`
+- Auditing tests entrypoint `./tests/audit_books.sh`
+- DB models `services/client/src/prisma/schema.prisma`
+- DB seed entrypoint `services/client/src/prisma/seeds/dev.ts`
 
-# Current Tests
+# Instructions
 
-These tests are currently implemented in `tests/audit_books.sh`.
+There are things which are always true in a properly designed accounting system.
+After reviewing the models of schema.prisma, use SQL inside of audit_book.sh to deterministically evaluate the state of our system.
 
-### 1. System Solvency (External Flow vs Internal Holdings)
+For now we focus on the state of our books after seeding accounts(and corresponding models) but later we'll run these tests after real orders,
+when they're matched and settled.
 
-Checks if the total assets held in user wallets match the net inflow of assets (Deposits - Withdrawals).
+When you're done, append to the section below, the tests we have, and what they cover.
 
-- **Query**: Compares `SUM(Wallet.total)` against `SUM(Deposit.amount) - SUM(Withdrawal.amount)` per asset.
-- **Goal**: Ensure money isn't being created or destroyed out of thin air (except for trading fees/pnl which should be accounted for, currently simple version).
+## Tests
 
-### 2. Wallet Integrity (Internal Consistency)
+- [x] 1. System Solvency (Internal Flow vs External Holdings)
+  - **Description**: Verifies that the total amount of each asset held in all user wallets matches the net external flow (Total Deposits - Total Withdrawals). This ensures no money is created or destroyed within the system.
+  - **SQL Logic**: `Sum(Wallet.total) == Sum(Deposit.amount) - Sum(Withdrawal.amount)`
 
-Checks if the internal state of each wallet is consistent.
+- [x] 2. Wallet Consistency (Available + Locked = Total)
+  - **Description**: Ensures that for every individual wallet, the sum of `available` and `locked` balances exactly equals the `total` balance. This prevents internal accounting errors within a wallet.
+  - **SQL Logic**: `Wallet.total - (Wallet.available + Wallet.locked) == 0`
 
-- **Query**: Checks `Wallet.total == Wallet.available + Wallet.locked`.
-- **Goal**: Ensure no mathematical errors in updating wallet states.
+- [x] 3. Locked Funds Audit (Wallet Locked vs Open Orders)
+  - **Description**: Verifies that the `locked` balance in user wallets correctly matches the funds required for all Open Orders.
+  - **Logic**:
+    - For **Buy Orders** (Spot): `Locked Amount = Price * Quantity`.
+    - For **Sell Orders** (Spot): `Locked Amount = Quantity`.
+    - **SQL Logic**: `Wallet.locked == Sum(OpenOrders.RequiredLockAmount)` (filtered for Spot instruments).
 
-### 3. Ledger Zero-Sum (Double Entry Accounting)
+- [x] 4. Ledger Integrity (Wallet Balance vs Ledger Entries)
+  - **Description**: Verifies that the total balance of a wallet matches the sum of all its historical ledger entries. This ensures the immutable ledger is the source of truth for current balances.
+  - **SQL Logic**: `Wallet.total == Sum(LedgerEntry.amount)` (grouped by Account).
 
-Checks if every trade event is balanced in the ledger.
+- [x] 5. Negative Balance Check
+  - **Description**: A sanity check to ensure no wallet has a negative available, locked, or total balance, which would indicate a serious logic error or race condition.
+  - **SQL Logic**: `Wallet.available < 0 OR Wallet.locked < 0 OR Wallet.total < 0` (Should return 0 rows).
 
-- **Query**: Sums `LedgerEntry.amount` for each `trade` event per asset. Must equal 0.
-- **Goal**: Ensure the double-entry ledger system is working for trades (Debits = Credits).
-
-# Proposed Tests
-
-We should add the following tests to harden the system further:
-
-### 4. Ledger vs Wallet Reconciliation (History vs State)
-
-The `Wallet` table acts as a snapshot/cache of the `Ledger`. We must ensure they match.
-
-- **Query**: For each Account/Asset, `SUM(LedgerEntry.amount)` must equal `Wallet.total`.
-- **Goal**: Ensure the history of transactions perfectly explains the current balance.
-
-### 5. Order Book vs Wallet Locked Balance
-
-Locked funds in wallets must exactly match the capital required for open orders.
-
-- **Query**:
-  - For Bids: `SUM(Order.price * Order.size)` (for quote asset) must equal `Wallet.locked` (quote asset).
-  - For Asks: `SUM(Order.size)` (for base asset) must equal `Wallet.locked` (base asset).
-- **Goal**: Ensure funds are correctly locked and unlocked during order placement and cancellation.
-
-### 6. Negative Balance Check
-
-Unless explicitly allowed (e.g., margin trading), balances should never be negative.
-
-- **Query**: `SELECT count(*) FROM "Wallet" WHERE total < 0 OR available < 0 OR locked < 0`.
-- **Goal**: Catch underflow bugs or race conditions allowing over-spending.
-
-### 7. Fee Account Reconciliation
-
-Ensure fees deducted from trades actually end up in the System Fee Account.
-
-- **Query**: `SUM(Trade.fee)` vs `Wallet.total` (of the System Fee Account).
-- **Goal**: Ensure revenue is not being lost.
+- [x] 6. Order Integrity (Quantity vs Filled)
+  - **Description**: Ensures that an Order's `quantityFilled` is non-negative and never exceeds the original `quantity`.
+  - **SQL Logic**: `Order.quantityFilled < 0 OR Order.quantityFilled > Order.quantity` (Should return 0 rows).

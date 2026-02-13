@@ -508,8 +508,8 @@ model Order {
   side String?
   type String?
   price Decimal? @db.Decimal(72, 20)
-  quantity Decimal? @db.Decimal(72, 0)
-  quantityFilled Decimal? @db.Decimal(72, 0)
+  quantity Decimal? @db.Decimal(72, 20)
+  quantityFilled Decimal? @db.Decimal(72, 20)
   status String?
   timeInFore String?
   meta Json?
@@ -547,8 +547,8 @@ model Fill {
 
   side String
   price Decimal @db.Decimal(72, 20)
-  quantity Decimal @db.Decimal(72, 0)
-  fee Decimal? @db.Decimal(72, 0)
+  quantity Decimal @db.Decimal(72, 20)
+  fee Decimal? @db.Decimal(72, 20)
   role String
   feeCurrency String
   instrumentId String @db.Uuid
@@ -582,7 +582,7 @@ model Trade {
   importHash            String?     @unique
 
   price Decimal? @db.Decimal(72, 20)
-  quantity Decimal? @db.Decimal(72, 0)
+  quantity Decimal? @db.Decimal(72, 20)
   meta Json?
   buyOrderId Order[] @relation("buyOrderId_buys")
 

@@ -97,9 +97,9 @@ export const seedUserWithData = async (
     const account = mainAccount;
 
     if (deposit.amount > 0) {
-      const amount = BigInt(
-        Math.floor(deposit.amount * Math.pow(10, asset.decimals)),
-      );
+      const amount = new Prisma.Decimal(deposit.amount)
+        .mul(new Prisma.Decimal(10).pow(asset.decimals))
+        .floor();
 
       await ensureWallet(
         prisma,
@@ -143,9 +143,9 @@ export const seedUserWithData = async (
       const account = mainAccount;
 
       if (withdrawal.amount > 0) {
-        const amount = BigInt(
-          Math.floor(withdrawal.amount * Math.pow(10, asset.decimals)),
-        );
+        const amount = new Prisma.Decimal(withdrawal.amount)
+          .mul(new Prisma.Decimal(10).pow(asset.decimals))
+          .floor();
 
         // Decrement wallet balance
         await ensureWallet(
@@ -155,7 +155,7 @@ export const seedUserWithData = async (
           user.id,
           account.id,
           asset.id,
-          -amount, // Negative for withdrawal
+          amount.negated(), // Negative for withdrawal
           { increment: true },
         );
 
@@ -216,25 +216,29 @@ export const seedUserWithData = async (
         console.log(`Order Values: Price=${finalPrice}, Qty=${finalQty}`);
 
         // Lock Funds Logic
-        let lockedAmount = BigInt(0);
+        let lockedAmount = new Prisma.Decimal(0);
         let lockAssetId = '';
         let lockAccount = mainAccount;
 
-        if (order.side === 'buy') {
-          lockedAmount = BigInt(
-            Math.floor(order.price * order.quantity * Math.pow(10, quoteDec)),
-          );
-          lockAssetId = inst.quoteAssetId;
-        } else {
-          lockedAmount = BigInt(
-            Math.floor(order.quantity * Math.pow(10, baseDec)),
-          );
-          lockAssetId = inst.underlyingAssetId;
-          // lockAccount is already mainAccount, no need to switch
+        // Only simulate locking for SPOT instruments for now
+        if (inst.type === 'spot') {
+          if (order.side === 'buy') {
+            lockedAmount = new Prisma.Decimal(order.price)
+              .mul(new Prisma.Decimal(order.quantity))
+              .mul(new Prisma.Decimal(10).pow(quoteDec))
+              .floor();
+            lockAssetId = inst.quoteAssetId;
+          } else {
+            lockedAmount = new Prisma.Decimal(order.quantity)
+              .mul(new Prisma.Decimal(10).pow(baseDec))
+              .floor();
+            lockAssetId = inst.underlyingAssetId;
+            // lockAccount is already mainAccount, no need to switch
+          }
         }
 
-        if (lockAccount && lockAssetId && lockedAmount > 0) {
-          const decimalLock = new Prisma.Decimal(lockedAmount.toString());
+        if (lockAccount && lockAssetId && lockedAmount.gt(0)) {
+          const decimalLock = lockedAmount;
           await prisma.wallet.updateMany({
             where: {
               tenantId,
