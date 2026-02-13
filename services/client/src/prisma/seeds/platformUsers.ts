@@ -311,7 +311,12 @@ export async function seedPlatformUsers(
 
   for (let i = 1; i <= 5; i++) {
     const initialFundsMap = new Map<string, number>();
-    initialFundsMap.set('USD', randomInt(50000, 1000000));
+    // Default USD between 50k and 1M, but boost first two users to 1M-5M
+    if (i === 1 || i === 2) {
+      initialFundsMap.set('USD', randomInt(1_000_000, 5_000_000));
+    } else {
+      initialFundsMap.set('USD', randomInt(50000, 1000000));
+    }
 
     const numOrders = randomInt(3, 8);
     const openOrders: any[] = [];
@@ -323,7 +328,8 @@ export async function seedPlatformUsers(
       const side = Math.random() > 0.5 ? 'buy' : 'sell';
       const basePrice = getBasePrice(instrument.symbol, instrument.type!);
       // Randomize price within +/- 5% of base
-      const price = basePrice * randomRange(0.95, 1.05);
+      let price = basePrice * randomRange(0.95, 1.05);
+      price = parseFloat(price.toFixed(6));
 
       let quantity;
       if (instrument.type === 'option' || instrument.type === 'future') {
@@ -336,6 +342,7 @@ export async function seedPlatformUsers(
           quantity = randomInt(1, 50);
         }
       }
+      quantity = parseFloat(Number(quantity).toFixed(6));
 
       if (side === 'sell' && instrument.type === 'spot') {
         const baseSymbol = instrument.underlyingAsset?.symbol;
@@ -358,6 +365,19 @@ export async function seedPlatformUsers(
         side,
         price,
         quantity,
+      });
+    }
+
+    // Ensure first two seeded users have explicit buy orders for BTC to be able to fill large sell
+    const btcInstrument = instruments.find((it) => it.symbol.includes('BTC'));
+    if ((i === 1 || i === 2) && btcInstrument) {
+      // Each will place a buy order for 5 BTC at the super-user seed sell price (100_000)
+      openOrders.push({
+        instrumentId: btcInstrument.id,
+        status: 'open',
+        side: 'buy',
+        price: 100_000,
+        quantity: 5,
       });
     }
 

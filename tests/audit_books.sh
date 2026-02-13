@@ -155,7 +155,7 @@ WITH LedgerWithAsset AS (
     SELECT 
         le.amount, 
         le."accountId",
-        COALESCE(d."assetId", wd."assetId") as "assetId"
+        COALESCE(d."assetId", wd."assetId", (le.meta->>'\''assetId'\'')::uuid) as "assetId"
     FROM "LedgerEntry" le
     LEFT JOIN "LedgerEvent" ev ON le."eventId" = ev.id
     LEFT JOIN "Deposit" d ON ev."referenceType" = '"'Deposit'"' AND ev."referenceId"::uuid = d.id
@@ -212,6 +212,85 @@ WHERE o."quantityFilled" < 0 OR o."quantityFilled" > o.quantity
 '
 
 run_check "6. Order Integrity" "$Q6_TOTAL" "$Q6_VARIANCE"
+
+
+# =================================================================================================
+# CHECK 7: ORDER-FILL RECONCILIATION
+# =================================================================================================
+Q7_TOTAL='SELECT count(*) FROM "Order" WHERE "quantityFilled" > 0'
+Q7_VARIANCE='
+WITH OrderFills AS (
+    SELECT "orderId", SUM(quantity) as total_filled
+    FROM "Fill"
+    GROUP BY "orderId"
+)
+SELECT 
+    o.id,
+    o."quantityFilled",
+    COALESCE(of.total_filled, 0) as actual_filled,
+    (o."quantityFilled" - COALESCE(of.total_filled, 0)) as variance
+FROM "Order" o
+LEFT JOIN OrderFills of ON o.id = of."orderId"
+WHERE o."quantityFilled" > 0 AND (o."quantityFilled" - COALESCE(of.total_filled, 0)) != 0
+'
+
+run_check "7. Order-Fill Reconciliation" "$Q7_TOTAL" "$Q7_VARIANCE"
+
+
+# =================================================================================================
+# CHECK 8: FEE COLLECTION AUDIT
+# =================================================================================================
+# Assuming fees are collected in USD for now or converted. 
+# Simplified check: Ensure Fee Account Balance >= Sum of Fees Collected.
+# A strict equality check is hard without knowing exactly when fees are swept or if they are in multiple currencies.
+# Let's check per currency.
+Q8_TOTAL='SELECT count(*) FROM "Fill" WHERE fee > 0'
+Q8_VARIANCE='
+WITH FeeSum AS (
+    SELECT "feeCurrency", SUM(fee) as total_fees
+    FROM "Fill"
+    GROUP BY "feeCurrency"
+),
+FeeAccount AS (
+    SELECT a.symbol, w.total
+    FROM "Wallet" w
+    JOIN "Account" acc ON w."accountId" = acc.id
+    JOIN "Asset" a ON w."assetId" = a.id
+    WHERE acc.type = '"'fees'"'
+)
+SELECT 
+    fs."feeCurrency",
+    fs.total_fees,
+    COALESCE(fa.total, 0) as fee_account_balance,
+    (COALESCE(fa.total, 0) - fs.total_fees) as variance
+FROM FeeSum fs
+LEFT JOIN FeeAccount fa ON fs."feeCurrency" = fa.symbol
+WHERE (COALESCE(fa.total, 0) - fs.total_fees) < 0
+'
+# Note: Variance < 0 means we collected more fees than we have in the fee account (money missing).
+# Variance > 0 is acceptable if the fee account was pre-seeded or has other funds.
+
+run_check "8. Fee Collection Audit" "$Q8_TOTAL" "$Q8_VARIANCE"
+
+
+# =================================================================================================
+# CHECK 9: TRADE SETTLEMENT AUDIT
+# =================================================================================================
+# Verifies that for every Trade, there are corresponding LedgerEntries.
+# This is complex because a Trade generates multiple Ledger Entries (Buyer Debit Quote, Buyer Credit Base, Seller Credit Quote, Seller Debit Base, Fees).
+# We will simplify by checking that the Count of LedgerEvents of type 'trade' matches the Count of Trades * 2 (or similar factor).
+# Or better: Find Trades that do NOT have a corresponding LedgerEvent.
+
+Q9_TOTAL='SELECT count(*) FROM "Trade"'
+Q9_VARIANCE='
+SELECT t.id
+FROM "Trade" t
+LEFT JOIN "LedgerEvent" le ON t.id::text = le."referenceId" AND le."referenceType" = '"'Trade'"'
+WHERE le.id IS NULL
+'
+
+run_check "9. Trade Settlement Audit" "$Q9_TOTAL" "$Q9_VARIANCE"
+
 
 echo "---------------------------------------------------------------------------------------------------"
 if [ "$EXIT_CODE" -eq "0" ]; then

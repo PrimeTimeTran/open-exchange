@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import 'tsconfig-paths/register';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { seedTenant } from './tenant';
 import { seedUser } from './user';
 import { seedMembership } from './membership';
@@ -8,6 +8,7 @@ import { seedAssets } from './assets';
 import { seedPlatformData } from './platformData';
 import { seedPlatformUsers, seedUserWithData } from './platformUsers';
 import { reportSeeding } from './reporter';
+import { seedMatchedTrades } from './matching';
 
 const prisma = new PrismaClient();
 
@@ -51,8 +52,8 @@ async function main() {
           { assetSymbol: 'ETH', amount: 1000, txHash: '0x456def' },
         ],
         withdrawals: [
-          { assetSymbol: 'BTC', amount: 0.1, txHash: '0x111aaa' },
-          { assetSymbol: 'ETH', amount: 2.5, txHash: '0x222bbb' },
+          { assetSymbol: 'BTC', amount: 10, txHash: '0x111aaa' },
+          { assetSymbol: 'ETH', amount: 100, txHash: '0x222bbb' },
           {
             assetSymbol: 'USD',
             amount: 100_000.0,
@@ -65,26 +66,13 @@ async function main() {
           },
         ],
         openOrders: [
+          // Buy Orders
           {
             instrumentId: btc.id,
             status: 'open',
             side: 'buy',
             price: 20_000,
             quantity: 5,
-          },
-          {
-            instrumentId: btc.id,
-            status: 'open',
-            side: 'sell',
-            price: 100_000,
-            quantity: 10,
-          },
-          {
-            instrumentId: eth.id,
-            status: 'open',
-            side: 'sell',
-            price: 10_000,
-            quantity: 10,
           },
           {
             instrumentId: btc.id,
@@ -104,8 +92,8 @@ async function main() {
             instrumentId: eth.id,
             status: 'open',
             side: 'buy',
-            price: 2_000, // Fixed: Price closer to market value
-            quantity: 10, // Fixed: Quantity reasonable for ETH
+            price: 2_000,
+            quantity: 10,
           },
           {
             instrumentId: aapl.id,
@@ -121,6 +109,28 @@ async function main() {
             price: 150,
             quantity: 500,
           },
+          // Sell Orders
+          {
+            instrumentId: btc.id,
+            status: 'open',
+            side: 'sell',
+            price: 100_000,
+            quantity: 10,
+          },
+          {
+            instrumentId: btc.id,
+            status: 'open',
+            side: 'sell',
+            price: 150_000,
+            quantity: 10,
+          },
+          {
+            instrumentId: eth.id,
+            status: 'open',
+            side: 'sell',
+            price: 10_000,
+            quantity: 10,
+          },
         ],
       },
       tenant.id,
@@ -131,6 +141,11 @@ async function main() {
 
   await seedPlatformUsers(prisma, tenant.id, assetsMap);
   await seedPlatformData(prisma, tenant.id, membership.id, user.id, assetsMap);
+  // Create matched fills/trade to match the super user's large BTC sell order
+
+  if (btc && eth && aapl && tsla) {
+    await seedMatchedTrades(prisma, tenant.id, btc);
+  }
 
   console.log('Seeding completed.');
   await reportSeeding(prisma);

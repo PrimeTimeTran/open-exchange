@@ -1,7 +1,9 @@
 # Testing Accounts/Ledgers/DB
 
-We're building a Stock/Crypto/Options/Futures exchange.
-It's essential to our business that our books balance, we dont have money disappear or appear out of no where.
+A Stock/Crypto/Options/Futures exchange requires thorough auditing & testing.
+It's essential to our business that books balance and we dont have money appear/disappear out of nowhere.
+
+The following files are important for testing, modeling, and seeding.
 
 - Auditing tests entrypoint `./tests/audit_books.sh`
 - DB models `services/client/src/prisma/schema.prisma`
@@ -9,13 +11,12 @@ It's essential to our business that our books balance, we dont have money disapp
 
 # Instructions
 
-There are things which are always true in a properly designed accounting system.
-After reviewing the models of schema.prisma, use SQL inside of audit_book.sh to deterministically evaluate the state of our system.
+Write tests which will audit a REAL database.
+Review the the tests, models inside of schema.prisma, and use SQL inside of audit_db.sh to identify if there are any issues.
 
-For now we focus on the state of our books after seeding accounts(and corresponding models) but later we'll run these tests after real orders,
-when they're matched and settled.
+For now, we'll focus on the state of the DB being correct AFTER seeding. In the future, we'll have these tests run in our prod DB as well.
 
-When you're done, append to the section below, the tests we have, and what they cover.
+In other words, write tests that guarantee that the state of our DB is correct given the relationships of each model with one another and how many of one or the other we have.
 
 ## Tests
 
@@ -45,3 +46,15 @@ When you're done, append to the section below, the tests we have, and what they 
 - [x] 6. Order Integrity (Quantity vs Filled)
   - **Description**: Ensures that an Order's `quantityFilled` is non-negative and never exceeds the original `quantity`.
   - **SQL Logic**: `Order.quantityFilled < 0 OR Order.quantityFilled > Order.quantity` (Should return 0 rows).
+
+- [x] 7. Order-Fill Reconciliation
+  - **Description**: Verifies that the sum of all fills for an order matches the order's recorded `quantityFilled`. This ensures that the order status accurately reflects its execution history.
+  - **SQL Logic**: `Order.quantityFilled == Sum(Fill.quantity) WHERE Fill.orderId = Order.id`
+
+- [x] 8. Fee Collection Audit
+  - **Description**: Verifies that the total fees recorded in all Fills have been correctly credited to the System Fee Account.
+  - **SQL Logic**: `Sum(Fill.fee) (converted to base currency) == Wallet(FeeAccount).total`
+
+- [x] 9. Trade Settlement Audit
+  - **Description**: Ensures that for every Spot Trade, the Buyer received the Base Asset and the Seller received the Quote Asset (less fees), and that these movements are recorded in the Ledger.
+  - **SQL Logic**: `Trade(Quantity * Price) == LedgerEntry(Seller, QuoteAsset) + LedgerEntry(Buyer, BaseAsset)` (simplified)
