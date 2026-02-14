@@ -1,5 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import {
   Button,
   Typewriter,
@@ -8,8 +10,15 @@ import {
 } from '@/components/ui';
 import { CodeWindow } from '@/components/code-window';
 import { MarketTicker } from '@/components/landing/market-ticker';
+import { appContextForReact } from '@/shared/controller/appContext';
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const context = await appContextForReact(cookies());
+  const dictionary = context.dictionary;
+
+  if (context.currentUser) {
+    return redirect(`/home`);
+  }
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
