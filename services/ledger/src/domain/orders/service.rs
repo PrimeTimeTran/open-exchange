@@ -130,39 +130,36 @@ impl OrderService {
     pub async fn update_status_with_tx(&self, tx: &mut Transaction<'_, Postgres>, order_id_str: &str, trade_qty: Decimal) -> Result<()> {
         let order_uuid = Uuid::parse_str(order_id_str).map_err(|_| AppError::ValidationError("Invalid order ID".into()))?;
         
-        // Read order (Note: outside transaction if repo doesn't support reading inside tx yet, but ideally inside)
-        // Assuming we use optimistic concurrency or just accept it for now as per previous code.
-        if let Some(order) = self.repo.get(order_uuid).await? {
-            let current_filled = order.filled_quantity;
-                let new_filled = current_filled + trade_qty;
-                
-                self.repo.update_filled_amount_with_tx(tx, order_uuid, new_filled).await?;
-                
-                let original_qty = order.quantity;
-                if new_filled >= original_qty {
-                    self.repo.update_status_with_tx(tx, order_uuid, "filled".to_string()).await?;
-                } else {
-                    self.repo.update_status_with_tx(tx, order_uuid, "partial_fill".to_string()).await?;
-                }
-            }
+        // Atomically increment filled_quantity and get the updated order state
+        let updated_order = self.repo.increment_filled_amount_with_tx(tx, order_uuid, trade_qty).await?;
+        
+        let new_filled = updated_order.filled_quantity;
+        let original_qty = updated_order.quantity;
+        
+        if new_filled >= original_qty {
+            self.repo.update_status_with_tx(tx, order_uuid, "filled".to_string()).await?;
+        } else {
+            self.repo.update_status_with_tx(tx, order_uuid, "partial_fill".to_string()).await?;
+        }
+        
         Ok(())
     }
 
     pub async fn update_status(&self, order_id_str: &str, trade_qty: Decimal) -> Result<()> {
         let order_uuid = Uuid::parse_str(order_id_str).map_err(|_| AppError::ValidationError("Invalid order ID".into()))?;
 
-        if let Some(order) = self.repo.get(order_uuid).await? {
-            let current_filled = order.filled_quantity;
-            let new_filled = current_filled + trade_qty;
-                self.repo.update_filled_amount(order_uuid, new_filled).await?;
-                
-                let original_qty = order.quantity;
-                if new_filled >= original_qty {
-                    self.repo.update_status(order_uuid, "filled".to_string()).await?;
-                } else {
-                    self.repo.update_status(order_uuid, "partial_fill".to_string()).await?;
-                }
-            }
+        // Atomically increment filled_quantity and get the updated order state
+        let updated_order = self.repo.increment_filled_amount(order_uuid, trade_qty).await?;
+        
+        let new_filled = updated_order.filled_quantity;
+        let original_qty = updated_order.quantity;
+        
+        if new_filled >= original_qty {
+            self.repo.update_status(order_uuid, "filled".to_string()).await?;
+        } else {
+            self.repo.update_status(order_uuid, "partial_fill".to_string()).await?;
+        }
+        
         Ok(())
     }
 }

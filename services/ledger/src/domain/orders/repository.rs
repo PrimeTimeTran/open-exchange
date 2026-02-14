@@ -14,6 +14,8 @@ pub trait OrderRepository: Send + Sync {
     async fn update_status_with_tx(&self, tx: &mut Transaction<'_, Postgres>, id: Uuid, status: String) -> Result<()>;
     async fn update_filled_amount(&self, id: Uuid, filled: Decimal) -> Result<()>;
     async fn update_filled_amount_with_tx(&self, tx: &mut Transaction<'_, Postgres>, id: Uuid, filled: Decimal) -> Result<()>;
+    async fn increment_filled_amount(&self, id: Uuid, amount: Decimal) -> Result<Order>;
+    async fn increment_filled_amount_with_tx(&self, tx: &mut Transaction<'_, Postgres>, id: Uuid, amount: Decimal) -> Result<Order>;
     async fn list_open(&self) -> Result<Vec<Order>>;
 }
 

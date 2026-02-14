@@ -138,7 +138,7 @@ func (s *MatchingService) PlaceOrder(ctx context.Context, order *common.Order) (
 				Price:        fmt.Sprintf("%.8f", trade.Price),
 				Quantity:     fmt.Sprintf("%.8f", trade.Quantity),
 				TakerSide:    order.Side,
-				MatchedAt:    trade.Timestamp,
+				MatchedAt:    trade.Timestamp * 1000,
 			})
 		}
 
@@ -319,7 +319,32 @@ func (s *MatchingService) RecoverState(ctx context.Context) error {
 			continue
 		}
 		if len(trades) > 0 {
-			log.Printf("WARNING: Recovery triggered %d trades for order %s. This implies inconsistent state.", len(trades), order.ID)
+			log.Printf("WARNING: Recovery triggered %d trades for order %s. This implies inconsistent state. Committing trades to Ledger to resolve state.", len(trades), order.ID)
+			
+			var matches []*ledger.Match
+			for _, trade := range trades {
+				matches = append(matches, &ledger.Match{
+					MatchId:      uuid.New().String(),
+					MakerOrderId: trade.MakerOrderID,
+					TakerOrderId: trade.TakerOrderID,
+					InstrumentId: order.InstrumentID,
+					Price:        fmt.Sprintf("%.8f", trade.Price),
+					Quantity:     fmt.Sprintf("%.8f", trade.Quantity),
+					TakerSide:    order.Side, // Using order.Side from engine order
+					MatchedAt:    trade.Timestamp * 1000,
+				})
+			}
+
+			log.Printf("RecoverState: Committing %d trades to Ledger...", len(matches))
+			
+			commitReq := &ledger.CommitRequest{
+				Matches:  matches,
+				TenantId: orderProto.TenantId,
+			}
+			
+			if err := s.Store.EnqueueMatches(ctx, commitReq); err != nil {
+				log.Printf("CRITICAL: RecoverState: Failed to enqueue matches for settlement: %v. Data risk!", err)
+			}
 		}
 	}
 	

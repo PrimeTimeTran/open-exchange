@@ -124,6 +124,21 @@ impl OrderRepository for InMemoryOrderRepository {
         self.update_filled_amount(id, filled).await
     }
 
+    async fn increment_filled_amount(&self, id: Uuid, amount: Decimal) -> Result<Order> {
+        let mut orders = self.orders.lock().unwrap();
+        if let Some(order) = orders.iter_mut().find(|o| o.id == id) {
+            order.filled_quantity += amount;
+            order.updated_at = chrono::Utc::now();
+            Ok(order.clone())
+        } else {
+            Err(AppError::NotFound(format!("Order {} not found", id)))
+        }
+    }
+
+    async fn increment_filled_amount_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, id: Uuid, amount: Decimal) -> Result<Order> {
+        self.increment_filled_amount(id, amount).await
+    }
+
     async fn list_open(&self) -> Result<Vec<Order>> {
         let orders = self.orders.lock().unwrap();
         // Assuming "open", "partial_fill", "new" are considered open

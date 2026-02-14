@@ -190,6 +190,44 @@ impl OrderRepository for PostgresOrderRepository {
         Ok(())
     }
 
+    async fn increment_filled_amount(&self, id: Uuid, amount: Decimal) -> Result<Order> {
+        let row: OrderRow = sqlx::query_as(
+            r#"
+            UPDATE "Order" 
+            SET "quantityFilled" = "quantityFilled" + $2, "updatedAt" = $3 
+            WHERE id = $1 
+            RETURNING id, "tenantId", "accountId", "instrumentId", side, type as "type", quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt"
+            "#
+        )
+        .bind(id)
+        .bind(amount)
+        .bind(chrono::Utc::now())
+        .fetch_one(&self.pool)
+        .await
+        .map_err(AppError::DatabaseError)?;
+
+        Ok(row.into())
+    }
+
+    async fn increment_filled_amount_with_tx(&self, tx: &mut Transaction<'_, Postgres>, id: Uuid, amount: Decimal) -> Result<Order> {
+        let row: OrderRow = sqlx::query_as(
+            r#"
+            UPDATE "Order" 
+            SET "quantityFilled" = "quantityFilled" + $2, "updatedAt" = $3 
+            WHERE id = $1 
+            RETURNING id, "tenantId", "accountId", "instrumentId", side, type as "type", quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt"
+            "#
+        )
+        .bind(id)
+        .bind(amount)
+        .bind(chrono::Utc::now())
+        .fetch_one(&mut **tx)
+        .await
+        .map_err(AppError::DatabaseError)?;
+
+        Ok(row.into())
+    }
+
     async fn list_open(&self) -> Result<Vec<Order>> {
         let recs: Vec<OrderRow> = sqlx::query_as(
             r#"
