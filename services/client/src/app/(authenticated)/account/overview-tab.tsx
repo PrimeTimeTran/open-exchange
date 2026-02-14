@@ -19,10 +19,27 @@ export function OverviewTab({
   balances: Balance[];
   orders: OrderWithInstrument[];
 }) {
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [assetClassFilter, setAssetClassFilter] = useState<string>('all');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [balanceSortDirection, setBalanceSortDirection] = useState<
+    'asc' | 'desc'
+  >('desc');
 
   const totalValue = balances.reduce((acc, curr) => acc + curr.value, 0);
+
+  const filteredBalances = useMemo(() => {
+    let result = [...balances];
+    if (assetClassFilter !== 'all') {
+      result = result.filter((b) => b.klass === assetClassFilter);
+    }
+    result.sort((a, b) => {
+      return balanceSortDirection === 'asc'
+        ? a.value - b.value
+        : b.value - a.value;
+    });
+    return result;
+  }, [balances, assetClassFilter, balanceSortDirection]);
 
   const filteredAndSortedOrders = useMemo(() => {
     let result = [...orders];
@@ -58,45 +75,85 @@ export function OverviewTab({
       </div>
 
       <div className="rounded-xl border border-outline-variant bg-surface shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-outline-variant">
+        <div className="p-6 border-b border-outline-variant flex items-center justify-between">
           <h3 className="font-semibold text-on-surface">Asset Balances</h3>
+          <div className="flex items-center gap-2">
+            <div className="w-[140px]">
+              <Select
+                value={assetClassFilter}
+                onValueChange={setAssetClassFilter}
+              >
+                <SelectTrigger className="h-8 text-xs bg-surface border-outline-variant">
+                  <SelectValue placeholder="Asset Class" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Assets</SelectItem>
+                  <SelectItem value="crypto">Crypto</SelectItem>
+                  <SelectItem value="stock">Stocks</SelectItem>
+                  <SelectItem value="fiat">Fiat</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                setBalanceSortDirection((prev) =>
+                  prev === 'asc' ? 'desc' : 'asc',
+                )
+              }
+              className="h-8 px-2 text-xs text-on-surface-variant hover:text-on-surface flex items-center gap-1"
+            >
+              <ArrowUpDown className="h-3 w-3" />
+              {balanceSortDirection === 'asc' ? 'Low-High' : 'High-Low'}
+            </Button>
+          </div>
         </div>
         <div className="divide-y divide-outline-variant">
-          {balances.map((balance) => (
-            <div
-              key={balance.asset}
-              className="flex items-center justify-between p-6 hover:bg-surface-variant/50 transition-colors"
-            >
-              <div className="flex items-center gap-4">
-                <div className="h-10 w-10 rounded-full bg-primary-container flex items-center justify-center font-bold text-on-primary-container">
-                  {balance.asset[0]}
-                </div>
-                <div>
-                  <div className="font-medium text-on-surface">
-                    {balance.name}
+          {filteredBalances.length === 0 ? (
+            <div className="p-8 text-center text-on-surface-variant">
+              No assets found
+            </div>
+          ) : (
+            filteredBalances.map((balance) => (
+              <div
+                key={balance.asset}
+                className="flex items-center justify-between p-6 hover:bg-surface-variant/50 transition-colors"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="h-10 w-10 rounded-full bg-primary-container flex items-center justify-center font-bold text-on-primary-container">
+                    {balance.asset[0]}
                   </div>
-                  <div className="text-sm text-on-surface-variant">
+                  <div>
+                    <div className="font-medium text-on-surface flex items-center gap-2">
+                      {balance.name}
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-variant text-on-surface-variant uppercase tracking-wider font-semibold">
+                        {balance.klass}
+                      </span>
+                    </div>
+                    <div className="text-sm text-on-surface-variant">
+                      {balance.asset}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="font-medium text-on-surface">
+                    {balance.amount.toLocaleString('en-US', {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: balance.decimals,
+                    })}{' '}
                     {balance.asset}
                   </div>
+                  <div className="text-sm text-on-surface-variant">
+                    $
+                    {balance.value.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                    })}
+                  </div>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="font-medium text-on-surface">
-                  {balance.amount.toLocaleString('en-US', {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: balance.decimals,
-                  })}{' '}
-                  {balance.asset}
-                </div>
-                <div className="text-sm text-on-surface-variant">
-                  $
-                  {balance.value.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                  })}
-                </div>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 

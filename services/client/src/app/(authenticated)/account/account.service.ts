@@ -12,10 +12,15 @@ export async function getAccountPageData(context: AppContext) {
   const membershipId = currentMembership.id;
 
   // 1. Fetch Wallets (Balances)
+  // Only show wallets with non-zero balance OR base currencies (USD, BTC, ETH)
   const wallets = await prisma.wallet.findMany({
     where: {
       tenantId,
       userId: membershipId,
+      OR: [
+        { total: { gt: 0 } },
+        { asset: { symbol: { in: ['USD', 'BTC', 'ETH'] } } },
+      ],
     },
     include: {
       asset: true,
@@ -32,7 +37,8 @@ export async function getAccountPageData(context: AppContext) {
 
     return {
       asset: w.asset?.symbol || 'Unknown',
-      name: w.asset?.symbol || 'Unknown',
+      name: w.asset?.name || w.asset?.symbol || 'Unknown',
+      klass: w.asset?.klass || 'unknown',
       amount: amount,
       value: amount * price,
       decimals: decimals,

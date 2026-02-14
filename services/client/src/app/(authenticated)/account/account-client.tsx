@@ -14,6 +14,7 @@ import { WithdrawTab } from './withdraw-tab';
 export type Balance = {
   asset: string;
   name: string;
+  klass: string;
   amount: number;
   value: number;
   decimals: number;

@@ -44,11 +44,13 @@ export async function walletCreateDefault(userId: string, context: AppContext) {
     }
   }
 
-  // 3. Find Assets (USD, BTC, ETH)
+  // 3. Find Assets (Base Currencies Only)
   const assets = await prisma.asset.findMany({
     where: {
       tenantId,
-      symbol: { in: ['USD', 'BTC', 'ETH'] },
+      symbol: {
+        in: ['USD', 'BTC', 'ETH'],
+      },
     },
   });
 
