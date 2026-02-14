@@ -11,6 +11,27 @@ use rust_decimal::Decimal;
 use std::str::FromStr;
 use rust_decimal::MathematicalOps;
 
+struct TradeData {
+    buy_order: Order,
+    sell_order: Order,
+    base_asset_id: String,
+    quote_asset_id: String,
+    base_decimals: i32,
+    quote_decimals: i32,
+    fees_account_id: String,
+}
+
+struct TradeAmounts {
+    qty_atomic: Decimal,
+    total_atomic: Decimal,
+    fee_atomic: Decimal,
+}
+
+struct OrderLockData {
+    asset_id: String,
+    amount_atomic: Decimal,
+}
+
 pub struct LedgerService {
     order_repo: Arc<dyn OrderRepository>,
     instrument_repo: Arc<dyn InstrumentRepository>,
@@ -79,8 +100,52 @@ impl LedgerService {
 
     pub async fn process_trade(&self, trade: Trade) -> Result<(LedgerEvent, Vec<LedgerEntry>)> {
         let event_id = Uuid::new_v4().to_string();
+        
+        // 1. Fetch context data
+        let data = self.fetch_trade_data(&trade).await?;
 
-        // 1. Fetch Orders to identify users
+        // 2. Calculate amounts
+        let amounts = self.calculate_trade_amounts(&trade, data.base_decimals, data.quote_decimals)?;
+
+        // 3. Create Ledger Event
+        let event = Self::create_event(
+            &trade.tenant_id,
+            &event_id,
+            "trade",
+            &trade.id,
+            "Trade",
+            "Trade execution",
+        );
+
+        // 4. Generate Ledger Entries
+        let entries = self.generate_trade_entries(&trade.tenant_id, &event_id, &data, &amounts);
+
+        Ok((event, entries))
+    }
+
+    pub async fn process_order_placed(&self, order: Order) -> Result<(LedgerEvent, Vec<LedgerEntry>)> {
+        let event_id = Uuid::new_v4().to_string();
+
+        // 1. Prepare Lock Data (Asset & Amount)
+        let lock_data = self.prepare_order_lock(&order).await?;
+
+        // 2. Create Ledger Event
+        let event = Self::create_event(
+            &order.tenant_id.to_string(),
+            &event_id,
+            "order_placed",
+            &order.id.to_string(),
+            "order",
+            "Funds reservation for order",
+        );
+
+        // 3. Generate Entries
+        let entries = self.generate_lock_entries(&order.tenant_id.to_string(), &event_id, &order.account_id.to_string(), &lock_data)?;
+
+        Ok((event, entries))
+    }
+
+    async fn fetch_trade_data(&self, trade: &Trade) -> Result<TradeData> {
         let buy_order_uuid = Uuid::parse_str(&trade.buy_order_id).map_err(|_| AppError::ValidationError("Invalid buy order ID".to_string()))?;
         let sell_order_uuid = Uuid::parse_str(&trade.sell_order_id).map_err(|_| AppError::ValidationError("Invalid sell order ID".to_string()))?;
 
@@ -89,7 +154,6 @@ impl LedgerService {
         let sell_order = self.order_repo.get(sell_order_uuid).await?
             .ok_or(AppError::NotFound(format!("Sell order {} not found", sell_order_uuid)))?;
 
-        // Fetch Instrument to determine assets
         let instrument_id = Uuid::parse_str(&trade.instrument_id).map_err(|_| AppError::ValidationError("Invalid instrument ID".to_string()))?;
         let instrument = self.instrument_repo.get(instrument_id).await?
             .ok_or(AppError::NotFound(format!("Instrument {} not found", trade.instrument_id)))?;
@@ -97,7 +161,6 @@ impl LedgerService {
         let base_asset_id = instrument.underlying_asset_id;
         let quote_asset_id = instrument.quote_asset_id;
 
-        // Fetch Assets to get decimals
         let base_asset_uuid = Uuid::parse_str(&base_asset_id).map_err(|_| AppError::ValidationError("Invalid base asset ID".into()))?;
         let quote_asset_uuid = Uuid::parse_str(&quote_asset_id).map_err(|_| AppError::ValidationError("Invalid quote asset ID".into()))?;
 
@@ -106,20 +169,21 @@ impl LedgerService {
         let quote_asset = self.asset_repo.get(quote_asset_uuid).await?
             .ok_or(AppError::NotFound(format!("Quote asset {} not found", quote_asset_id)))?;
 
-        let base_decimals = base_asset.decimals;
-        let quote_decimals = quote_asset.decimals;
-        
-        // 2. Create Ledger Event
-        let event = Self::create_event(
-            &trade.tenant_id,
-            &event_id,
-            "trade",
-            &trade.id,
-            "Trade", // reference_type (Capitalized for consistency/Audit)
-            "Trade execution",
-        );
+        let fees_account = self.account_repo.get_by_name("fees_account").await?
+            .ok_or(AppError::NotFound("System fees_account not found".to_string()))?;
 
-        let mut entries = Vec::new();
+        Ok(TradeData {
+            buy_order,
+            sell_order,
+            base_asset_id,
+            quote_asset_id,
+            base_decimals: base_asset.decimals,
+            quote_decimals: quote_asset.decimals,
+            fees_account_id: fees_account.id.to_string(),
+        })
+    }
+
+    fn calculate_trade_amounts(&self, trade: &Trade, base_decimals: i32, quote_decimals: i32) -> Result<TradeAmounts> {
         let trade_price = Decimal::from_str(&trade.price).map_err(|_| AppError::ValidationError("Invalid trade price".into()))?;
         let trade_qty = Decimal::from_str(&trade.quantity).map_err(|_| AppError::ValidationError("Invalid trade quantity".into()))?;
         let total_value = trade_price * trade_qty;
@@ -132,103 +196,92 @@ impl LedgerService {
         let base_scale = Decimal::from(10).powi(base_decimals as i64);
         let quote_scale = Decimal::from(10).powi(quote_decimals as i64);
 
-        let qty_atomic = (trade_qty * base_scale).floor();
-        let total_atomic = (total_value * quote_scale).floor();
-        let fee_atomic = (fee_amount * quote_scale).floor();
+        Ok(TradeAmounts {
+            qty_atomic: (trade_qty * base_scale).floor(),
+            total_atomic: (total_value * quote_scale).floor(),
+            fee_atomic: (fee_amount * quote_scale).floor(),
+        })
+    }
+
+    fn generate_trade_entries(&self, tenant_id: &str, event_id: &str, data: &TradeData, amounts: &TradeAmounts) -> Vec<LedgerEntry> {
+        let mut entries = Vec::new();
 
         // Entry 1: Buyer receives Base Asset (+Qty)
         entries.push(Self::create_entry(
-            &trade.tenant_id, &event_id, &buy_order.account_id.to_string(),
-            format!("{}", qty_atomic), &base_asset_id, "credit"
+            tenant_id, event_id, &data.buy_order.account_id.to_string(),
+            format!("{}", amounts.qty_atomic), &data.base_asset_id, "credit"
         ));
 
         // Entry 2: Buyer pays Quote Asset (-Total)
         entries.push(Self::create_entry(
-            &trade.tenant_id, &event_id, &buy_order.account_id.to_string(),
-            format!("-{}", total_atomic), &quote_asset_id, "debit"
+            tenant_id, event_id, &data.buy_order.account_id.to_string(),
+            format!("-{}", amounts.total_atomic), &data.quote_asset_id, "debit"
         ));
 
         // Entry 3: Buyer pays Fee (-FeeAmount)
         entries.push(Self::create_entry(
-            &trade.tenant_id, &event_id, &buy_order.account_id.to_string(),
-            format!("-{}", fee_atomic), &quote_asset_id, "fee"
+            tenant_id, event_id, &data.buy_order.account_id.to_string(),
+            format!("-{}", amounts.fee_atomic), &data.quote_asset_id, "fee"
         ));
 
         // Entry 4: Seller pays Base Asset (-Qty)
         entries.push(Self::create_entry(
-            &trade.tenant_id, &event_id, &sell_order.account_id.to_string(),
-            format!("-{}", qty_atomic), &base_asset_id, "debit"
+            tenant_id, event_id, &data.sell_order.account_id.to_string(),
+            format!("-{}", amounts.qty_atomic), &data.base_asset_id, "debit"
         ));
 
         // Entry 5: Seller receives Quote Asset (+Total)
         entries.push(Self::create_entry(
-            &trade.tenant_id, &event_id, &sell_order.account_id.to_string(),
-            format!("{}", total_atomic), &quote_asset_id, "credit"
+            tenant_id, event_id, &data.sell_order.account_id.to_string(),
+            format!("{}", amounts.total_atomic), &data.quote_asset_id, "credit"
         ));
 
         // Entry 6: Exchange receives Fee (+FeeAmount)
-        // Use Real Fees Account
-        let fees_account = self.account_repo.get_by_name("fees_account").await?
-            .ok_or(AppError::NotFound("System fees_account not found".to_string()))?;
-        let exchange_account_id = fees_account.id.to_string();
-
         entries.push(Self::create_entry(
-            &trade.tenant_id, &event_id, &exchange_account_id,
-            format!("{}", fee_atomic), &quote_asset_id, "revenue"
+            tenant_id, event_id, &data.fees_account_id,
+            format!("{}", amounts.fee_atomic), &data.quote_asset_id, "revenue"
         ));
 
-        Ok((event, entries))
+        entries
     }
 
-    pub async fn process_order_placed(&self, order: Order) -> Result<(LedgerEvent, Vec<LedgerEntry>)> {
-        let event_id = Uuid::new_v4().to_string();
-
-        // 1. Fetch Instrument to determine Asset
+    async fn prepare_order_lock(&self, order: &Order) -> Result<OrderLockData> {
         let instrument_id = order.instrument_id;
         let instrument = self.instrument_repo.get(instrument_id).await?
             .ok_or(AppError::NotFound(format!("Instrument {} not found", order.instrument_id)))?;
 
-        // 2. Determine Asset and Amount
         let (asset_id, raw_amount) = if order.side == "buy" { 
-            // Buying -> Locking Quote Asset (e.g., buying BTC with USD)
-            let price = order.price;
-            let quantity = order.quantity;
-            (instrument.quote_asset_id, price * quantity)
+            (instrument.quote_asset_id, order.price * order.quantity)
         } else {
-            // Selling -> Locking Base Asset (e.g., selling BTC for USD)
             (instrument.underlying_asset_id, order.quantity)
         };
 
-        // Fetch Asset to get decimals
         let asset_uuid = Uuid::parse_str(&asset_id).map_err(|_| AppError::ValidationError("Invalid asset ID".into()))?;
         let asset = self.asset_repo.get(asset_uuid).await?
             .ok_or(AppError::NotFound(format!("Asset {} not found", asset_id)))?;
         
         let scale = Decimal::from(10).powi(asset.decimals as i64);
-        let amount = (raw_amount * scale).floor();
+        let amount_atomic = (raw_amount * scale).floor();
 
-        // 3. Create Ledger Event
-        let event = Self::create_event(
-            &order.tenant_id.to_string(),
-            &event_id,
-            "order_placed",
-            &order.id.to_string(),
-            "order",
-            "Funds reservation for order",
-        );
+        Ok(OrderLockData {
+            asset_id,
+            amount_atomic,
+        })
+    }
 
+    fn generate_lock_entries(&self, tenant_id: &str, event_id: &str, account_id: &str, lock_data: &OrderLockData) -> Result<Vec<LedgerEntry>> {
         let mut entries = Vec::new();
 
         // Entry 1: Debit Available Balance
         entries.push(Self::create_entry(
-            &order.tenant_id.to_string(), &event_id, &order.account_id.to_string(),
-            format!("-{}", amount), &asset_id, "available"
+            tenant_id, event_id, account_id,
+            format!("-{}", lock_data.amount_atomic), &lock_data.asset_id, "available"
         ));
 
         // Entry 2: Credit Locked Balance
         entries.push(Self::create_entry(
-            &order.tenant_id.to_string(), &event_id, &order.account_id.to_string(),
-            format!("{}", amount), &asset_id, "locked"
+            tenant_id, event_id, account_id,
+            format!("{}", lock_data.amount_atomic), &lock_data.asset_id, "locked"
         ));
 
         // Override meta to include action: lock
@@ -242,7 +295,7 @@ impl LedgerService {
             entry.meta = meta_json.to_string();
         }
 
-        Ok((event, entries))
+        Ok(entries)
     }
 }
 

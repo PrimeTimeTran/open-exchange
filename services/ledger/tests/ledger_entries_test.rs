@@ -67,7 +67,7 @@ async fn test_process_trade_creates_entries() {
     assert!(entry_b_usd.is_some(), "Missing Entry: User B receives +30,000 USD");
 
     // 6. Exchange receives +30 USD Fee Revenue (3,000 cents)
-    let entry_exchange = find_entry(ctx.account_repo.accounts.lock().unwrap()[0].id.to_string(), "3000", "revenue");
+    let entry_exchange = find_entry(ctx.account_repo.get_accounts()[0].id.to_string(), "3000", "revenue");
     assert!(entry_exchange.is_some(), "Missing Entry: Exchange receives +30 USD Fee Revenue");
 
     println!("All ledger entries verified successfully!");

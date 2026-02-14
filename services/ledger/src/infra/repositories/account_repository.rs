@@ -1,9 +1,9 @@
-use async_trait::async_trait;
-use sqlx::{PgPool, FromRow};
-use uuid::Uuid;
-use crate::domain::accounts::{Account, AccountRepository};
 use crate::error::{AppError, Result};
+use crate::domain::accounts::{Account, AccountRepository};
+use uuid::Uuid;
+use sqlx::{PgPool, FromRow};
 use chrono::{DateTime, Utc};
+use async_trait::async_trait;
 
 pub struct PostgresAccountRepository {
     pool: PgPool,

@@ -16,6 +16,10 @@ impl InMemoryInstrumentRepository {
             instruments: Arc::new(Mutex::new(Vec::new())),
         }
     }
+
+    pub fn add(&self, instrument: common::Instrument) {
+        self.instruments.lock().unwrap().push(instrument);
+    }
 }
 
 #[async_trait]

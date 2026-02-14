@@ -1,16 +1,16 @@
-use std::sync::Arc;
-use uuid::Uuid;
 use super::model::Order;
-use super::repository::OrderRepository;
 use crate::error::{Result, AppError};
-use crate::domain::wallets::WalletService;
+use super::repository::OrderRepository;
 use crate::domain::assets::AssetService;
-use rust_decimal::Decimal;
-use rust_decimal::MathematicalOps;
-use std::str::FromStr;
-use sqlx::{Transaction, Postgres};
-
+use crate::domain::wallets::WalletService;
 use std::fmt;
+use uuid::Uuid;
+use std::sync::Arc;
+use std::str::FromStr;
+use rust_decimal::Decimal;
+use sqlx::{Transaction, Postgres};
+use rust_decimal::MathematicalOps;
+
 
 #[derive(Clone)]
 pub struct OrderService {

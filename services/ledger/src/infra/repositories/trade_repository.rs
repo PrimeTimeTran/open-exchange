@@ -1,11 +1,11 @@
+use crate::error::Result;
+use crate::proto::common::Trade;
+use crate::domain::trade::TradeRepository;
+use std::str::FromStr;
+use rust_decimal::Decimal;
+use chrono::{TimeZone, Utc};
 use async_trait::async_trait;
 use sqlx::{PgPool, Transaction, Postgres};
-use crate::error::Result;
-use crate::domain::trade::TradeRepository;
-use crate::proto::common::Trade;
-use rust_decimal::Decimal;
-use std::str::FromStr;
-use chrono::{TimeZone, Utc};
 
 #[derive(Debug, Clone)]
 pub struct PostgresTradeRepository {
@@ -78,5 +78,61 @@ impl TradeRepository for PostgresTradeRepository {
         .map_err(crate::error::AppError::DatabaseError)?;
 
         Ok(trade)
+    }
+
+    async fn get(&self, id: &str) -> Result<Option<Trade>> {
+        let uuid = uuid::Uuid::parse_str(id).map_err(|_| crate::error::AppError::ValidationError("Invalid trade ID".to_string()))?;
+        
+        let row = sqlx::query!(
+            r#"SELECT * FROM "Trade" WHERE id = $1"#,
+            uuid
+        )
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(crate::error::AppError::DatabaseError)?;
+
+        match row {
+            Some(r) => Ok(Some(Trade {
+                id: r.id.to_string(),
+                tenant_id: r.tenantId.to_string(),
+                instrument_id: r.instrumentId.map(|i| i.to_string()).unwrap_or_default(),
+                buy_order_id: "".to_string(),
+                sell_order_id: "".to_string(),
+                price: r.price.map(|p| p.to_string()).unwrap_or_default(),
+                quantity: r.quantity.map(|q| q.to_string()).unwrap_or_default(),
+                meta: r.meta.map(|m| m.to_string()).unwrap_or_default(),
+                created_at: r.createdAt.timestamp_millis(),
+                updated_at: r.updatedAt.timestamp_millis(),
+            })),
+            None => Ok(None),
+        }
+    }
+
+    async fn get_with_tx(&self, tx: &mut Transaction<'_, Postgres>, id: &str) -> Result<Option<Trade>> {
+        let uuid = uuid::Uuid::parse_str(id).map_err(|_| crate::error::AppError::ValidationError("Invalid trade ID".to_string()))?;
+        
+        let row = sqlx::query!(
+            r#"SELECT * FROM "Trade" WHERE id = $1"#,
+            uuid
+        )
+        .fetch_optional(&mut **tx)
+        .await
+        .map_err(crate::error::AppError::DatabaseError)?;
+
+        match row {
+            Some(r) => Ok(Some(Trade {
+                id: r.id.to_string(),
+                tenant_id: r.tenantId.to_string(),
+                instrument_id: r.instrumentId.map(|i| i.to_string()).unwrap_or_default(),
+                buy_order_id: "".to_string(),
+                sell_order_id: "".to_string(),
+                price: r.price.map(|p| p.to_string()).unwrap_or_default(),
+                quantity: r.quantity.map(|q| q.to_string()).unwrap_or_default(),
+                meta: r.meta.map(|m| m.to_string()).unwrap_or_default(),
+                created_at: r.createdAt.timestamp_millis(),
+                updated_at: r.updatedAt.timestamp_millis(),
+            })),
+            None => Ok(None),
+        }
     }
 }

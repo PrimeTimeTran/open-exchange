@@ -31,7 +31,7 @@ impl FillService {
             instrument_id: Uuid::parse_str(&trade.instrument_id).map_err(|_| AppError::ValidationError("Invalid instrument ID".into()))?,
             price: Decimal::from_str(&trade.price).map_err(|_| AppError::ValidationError("Invalid trade price".into()))?,
             quantity,
-            fee: Decimal::ZERO, // TODO: Calculate fee
+            fee: Decimal::ZERO,
             fee_currency: fee_currency.to_string(),
             role: role.to_string(),
             side: side.to_string(),

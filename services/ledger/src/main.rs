@@ -51,117 +51,109 @@ use ledger::proto::{
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // 1. Setup Environment & Config
     dotenv().ok();
     env_logger::init();
-
-    // Load Configuration
     let config = Config::from_env().expect("Failed to load configuration");
 
-    // Database Connection
+    // 2. Infrastructure Setup
     println!("Connecting to database: {}", config.database_url);
     let db_pool = infra::database::get_db_pool(&config.database_url).await?;
     println!("Database connected successfully.");
 
-    // Repositories
+    let matching_client = connect_to_matching_engine().await;
+
+    // 3. Initialize Repositories (Data Access Layer)
     let order_repo = Arc::new(PostgresOrderRepository::new(db_pool.clone()));
     let account_repo = Arc::new(PostgresAccountRepository::new(db_pool.clone()));
     let wallet_repo = Arc::new(PostgresWalletRepository::new(db_pool.clone()));
     let asset_repo = Arc::new(PostgresAssetRepository::new(db_pool.clone()));
     let instrument_repo = Arc::new(PostgresInstrumentRepository::new(db_pool.clone()));
     let fill_repo = Arc::new(PostgresFillRepository::new(db_pool.clone()));
-
     let ledger_repo = Arc::new(PostgresLedgerRepository::new(db_pool.clone()));
     let trade_repo = Arc::new(PostgresTradeRepository::new(db_pool.clone()));
 
-    // Services (Domain)
-    let wallet_service = Arc::new(WalletService::new(wallet_repo));
-    let asset_service = Arc::new(AssetService::new(asset_repo.clone(), instrument_repo.clone()));
-    let order_service = Arc::new(OrderService::new(
-        order_repo.clone(), 
-        wallet_service.clone(), 
-        asset_service.clone()
-    ));
-    let account_service = Arc::new(AccountService::new(account_repo.clone()));
-    let deposit_service = Arc::new(DepositService::new());
-    let withdrawal_service = Arc::new(WithdrawalService::new());
-    let user_service = Arc::new(UserService::new());
+    // 4. Initialize Domain Services (Business Logic Layer)
+    let wallet_svc = Arc::new(WalletService::new(wallet_repo));
+    let asset_svc = Arc::new(AssetService::new(asset_repo.clone(), instrument_repo.clone()));
+    let account_svc = Arc::new(AccountService::new(account_repo.clone()));
+    let deposit_svc = Arc::new(DepositService::new());
+    let withdrawal_svc = Arc::new(WithdrawalService::new());
+    let user_svc = Arc::new(UserService::new());
+    let fill_svc = Arc::new(FillService::new(fill_repo));
     
-    // Domain Services
-    let ledger_service = Arc::new(LedgerService::new(
+    let order_svc = Arc::new(OrderService::new(
+        order_repo.clone(), 
+        wallet_svc.clone(), 
+        asset_svc.clone()
+    ));
+
+    let ledger_svc = Arc::new(LedgerService::new(
         order_repo.clone(), 
         instrument_repo.clone(), 
         asset_repo.clone(),
         account_repo.clone()
     ));
-    let fill_service = Arc::new(FillService::new(fill_repo.clone()));
-    let settlement_service = Arc::new(SettlementService::new(
+
+    let settlement_svc = Arc::new(SettlementService::new(
         Some(db_pool.clone()),
-        order_service.clone(), 
+        order_svc.clone(), 
         instrument_repo.clone(), 
-        ledger_service.clone(),
-        wallet_service.clone(),
-        fill_service.clone(),
+        ledger_svc.clone(),
+        wallet_svc.clone(),
+        fill_svc.clone(),
         ledger_repo.clone(),
         trade_repo.clone(),
     ));
 
-    // Matching Engine Connection
-    let matching_engine_url = std::env::var("MATCHING_ENGINE_URL")
-        .unwrap_or_else(|_| "http://matching:50051".to_string());
-    println!("Connecting to Matching Engine at: {}", matching_engine_url);
+    // 5. Initialize API Implementations (Presentation Layer)
+    let order_api = OrderServiceImpl::new(order_svc, asset_svc.clone(), fill_svc.repo().clone(), matching_client);
+    let account_api = AccountServiceImpl::new(account_svc);
+    let wallet_api = WalletServiceImpl::new(wallet_svc.clone());
+    let asset_api = AssetServiceImpl::new(asset_svc);
+    let deposit_api = DepositServiceImpl::new(deposit_svc, wallet_svc.clone());
+    let withdrawal_api = WithdrawalServiceImpl::new(withdrawal_svc);
+    let user_api = UserServiceImpl::new(user_svc);
+    let settlement_api = SettlementServiceImpl::new(settlement_svc);
 
-    // Using Option<MatchingClient> but populated later if needed, or we just connect once and clone.
-    // Ideally we want to start serving even if matching engine is down.
-    // But OrderServiceImpl needs the client.
-    // Let's rely on tonic's lazy connection or make the connection retry loop not block main.
-    
-    // For now, let's just create the channel lazily.
-    // system::connect_to_matching_engine blocks, which prevents the server from starting.
-    // We should make it non-blocking or just use endpoint connect which is lazy.
-    
-    // Changing strategy: Don't block on matching engine connection.
-    let channel = tonic::transport::Endpoint::from_shared(matching_engine_url.clone())?
-        .connect_lazy();
-    let matching_client = Some(ledger::proto::matching::matching_client::MatchingClient::new(channel));
-    println!("Lazy connected to Matching Engine at {}", matching_engine_url);
-
-    // Start HTTP Health Server
+    // 6. Start Health Check Server
     let health_port = 8081;
     tokio::spawn(async move {
         system::start_health_server(health_port).await;
     });
 
+    // 7. Start gRPC Server
     let addr = format!("[::]:{}", config.port).parse()?;
-
-    // API Services
-    let order_impl = OrderServiceImpl::new(
-        order_service, 
-        asset_service.clone(), 
-        fill_service.repo().clone(),
-        matching_client
-    );
-    let account_impl = AccountServiceImpl::new(account_service);
-    let wallet_impl = WalletServiceImpl::new(wallet_service.clone());
-    let asset_impl = AssetServiceImpl::new(asset_service);
-    let deposit_impl = DepositServiceImpl::new(deposit_service, wallet_service.clone());
-    let withdrawal_impl = WithdrawalServiceImpl::new(withdrawal_service);
-    let user_impl = UserServiceImpl::new(user_service);
-    let settlement_impl = SettlementServiceImpl::new(settlement_service);
-
     println!("LedgerService listening on {}", addr);
 
     Server::builder()
-        .add_service(OrderServiceServer::new(order_impl))
-        .add_service(AccountServiceServer::new(account_impl))
-        .add_service(WalletServiceServer::new(wallet_impl))
-        .add_service(AssetServiceServer::new(asset_impl))
-        .add_service(DepositServiceServer::new(deposit_impl))
-        .add_service(WithdrawalServiceServer::new(withdrawal_impl))
-        .add_service(UserServiceServer::new(user_impl))
-        .add_service(SettlementServer::new(settlement_impl))
+        .add_service(OrderServiceServer::new(order_api))
+        .add_service(AccountServiceServer::new(account_api))
+        .add_service(WalletServiceServer::new(wallet_api))
+        .add_service(AssetServiceServer::new(asset_api))
+        .add_service(DepositServiceServer::new(deposit_api))
+        .add_service(WithdrawalServiceServer::new(withdrawal_api))
+        .add_service(UserServiceServer::new(user_api))
+        .add_service(SettlementServer::new(settlement_api))
         .serve(addr)
         .await?;
 
     Ok(())
+}
+
+async fn connect_to_matching_engine() -> Option<ledger::proto::matching::matching_client::MatchingClient<tonic::transport::Channel>> {
+    let url = std::env::var("MATCHING_ENGINE_URL").unwrap_or_else(|_| "http://matching:50051".to_string());
+    println!("Connecting to Matching Engine at: {}", url);
+    match tonic::transport::Endpoint::from_shared(url.clone()) {
+        Ok(endpoint) => {
+            let channel = endpoint.connect_lazy();
+            println!("Lazy connected to Matching Engine at {}", url);
+            Some(ledger::proto::matching::matching_client::MatchingClient::new(channel))
+        },
+        Err(e) => {
+            eprintln!("Invalid Matching Engine URL: {}", e);
+            None
+        }
+    }
 }
 

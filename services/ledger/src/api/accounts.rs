@@ -1,9 +1,9 @@
-use uuid::Uuid;
-use std::sync::Arc;
-use tonic::{Request, Response, Status};
 use crate::proto::ledger::*;
 use crate::proto::ledger::account_service_server::AccountService;
 use crate::domain::accounts::AccountService as AccountDomainService;
+use uuid::Uuid;
+use std::sync::Arc;
+use tonic::{Request, Response, Status};
 
 pub struct AccountServiceImpl {
     account_service: Arc<AccountDomainService>,
