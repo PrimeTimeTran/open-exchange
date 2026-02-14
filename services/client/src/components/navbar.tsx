@@ -132,7 +132,7 @@ export function Navbar({ currentUser }: { currentUser?: any }) {
                     <>
                       <DropdownMenuItem asChild>
                         <Link
-                          href="/auth/signin"
+                          href="/auth/sign-in"
                           className="cursor-pointer w-full"
                         >
                           <span>Sign In</span>
@@ -140,7 +140,7 @@ export function Navbar({ currentUser }: { currentUser?: any }) {
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link
-                          href="/auth/signup"
+                          href="/auth/sign-up"
                           className="cursor-pointer w-full"
                         >
                           <span>Create Account</span>

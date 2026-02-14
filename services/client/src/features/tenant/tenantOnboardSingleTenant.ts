@@ -67,7 +67,7 @@ export async function tenantOnboardSingleTenant(
         firstName: oauthExtraData?.firstName || undefined,
         lastName: oauthExtraData?.lastName || undefined,
         // Add default roles for new members here
-        roles: [],
+        roles: [roles.user],
       },
     });
     queries.push(createMembershipQuery);

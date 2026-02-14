@@ -6,6 +6,7 @@ import { authSignUpInputSchema } from 'src/features/auth/authSchemas';
 import { authSendVerifyEmailEmail } from 'src/features/auth/authSendVerifyEmail';
 import { membershipAcceptInvitation } from 'src/features/membership/membershipAcceptInvitation';
 import { tenantOnboardSingleTenant } from 'src/features/tenant/tenantOnboardSingleTenant';
+import { walletCreateDefault } from 'src/features/wallet/walletCreateDefault';
 import {
   prismaDangerouslyBypassAuth,
   prismaTransactionDangerouslyBypassAuth,
@@ -139,6 +140,12 @@ export async function authSignUpController(body: unknown, context: AppContext) {
   }
 
   await prismaWT.$transaction(queries);
+
+  try {
+    await walletCreateDefault(user.id, context);
+  } catch (error) {
+    Logger.error(error);
+  }
 
   if (verifyEmailToken) {
     await authSendVerifyEmailEmail(user.email, verifyEmailToken, context);

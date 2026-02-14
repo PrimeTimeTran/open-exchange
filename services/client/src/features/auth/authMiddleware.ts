@@ -174,6 +174,10 @@ export async function authenticateWithJwtToken(
     currentMembership = activeMemberships.find((membership) => {
       return membership.tenantId === tenantId;
     });
+
+    if (!currentMembership && activeMemberships.length > 0) {
+      currentMembership = activeMemberships[0];
+    }
   }
 
   currentMembership = await filePopulateDownloadUrlInTree(currentMembership);

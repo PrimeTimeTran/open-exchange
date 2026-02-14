@@ -8,13 +8,15 @@ export default async function AccountPage() {
   const context = await appContextForReact(cookies());
 
   if (!context.currentMembership || !context.currentTenant) {
+    console.log({
+      membership: context.dictionary.membership,
+      tenant: context.dictionary.tenant,
+    });
     return null;
   }
 
   const { balances, orders, deposits, withdrawals, availableAssets } =
     await getAccountPageData(context);
-
-  console.log({ balances, orders, deposits, withdrawals, availableAssets });
 
   return (
     <AccountClient
