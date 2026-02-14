@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
+import { authSignOutApiCall } from 'src/features/auth/authApiCalls';
 import {
   Moon,
   Sun,
@@ -176,8 +177,8 @@ export function Navbar({ currentUser }: { currentUser?: any }) {
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive cursor-pointer"
                         onClick={() => {
-                          // Handle sign out or redirect
-                          window.location.href = '/auth/signout';
+                          authSignOutApiCall();
+                          window.location.href = '/auth/sign-in';
                         }}
                       >
                         <LogOut className="mr-2 h-4 w-4" />

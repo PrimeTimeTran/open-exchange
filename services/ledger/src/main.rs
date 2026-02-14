@@ -75,19 +75,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Services (Domain)
     let wallet_service = Arc::new(WalletService::new(wallet_repo));
-    let asset_service = Arc::new(AssetService::new(asset_repo, instrument_repo.clone()));
+    let asset_service = Arc::new(AssetService::new(asset_repo.clone(), instrument_repo.clone()));
     let order_service = Arc::new(OrderService::new(
         order_repo.clone(), 
         wallet_service.clone(), 
         asset_service.clone()
     ));
-    let account_service = Arc::new(AccountService::new(account_repo));
+    let account_service = Arc::new(AccountService::new(account_repo.clone()));
     let deposit_service = Arc::new(DepositService::new());
     let withdrawal_service = Arc::new(WithdrawalService::new());
     let user_service = Arc::new(UserService::new());
     
     // Domain Services
-    let ledger_service = Arc::new(LedgerService::new(order_repo.clone(), instrument_repo.clone()));
+    let ledger_service = Arc::new(LedgerService::new(
+        order_repo.clone(), 
+        instrument_repo.clone(), 
+        asset_repo.clone(),
+        account_repo.clone()
+    ));
     let fill_service = Arc::new(FillService::new(fill_repo.clone()));
     let settlement_service = Arc::new(SettlementService::new(
         Some(db_pool.clone()),

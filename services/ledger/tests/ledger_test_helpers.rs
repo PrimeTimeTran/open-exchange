@@ -160,6 +160,61 @@ impl AssetRepository for MockAssetRepository {
 }
 
 #[derive(Debug)]
+pub struct MockAccountRepository {
+    pub accounts: Mutex<Vec<ledger::domain::accounts::Account>>,
+}
+
+impl MockAccountRepository {
+    pub fn new() -> Self {
+        Self { accounts: Mutex::new(Vec::new()) }
+    }
+
+    #[allow(dead_code)]
+    pub fn add(&self, account: ledger::domain::accounts::Account) {
+        self.accounts.lock().unwrap().push(account);
+    }
+}
+
+#[async_trait]
+impl ledger::domain::accounts::repository::AccountRepository for MockAccountRepository {
+    async fn create(&self, account: ledger::domain::accounts::Account) -> Result<ledger::domain::accounts::Account> {
+        self.add(account.clone());
+        Ok(account)
+    }
+
+    async fn get(&self, id: Uuid) -> Result<Option<ledger::domain::accounts::Account>> {
+        let accounts = self.accounts.lock().unwrap();
+        Ok(accounts.iter().find(|a| a.id == id).cloned())
+    }
+
+    async fn update(&self, account: ledger::domain::accounts::Account) -> Result<ledger::domain::accounts::Account> {
+        let mut accounts = self.accounts.lock().unwrap();
+        if let Some(pos) = accounts.iter().position(|a| a.id == account.id) {
+            accounts[pos] = account.clone();
+        }
+        Ok(account)
+    }
+
+    async fn delete(&self, id: Uuid) -> Result<()> {
+        let mut accounts = self.accounts.lock().unwrap();
+        if let Some(pos) = accounts.iter().position(|a| a.id == id) {
+            accounts.remove(pos);
+        }
+        Ok(())
+    }
+
+    async fn list_by_user(&self, user_id: &str) -> Result<Vec<ledger::domain::accounts::Account>> {
+        let accounts = self.accounts.lock().unwrap();
+        Ok(accounts.iter().filter(|a| a.user_id == user_id).cloned().collect())
+    }
+
+    async fn get_by_name(&self, name: &str) -> Result<Option<ledger::domain::accounts::Account>> {
+        let accounts = self.accounts.lock().unwrap();
+        Ok(accounts.iter().find(|a| a.name == name).cloned())
+    }
+}
+
+#[derive(Debug)]
 pub struct MockWalletRepository {
     wallets: Mutex<Vec<ledger::domain::wallets::Wallet>>,
 }
@@ -351,6 +406,7 @@ pub struct LedgerTestContext {
     pub repo: Arc<MockOrderRepository>,
     pub instrument_repo: Arc<MockInstrumentRepository>,
     pub asset_repo: Arc<MockAssetRepository>,
+    pub account_repo: Arc<MockAccountRepository>,
     pub wallet_repo: Arc<MockWalletRepository>,
     pub fill_repo: Arc<MockFillRepository>,
     pub ledger_repo: Arc<MockLedgerRepository>,
@@ -359,6 +415,8 @@ pub struct LedgerTestContext {
     pub account_a: Uuid,
     pub account_b: Uuid,
     pub instrument_id: Uuid,
+    pub btc_id: Uuid,
+    pub usd_id: Uuid,
 }
 
 impl LedgerTestContext {
@@ -366,11 +424,44 @@ impl LedgerTestContext {
         let instrument_id = Uuid::new_v4();
         let instrument_repo = Arc::new(MockInstrumentRepository::new());
         let asset_repo = Arc::new(MockAssetRepository::new());
+        let account_repo = Arc::new(MockAccountRepository::new());
         let wallet_repo = Arc::new(MockWalletRepository::new());
         let fill_repo = Arc::new(MockFillRepository::new());
         let ledger_repo = Arc::new(MockLedgerRepository::new());
         let trade_repo = Arc::new(MockTradeRepository::new());
         
+        let btc_id = Uuid::new_v4();
+        let usd_id = Uuid::new_v4();
+
+        // Add Assets
+        asset_repo.add(ledger::proto::common::Asset {
+            id: btc_id.to_string(),
+            tenant_id: "default".to_string(),
+            symbol: "BTC".to_string(),
+            decimals: 8,
+            ..Default::default()
+        });
+        asset_repo.add(ledger::proto::common::Asset {
+            id: usd_id.to_string(),
+            tenant_id: "default".to_string(),
+            symbol: "USD".to_string(),
+            decimals: 2,
+            ..Default::default()
+        });
+
+        // Add Fee Account
+        account_repo.add(ledger::domain::accounts::Account {
+            id: Uuid::new_v4(),
+            tenant_id: "default".to_string(),
+            user_id: "".to_string(),
+            name: "fees_account".to_string(),
+            r#type: "fees".to_string(),
+            status: "active".to_string(),
+            meta: serde_json::json!({}),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        });
+
         // Add default BTC-USD instrument
         instrument_repo.add(Instrument {
             id: instrument_id.to_string(),
@@ -378,8 +469,8 @@ impl LedgerTestContext {
             symbol: "BTC-USD".to_string(),
             r#type: "spot".to_string(),
             status: "active".to_string(),
-            underlying_asset_id: "BTC".to_string(),
-            quote_asset_id: "USD".to_string(),
+            underlying_asset_id: btc_id.to_string(),
+            quote_asset_id: usd_id.to_string(),
             meta: "{}".to_string(),
             created_at: Utc::now().timestamp_millis(),
             updated_at: Utc::now().timestamp_millis(),
@@ -389,6 +480,7 @@ impl LedgerTestContext {
             repo: Arc::new(MockOrderRepository::new()),
             instrument_repo,
             asset_repo,
+            account_repo,
             wallet_repo,
             fill_repo,
             ledger_repo,
@@ -397,6 +489,8 @@ impl LedgerTestContext {
             account_a: Uuid::new_v4(),
             account_b: Uuid::new_v4(),
             instrument_id,
+            btc_id,
+            usd_id,
         }
     }
 
@@ -478,7 +572,7 @@ impl LedgerTestContext {
     
     #[allow(dead_code)]
     pub fn init_test_services(&self) -> (SettlementService, Arc<WalletService>) {
-        let ledger_service = Arc::new(LedgerService::new(self.repo.clone(), self.instrument_repo.clone()));
+        let ledger_service = Arc::new(LedgerService::new(self.repo.clone(), self.instrument_repo.clone(), self.asset_repo.clone(), self.account_repo.clone()));
         let wallet_service = Arc::new(WalletService::new(self.wallet_repo.clone()));
         let asset_service = Arc::new(AssetService::new(self.asset_repo.clone(), self.instrument_repo.clone()));
         let order_service = Arc::new(OrderService::new(self.repo.clone(), wallet_service.clone(), asset_service));

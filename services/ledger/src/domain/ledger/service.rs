@@ -2,21 +2,30 @@ use crate::proto::common::{Trade, LedgerEvent, LedgerEntry};
 use crate::domain::orders::model::Order;
 use crate::error::{Result, AppError};
 use crate::domain::orders::repository::OrderRepository;
+use crate::domain::accounts::repository::AccountRepository;
 use crate::infra::repositories::InstrumentRepository;
 use uuid::Uuid;
 use chrono::Utc;
 use std::sync::Arc;
 use rust_decimal::Decimal;
 use std::str::FromStr;
+use rust_decimal::MathematicalOps;
 
 pub struct LedgerService {
     order_repo: Arc<dyn OrderRepository>,
     instrument_repo: Arc<dyn InstrumentRepository>,
+    asset_repo: Arc<dyn crate::infra::repositories::AssetRepository>,
+    account_repo: Arc<dyn AccountRepository>,
 }
 
 impl LedgerService {
-    pub fn new(order_repo: Arc<dyn OrderRepository>, instrument_repo: Arc<dyn InstrumentRepository>) -> Self {
-        Self { order_repo, instrument_repo }
+    pub fn new(
+        order_repo: Arc<dyn OrderRepository>, 
+        instrument_repo: Arc<dyn InstrumentRepository>,
+        asset_repo: Arc<dyn crate::infra::repositories::AssetRepository>,
+        account_repo: Arc<dyn AccountRepository>
+    ) -> Self {
+        Self { order_repo, instrument_repo, asset_repo, account_repo }
     }
 
     fn create_entry(
@@ -88,13 +97,25 @@ impl LedgerService {
         let base_asset_id = instrument.underlying_asset_id;
         let quote_asset_id = instrument.quote_asset_id;
 
+        // Fetch Assets to get decimals
+        let base_asset_uuid = Uuid::parse_str(&base_asset_id).map_err(|_| AppError::ValidationError("Invalid base asset ID".into()))?;
+        let quote_asset_uuid = Uuid::parse_str(&quote_asset_id).map_err(|_| AppError::ValidationError("Invalid quote asset ID".into()))?;
+
+        let base_asset = self.asset_repo.get(base_asset_uuid).await?
+            .ok_or(AppError::NotFound(format!("Base asset {} not found", base_asset_id)))?;
+        let quote_asset = self.asset_repo.get(quote_asset_uuid).await?
+            .ok_or(AppError::NotFound(format!("Quote asset {} not found", quote_asset_id)))?;
+
+        let base_decimals = base_asset.decimals;
+        let quote_decimals = quote_asset.decimals;
+        
         // 2. Create Ledger Event
         let event = Self::create_event(
             &trade.tenant_id,
             &event_id,
             "trade",
             &trade.id,
-            "trade",
+            "Trade", // reference_type (Capitalized for consistency/Audit)
             "Trade execution",
         );
 
@@ -107,42 +128,53 @@ impl LedgerService {
         let fee_rate = Decimal::new(1, 3);
         let fee_amount = total_value * fee_rate; 
 
+        // Scale Amounts (to Atomic Units)
+        let base_scale = Decimal::from(10).powi(base_decimals as i64);
+        let quote_scale = Decimal::from(10).powi(quote_decimals as i64);
+
+        let qty_atomic = (trade_qty * base_scale).floor();
+        let total_atomic = (total_value * quote_scale).floor();
+        let fee_atomic = (fee_amount * quote_scale).floor();
+
         // Entry 1: Buyer receives Base Asset (+Qty)
         entries.push(Self::create_entry(
             &trade.tenant_id, &event_id, &buy_order.account_id.to_string(),
-            trade.quantity.clone(), &base_asset_id, "credit"
+            format!("{}", qty_atomic), &base_asset_id, "credit"
         ));
 
         // Entry 2: Buyer pays Quote Asset (-Total)
         entries.push(Self::create_entry(
             &trade.tenant_id, &event_id, &buy_order.account_id.to_string(),
-            format!("-{}", total_value), &quote_asset_id, "debit"
+            format!("-{}", total_atomic), &quote_asset_id, "debit"
         ));
 
         // Entry 3: Buyer pays Fee (-FeeAmount)
         entries.push(Self::create_entry(
             &trade.tenant_id, &event_id, &buy_order.account_id.to_string(),
-            format!("-{}", fee_amount), &quote_asset_id, "fee"
+            format!("-{}", fee_atomic), &quote_asset_id, "fee"
         ));
 
         // Entry 4: Seller pays Base Asset (-Qty)
         entries.push(Self::create_entry(
             &trade.tenant_id, &event_id, &sell_order.account_id.to_string(),
-            format!("-{}", trade.quantity), &base_asset_id, "debit"
+            format!("-{}", qty_atomic), &base_asset_id, "debit"
         ));
 
         // Entry 5: Seller receives Quote Asset (+Total)
         entries.push(Self::create_entry(
             &trade.tenant_id, &event_id, &sell_order.account_id.to_string(),
-            format!("{}", total_value), &quote_asset_id, "credit"
+            format!("{}", total_atomic), &quote_asset_id, "credit"
         ));
 
         // Entry 6: Exchange receives Fee (+FeeAmount)
-        // Use Nil UUID for exchange account for now to pass validation
-        let exchange_account_id = Uuid::nil().to_string(); 
+        // Use Real Fees Account
+        let fees_account = self.account_repo.get_by_name("fees_account").await?
+            .ok_or(AppError::NotFound("System fees_account not found".to_string()))?;
+        let exchange_account_id = fees_account.id.to_string();
+
         entries.push(Self::create_entry(
             &trade.tenant_id, &event_id, &exchange_account_id,
-            format!("{}", fee_amount), &quote_asset_id, "revenue"
+            format!("{}", fee_atomic), &quote_asset_id, "revenue"
         ));
 
         Ok((event, entries))
@@ -157,7 +189,7 @@ impl LedgerService {
             .ok_or(AppError::NotFound(format!("Instrument {} not found", order.instrument_id)))?;
 
         // 2. Determine Asset and Amount
-        let (asset_id, amount) = if order.side == "buy" { 
+        let (asset_id, raw_amount) = if order.side == "buy" { 
             // Buying -> Locking Quote Asset (e.g., buying BTC with USD)
             let price = order.price;
             let quantity = order.quantity;
@@ -166,6 +198,14 @@ impl LedgerService {
             // Selling -> Locking Base Asset (e.g., selling BTC for USD)
             (instrument.underlying_asset_id, order.quantity)
         };
+
+        // Fetch Asset to get decimals
+        let asset_uuid = Uuid::parse_str(&asset_id).map_err(|_| AppError::ValidationError("Invalid asset ID".into()))?;
+        let asset = self.asset_repo.get(asset_uuid).await?
+            .ok_or(AppError::NotFound(format!("Asset {} not found", asset_id)))?;
+        
+        let scale = Decimal::from(10).powi(asset.decimals as i64);
+        let amount = (raw_amount * scale).floor();
 
         // 3. Create Ledger Event
         let event = Self::create_event(
@@ -209,8 +249,10 @@ impl LedgerService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::infra::repositories::{InMemoryOrderRepository, InMemoryInstrumentRepository};
-    use crate::proto::common::Instrument;
+    use crate::infra::repositories::{InMemoryOrderRepository, InMemoryInstrumentRepository, InMemoryAssetRepository, InMemoryAccountRepository, AssetRepository};
+    use crate::domain::accounts::repository::AccountRepository;
+    use crate::proto::common::{Instrument, Asset};
+    use crate::domain::accounts::Account;
     use crate::domain::orders::model::Order;
     use rust_decimal::Decimal;
 
@@ -218,7 +260,9 @@ mod tests {
     async fn test_process_trade_events() {
         let order_repo = Arc::new(InMemoryOrderRepository::new());
         let instrument_repo = Arc::new(InMemoryInstrumentRepository::new());
-        let service = LedgerService::new(order_repo.clone(), instrument_repo.clone());
+        let asset_repo = Arc::new(InMemoryAssetRepository::new());
+        let account_repo = Arc::new(InMemoryAccountRepository::new());
+        let service = LedgerService::new(order_repo.clone(), instrument_repo.clone(), asset_repo.clone(), account_repo.clone());
 
         // Setup Data
         let tenant_id = Uuid::new_v4();
@@ -226,12 +270,46 @@ mod tests {
         let account_a = Uuid::new_v4(); // Buyer
         let account_b = Uuid::new_v4(); // Seller
         
+        // Setup Assets
+        let btc_id = Uuid::new_v4().to_string();
+        let usd_id = Uuid::new_v4().to_string();
+
+        asset_repo.create(Asset {
+            id: btc_id.clone(),
+            tenant_id: tenant_id.to_string(),
+            symbol: "BTC".to_string(),
+            decimals: 8,
+            ..Default::default()
+        }).await.unwrap();
+
+        asset_repo.create(Asset {
+            id: usd_id.clone(),
+            tenant_id: tenant_id.to_string(),
+            symbol: "USD".to_string(),
+            decimals: 2,
+            ..Default::default()
+        }).await.unwrap();
+
+        // Setup Fee Account
+        let fees_account_id = Uuid::new_v4();
+        account_repo.create(Account {
+            id: fees_account_id,
+            tenant_id: tenant_id.to_string(),
+            user_id: "".to_string(),
+            name: "fees_account".to_string(),
+            r#type: "fees".to_string(),
+            status: "active".to_string(),
+            meta: serde_json::json!({}),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        }).await.unwrap();
+
         let instrument = Instrument {
             id: instrument_id.to_string(),
             tenant_id: tenant_id.to_string(),
             symbol: "BTC-USD".to_string(),
-            underlying_asset_id: "BTC".to_string(),
-            quote_asset_id: "USD".to_string(),
+            underlying_asset_id: btc_id.clone(),
+            quote_asset_id: usd_id.clone(),
             ..Default::default()
         };
         instrument_repo.create(instrument).await.unwrap();
@@ -292,12 +370,12 @@ mod tests {
         
         assert_eq!(entries.len(), 6);
         
-        let buyer_btc = entries.iter().find(|e| e.account_id == account_a.to_string() && e.meta.contains("BTC") && e.meta.contains("credit"));
+        let buyer_btc = entries.iter().find(|e| e.account_id == account_a.to_string() && e.meta.contains(&btc_id) && e.meta.contains("credit"));
         assert!(buyer_btc.is_some());
-        assert_eq!(buyer_btc.unwrap().amount, "1.0");
+        assert_eq!(buyer_btc.unwrap().amount, "100000000");
 
-        let buyer_usd = entries.iter().find(|e| e.account_id == account_a.to_string() && e.meta.contains("USD") && e.meta.contains("debit"));
+        let buyer_usd = entries.iter().find(|e| e.account_id == account_a.to_string() && e.meta.contains(&usd_id) && e.meta.contains("debit"));
         assert!(buyer_usd.is_some());
-        assert_eq!(buyer_usd.unwrap().amount, "-50000.0");
+        assert_eq!(buyer_usd.unwrap().amount, "-5000000");
     }
 }

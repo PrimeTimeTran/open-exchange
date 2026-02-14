@@ -221,8 +221,12 @@ export const seedUserWithData = async (
         let lockAssetId = '';
         let lockAccount = mainAccount;
 
-        // Only simulate locking for SPOT instruments for now
-        if (inst.type === 'spot') {
+        // Simulate locking for all instruments (Spot, Future, Option) assuming physical settlement logic
+        if (
+          inst.type === 'spot' ||
+          inst.type === 'future' ||
+          inst.type === 'option'
+        ) {
           if (order.side === 'buy') {
             lockedAmount = new Prisma.Decimal(order.price)
               .mul(new Prisma.Decimal(order.quantity))
@@ -349,7 +353,12 @@ export async function seedPlatformUsers(
       }
       quantity = parseFloat(Number(quantity).toFixed(6));
 
-      if (side === 'sell' && instrument.type === 'spot') {
+      if (
+        side === 'sell' &&
+        (instrument.type === 'spot' ||
+          instrument.type === 'future' ||
+          instrument.type === 'option')
+      ) {
         const baseSymbol = instrument.underlyingAsset?.symbol;
         if (baseSymbol) {
           const current = initialFundsMap.get(baseSymbol) || 0;

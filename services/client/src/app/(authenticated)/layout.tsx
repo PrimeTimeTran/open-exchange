@@ -33,7 +33,7 @@ export default async function DashboardLayout({
 
   return (
     <LedgerProvider>
-      <TradeNotificationListener />
+      <TradeNotificationListener currentUserId={context.currentUser?.id} />
       <Navbar currentUser={context.currentUser} />
       <main className="min-h-screen bg-background">{children}</main>
     </LedgerProvider>

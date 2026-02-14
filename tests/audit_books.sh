@@ -110,7 +110,7 @@ WITH OrderLocks AS (
     FROM "Order" o
     JOIN "Instrument" i ON o."instrumentId" = i.id
     JOIN "Asset" qa ON i."quoteAssetId" = qa.id
-    WHERE o.side = '"'buy'"' AND o.status IN ('"'open'"', '"'partial_fill'"') AND i.type = '"'spot'"'
+    WHERE o.side = '\''buy'\'' AND o.status IN ('\''open'\'', '\''partial_fill'\'') AND i.type IN ('\''spot'\'', '\''future'\'', '\''option'\'')
     GROUP BY o."accountId", i."quoteAssetId"
 
     UNION ALL
@@ -123,7 +123,7 @@ WITH OrderLocks AS (
     FROM "Order" o
     JOIN "Instrument" i ON o."instrumentId" = i.id
     JOIN "Asset" ba ON i."underlyingAssetId" = ba.id
-    WHERE o.side = '"'sell'"' AND o.status IN ('"'open'"', '"'partial_fill'"') AND i.type = '"'spot'"'
+    WHERE o.side = '\''sell'\'' AND o.status IN ('\''open'\'', '\''partial_fill'\'') AND i.type IN ('\''spot'\'', '\''future'\'', '\''option'\'')
     GROUP BY o."accountId", i."underlyingAssetId"
 ),
 AggregatedLocks AS (
@@ -155,11 +155,11 @@ WITH LedgerWithAsset AS (
     SELECT 
         le.amount, 
         le."accountId",
-        COALESCE(d."assetId", wd."assetId", (le.meta->>'\''assetId'\'')::uuid) as "assetId"
+        COALESCE(d."assetId", wd."assetId", (le.meta->>'\''assetId'\'')::uuid, (le.meta->>'\''asset'\'')::uuid) as "assetId"
     FROM "LedgerEntry" le
     LEFT JOIN "LedgerEvent" ev ON le."eventId" = ev.id
-    LEFT JOIN "Deposit" d ON ev."referenceType" = '"'Deposit'"' AND ev."referenceId"::uuid = d.id
-    LEFT JOIN "Withdrawal" wd ON ev."referenceType" = '"'Withdrawal'"' AND ev."referenceId"::uuid = wd.id
+    LEFT JOIN "Deposit" d ON ev."referenceType" = '\''Deposit'\'' AND ev."referenceId"::uuid = d.id
+    LEFT JOIN "Withdrawal" wd ON ev."referenceType" = '\''Withdrawal'\'' AND ev."referenceId"::uuid = wd.id
 )
 SELECT 
     w."accountId",

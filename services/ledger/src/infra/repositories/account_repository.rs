@@ -21,7 +21,8 @@ struct AccountRow {
     #[sqlx(rename = "tenantId")]
     tenant_id: Uuid,
     #[sqlx(rename = "userId")]
-    user_id: Uuid,
+    user_id: Option<Uuid>,
+    name: String,
     r#type: String,
     status: String,
     meta: Option<serde_json::Value>,
@@ -36,7 +37,8 @@ impl From<AccountRow> for Account {
         Self {
             id: row.id,
             tenant_id: row.tenant_id.to_string(),
-            user_id: row.user_id.to_string(),
+            user_id: row.user_id.map(|u| u.to_string()).unwrap_or_default(),
+            name: row.name,
             r#type: row.r#type,
             status: row.status,
             meta: row.meta.unwrap_or(serde_json::json!({})),
@@ -54,14 +56,15 @@ impl AccountRepository for PostgresAccountRepository {
 
         let rec: AccountRow = sqlx::query_as(
             r#"
-            INSERT INTO "Account" (id, "tenantId", "userId", type, status, meta, "createdAt", "updatedAt")
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            RETURNING id, "tenantId", "userId", type, status, meta, "createdAt", "updatedAt"
+            INSERT INTO "Account" (id, "tenantId", "userId", name, type, status, meta, "createdAt", "updatedAt")
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            RETURNING id, "tenantId", "userId", name, type, status, meta, "createdAt", "updatedAt"
             "#
         )
         .bind(account.id)
         .bind(tenant_id)
         .bind(user_id)
+        .bind(account.name)
         .bind(account.r#type)
         .bind(account.status)
         .bind(account.meta)
@@ -77,7 +80,7 @@ impl AccountRepository for PostgresAccountRepository {
     async fn get(&self, id: Uuid) -> Result<Option<Account>> {
         let rec: Option<AccountRow> = sqlx::query_as(
             r#"
-            SELECT id, "tenantId", "userId", type, status, meta, "createdAt", "updatedAt"
+            SELECT id, "tenantId", "userId", name, type, status, meta, "createdAt", "updatedAt"
             FROM "Account"
             WHERE id = $1
             "#
@@ -97,14 +100,15 @@ impl AccountRepository for PostgresAccountRepository {
         let rec: AccountRow = sqlx::query_as(
             r#"
             UPDATE "Account"
-            SET "tenantId" = $2, "userId" = $3, type = $4, status = $5, meta = $6, "updatedAt" = $7
+            SET "tenantId" = $2, "userId" = $3, name = $4, type = $5, status = $6, meta = $7, "updatedAt" = $8
             WHERE id = $1
-            RETURNING id, "tenantId", "userId", type, status, meta, "createdAt", "updatedAt"
+            RETURNING id, "tenantId", "userId", name, type, status, meta, "createdAt", "updatedAt"
             "#
         )
         .bind(account.id)
         .bind(tenant_id)
         .bind(user_id)
+        .bind(account.name)
         .bind(account.r#type)
         .bind(account.status)
         .bind(account.meta)
@@ -141,7 +145,7 @@ impl AccountRepository for PostgresAccountRepository {
 
         let recs: Vec<AccountRow> = sqlx::query_as(
             r#"
-            SELECT id, "tenantId", "userId", type, status, meta, "createdAt", "updatedAt"
+            SELECT id, "tenantId", "userId", name, type, status, meta, "createdAt", "updatedAt"
             FROM "Account"
             WHERE "userId" = $1
             "#
@@ -153,4 +157,18 @@ impl AccountRepository for PostgresAccountRepository {
 
         Ok(recs.into_iter().map(|r| r.into()).collect())
     }
-}
+    async fn get_by_name(&self, name: &str) -> Result<Option<Account>> {
+        let rec: Option<AccountRow> = sqlx::query_as(
+            r#"
+            SELECT id, "tenantId", "userId", name, type, status, meta, "createdAt", "updatedAt"
+            FROM "Account"
+            WHERE name = $1
+            "#
+        )
+        .bind(name)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(AppError::DatabaseError)?;
+
+        Ok(rec.map(|r| r.into()))
+    }}

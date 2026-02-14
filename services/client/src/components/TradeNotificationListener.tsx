@@ -7,34 +7,48 @@ import { orderEnumerators } from 'src/features/order/orderEnumerators';
 import { useTradeStream } from 'src/hooks/useTradeStream';
 import { toast } from 'src/shared/components/ui/use-toast';
 
-export function TradeNotificationListener() {
+export function TradeNotificationListener({
+  currentUserId,
+}: {
+  currentUserId?: string;
+}) {
   const queryClient = useQueryClient();
 
   // Fetch OPEN orders
   const openOrdersQuery = useQuery({
-    queryKey: ['order', 'open'],
+    queryKey: ['order', 'open', currentUserId],
     queryFn: async ({ signal }) => {
+      if (!currentUserId) return { orders: [] };
       return await orderFindManyApiCall(
         {
-          filter: { status: orderEnumerators.status.open },
+          filter: {
+            status: orderEnumerators.status.open,
+            createdByUserId: currentUserId,
+          },
         },
         signal,
       );
     },
+    enabled: !!currentUserId,
     refetchInterval: 30000,
   });
 
   // Fetch PARTIALLY FILLED orders
   const partialOrdersQuery = useQuery({
-    queryKey: ['order', 'partial_fill'],
+    queryKey: ['order', 'partial_fill', currentUserId],
     queryFn: async ({ signal }) => {
+      if (!currentUserId) return { orders: [] };
       return await orderFindManyApiCall(
         {
-          filter: { status: orderEnumerators.status.partial_fill },
+          filter: {
+            status: orderEnumerators.status.partial_fill,
+            createdByUserId: currentUserId,
+          },
         },
         signal,
       );
     },
+    enabled: !!currentUserId,
     refetchInterval: 30000,
   });
 

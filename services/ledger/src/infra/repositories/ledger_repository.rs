@@ -3,6 +3,11 @@ use sqlx::{PgPool, Transaction, Postgres};
 use crate::error::Result;
 use crate::proto::common::{LedgerEvent, LedgerEntry, Trade};
 use crate::domain::ledger::repository::LedgerRepository;
+use rust_decimal::Decimal;
+use std::str::FromStr;
+use chrono::Utc;
+use chrono::TimeZone;
+use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct PostgresLedgerRepository {
@@ -24,9 +29,32 @@ impl LedgerRepository for PostgresLedgerRepository {
         Ok(event)
     }
 
-    async fn save_event_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, event: LedgerEvent) -> Result<LedgerEvent> {
-        // TODO: Implement actual DB persistence
-        println!("PERSIST (TX): Ledger Event created {:?}", event);
+    async fn save_event_with_tx(&self, tx: &mut Transaction<'_, Postgres>, event: LedgerEvent) -> Result<LedgerEvent> {
+        let created_at = Utc.timestamp_millis_opt(event.created_at).unwrap();
+        let updated_at = Utc.timestamp_millis_opt(event.updated_at).unwrap();
+
+        sqlx::query!(
+            r#"
+            INSERT INTO "LedgerEvent" (
+                id, "tenantId", type, "referenceId", "referenceType", status, description, meta, "createdAt", "updatedAt"
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10)
+            "#,
+            Uuid::parse_str(&event.id).unwrap(),
+            Uuid::parse_str(&event.tenant_id).unwrap(),
+            event.r#type,
+            event.reference_id,
+            event.reference_type,
+            event.status,
+            event.description,
+            serde_json::from_str::<serde_json::Value>(&event.meta).unwrap_or(serde_json::json!({})),
+            created_at,
+            updated_at
+        )
+        .execute(&mut **tx)
+        .await
+        .map_err(crate::error::AppError::DatabaseError)?;
+
         Ok(event)
     }
 
@@ -36,8 +64,33 @@ impl LedgerRepository for PostgresLedgerRepository {
         Ok(entries)
     }
 
-    async fn save_entries_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, entries: Vec<LedgerEntry>) -> Result<Vec<LedgerEntry>> {
-        // TODO: Implement actual DB persistence
+    async fn save_entries_with_tx(&self, tx: &mut Transaction<'_, Postgres>, entries: Vec<LedgerEntry>) -> Result<Vec<LedgerEntry>> {
+        for entry in &entries {
+            let created_at = Utc.timestamp_millis_opt(entry.created_at).unwrap();
+            let updated_at = Utc.timestamp_millis_opt(entry.updated_at).unwrap();
+            let amount = Decimal::from_str(&entry.amount).unwrap_or_default();
+
+            sqlx::query!(
+                r#"
+                INSERT INTO "LedgerEntry" (
+                    id, "tenantId", "eventId", "accountId", amount, meta, "createdAt", "updatedAt"
+                )
+                VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8)
+                "#,
+                Uuid::parse_str(&entry.id).unwrap(),
+                Uuid::parse_str(&entry.tenant_id).unwrap(),
+                Uuid::parse_str(&entry.event_id).unwrap(),
+                entry.account_id.to_string(),
+                amount,
+                serde_json::from_str::<serde_json::Value>(&entry.meta).unwrap_or(serde_json::json!({})),
+                created_at,
+                updated_at
+            )
+            .execute(&mut **tx)
+            .await
+            .map_err(crate::error::AppError::DatabaseError)?;
+        }
+        
         println!("PERSIST (TX): {} Ledger Entries created", entries.len());
         Ok(entries)
     }

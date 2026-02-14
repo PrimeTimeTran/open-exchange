@@ -161,6 +161,7 @@ async function matchSingleOrder(
       data: {
         locked: { decrement: buyLockAmount },
         total: { decrement: quoteAmount },
+        available: { increment: buyLockAmount.sub(quoteAmount) },
       },
     });
 

@@ -10,4 +10,5 @@ pub trait AccountRepository: Send + Sync {
     async fn update(&self, account: Account) -> Result<Account>;
     async fn delete(&self, id: Uuid) -> Result<()>;
     async fn list_by_user(&self, user_id: &str) -> Result<Vec<Account>>;
+    async fn get_by_name(&self, name: &str) -> Result<Option<Account>>;
 }

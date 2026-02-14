@@ -23,8 +23,10 @@ impl AccountService for AccountServiceImpl {
     ) -> Result<Response<CreateAccountResponse>, Status> {
         let req = request.into_inner();
         
+        let name = format!("{}_account", req.r#type);
         let account = self.account_service.create_new_account(
             req.user_id,
+            name,
             req.r#type,
         ).await.map_err(|e| Status::internal(e.to_string()))?;
 

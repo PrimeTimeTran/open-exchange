@@ -4,9 +4,9 @@ import { importerInputSchema } from 'src/shared/schemas/importerSchemas';
 import { orderBySchema } from 'src/shared/schemas/orderBySchema';
 import { z } from 'zod';
 import { orderEnumerators } from 'src/features/order/orderEnumerators';
-import { numberCoerceSchema, numberOptionalCoerceSchema } from 'src/shared/schemas/numberCoerceSchema';
+import { numberOptionalCoerceSchema } from 'src/shared/schemas/numberCoerceSchema';
 import { jsonSchema } from 'src/shared/schemas/jsonSchema';
-import { objectToUuidSchema, objectToUuidSchemaOptional } from 'src/shared/schemas/objectToUuidSchema';
+import { objectToUuidSchemaOptional } from 'src/shared/schemas/objectToUuidSchema';
 import { Account } from '@prisma/client';
 import { Instrument } from '@prisma/client';
 import { Trade } from '@prisma/client';
@@ -27,21 +27,21 @@ export const orderFilterFormSchema = z
     status: z.nativeEnum(orderEnumerators.status).nullable().optional(),
     timeInFore: z.nativeEnum(orderEnumerators.timeInFore).nullable().optional(),
     archived: z
-    .any()
-    .transform((val) =>
-      val != null && val !== ''
-        ? val === 'true' || val === true
-          ? true
-          : null
-        : null,
-    ),
+      .any()
+      .transform((val) =>
+        val != null && val !== ''
+          ? val === 'true' || val === true
+            ? true
+            : null
+          : null,
+      ),
   })
   .partial();
 
 export const orderFilterInputSchema = orderFilterFormSchema
   .merge(
     z.object({
-
+      createdByUserId: z.string().uuid().optional(),
     }),
   )
   .partial();
@@ -112,8 +112,7 @@ export const orderUpdateParamsInputSchema = z.object({
   id: z.string(),
 });
 
-export const orderUpdateBodyInputSchema =
-  orderCreateInputSchema.partial();
+export const orderUpdateBodyInputSchema = orderCreateInputSchema.partial();
 
 export interface OrderWithRelationships extends Order {
   account?: Account;

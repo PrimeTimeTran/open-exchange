@@ -30,8 +30,7 @@ export async function orderFindManyController(
     context,
   );
 
-  const { filter, orderBy, skip, take } =
-    orderFindManyInputSchema.parse(query);
+  const { filter, orderBy, skip, take } = orderFindManyInputSchema.parse(query);
 
   const whereAnd: Array<Prisma.OrderWhereInput> = [];
 
@@ -48,6 +47,12 @@ export async function orderFindManyController(
   if (filter?.side != null) {
     whereAnd.push({
       side: filter?.side,
+    });
+  }
+
+  if (filter?.createdByUserId != null) {
+    whereAnd.push({
+      createdByUserId: filter?.createdByUserId,
     });
   }
 

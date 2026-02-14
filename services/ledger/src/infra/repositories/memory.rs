@@ -64,6 +64,11 @@ impl AccountRepository for InMemoryAccountRepository {
         let accounts = self.accounts.lock().unwrap();
         Ok(accounts.iter().filter(|a| a.user_id == user_id).cloned().collect())
     }
+
+    async fn get_by_name(&self, name: &str) -> Result<Option<Account>> {
+        let accounts = self.accounts.lock().unwrap();
+        Ok(accounts.iter().find(|a| a.name == name).cloned())
+    }
 }
 
 // --- InMemoryOrderRepository ---

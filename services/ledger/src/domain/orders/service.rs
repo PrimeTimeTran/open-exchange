@@ -102,7 +102,47 @@ impl OrderService {
     }
 
     pub async fn cancel_order(&self, id: Uuid) -> Result<()> {
-        self.repo.update_status(id, "cancelled".to_string()).await
+        if let Some(order) = self.repo.get(id).await? {
+            if order.status == "open" || order.status == "partial_fill" {
+                self.release_funds(&order).await?;
+                self.repo.update_status(id, "cancelled".to_string()).await?;
+            }
+        }
+        Ok(())
+    }
+
+    async fn release_funds(&self, order: &Order) -> Result<()> {
+        let instr_uuid = order.instrument_id.to_string();
+        if let Some(instrument) = self.asset_service.get_instrument(&instr_uuid).await? {
+            let (locked_asset_id, raw_locked_amount) = if order.side == "buy" {
+                (instrument.quote_asset_id.clone(), (order.quantity - order.filled_quantity) * order.price)
+            } else {
+                (instrument.underlying_asset_id.clone(), order.quantity - order.filled_quantity)
+            };
+
+            let asset = self.asset_service.get_asset(&locked_asset_id).await?
+                .ok_or_else(|| AppError::NotFound(format!("Asset {} not found", locked_asset_id)))?;
+            
+            let scale_factor = Decimal::from(10).powi(asset.decimals as i64);
+            let locked_amount_atomic = (raw_locked_amount * scale_factor).floor();
+
+            let account_uuid = order.account_id.to_string();
+            let wallet_opt = self.wallet_service.get_wallet_by_account_and_asset(&account_uuid, &locked_asset_id)
+                .await
+                .map_err(|e| AppError::Internal(e.to_string()))?;
+
+            if let Some(mut wallet) = wallet_opt {
+                let available = Decimal::from_str(&wallet.available).map_err(|_| AppError::Internal("Invalid available".into()))?;
+                let locked = Decimal::from_str(&wallet.locked).map_err(|_| AppError::Internal("Invalid locked".into()))?;
+
+                wallet.available = (available + locked_amount_atomic).to_string();
+                wallet.locked = (locked - locked_amount_atomic).to_string();
+                wallet.updated_at = chrono::Utc::now().timestamp_millis();
+                
+                self.wallet_service.update_wallet(wallet).await.map_err(|e| AppError::Internal(e.to_string()))?;
+            }
+        }
+        Ok(())
     }
 
     pub async fn list_open_orders(&self) -> Result<Vec<Order>> {
