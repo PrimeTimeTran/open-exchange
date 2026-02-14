@@ -18,6 +18,11 @@ const nextConfig = {
       poll: 1000,
       aggregateTimeout: 300,
     };
+    // Fix for AWS SDK v3 critical dependency warning
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'aws-crt': false,
+    };
     return config;
   },
 };

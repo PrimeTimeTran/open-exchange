@@ -2,6 +2,7 @@ import React from 'react';
 import { cookies } from 'next/headers';
 
 import { Navbar } from '@/components';
+import { TradeNotificationListener } from '@/components/TradeNotificationListener';
 import { getDictionary } from '@/translation/getDictionary';
 import { getLocaleFromCookies } from '@/translation/getLocaleFromCookies';
 import { appContextForReact } from 'src/shared/controller/appContext';
@@ -32,6 +33,7 @@ export default async function DashboardLayout({
 
   return (
     <LedgerProvider>
+      <TradeNotificationListener />
       <Navbar currentUser={context.currentUser} />
       <main className="min-h-screen bg-background">{children}</main>
     </LedgerProvider>

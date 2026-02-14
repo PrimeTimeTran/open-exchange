@@ -18,6 +18,7 @@ services:
       - MATCHING_ENGINE_URL=matching:50051
       - MARKET_SERVICE_URL=market:50053
       - LEDGER_SERVICE_URL=ledger:50052
+      - REDIS_URL=redis://redis:6379
       # Use host.docker.internal to access localhost on the host machine (macOS/Windows)
       # You may need to update 'user:password' and 'crypto' to match your local credentials
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?schema=public
@@ -26,6 +27,7 @@ services:
       - WATCHPACK_POLLING=true
     depends_on:
       - matching
+      - redis
       # - db
 
   matching:

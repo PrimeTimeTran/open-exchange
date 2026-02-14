@@ -6,7 +6,6 @@ import { orderFindManyController } from 'src/features/order/controllers/orderFin
 import { NextResponseError } from 'src/shared/controller/NextResponseError';
 import { NextResponseSuccess } from 'src/shared/controller/NextResponseSuccess';
 import { appContext } from 'src/shared/controller/appContext';
-import { sayHello } from 'src/features/matchingEngine/matchingEngineGrpcClient';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -24,15 +23,6 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  // Note:
-  // Confirm GRPC works between Admin -> Matching Engine & Matching Engine -> GRPC
-  //
-  try {
-    const helloResponse = await sayHello('OrderCreated by helloOrder');
-    console.log('gRPC Hello Response:', helloResponse);
-  } catch (e) {
-    console.error('gRPC Hello Error:', e);
-  }
   let context;
   try {
     context = await appContext(request);
