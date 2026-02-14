@@ -1,0 +1,89 @@
+mod infra_test_helpers;
+use infra_test_helpers::TestDb;
+use ledger::domain::wallets::{Wallet, WalletRepository};
+use ledger::infra::repositories::PostgresWalletRepository;
+use uuid::Uuid;
+use chrono::Utc;
+use std::str::FromStr;
+use rust_decimal::Decimal;
+
+#[tokio::test]
+async fn test_postgres_wallet_persistence() {
+    // 1. Setup DB
+    let test_db = TestDb::new().await;
+    let repo = PostgresWalletRepository::new(test_db.pool.clone());
+
+    // 2. Setup Data
+    let tenant_id = Uuid::new_v4();
+    let account_id = Uuid::new_v4();
+    let asset_id = Uuid::new_v4();
+    let wallet_id = Uuid::new_v4();
+
+    // Insert Tenant
+    sqlx::query!(r#"
+        INSERT INTO "Tenant" (id, name, "createdAt", "updatedAt") 
+        VALUES ($1, 'Test Tenant', now(), now())
+    "#, tenant_id)
+    .execute(&test_db.pool).await.expect("Failed to insert tenant");
+
+    // Insert Account (userId is null)
+    // Note: 'type' is a reserved keyword in some SQL contexts, usually safe in string literals or quoted identifiers?
+    // In Postgres, type is reserved? No, but generally good to quote identifiers.
+    // Schema says: type String
+    sqlx::query!(r#"
+        INSERT INTO "Account" (id, "tenantId", type, name, "createdAt", "updatedAt") 
+        VALUES ($1, $2, 'USER', 'Test Account', now(), now())
+    "#, account_id, tenant_id)
+    .execute(&test_db.pool).await.expect("Failed to insert account");
+
+    // Insert Asset
+    sqlx::query!(r#"
+        INSERT INTO "Asset" (id, "tenantId", symbol, decimals, "createdAt", "updatedAt") 
+        VALUES ($1, $2, 'USD', 2, now(), now())
+    "#, asset_id, tenant_id)
+    .execute(&test_db.pool).await.expect("Failed to insert asset");
+
+    // 3. Test Create Wallet
+    let wallet = Wallet {
+        id: wallet_id.to_string(),
+        tenant_id: tenant_id.to_string(),
+        account_id: account_id.to_string(),
+        asset_id: asset_id.to_string(),
+        available: "100.00".to_string(),
+        locked: "0.00".to_string(),
+        total: "100.00".to_string(),
+        user_id: "".to_string(),
+        version: 1,
+        status: "active".to_string(),
+        meta: "{}".to_string(),
+        created_at: Utc::now().timestamp_millis(),
+        updated_at: Utc::now().timestamp_millis(),
+    };
+
+    let created = repo.create(wallet.clone()).await.expect("Failed to create wallet");
+    assert_eq!(created.id, wallet.id);
+
+    // 4. Test Get Wallet
+    let fetched = repo.get(wallet_id).await.expect("Failed to get wallet").expect("Wallet not found");
+    assert_eq!(Decimal::from_str(&fetched.available).unwrap(), Decimal::from_str("100").unwrap());
+
+    // 5. Test Update Wallet (Optimistic Locking)
+    let mut updated = fetched.clone();
+    updated.available = "50.00".to_string(); // Will be stored as 50
+    updated.total = "50.00".to_string();
+    
+    // Success case
+    let saved = repo.update(updated.clone()).await.expect("Failed to update wallet");
+    assert_eq!(saved.version, 2);
+    assert_eq!(Decimal::from_str(&saved.available).unwrap(), Decimal::from_str("50").unwrap());
+
+    // Failure case (Old Version)
+    let mut old_version = updated.clone();
+    old_version.version = 1; // Should be 2 now
+    let result = repo.update(old_version).await;
+    assert!(result.is_err(), "Should fail with optimistic locking error");
+    
+    // Verify error type if possible (string check)
+    let err_msg = format!("{:?}", result.err().unwrap());
+    assert!(err_msg.contains("OptimisticLockingError"), "Expected OptimisticLockingError, got {}", err_msg);
+}
