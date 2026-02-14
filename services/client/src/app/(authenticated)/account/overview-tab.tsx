@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
 import { ArrowUpDown } from 'lucide-react';
-import { Balance, OrderWithInstrument } from './account-client';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
+import { Balance, OrderWithInstrument } from './account-client';
 import {
   Select,
   SelectContent,
@@ -12,9 +12,31 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+function AssetLogo({ symbol, klass }: { symbol: string; klass: string }) {
+  const [error, setError] = useState(false);
+
+  if (klass === 'stock' && !error) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={`https://www.pulserobotics.com/logos/${symbol}.png`}
+        alt={symbol}
+        className="h-10 w-10 rounded-full object-contain bg-white border border-outline-variant"
+        onError={() => setError(true)}
+      />
+    );
+  }
+
+  return (
+    <div className="h-10 w-10 rounded-full bg-primary-container flex items-center justify-center font-bold text-on-primary-container">
+      {symbol[0]}
+    </div>
+  );
+}
+
 export function OverviewTab({
-  balances,
   orders,
+  balances,
 }: {
   balances: Balance[];
   orders: OrderWithInstrument[];
@@ -27,6 +49,11 @@ export function OverviewTab({
   >('desc');
 
   const totalValue = balances.reduce((acc, curr) => acc + curr.value, 0);
+
+  const availableClasses = useMemo(() => {
+    const classes = new Set(balances.map((b) => b.klass));
+    return Array.from(classes).sort();
+  }, [balances]);
 
   const filteredBalances = useMemo(() => {
     let result = [...balances];
@@ -88,9 +115,15 @@ export function OverviewTab({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Assets</SelectItem>
-                  <SelectItem value="crypto">Crypto</SelectItem>
-                  <SelectItem value="stock">Stocks</SelectItem>
-                  <SelectItem value="fiat">Fiat</SelectItem>
+                  {availableClasses.map((klass) => (
+                    <SelectItem
+                      key={klass}
+                      value={klass}
+                      className="capitalize"
+                    >
+                      {klass === 'stock' ? 'Stocks' : klass}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -121,9 +154,7 @@ export function OverviewTab({
                 className="flex items-center justify-between p-6 hover:bg-surface-variant/50 transition-colors"
               >
                 <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-full bg-primary-container flex items-center justify-center font-bold text-on-primary-container">
-                    {balance.asset[0]}
-                  </div>
+                  <AssetLogo symbol={balance.asset} klass={balance.klass} />
                   <div>
                     <div className="font-medium text-on-surface flex items-center gap-2">
                       {balance.name}
