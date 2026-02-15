@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { ArrowUpDown } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import {
@@ -10,7 +11,6 @@ import {
   CalendarClock,
   ArrowRightLeft,
 } from 'lucide-react';
-
 import { Button } from '@/components/ui/button';
 import { Balance, OrderWithInstrument } from './account-client';
 import {
@@ -27,6 +27,8 @@ import {
   DialogContent,
   DialogTrigger,
 } from '@/shared/components/ui/dialog';
+import { Dictionary } from '@/translation/locales';
+import { CopyToClipboardButton } from '@/shared/components/CopyToClipboardButton';
 
 function AssetLogo({ symbol, klass }: { symbol: string; klass: string }) {
   const [error, setError] = useState(false);
@@ -53,9 +55,11 @@ function AssetLogo({ symbol, klass }: { symbol: string; klass: string }) {
 export function OverviewTab({
   orders,
   balances,
+  dictionary,
 }: {
   balances: Balance[];
   orders: OrderWithInstrument[];
+  dictionary: Dictionary;
 }) {
   const [selectedOrder, setSelectedOrder] =
     useState<OrderWithInstrument | null>(null);
@@ -275,8 +279,8 @@ export function OverviewTab({
                             order.status === 'filled'
                               ? 'bg-success-container text-on-success-container'
                               : order.status === 'open'
-                              ? 'bg-primary-container text-on-primary-container'
-                              : 'bg-surface-variant text-on-surface-variant'
+                                ? 'bg-primary-container text-on-primary-container'
+                                : 'bg-surface-variant text-on-surface-variant'
                           }`}
                         >
                           {order.status.replace('_', ' ')}
@@ -299,7 +303,11 @@ export function OverviewTab({
                           <Hash className="h-3.5 w-3.5" /> Order ID
                         </div>
                         <div className="text-sm font-mono text-on-surface bg-surface-variant/30 p-2 rounded border border-outline-variant break-all">
-                          {order.id}
+                          <span className="mr-2">{order.id}</span>
+                          <CopyToClipboardButton
+                            text={order.id}
+                            dictionary={dictionary}
+                          />
                         </div>
                       </div>
                       <div className="space-y-1">
@@ -315,7 +323,12 @@ export function OverviewTab({
                           <ArrowRightLeft className="h-3.5 w-3.5" /> Instrument
                         </div>
                         <div className="text-sm text-on-surface font-semibold p-2">
-                          {order.instrument.symbol}
+                          <Link
+                            href={`/assets/${order.instrument.symbol.split('_')[0]}`}
+                            className="hover:underline text-primary"
+                          >
+                            {order.instrument.symbol}
+                          </Link>
                         </div>
                       </div>
                       <div className="space-y-1">

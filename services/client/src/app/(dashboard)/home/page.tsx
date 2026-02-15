@@ -1,13 +1,16 @@
 import React from 'react';
-import { marketClient } from 'src/services/MarketClient';
+import { cookies } from 'next/headers';
 import { DashboardClient } from './DashboardClient';
 import { fetchMarketData } from 'src/actions/market';
+import { marketClient } from 'src/services/MarketClient';
+import { appContextForReact } from '@/shared/controller/appContext';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
   let marketData;
   let chartData;
+  const context = await appContextForReact(cookies());
 
   const now = Date.now();
   const startTime = now - 7 * 24 * 60 * 60 * 1000;
@@ -42,8 +45,9 @@ export default async function DashboardPage() {
 
   return (
     <DashboardClient
-      initialMarketData={marketData}
       initialChartData={chartData}
+      initialMarketData={marketData}
+      userId={context.currentUser?.id ?? null}
     />
   );
 }

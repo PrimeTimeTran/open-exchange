@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ChartHeader } from '@/components/charts/chart-header';
 import { PriceChart } from '@/components/charts/price-chart';
 import { TimeRangeSelector } from '@/components/charts/time-range-selector';
@@ -10,6 +10,7 @@ import { PriceUpdate } from 'src/proto/market/market';
 import { ChartDataPoint, useMarketChart } from 'src/hooks/use-market-chart';
 
 interface DashboardClientProps {
+  userId: string | null;
   initialMarketData?: PriceUpdate;
   initialChartData?: ChartDataPoint[];
 }
@@ -17,6 +18,7 @@ interface DashboardClientProps {
 export function DashboardClient({
   initialMarketData,
   initialChartData,
+  userId,
 }: DashboardClientProps) {
   const {
     timeRange,
@@ -33,6 +35,22 @@ export function DashboardClient({
     initialMarketData,
     initialChartData,
   });
+  useEffect(() => {
+    if (!window.gtag) return;
+    if (userId) {
+      window.gtag('config', 'G-MFFQRL807K', {
+        user_id: userId,
+      });
+
+      window.gtag('event', 'login', {
+        method: 'password',
+      });
+    } else {
+      window.gtag('config', 'G-MFFQRL807K', {
+        user_id: null,
+      });
+    }
+  }, [userId]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">

@@ -30,6 +30,7 @@ export default async function AccountPage({
       assets={availableAssets}
       withdrawals={withdrawals}
       initialTab={initialTab}
+      dictionary={context.dictionary}
     />
   );
 }

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { OverviewTab } from './overview-tab';
 import { DepositTab } from './deposit-tab';
 import { WithdrawTab } from './withdraw-tab';
+import { Dictionary } from '@/translation/locales';
 
 export type Balance = {
   asset: string;
@@ -68,6 +69,7 @@ interface AccountClientProps {
   deposits: DepositWithAsset[];
   withdrawals: WithdrawalWithAsset[];
   initialTab?: 'overview' | 'deposit' | 'withdraw';
+  dictionary: Dictionary;
 }
 
 export function AccountClient({
@@ -77,6 +79,7 @@ export function AccountClient({
   deposits,
   withdrawals,
   initialTab = 'overview',
+  dictionary,
 }: AccountClientProps) {
   const [activeTab, setActiveTab] = useState<
     'overview' | 'deposit' | 'withdraw'
@@ -123,7 +126,11 @@ export function AccountClient({
         {/* Main Content */}
         <main className="flex-1 min-h-125">
           {activeTab === 'overview' && (
-            <OverviewTab balances={balances} orders={orders} />
+            <OverviewTab
+              balances={balances}
+              orders={orders}
+              dictionary={dictionary}
+            />
           )}
           {activeTab === 'deposit' && <DepositTab assets={assets} />}
           {activeTab === 'withdraw' && <WithdrawTab assets={assets} />}
