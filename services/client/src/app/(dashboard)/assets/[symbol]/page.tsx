@@ -1,5 +1,6 @@
 import React from 'react';
 import { cookies } from 'next/headers';
+import { Metadata } from 'next';
 import { marketClient } from 'src/services/MarketClient';
 import { AssetClient } from './AssetClient';
 import { fetchMarketData } from 'src/actions/market';
@@ -7,13 +8,25 @@ import { appContextForReact } from 'src/shared/controller/appContext';
 
 export const dynamic = 'force-dynamic';
 
+export async function generateMetadata({
+  params,
+}: {
+  params: { symbol: string };
+}): Promise<Metadata> {
+  const symbol = params.symbol.toUpperCase();
+  return {
+    title: `${symbol} Price | OpenExchange`,
+    description: `View live price charts and trade ${symbol} on OpenExchange.`,
+  };
+}
+
 export default async function AssetPage({
   params,
 }: {
   params: { symbol: string };
 }) {
   const symbol = params.symbol.toUpperCase();
-  const apiSymbol = symbol.includes('_') ? symbol : `${symbol}_USD`;
+  const apiSymbol = symbol.includes('_') ? symbol : `${symbol}_USDT`;
   const context = await appContextForReact(cookies());
   const isAuthenticated = !!context.currentUser;
 

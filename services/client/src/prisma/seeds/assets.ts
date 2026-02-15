@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { assetsData } from './data/assetsData';
+import { assetsData } from './dataAssets';
 
 export async function seedAssets(
   prisma: PrismaClient,
@@ -63,11 +63,13 @@ export async function seedAssets(
   const expiryStr = futureDate.toISOString().split('T')[0];
 
   const instrumentsData: any[] = [];
-  const quoteAsset = assetsMap.get('USD');
+  const quoteAssetUSD = assetsMap.get('USD');
+  const quoteAssetUSDT = assetsMap.get('USDT');
 
-  console.log('Quote Asset found:', !!quoteAsset);
+  console.log('Quote Asset USD found:', !!quoteAssetUSD);
+  console.log('Quote Asset USDT found:', !!quoteAssetUSDT);
 
-  if (quoteAsset) {
+  if (quoteAssetUSD) {
     console.log('Iterating assets to generate instruments...');
     const allAssets = Array.from(assetsMap.values());
     console.log(`Found ${allAssets.length} assets from map values.`);
@@ -76,11 +78,27 @@ export async function seedAssets(
       console.log(`Checking asset: ${asset.symbol} (ID: ${asset.id})`);
       if (asset.symbol === 'USD') continue;
 
+      let quoteAsset = quoteAssetUSD;
+      let quoteSymbol = 'USD';
+
+      // If it's a crypto asset (except USDT itself), quote in USDT
+      if (asset.klass === 'crypto' && asset.symbol !== 'USDT') {
+        if (quoteAssetUSDT) {
+          quoteAsset = quoteAssetUSDT;
+          quoteSymbol = 'USDT';
+        } else {
+          console.warn(
+            'USDT asset not found, falling back to USD quote for',
+            asset.symbol,
+          );
+        }
+      }
+
       // Create Spot Instrument for all assets
       instrumentsData.push({
-        symbol: `${asset.symbol}_USD`,
+        symbol: `${asset.symbol}_${quoteSymbol}`,
         base: asset.symbol,
-        quote: 'USD',
+        quote: quoteSymbol,
         type: 'spot',
         underlyingAssetId: asset.id,
         quoteAssetId: quoteAsset.id,
@@ -95,7 +113,7 @@ export async function seedAssets(
           quote: 'USD',
           type: 'future',
           underlyingAssetId: asset.id,
-          quoteAssetId: quoteAsset.id,
+          quoteAssetId: quoteAssetUSD.id, // Derivatives usually quoted in USD
           meta: { expiry: '2026-06-25' },
         });
 
@@ -107,7 +125,7 @@ export async function seedAssets(
           quote: 'USD',
           type: 'option',
           underlyingAssetId: asset.id,
-          quoteAssetId: quoteAsset.id,
+          quoteAssetId: quoteAssetUSD.id,
           meta: { expiry: expiryStr, strike: 150, optionType: 'call' },
         });
         // Put
@@ -117,7 +135,7 @@ export async function seedAssets(
           quote: 'USD',
           type: 'option',
           underlyingAssetId: asset.id,
-          quoteAssetId: quoteAsset.id,
+          quoteAssetId: quoteAssetUSD.id,
           meta: { expiry: expiryStr, strike: 150, optionType: 'put' },
         });
       }

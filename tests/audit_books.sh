@@ -291,6 +291,104 @@ WHERE le.id IS NULL
 
 run_check "9. Trade Settlement Audit" "$Q9_TOTAL" "$Q9_VARIANCE"
 
+# =================================================================================================
+# CHECK 10: PER-TRADE ZERO-SUM INVARIANT
+# =================================================================================================
+# For every Trade, the associated LedgerEntries must net to zero per asset.
+# If any asset inside a trade settlement does not sum to 0, settlement is broken.
+
+Q10_TOTAL='SELECT count(*) FROM "Trade"'
+
+Q10_VARIANCE='
+WITH trade_asset_sums AS (
+  SELECT
+    le."eventId",
+    COALESCE(le.meta->>'\''assetId'\'', (le.meta->>'\''asset'\'')::text) as "assetId",
+    SUM(le.amount) AS net
+  FROM "LedgerEntry" le
+  JOIN "LedgerEvent" ev ON ev.id = le."eventId"
+  WHERE ev."referenceType" = '\''Trade'\''
+  GROUP BY le."eventId", COALESCE(le.meta->>'\''assetId'\'', (le.meta->>'\''asset'\'')::text)
+)
+SELECT "eventId"
+FROM trade_asset_sums
+WHERE net != 0
+'
+
+run_check "10. Per-Trade Zero-Sum Invariant" "$Q10_TOTAL" "$Q10_VARIANCE"
+
+
+# =================================================================================================
+# CHECK 11: GLOBAL LEDGER ZERO-SUM PER ASSET
+# =================================================================================================
+# Across the entire system, credits - debits must equal zero per asset (excluding external flows).
+# If this fails, assets were created or destroyed internally.
+
+Q11_TOTAL='SELECT count(DISTINCT "symbol") FROM "Asset"'
+
+Q11_VARIANCE='
+WITH asset_sums AS (
+  SELECT
+    COALESCE(le.meta->>'\''assetId'\'', (le.meta->>'\''asset'\'')::text) as "assetId",
+    SUM(le.amount) AS net
+  FROM "LedgerEntry" le
+  JOIN "LedgerEvent" ev ON ev.id = le."eventId"
+  WHERE ev."referenceType" NOT IN ('\''Deposit'\'', '\''Withdrawal'\'')
+  GROUP BY COALESCE(le.meta->>'\''assetId'\'', (le.meta->>'\''asset'\'')::text)
+)
+SELECT "assetId"
+FROM asset_sums
+WHERE net != 0
+'
+
+run_check "11. Global Ledger Zero-Sum Per Asset" "$Q11_TOTAL" "$Q11_VARIANCE"
+
+
+# =================================================================================================
+# CHECK 12: ASSET PRECISION ENFORCEMENT
+# =================================================================================================
+# Ensures no LedgerEntry exceeds the decimal precision defined in Asset table.
+
+Q12_TOTAL='SELECT count(*) FROM "LedgerEntry"'
+
+Q12_VARIANCE='
+SELECT le.id
+FROM "LedgerEntry" le
+JOIN "Asset" a ON COALESCE(le.meta->>'\''assetId'\'', le.meta->>'\''asset'\'')::uuid = a.id
+WHERE
+  POSITION('\''.'\'' IN le.amount::text) > 0
+  AND LENGTH(SPLIT_PART(le.amount::text, '\''.'\'', 2)) > a.decimals
+'
+
+run_check "12. Asset Precision Enforcement" "$Q12_TOTAL" "$Q12_VARIANCE"
+
+
+# =================================================================================================
+# CHECK 13: ASSET ISOLATION GUARD
+# =================================================================================================
+# Ensures every LedgerEntry references a defined Asset.
+# Prevents phantom assets from entering the system.
+
+Q13_TOTAL='SELECT count(*) FROM "LedgerEntry"'
+
+Q13_VARIANCE='
+WITH LedgerWithAsset AS (
+    SELECT 
+        le.id,
+        COALESCE(d."assetId", wd."assetId", (le.meta->>'\''assetId'\'')::uuid, (le.meta->>'\''asset'\'')::uuid) as "assetId"
+    FROM "LedgerEntry" le
+    LEFT JOIN "LedgerEvent" ev ON le."eventId" = ev.id
+    LEFT JOIN "Deposit" d ON ev."referenceType" = '\''Deposit'\'' AND ev."referenceId"::uuid = d.id
+    LEFT JOIN "Withdrawal" wd ON ev."referenceType" = '\''Withdrawal'\'' AND ev."referenceId"::uuid = wd.id
+)
+SELECT lwa.id
+FROM LedgerWithAsset lwa
+LEFT JOIN "Asset" a ON lwa."assetId" = a.id
+WHERE a.id IS NULL
+'
+
+run_check "13. Asset Isolation Guard" "$Q13_TOTAL" "$Q13_VARIANCE"
+
 
 echo "---------------------------------------------------------------------------------------------------"
 if [ "$EXIT_CODE" -eq "0" ]; then

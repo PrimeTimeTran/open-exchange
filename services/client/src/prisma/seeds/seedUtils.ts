@@ -139,23 +139,65 @@ export async function createDeposit(
       eventId: ledgerEvent.id,
       accountId: accountId,
       amount: decimalAmount,
-      // No explicit assetId on LedgerEntry? Wait, typically ledger is double-entry or linked to asset.
-      // The schema for LedgerEntry shows: amount, accountId, eventId, meta.
-      // It does NOT have assetId. It relies on accountId (which is linked to asset context usually? or maybe account is multi-asset?)
-      // In our schema, Account is "USD" or "BTC_USD".
-      // Wallet is linked to Account + Asset.
-      // So Account + LedgerEntry implies asset?
-      // Wait, Account model:
-      // name, type, status.
-      // It doesn't strictly enforce one asset.
-      // But we name them "USD", "BTC_USD".
-      // Let's assume the Account context is sufficient.
       createdByMembershipId: membershipId,
       updatedByMembershipId: membershipId,
       createdByUserId: userId,
       updatedByUserId: userId,
     },
   });
+
+  // 4. Mirror to System Custody/Reserve (Hot Wallet)
+  // First check if the target account itself is a system account
+  let systemWallet = await prisma.wallet.findFirst({
+    where: {
+      accountId,
+      assetId,
+      account: {
+        isSystem: true,
+        type: { in: ['custody', 'cash', 'reserve'] },
+      },
+    },
+  });
+
+  // If not, find ANY system wallet for this asset
+  if (!systemWallet) {
+    systemWallet = await prisma.wallet.findFirst({
+      where: {
+        assetId,
+        account: {
+          isSystem: true,
+          type: { in: ['custody', 'cash', 'reserve'] },
+        },
+      },
+    });
+  }
+
+  if (systemWallet) {
+    // console.log(`Mirroring deposit to System Wallet ${systemWallet.id}`);
+    await prisma.wallet.update({
+      where: { id: systemWallet.id },
+      data: {
+        available: { increment: decimalAmount },
+        total: { increment: decimalAmount },
+      },
+    });
+
+    // 5. Create Ledger Entry for System Wallet (Only if distinct from user wallet)
+    if (systemWallet.accountId !== accountId) {
+      await prisma.ledgerEntry.create({
+        data: {
+          tenantId,
+          eventId: ledgerEvent.id,
+          accountId: systemWallet.accountId,
+          amount: decimalAmount,
+          createdByMembershipId: membershipId,
+          updatedByMembershipId: membershipId,
+          createdByUserId: userId,
+          updatedByUserId: userId,
+        },
+      });
+    }
+  }
 
   return deposit;
 }
@@ -207,24 +249,70 @@ export async function createWithdrawal(
   });
 
   // 3. Create Ledger Entry
-  // Note: Withdrawals reduce balance. Ledger entries might be negative or positive depending on accounting.
-  // Assuming positive here for "amount involved", but usually debit/credit.
-  // Since we don't have debit/credit columns, assuming amount is absolute.
   await prisma.ledgerEntry.create({
     data: {
       tenantId,
       eventId: ledgerEvent.id,
       accountId: accountId,
-      amount: decimalAmount.negated(), // Withdrawal is negative entry? Or separate type?
-      // Checking LedgerEntry schema again: amount Decimal?
-      // Typically withdrawals reduce balance.
-      // Let's assume negative for now as per double-entry intuition for user account.
+      amount: decimalAmount.negated(),
       createdByMembershipId: membershipId,
       updatedByMembershipId: membershipId,
       createdByUserId: userId,
       updatedByUserId: userId,
     },
   });
+
+  // 4. Mirror to System Custody/Reserve (Hot Wallet)
+  // First check if the target account itself is a system account
+  let systemWallet = await prisma.wallet.findFirst({
+    where: {
+      accountId,
+      assetId,
+      account: {
+        isSystem: true,
+        type: { in: ['custody', 'cash', 'reserve'] },
+      },
+    },
+  });
+
+  // If not, find ANY system wallet for this asset
+  if (!systemWallet) {
+    systemWallet = await prisma.wallet.findFirst({
+      where: {
+        assetId,
+        account: {
+          isSystem: true,
+          type: { in: ['custody', 'cash', 'reserve'] },
+        },
+      },
+    });
+  }
+
+  if (systemWallet) {
+    await prisma.wallet.update({
+      where: { id: systemWallet.id },
+      data: {
+        available: { decrement: decimalAmount },
+        total: { decrement: decimalAmount },
+      },
+    });
+
+    // 5. Create Ledger Entry for System Wallet (Only if distinct from user wallet)
+    if (systemWallet.accountId !== accountId) {
+      await prisma.ledgerEntry.create({
+        data: {
+          tenantId,
+          eventId: ledgerEvent.id,
+          accountId: systemWallet.accountId,
+          amount: decimalAmount.negated(),
+          createdByMembershipId: membershipId,
+          updatedByMembershipId: membershipId,
+          createdByUserId: userId,
+          updatedByUserId: userId,
+        },
+      });
+    }
+  }
 
   return withdrawal;
 }

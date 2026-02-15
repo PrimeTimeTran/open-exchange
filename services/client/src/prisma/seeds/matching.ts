@@ -1,4 +1,5 @@
 import { PrismaClient, Prisma } from '@prisma/client';
+import { ensureWallet } from './seedUtils';
 
 async function matchSingleOrder(
   prisma: PrismaClient,
@@ -49,7 +50,7 @@ async function matchSingleOrder(
         quantity: matchQuantity,
         fee: buyerFeeVal,
         role: 'taker',
-        feeCurrency: 'USD',
+        feeCurrency: instrument.quoteAsset.symbol,
         instrumentId: instrument.id,
         orderId: buyerOrder.id,
         tradeId: trade.id,
@@ -68,7 +69,7 @@ async function matchSingleOrder(
         quantity: matchQuantity,
         fee: sellerFeeVal,
         role: 'maker',
-        feeCurrency: 'USD',
+        feeCurrency: instrument.quoteAsset.symbol,
         instrumentId: instrument.id,
         orderId: sellerOrder.id,
         tradeId: trade.id,
@@ -195,17 +196,16 @@ async function matchSingleOrder(
     // Credit Fee Account
     if (feeAccount && (buyerFeeVal.gt(0) || sellerFeeVal.gt(0))) {
       const totalFee = buyerFeeVal.add(sellerFeeVal);
-      await tx.wallet.updateMany({
-        where: {
-          tenantId,
-          accountId: feeAccount.id,
-          assetId: instrument.quoteAssetId,
-        },
-        data: {
-          available: { increment: totalFee },
-          total: { increment: totalFee },
-        },
-      });
+      await ensureWallet(
+        tx,
+        tenantId,
+        feeAccount.createdByMembershipId!,
+        feeAccount.createdByUserId!,
+        feeAccount.id,
+        instrument.quoteAssetId,
+        totalFee,
+        { increment: true },
+      );
 
       // Ledger entry for fees?
       // The original code created a separate ledger entry for the fee.

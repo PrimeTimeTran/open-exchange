@@ -1,9 +1,9 @@
 export const assetsData = [
     { symbol: 'USD', name: 'US Dollar', klass: 'fiat', decimals: 2 },
     // Cryptos
+    { symbol: 'USDT', name: 'Tether', klass: 'crypto', decimals: 6 },
     { symbol: 'BTC', name: 'Bitcoin', klass: 'crypto', decimals: 8 },
     { symbol: 'ETH', name: 'Ethereum', klass: 'crypto', decimals: 18 },
-    { symbol: 'USDT', name: 'Tether', klass: 'crypto', decimals: 6 },
     { symbol: 'BNB', name: 'BNB', klass: 'crypto', decimals: 18 },
     { symbol: 'SOL', name: 'Solana', klass: 'crypto', decimals: 9 },
     { symbol: 'XRP', name: 'XRP', klass: 'crypto', decimals: 6 },

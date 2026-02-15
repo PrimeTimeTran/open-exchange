@@ -59,6 +59,7 @@ interface AccountClientProps {
   orders: OrderWithInstrument[];
   deposits: DepositWithAsset[];
   withdrawals: WithdrawalWithAsset[];
+  initialTab?: 'overview' | 'deposit' | 'withdraw';
 }
 
 export function AccountClient({
@@ -67,10 +68,11 @@ export function AccountClient({
   orders,
   deposits,
   withdrawals,
+  initialTab = 'overview',
 }: AccountClientProps) {
   const [activeTab, setActiveTab] = useState<
     'overview' | 'deposit' | 'withdraw'
-  >('overview');
+  >(initialTab);
 
   return (
     <div className="container mx-auto max-w-5xl py-10 px-4 ">

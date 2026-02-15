@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { createDeposit } from './seedUtils';
+import { SYSTEM_ACCOUNTS } from '../../constants/system-accounts';
 
 export async function seedSystemAccounts(
   prisma: PrismaClient,
@@ -8,16 +9,7 @@ export async function seedSystemAccounts(
   userId: string,
   assetsMap: Map<string, any>,
 ) {
-  const systemAccounts = [
-    { name: 'btc_hot_wallet', asset: 'BTC', type: 'custody' },
-    { name: 'eth_hot_wallet', asset: 'ETH', type: 'custody' },
-    { name: 'openc_reserve', asset: 'OPENC', type: 'cash' },
-    { name: 'usd_operational', asset: 'USD', type: 'cash' },
-    { name: 'fees_account', asset: 'USD', type: 'fees' },
-    { name: 'clearing_account', asset: 'USD', type: 'clearing' },
-  ];
-
-  for (const accountData of systemAccounts) {
+  for (const accountData of SYSTEM_ACCOUNTS) {
     // Check if account exists
     let account = await prisma.account.findFirst({
       where: {
@@ -39,6 +31,17 @@ export async function seedSystemAccounts(
           status: 'active',
           isSystem: true,
           isInterest: false,
+          meta:
+            accountData.network || accountData.address
+              ? {
+                  ...(accountData.network
+                    ? { network: accountData.network }
+                    : {}),
+                  ...(accountData.address
+                    ? { address: accountData.address }
+                    : {}),
+                }
+              : undefined,
           createdByMembership: { connect: { id: membershipId } }, // Relation fix
           updatedByMembership: { connect: { id: membershipId } }, // Relation fix
           createdByUserId: userId, // Scalar, no change needed
@@ -47,8 +50,40 @@ export async function seedSystemAccounts(
       });
     }
 
-    // Ensure Wallet exists for the associated asset
-    if (assetsMap.has(accountData.asset)) {
+    // If account type is 'fees' or 'clearing', ensure wallets for ALL assets exist
+    if (accountData.type === 'fees' || accountData.type === 'clearing') {
+      console.log(
+        `Ensuring all asset wallets for System Account ${accountData.name} (${accountData.type})...`,
+      );
+      for (const asset of assetsMap.values()) {
+        const existingWallet = await prisma.wallet.findFirst({
+          where: {
+            tenantId,
+            accountId: account.id,
+            assetId: asset.id,
+          },
+        });
+
+        if (!existingWallet) {
+          await prisma.wallet.create({
+            data: {
+              tenant: { connect: { id: tenantId } },
+              account: { connect: { id: account.id } },
+              asset: { connect: { id: asset.id } },
+              available: 0,
+              total: 0,
+              locked: 0,
+              version: 1,
+              createdByMembership: { connect: { id: membershipId } },
+              updatedByMembership: { connect: { id: membershipId } },
+              createdByUserId: userId,
+              updatedByUserId: userId,
+            },
+          });
+        }
+      }
+    } else if (assetsMap.has(accountData.asset)) {
+      // Ensure Wallet exists for the specific associated asset
       const asset = assetsMap.get(accountData.asset);
 
       const existingWallet = await prisma.wallet.findFirst({
@@ -69,8 +104,8 @@ export async function seedSystemAccounts(
             tenant: { connect: { id: tenantId } }, // Relation fix if tenant is a relation
             account: { connect: { id: account.id } }, // Relation fix
             asset: { connect: { id: asset.id } }, // Relation fix
-            available: 100_000_000, // Adjust for decimals if needed
-            total: 100_000_000,
+            available: 0,
+            total: 0,
             locked: 0,
             version: 1,
             createdByMembership: { connect: { id: membershipId } }, // Relation fix

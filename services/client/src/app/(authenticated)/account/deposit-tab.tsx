@@ -19,6 +19,19 @@ import {
   CardDescription,
 } from '@/shared/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { SYSTEM_ACCOUNTS } from '@/constants/system-accounts';
+import QRCode from 'react-qr-code';
+
+// Helper to get address from shared constants
+const getAddress = (asset: string, network?: string) => {
+  const account = SYSTEM_ACCOUNTS.find(
+    (acc) =>
+      acc.asset === asset &&
+      (acc.type === 'custody' || acc.type === 'cash') &&
+      (!network || ('network' in acc && acc.network === network)),
+  );
+  return account?.address || 'Generating...';
+};
 
 // Mock data for deposit instructions
 const DEPOSIT_INFO: Record<string, any> = {
@@ -29,7 +42,7 @@ const DEPOSIT_INFO: Record<string, any> = {
     bankName: 'Silvergate Bank',
     routingNumber: '021000021',
     accountNumber: '9876543210',
-    reference: 'USER-88392-DEP', // In production, this would be dynamic per user
+    reference: 'USER-88392-DEP',
     estimatedTime: '1-3 Business Days',
     instructions: [
       'Initiate a wire transfer from your bank account.',
@@ -40,7 +53,7 @@ const DEPOSIT_INFO: Record<string, any> = {
   BTC: {
     type: 'crypto',
     network: 'Bitcoin',
-    address: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
+    address: getAddress('BTC'),
     confirmations: 3,
     estimatedTime: '~30-60 minutes',
     warning: 'Send only BTC to this address.',
@@ -48,7 +61,7 @@ const DEPOSIT_INFO: Record<string, any> = {
   ETH: {
     type: 'crypto',
     network: 'Ethereum (ERC-20)',
-    address: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
+    address: getAddress('ETH'),
     confirmations: 12,
     estimatedTime: '~5-15 minutes',
     warning: 'Send only ETH or ERC-20 tokens to this address.',
@@ -56,15 +69,28 @@ const DEPOSIT_INFO: Record<string, any> = {
   OPENC: {
     type: 'crypto',
     network: 'Ethereum (ERC-20)',
-    address: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
+    address: getAddress('OPENC'),
     confirmations: 12,
     estimatedTime: '~5-15 minutes',
     warning: 'Send only OPENC tokens to this address.',
   },
+  USDT: {
+    type: 'crypto',
+    network: 'Ethereum (ERC-20)',
+    address: getAddress('USDT', 'ETH'),
+    confirmations: 12,
+    estimatedTime: '~5-15 minutes',
+    warning: 'Send only USDT (ERC-20) to this address.',
+  },
 };
 
 export function DepositTab({ assets }: { assets: string[] }) {
-  const [selectedAsset, setSelectedAsset] = useState(assets[0] || 'BTC');
+  const supportedAssets = ['USD', 'USDT', 'BTC', 'ETH', 'SOL', 'OPENC'];
+  const displayAssets = assets.filter((asset) =>
+    supportedAssets.includes(asset),
+  );
+
+  const [selectedAsset, setSelectedAsset] = useState(displayAssets[0] || 'BTC');
   const [copied, setCopied] = useState(false);
 
   const assetInfo = DEPOSIT_INFO[selectedAsset] || {
@@ -101,7 +127,7 @@ export function DepositTab({ assets }: { assets: string[] }) {
                 <SelectValue placeholder="Select asset" />
               </SelectTrigger>
               <SelectContent>
-                {assets.map((asset) => (
+                {displayAssets.map((asset) => (
                   <SelectItem key={asset} value={asset}>
                     {asset}
                   </SelectItem>
@@ -234,9 +260,12 @@ export function DepositTab({ assets }: { assets: string[] }) {
               </div>
 
               <div className="flex flex-col items-center justify-center rounded-lg border border-border bg-background p-6">
-                {/* QR Code Placeholder */}
-                <div className="mb-4 flex h-48 w-48 items-center justify-center rounded bg-surface font-mono text-xs text-white">
-                  [QR CODE: {assetInfo.address.substring(0, 8)}...]
+                <div className="mb-4 rounded bg-white p-4">
+                  <QRCode
+                    value={assetInfo.address}
+                    size={160}
+                    className="h-auto w-full max-w-[160px]"
+                  />
                 </div>
                 <p className="text-sm text-gray-500">
                   Scan to deposit {selectedAsset}

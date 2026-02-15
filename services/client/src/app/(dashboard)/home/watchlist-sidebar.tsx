@@ -270,7 +270,9 @@ export function WatchlistSidebar() {
             You're ready to trade! Deposit funds to start building your
             portfolio.
           </p>
-          <Button className="w-full">Deposit Funds</Button>
+          <Link href="/account?tab=deposit" className="w-full block">
+            <Button className="w-full">Deposit Funds</Button>
+          </Link>
         </div>
       </div>
     </div>

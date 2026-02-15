@@ -17,6 +17,9 @@ export async function getAccountPageData(context: AppContext) {
     where: {
       tenantId,
       userId: membershipId,
+      account: {
+        isSystem: false,
+      },
       OR: [
         { total: { gt: 0 } },
         { asset: { symbol: { in: ['USD', 'BTC', 'ETH'] } } },

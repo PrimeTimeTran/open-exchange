@@ -56,11 +56,13 @@ export default async function CryptoPage() {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex justify-end">
-                 <Link href={`/trade/${asset.symbol}_USD`}>
-                    <Button variant="secondary" size="sm">Trade</Button>
-                 </Link>
+              <Link href={`assets/${asset.symbol}_USD`}>
+                <Button variant="secondary" size="sm">
+                  Trade
+                </Button>
+              </Link>
             </div>
           </div>
         ))}

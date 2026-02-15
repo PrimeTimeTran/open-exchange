@@ -19,21 +19,19 @@ import {
   LogIn,
 } from 'lucide-react';
 
-import { FeedbackModal } from './feedback-modal';
-
 interface GlobalSidebarProps {
   isOpen: boolean;
   onClose: () => void;
   currentUser?: any;
+  onOpenFeedback: () => void;
 }
 
 export function GlobalSidebar({
   isOpen,
   onClose,
   currentUser,
+  onOpenFeedback,
 }: GlobalSidebarProps) {
-  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
-
   // Prevent scrolling when sidebar is open
   useEffect(() => {
     if (isOpen) {
@@ -161,7 +159,7 @@ export function GlobalSidebar({
                 label="Feedback & Bugs"
                 onClick={() => {
                   onClose();
-                  setIsFeedbackOpen(true);
+                  onOpenFeedback();
                 }}
               />
               <SidebarLink
@@ -192,10 +190,6 @@ export function GlobalSidebar({
           </div>
         </div>
       </div>
-      <FeedbackModal
-        isOpen={isFeedbackOpen}
-        onClose={() => setIsFeedbackOpen(false)}
-      />
     </>
   );
 

@@ -11,9 +11,13 @@ import {
   LogOut,
   Laptop,
   Settings,
+  MessageSquarePlus,
+  LogIn,
+  UserPlus,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { GlobalSidebar } from './global-sidebar';
+import { FeedbackModal } from './feedback-modal';
 import {
   DropdownMenu,
   DropdownMenuItem,
@@ -28,6 +32,7 @@ export function Navbar({ currentUser }: { currentUser?: any }) {
   const [mounted, setMounted] = useState(false);
   const { setTheme, resolvedTheme } = useTheme();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -50,22 +55,22 @@ export function Navbar({ currentUser }: { currentUser?: any }) {
             </Link>
           </div> */}
 
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-2">
             <Link
               href="/home"
-              className="text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors"
+              className="px-3 py-2 rounded-md text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-variant/50 transition-colors"
             >
               Home
             </Link>
             <Link
               href="/investing"
-              className="text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors"
+              className="px-3 py-2 rounded-md text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-variant/50 transition-colors"
             >
               Investing
             </Link>
             <Link
               href="/crypto"
-              className="text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors"
+              className="px-3 py-2 rounded-md text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-variant/50 transition-colors"
             >
               Crypto
             </Link>
@@ -73,13 +78,13 @@ export function Navbar({ currentUser }: { currentUser?: any }) {
               <>
                 <Link
                   href="/notifications"
-                  className="text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors"
+                  className="px-3 py-2 rounded-md text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-variant/50 transition-colors"
                 >
                   Notifications
                 </Link>
                 <Link
                   href="/account"
-                  className="text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors"
+                  className="px-3 py-2 rounded-md text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-variant/50 transition-colors"
                 >
                   Account
                 </Link>
@@ -92,7 +97,7 @@ export function Navbar({ currentUser }: { currentUser?: any }) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="relative rounded-full p-1 hover:bg-surface-variant transition-colors outline-none"
+                    className="relative rounded-full p-1 hover:bg-primary/20 transition-colors outline-none"
                     aria-label="User menu"
                   >
                     <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
@@ -133,16 +138,18 @@ export function Navbar({ currentUser }: { currentUser?: any }) {
                       <DropdownMenuItem asChild>
                         <Link
                           href="/auth/sign-in"
-                          className="cursor-pointer w-full"
+                          className="cursor-pointer w-full text-[var(--success)]"
                         >
+                          <LogIn className="mr-2 h-4 w-4" />
                           <span>Sign In</span>
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link
                           href="/auth/sign-up"
-                          className="cursor-pointer w-full"
+                          className="cursor-pointer w-full text-[var(--success)]"
                         >
+                          <UserPlus className="mr-2 h-4 w-4" />
                           <span>Create Account</span>
                         </Link>
                       </DropdownMenuItem>
@@ -150,8 +157,17 @@ export function Navbar({ currentUser }: { currentUser?: any }) {
                     </>
                   )}
 
-                  <DropdownMenuLabel>Theme</DropdownMenuLabel>
                   <DropdownMenuItem
+                    onClick={() => setIsFeedbackOpen(true)}
+                    className="cursor-pointer"
+                  >
+                    <MessageSquarePlus className="mr-2 h-4 w-4" />
+                    <span>Feedback & Bugs</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem
+                    className="cursor-pointer"
                     onClick={() =>
                       setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
                     }
@@ -162,26 +178,20 @@ export function Navbar({ currentUser }: { currentUser?: any }) {
                       <Moon className="mr-2 h-4 w-4" />
                     )}
                     <span>
-                      Toggle to {resolvedTheme === 'dark' ? 'Light' : 'Dark'}{' '}
-                      Mode
+                      {resolvedTheme === 'dark' ? 'Light' : 'Dark'} Mode
                     </span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setTheme('system')}>
-                    <Laptop className="mr-2 h-4 w-4" />
-                    <span>System</span>
-                  </DropdownMenuItem>
-
                   {currentUser && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        className="text-destructive focus:text-destructive cursor-pointer"
+                        className="text-error focus:text-error cursor-pointer"
                         onClick={() => {
                           authSignOutApiCall();
                           window.location.href = '/auth/sign-in';
                         }}
                       >
-                        <LogOut className="mr-2 h-4 w-4" />
+                        <LogOut className="mr-2 h-4 w-4 text-error" />
                         <span>Log out</span>
                       </DropdownMenuItem>
                     </>
@@ -197,6 +207,11 @@ export function Navbar({ currentUser }: { currentUser?: any }) {
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         currentUser={currentUser}
+        onOpenFeedback={() => setIsFeedbackOpen(true)}
+      />
+      <FeedbackModal
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
       />
     </>
   );

@@ -21,8 +21,8 @@ async function main() {
     include: { underlyingAsset: true, quoteAsset: true },
   });
 
-  const btc = instruments.find((i) => i.symbol === 'BTC_USD');
-  const eth = instruments.find((i) => i.symbol === 'ETH_USD');
+  const btc = instruments.find((i) => i.symbol === 'BTC_USDT');
+  const eth = instruments.find((i) => i.symbol === 'ETH_USDT');
   const aapl = instruments.find((i) => i.symbol === 'AAPL_USD');
   const tsla = instruments.find((i) => i.symbol === 'TSLA_USD');
 
@@ -46,6 +46,11 @@ async function main() {
             assetSymbol: 'USD',
             amount: 1_000_000.0,
             txHash: 'bank_transfer_003',
+          },
+          {
+            assetSymbol: 'USDT',
+            amount: 1_000_000.0,
+            txHash: 'usdt_deposit_001',
           },
           { assetSymbol: 'BTC', amount: 100, txHash: '0x123abc' },
           { assetSymbol: 'ETH', amount: 1000, txHash: '0x456def' },

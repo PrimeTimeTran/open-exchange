@@ -323,6 +323,8 @@ export async function seedPlatformUsers(
     // Default USD between 50k and 1M, but boost first two users to 1M-5M
     if (i === 1 || i === 2) {
       initialFundsMap.set('USD', randomInt(1_000_000, 5_000_000));
+      // Also add USDT for crypto trading (BTC/ETH orders below)
+      initialFundsMap.set('USDT', 2_000_000);
     } else {
       initialFundsMap.set('USD', randomInt(50000, 1000000));
     }
