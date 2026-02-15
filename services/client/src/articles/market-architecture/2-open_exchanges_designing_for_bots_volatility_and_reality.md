@@ -1,4 +1,11 @@
-# Open Exchanges: Designing for Bots, Volatility, and Reality — Part II
+---
+title: 'Open Exchanges: Designing for Bots, Volatility, and Reality'
+description: 'Exchanges don’t operate in ideal conditions. We outline how automated trading, slippage, and liquidity fragmentation shape architecture decisions.'
+date: '2024-03-08'
+author: 'Open Exchange Team'
+series: 'Market Architecture Series'
+part: 2
+---
 
 ### Strategic Framing: The Adversarial Nature of Markets
 

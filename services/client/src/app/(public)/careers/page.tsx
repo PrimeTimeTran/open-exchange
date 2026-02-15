@@ -1,22 +1,22 @@
 import React from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui';
-import { Badge } from '@/shared/components/ui/badge';
 import {
-  Code,
-  Globe,
-  Lock,
   Zap,
+  Cpu,
+  Star,
+  Code,
+  Lock,
   Users,
   Radio,
-  Cpu,
-  BookOpen,
-  ArrowRight,
-  Activity,
-  Trophy,
-  Star,
   Check,
+  Globe,
+  Trophy,
+  BookOpen,
+  Activity,
+  ArrowRight,
 } from 'lucide-react';
+
+import { Button } from '@/components/ui';
 
 const benefits = [
   {

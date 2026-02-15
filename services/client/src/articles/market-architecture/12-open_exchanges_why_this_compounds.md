@@ -1,4 +1,11 @@
-# Open Exchanges: Why This Compounds — Part XII
+---
+title: 'Open Exchanges: Why This Compounds'
+description: 'A systems-level explanation of why disciplined execution, public artifacts, and capital buffers create long-term structural advantage.'
+date: '2024-05-17'
+author: 'Open Exchange Team'
+series: 'Market Architecture Series'
+part: 12
+---
 
 ### Strategic Framing: The Long Game
 

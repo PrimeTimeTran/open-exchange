@@ -1,20 +1,21 @@
 import 'src/styles/globals.css';
-import { ThemeProvider } from 'src/shared/components/ThemeProvider';
-import { cn } from 'src/shared/components/cn';
-import { fontSans } from 'src/shared/components/fonts';
-import { Toaster } from 'src/shared/components/ui/toaster';
-import { ClientProviders } from 'src/shared/components/ClientProviders';
-import RQProvider from 'src/shared/components/reactQuery/RQProvider';
-import { getDictionary } from 'src/translation/getDictionary';
-import { defaultLocale } from 'src/translation/locales';
-import { cookies } from 'next/headers';
-import { getLocaleFromCookies } from 'src/translation/getLocaleFromCookies';
-import { cookieGet } from 'src/shared/lib/cookie';
 import { Viewport } from 'next';
 import Script from 'next/script';
 import { Footer } from '@/components';
-import { PublicThemeProvider } from '@/components/theme-provider-public';
+import { cookies } from 'next/headers';
+
+import { cn } from 'src/shared/components/cn';
+import { cookieGet } from 'src/shared/lib/cookie';
+import { fontSans } from 'src/shared/components/fonts';
+import { defaultLocale } from 'src/translation/locales';
+import { Toaster } from 'src/shared/components/ui/toaster';
+import { getDictionary } from 'src/translation/getDictionary';
+import { ThemeProvider } from 'src/shared/components/ThemeProvider';
+import RQProvider from 'src/shared/components/reactQuery/RQProvider';
 import { PublicDesignSystem } from '@/providers/design-system-public';
+import { ClientProviders } from 'src/shared/components/ClientProviders';
+import { PublicThemeProvider } from '@/components/theme-provider-public';
+import { getLocaleFromCookies } from 'src/translation/getLocaleFromCookies';
 
 export const viewport: Viewport = {
   width: 'device-width',

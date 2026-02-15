@@ -1,4 +1,11 @@
-# Open Exchanges: Designing the Real Launch Strategy — Part X
+---
+title: 'Open Exchanges: Designing the Real Launch Strategy'
+description: 'How OpenTest results inform OpenC’s liquidity structure, sequencing, and treasury management.'
+date: '2024-05-03'
+author: 'Open Exchange Team'
+series: 'Market Architecture Series'
+part: 10
+---
 
 ### Strategic Framing: The Go-Live Decision
 

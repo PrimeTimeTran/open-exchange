@@ -15,4 +15,4 @@ COPY . .
 
 EXPOSE 3000
 
-CMD npx prisma generate && npm run dev
+CMD npx prisma generate --schema=./src/prisma/schema.prisma && npm run dev

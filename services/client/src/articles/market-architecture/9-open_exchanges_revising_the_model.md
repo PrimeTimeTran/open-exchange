@@ -1,4 +1,11 @@
-# Open Exchanges: Revising the Model — Part IX
+---
+title: 'Open Exchanges: Revising the Model'
+description: 'Honest review of what we predicted incorrectly and how data reshaped strategy.'
+date: '2024-04-26'
+author: 'Open Exchange Team'
+series: 'Market Architecture Series'
+part: 9
+---
 
 ### Strategic Framing: Ego Kills Returns
 

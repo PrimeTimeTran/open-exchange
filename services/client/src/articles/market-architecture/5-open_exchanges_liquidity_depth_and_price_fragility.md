@@ -1,4 +1,11 @@
-# Open Exchanges: Liquidity Depth and Price Fragility — Part V
+---
+title: 'Open Exchanges: Liquidity Depth and Price Fragility'
+description: 'A quantitative breakdown of slippage, volatility, and trade impact in a small-cap AMM pool.'
+date: '2024-03-29'
+author: 'Open Exchange Team'
+series: 'Market Architecture Series'
+part: 5
+---
 
 ### Strategic Framing: Liquidity is a Product
 

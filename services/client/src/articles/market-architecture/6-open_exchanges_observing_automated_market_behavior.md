@@ -1,4 +1,11 @@
-# Open Exchanges: Observing Automated Market Behavior — Part VI
+---
+title: 'Open Exchanges: Observing Automated Market Behavior'
+description: 'What actually happens after listing: bot probes, arbitrage logic, and how inefficiencies get corrected.'
+date: '2024-04-05'
+author: 'Open Exchange Team'
+series: 'Market Architecture Series'
+part: 6
+---
 
 ### Strategic Framing: The Invisible Hand is a Bot
 

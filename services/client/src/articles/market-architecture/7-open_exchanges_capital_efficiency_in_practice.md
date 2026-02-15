@@ -1,4 +1,11 @@
-# Open Exchanges: Capital Efficiency in Practice — Part VII
+---
+title: 'Open Exchanges: Capital Efficiency in Practice'
+description: 'A 30-day comparison of LP returns vs simple holding, including fee accrual and volatility effects.'
+date: '2024-04-12'
+author: 'Open Exchange Team'
+series: 'Market Architecture Series'
+part: 7
+---
 
 ### Strategic Framing: The LP's Dilemma
 

@@ -428,6 +428,7 @@ export async function seedMatchedTrades(
             buyerOrder150k,
             150_000,
             1,
+            { sellerFee: 15 }, // 0.01% fee (150k * 0.0001)
           );
         }
       }

@@ -1,4 +1,11 @@
-# Open Exchanges: Building From First Principles — Part I
+---
+title: 'Open Exchanges: Building From First Principles'
+description: 'Why market infrastructure must be designed for adversarial conditions, capital efficiency, and long-term trust — not narrative cycles.'
+date: '2024-03-01'
+author: 'Open Exchange Team'
+series: 'Market Architecture Series'
+part: 1
+---
 
 ### Strategic Framing: Why This Matters
 

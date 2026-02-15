@@ -55,5 +55,6 @@
     "services/admin/src/proto": true,
     "services/matching/proto": true,
     "services/market/proto": true
-  }
+  },
+  "postman.settings.dotenv-detection-notification-visibility": false
 }

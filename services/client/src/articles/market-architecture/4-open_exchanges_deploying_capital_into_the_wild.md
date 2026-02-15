@@ -1,4 +1,11 @@
-# Open Exchanges: Deploying Capital Into the Wild — Part IV
+---
+title: 'Open Exchanges: Deploying Capital Into the Wild'
+description: 'Launching a controlled experimental token to study real AMM behavior with personal capital at risk.'
+date: '2024-03-22'
+author: 'Open Exchange Team'
+series: 'Market Architecture Series'
+part: 4
+---
 
 ### Strategic Framing: Skin in the Game
 

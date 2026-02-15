@@ -1,3 +1,12 @@
+---
+title: 'Open Exchanges: Series Overview'
+description: 'Why we’re building in public, the principles guiding our decisions, and how we focus on real relationships with users, collaborators, and investors.'
+date: '2024-02-20'
+author: 'Open Exchange Team'
+series: 'Market Architecture Series'
+published: false
+---
+
 ## Part I: The Vision & First Principles
 
 **Title:** Open Exchanges: Lessons in Building, Sharing, and Growing Trust in Public — Part I

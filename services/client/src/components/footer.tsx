@@ -76,7 +76,7 @@ export function Footer() {
             <ul className="space-y-2 text-sm">
               <FooterLink href="/about">About Us</FooterLink>
               <FooterLink href="/careers">Careers</FooterLink>
-              <FooterLink href="/blog">Blog</FooterLink>
+              <FooterLink href="/articles">Articles</FooterLink>
               <FooterLink href="/legal/privacy">Privacy Policy</FooterLink>
               <FooterLink href="/legal/terms">Terms of Service</FooterLink>
             </ul>

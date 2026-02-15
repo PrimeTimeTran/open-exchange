@@ -1,3 +1,12 @@
+---
+title: 'Open Exchanges: AMM Series Structure'
+description: 'The structural plan for the 12-part series on Open Exchanges tokenomics and design.'
+date: '2024-02-25'
+author: 'Open Exchange Team'
+series: 'Market Architecture Series'
+published: false
+---
+
 Each post should have:
 
 - A strategic framing section (why this matters)

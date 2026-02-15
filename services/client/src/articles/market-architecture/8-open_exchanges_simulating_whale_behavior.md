@@ -1,4 +1,11 @@
-# Open Exchanges: Simulating Whale Behavior — Part VIII
+---
+title: 'Open Exchanges: Simulating Whale Behavior'
+description: 'Intentional liquidity shocks to understand structural limits and breakpoints.'
+date: '2024-04-19'
+author: 'Open Exchange Team'
+series: 'Market Architecture Series'
+part: 8
+---
 
 ### Strategic Framing: Breaking the System on Purpose
 

@@ -1,4 +1,11 @@
-# Open Exchanges: Credibility Through Verifiable Systems — Part III
+---
+title: 'Open Exchanges: Credibility Through Verifiable Systems'
+description: 'Why dashboards, live metrics, and read-only demos matter more than pitch decks when building financial infrastructure.'
+date: '2024-03-15'
+author: 'Open Exchange Team'
+series: 'Market Architecture Series'
+part: 3
+---
 
 ### Strategic Framing: Trust is Verification
 
