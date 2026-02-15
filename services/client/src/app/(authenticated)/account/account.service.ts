@@ -40,7 +40,7 @@ export async function getAccountPageData(context: AppContext) {
 
     return {
       asset: w.asset?.symbol || 'Unknown',
-      name: w.asset?.name || w.asset?.symbol || 'Unknown',
+      name: (w.asset?.meta as any)?.name || w.asset?.symbol || 'Unknown',
       klass: w.asset?.klass || 'unknown',
       amount: amount,
       value: amount * price,

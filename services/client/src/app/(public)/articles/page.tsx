@@ -22,7 +22,7 @@ export default function ArticlesIndex() {
   return (
     <div className="container mx-auto py-24 px-4 sm:px-6 lg:px-8">
       <div className="text-center max-w-2xl mx-auto mb-16">
-        <h1 className="text-4xl font-extrabold tracking-tight mb-4 bg-gradient-to-r from-primary to-tertiary bg-clip-text text-transparent pb-2">
+        <h1 className="text-4xl font-extrabold tracking-tight mb-4 bg-linear-to-r from-primary to-tertiary bg-clip-text text-transparent pb-2">
           Market Architecture
         </h1>
         <p className="text-lg text-muted-foreground">
@@ -51,7 +51,7 @@ export default function ArticlesIndex() {
                     </time>
                   )}
                   {article.series && (
-                    <span className="bg-primary/10 text-primary px-2.5 py-0.5 rounded-full font-medium truncate max-w-[120px]">
+                    <span className="bg-primary/10 text-primary px-2.5 py-0.5 rounded-full font-medium truncate max-w-30">
                       {article.series}
                     </span>
                   )}
@@ -62,7 +62,7 @@ export default function ArticlesIndex() {
                 </h2>
 
                 {article.description && (
-                  <p className="text-muted-foreground text-sm line-clamp-3 mb-6 flex-grow leading-relaxed">
+                  <p className="text-muted-foreground text-sm line-clamp-3 mb-6 grow leading-relaxed">
                     {article.description}
                   </p>
                 )}

@@ -124,7 +124,7 @@ export default function CareersPage() {
 
           <h1 className="text-4xl md:text-7xl font-display font-bold tracking-tight text-foreground max-w-4xl">
             Build the Future of{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/60">
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-primary/60">
               Finance
             </span>
           </h1>
@@ -212,7 +212,7 @@ export default function CareersPage() {
             </div>
             <div className="flex-1 w-full aspect-square md:aspect-video bg-muted/50 rounded-2xl border border-border flex items-center justify-center relative overflow-hidden group">
               {/* Abstract visualization */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-tr from-primary/10 to-transparent" />
               <div className="w-3/4 h-3/4 border border-primary/20 rounded-xl relative rotate-3 group-hover:rotate-0 transition-all duration-700 bg-card shadow-2xl p-6 flex flex-col gap-4">
                 <div className="w-1/2 h-4 bg-muted rounded-full animate-pulse" />
                 <div className="w-full h-32 bg-muted/50 rounded-lg" />

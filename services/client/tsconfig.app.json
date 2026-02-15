@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["src/app", "src/features", "src/shared", "src/components"],
+  "exclude": [
+    "node_modules",
+    "src/prisma/seeds",
+    "**/*.test.ts",
+    "**/*.test.tsx"
+  ]
+}

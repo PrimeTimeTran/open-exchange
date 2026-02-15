@@ -48,7 +48,7 @@ export default async function CryptoPage() {
                 </div>
                 <div>
                   <div className="font-semibold text-on-surface">
-                    {asset.name}
+                    {(asset?.meta as any)?.name}
                   </div>
                   <div className="text-sm text-on-surface-variant">
                     {asset.symbol}

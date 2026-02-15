@@ -39,7 +39,7 @@ export function DashboardClient({
     if (!window.gtag) return;
     if (userId) {
       window.gtag('config', 'G-MFFQRL807K', {
-        user_id: userId,
+        user_id: 'Loi-Tran-123',
       });
 
       window.gtag('event', 'login', {

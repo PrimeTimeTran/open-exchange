@@ -1,16 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { Moon, Sun, Menu } from 'lucide-react';
 import { useState } from 'react';
-import { GlobalSidebar } from './global-sidebar';
+import { Moon, Sun, Menu } from 'lucide-react';
 
 export function PublicNavbar({ currentUser }: { currentUser?: any }) {
-  // Public pages: no sidebar toggle, sidebar always closed
-  const [isSidebarOpen] = useState(false);
-
-  // Theme toggle: optional, can be hidden or static
-  const showThemeToggle = false; // for public pages, hide toggle
+  const showThemeToggle = false;
 
   return (
     <>
@@ -44,13 +39,6 @@ export function PublicNavbar({ currentUser }: { currentUser?: any }) {
           </div>
         </div>
       </nav>
-
-      {/* SSR-safe sidebar shell */}
-      <GlobalSidebar
-        isOpen={false} // never open on public pages
-        onClose={() => {}}
-        currentUser={currentUser}
-      />
     </>
   );
 }

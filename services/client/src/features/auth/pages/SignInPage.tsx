@@ -34,14 +34,14 @@ export default async function SignInPage() {
         </div>
         <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex">
           <div
-            className="absolute inset-0 bg-cover bg-right-top"
+            className="absolute inset-0 bg-cover bg-top-right"
             style={{
               backgroundImage: 'url(/images/signIn.jpg)',
             }}
           />
         </div>
-        <div className="w-[100vw] p-4 sm:w-auto lg:p-8">
-          <div className="mx-auto flex w-full flex-col justify-center sm:w-[350px]">
+        <div className="w-screen p-4 sm:w-auto lg:p-8">
+          <div className="mx-auto flex w-full flex-col justify-center sm:w-87.5">
             <div className="mb-2 flex flex-col text-center">
               <h1 className="text-2xl font-semibold tracking-tight">
                 {dictionary.projectName}

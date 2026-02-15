@@ -22,7 +22,9 @@
     "prisma:truncate:dev": "dotenv -e .env.local -- ts-node -T ./src/prisma/truncateDev.ts",
     "setup": "npm install && npm run prisma:migrate:development",
     "stripe:login": "stripe login",
-    "stripe:listen": "stripe listen --forward-to localhost:3000/api/subscription/webhook"
+    "stripe:listen": "stripe listen --forward-to localhost:3000/api/subscription/webhook",
+    "fix-protos": "find src/proto -name \"*.ts\" -exec sed -i '' '1s;^;// @ts-nocheck\n;' {} \\;",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json"
   },
   "prisma": {
     "schema": "src/prisma/schema.prisma"

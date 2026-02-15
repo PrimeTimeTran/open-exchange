@@ -7,7 +7,8 @@ use sqlx::{postgres::{PgPoolOptions, PgConnectOptions}, ConnectOptions, Executor
 pub struct TestDb {
     pub pool: PgPool,
     pub db_name: String,
-    admin_conn_options: PgConnectOptions,
+    #[allow(dead_code)]
+    pub admin_conn_options: PgConnectOptions,
 }
 
 impl TestDb {

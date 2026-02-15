@@ -14,10 +14,10 @@ export default function FXExchangePage() {
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
       <section className="relative pt-24 pb-32 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-primary/10 via-background to-background" />
         <div className="container relative px-4 mx-auto sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-6xl mb-6 bg-gradient-to-r from-primary to-tertiary bg-clip-text text-transparent pb-2">
+            <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-6xl mb-6 bg-linear-to-r from-primary to-tertiary bg-clip-text text-transparent pb-2">
               Send Crypto. Receive VND.
             </h1>
             <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
@@ -263,7 +263,7 @@ function FeatureItem({
 }) {
   return (
     <li className="flex gap-4">
-      <div className="mt-1 w-6 h-6 rounded-full bg-success/20 flex items-center justify-center flex-shrink-0">
+      <div className="mt-1 w-6 h-6 rounded-full bg-success/20 flex items-center justify-center shrink-0">
         <div className="w-2 h-2 rounded-full bg-success" />
       </div>
       <div>

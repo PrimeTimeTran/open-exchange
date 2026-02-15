@@ -127,7 +127,7 @@ export function OverviewTab({
         <div className="p-6 border-b border-outline-variant flex items-center justify-between">
           <h3 className="font-semibold text-on-surface">Asset Balances</h3>
           <div className="flex items-center gap-2">
-            <div className="w-[140px]">
+            <div className="w-35">
               <Select
                 value={assetClassFilter}
                 onValueChange={setAssetClassFilter}
@@ -215,7 +215,7 @@ export function OverviewTab({
         <div className="p-6 border-b border-outline-variant flex items-center justify-between">
           <h3 className="font-semibold text-on-surface">Recent Orders</h3>
           <div className="flex items-center gap-2">
-            <div className="w-[140px]">
+            <div className="w-35">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="h-8 text-xs bg-surface border-outline-variant">
                   <SelectValue placeholder="Filter Status" />

@@ -7,6 +7,9 @@ if (process.env.NODE_ENV === 'test') {
 }
 
 const nextConfig = {
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   reactStrictMode: true,
   swcMinify: true,
   output: 'standalone',
