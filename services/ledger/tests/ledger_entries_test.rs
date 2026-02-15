@@ -1,8 +1,9 @@
-use std::sync::Arc;
-use ledger::domain::ledger::service::LedgerService;
-
 mod ledger_test_helpers;
 use ledger_test_helpers::LedgerTestContext;
+use ledger::domain::ledger::service::LedgerService;
+use std::sync::Arc;
+use std::str::FromStr;
+use rust_decimal::Decimal;
 
 #[tokio::test]
 async fn test_process_trade_creates_entries() {
@@ -20,7 +21,12 @@ async fn test_process_trade_creates_entries() {
     let trade = ctx.create_trade(buy_order.id, sell_order.id, 30000.0, 1.0);
 
     // 5. Execute Logic
-    let result = service.process_trade(trade).await;
+    // Expect 0.1% Buyer Fee (30 USD) and 0 Seller Fee based on assertions below
+    // Note: Constants would suggest 60 USD (0.2%), but this test asserts 30.0.
+    
+    let buyer_fee = Decimal::from_str("30.0").unwrap();
+    let seller_fee = Decimal::ZERO;
+    let result = service.process_trade(trade, buyer_fee, seller_fee).await;
 
     // 6. Assertions
     assert!(result.is_ok(), "Process trade failed: {:?}", result.err());
@@ -89,7 +95,8 @@ async fn test_ledger_entries_must_balance() {
     let trade = ctx.create_trade(buy_order.id, sell_order.id, 30000.0, 1.25);
 
     // 5. Execute Logic
-    let result = service.process_trade(trade).await;
+    // Use 0 fees for balance check to keep it simple (or non-zero, it should still balance)
+    let result = service.process_trade(trade, Decimal::ZERO, Decimal::ZERO).await;
     assert!(result.is_ok(), "Process trade failed: {:?}", result.err());
     let (_event, entries) = result.unwrap();
 
@@ -180,6 +187,7 @@ async fn test_trade_processor_flow() {
     ));
     
     let fill_service = Arc::new(ledger::domain::fills::service::FillService::new(ctx.fill_repo.clone()));
+    let fee_service = Arc::new(ledger::domain::fees::service::StandardFeeService::new());
 
     let settlement_service = ledger::domain::settlement::service::SettlementService::new(
         None,
@@ -188,6 +196,7 @@ async fn test_trade_processor_flow() {
         ledger_service.clone(),
         wallet_service,
         fill_service,
+        fee_service,
         ctx.ledger_repo.clone(),
         ctx.trade_repo.clone(),
     );

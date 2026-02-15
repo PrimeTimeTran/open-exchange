@@ -12,5 +12,6 @@ pub mod ledger;
 pub mod fills;
 pub mod trade;
 pub mod settlement;
+pub mod fees;
 
 

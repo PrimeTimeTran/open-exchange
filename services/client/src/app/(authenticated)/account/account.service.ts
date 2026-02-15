@@ -58,6 +58,11 @@ export async function getAccountPageData(context: AppContext) {
     },
     include: {
       instrument: true,
+      fills: {
+        orderBy: {
+          createdAt: 'desc',
+        },
+      },
     },
     orderBy: {
       createdAt: 'desc',
@@ -74,7 +79,15 @@ export async function getAccountPageData(context: AppContext) {
     quantityFilled: Number(o.quantityFilled || 0),
     status: o.status || '',
     createdAt: o.createdAt,
+    updatedAt: o.updatedAt,
     instrument: { symbol: o.instrument?.symbol || 'Unknown' },
+    fills: o.fills.map((f) => ({
+      quantity: Number(f.quantity || 0),
+      price: Number(f.price || 0),
+      fee: Number(f.fee || 0) / Math.pow(10, 6), // Assuming fee in quote asset 6 decimals for now
+      feeCurrency: f.feeCurrency || '',
+      createdAt: f.createdAt,
+    })),
   }));
 
   // 3. Fetch Deposits

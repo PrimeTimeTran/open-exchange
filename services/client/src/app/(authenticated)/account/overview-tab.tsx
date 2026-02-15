@@ -2,15 +2,31 @@
 
 import { ArrowUpDown } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
+import {
+  Hash,
+  Scale,
+  Coins,
+  Receipt,
+  CalendarClock,
+  ArrowRightLeft,
+} from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import { Balance, OrderWithInstrument } from './account-client';
 import {
   Select,
-  SelectContent,
   SelectItem,
-  SelectTrigger,
   SelectValue,
+  SelectTrigger,
+  SelectContent,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogTitle,
+  DialogHeader,
+  DialogContent,
+  DialogTrigger,
+} from '@/shared/components/ui/dialog';
 
 function AssetLogo({ symbol, klass }: { symbol: string; klass: string }) {
   const [error, setError] = useState(false);
@@ -41,6 +57,8 @@ export function OverviewTab({
   balances: Balance[];
   orders: OrderWithInstrument[];
 }) {
+  const [selectedOrder, setSelectedOrder] =
+    useState<OrderWithInstrument | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [assetClassFilter, setAssetClassFilter] = useState<string>('all');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -225,45 +243,163 @@ export function OverviewTab({
             </div>
           ) : (
             filteredAndSortedOrders.map((order) => (
-              <div
-                key={order.id}
-                className="flex items-center justify-between p-6 hover:bg-surface-variant/50 transition-colors"
-              >
-                <div className="flex flex-col gap-1">
-                  <div className="font-medium text-on-surface flex items-center gap-2">
-                    <span
-                      className={
-                        order.side === 'buy' ? 'text-success' : 'text-error'
-                      }
-                    >
-                      {order.side.toUpperCase()}
-                    </span>{' '}
-                    {order.instrument.symbol}
+              <Dialog key={order.id}>
+                <DialogTrigger asChild>
+                  <div
+                    onClick={() => setSelectedOrder(order)}
+                    className="flex items-center justify-between p-6 hover:bg-surface-variant/50 transition-colors cursor-pointer"
+                  >
+                    <div className="flex flex-col gap-1">
+                      <div className="font-medium text-on-surface flex items-center gap-2">
+                        <span
+                          className={
+                            order.side === 'buy' ? 'text-success' : 'text-error'
+                          }
+                        >
+                          {order.side.toUpperCase()}
+                        </span>{' '}
+                        {order.instrument.symbol}
+                      </div>
+                      <div className="text-sm text-on-surface-variant">
+                        {new Date(order.createdAt).toLocaleDateString()} at{' '}
+                        {new Date(order.createdAt).toLocaleTimeString()}
+                      </div>
+                    </div>
+                    <div className="text-right flex flex-col items-end gap-1">
+                      <div className="font-medium text-on-surface">
+                        {order.quantity} @ {order.price}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full capitalize ${
+                            order.status === 'filled'
+                              ? 'bg-success-container text-on-success-container'
+                              : order.status === 'open'
+                              ? 'bg-primary-container text-on-primary-container'
+                              : 'bg-surface-variant text-on-surface-variant'
+                          }`}
+                        >
+                          {order.status.replace('_', ' ')}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-sm text-on-surface-variant">
-                    {new Date(order.createdAt).toLocaleDateString()} at{' '}
-                    {new Date(order.createdAt).toLocaleTimeString()}
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl bg-surface border-outline-variant">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2 text-xl">
+                      <Receipt className="h-5 w-5 text-primary" />
+                      Order Details
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="grid gap-6 py-4">
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                      <div className="space-y-1">
+                        <div className="text-xs font-medium text-on-surface-variant uppercase tracking-wider flex items-center gap-1.5">
+                          <Hash className="h-3.5 w-3.5" /> Order ID
+                        </div>
+                        <div className="text-sm font-mono text-on-surface bg-surface-variant/30 p-2 rounded border border-outline-variant break-all">
+                          {order.id}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-xs font-medium text-on-surface-variant uppercase tracking-wider flex items-center gap-1.5">
+                          <CalendarClock className="h-3.5 w-3.5" /> Created At
+                        </div>
+                        <div className="text-sm text-on-surface p-2">
+                          {new Date(order.createdAt).toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-xs font-medium text-on-surface-variant uppercase tracking-wider flex items-center gap-1.5">
+                          <ArrowRightLeft className="h-3.5 w-3.5" /> Instrument
+                        </div>
+                        <div className="text-sm text-on-surface font-semibold p-2">
+                          {order.instrument.symbol}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-xs font-medium text-on-surface-variant uppercase tracking-wider flex items-center gap-1.5">
+                          <Scale className="h-3.5 w-3.5" /> Side
+                        </div>
+                        <div className="p-2">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium uppercase ${
+                              order.side === 'buy'
+                                ? 'bg-success/10 text-success'
+                                : 'bg-error/10 text-error'
+                            }`}
+                          >
+                            {order.side}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-xs font-medium text-on-surface-variant uppercase tracking-wider flex items-center gap-1.5">
+                          <Coins className="h-3.5 w-3.5" /> Price
+                        </div>
+                        <div className="text-sm text-on-surface font-medium p-2">
+                          {order.price.toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-xs font-medium text-on-surface-variant uppercase tracking-wider flex items-center gap-1.5">
+                          <Scale className="h-3.5 w-3.5" /> Quantity
+                        </div>
+                        <div className="text-sm text-on-surface font-medium p-2">
+                          {order.quantityFilled} / {order.quantity}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-outline-variant pt-6">
+                      <h4 className="text-sm font-semibold mb-4 flex items-center gap-2 text-on-surface">
+                        <Receipt className="h-4 w-4" /> Trade Fills
+                      </h4>
+                      {order.fills.length === 0 ? (
+                        <div className="text-sm text-on-surface-variant text-center py-8 bg-surface-variant/10 rounded-lg border border-dashed border-outline-variant">
+                          No fills recorded
+                        </div>
+                      ) : (
+                        <div className="rounded-lg border border-outline-variant overflow-hidden">
+                          <div className="grid grid-cols-4 bg-surface-variant/50 border-b border-outline-variant px-4 py-2 text-xs font-medium text-on-surface-variant uppercase tracking-wider">
+                            <div>Time</div>
+                            <div className="text-right">Price</div>
+                            <div className="text-right">Quantity</div>
+                            <div className="text-right">Fee</div>
+                          </div>
+                          <div className="divide-y divide-outline-variant">
+                            {order.fills.map((fill, i) => (
+                              <div
+                                key={i}
+                                className="grid grid-cols-4 text-sm text-on-surface px-4 py-3 hover:bg-surface-variant/30 transition-colors"
+                              >
+                                <div className="text-xs text-on-surface-variant flex items-center">
+                                  {new Date(
+                                    fill.createdAt,
+                                  ).toLocaleTimeString()}
+                                </div>
+                                <div className="text-right font-mono">
+                                  {fill.price.toLocaleString()}
+                                </div>
+                                <div className="text-right font-mono">
+                                  {fill.quantity}
+                                </div>
+                                <div className="text-right text-xs text-on-surface-variant flex flex-col justify-center items-end">
+                                  <span className="font-medium text-on-surface">
+                                    {fill.fee}
+                                  </span>
+                                  <span>{fill.feeCurrency}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <div className="text-right flex flex-col items-end gap-1">
-                  <div className="font-medium text-on-surface">
-                    {order.quantity} @ {order.price}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded-full capitalize ${
-                        order.status === 'filled'
-                          ? 'bg-success-container text-on-success-container'
-                          : order.status === 'open'
-                          ? 'bg-primary-container text-on-primary-container'
-                          : 'bg-surface-variant text-on-surface-variant'
-                      }`}
-                    >
-                      {order.status.replace('_', ' ')}
-                    </span>
-                  </div>
-                </div>
-              </div>
+                </DialogContent>
+              </Dialog>
             ))
           )}
         </div>

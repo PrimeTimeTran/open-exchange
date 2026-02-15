@@ -29,7 +29,15 @@ export type OrderWithInstrument = {
   quantityFilled: number;
   status: string;
   createdAt: Date;
+  updatedAt: Date;
   instrument: { symbol: string };
+  fills: {
+    quantity: number;
+    price: number;
+    fee: number;
+    feeCurrency: string;
+    createdAt: Date;
+  }[];
 };
 
 export type DepositWithAsset = {

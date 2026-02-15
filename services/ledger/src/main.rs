@@ -25,6 +25,7 @@ use ledger::domain::{
     ledger::service::LedgerService,
     settlement::service::SettlementService,
     fills::service::FillService,
+    fees::service::StandardFeeService,
 };
 use ledger::infra::repositories::{
     PostgresOrderRepository, 
@@ -81,6 +82,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let withdrawal_svc = Arc::new(WithdrawalService::new());
     let user_svc = Arc::new(UserService::new());
     let fill_svc = Arc::new(FillService::new(fill_repo));
+    let fee_svc = Arc::new(StandardFeeService::new());
     
     let order_svc = Arc::new(OrderService::new(
         order_repo.clone(), 
@@ -102,6 +104,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ledger_svc.clone(),
         wallet_svc.clone(),
         fill_svc.clone(),
+        fee_svc.clone(),
         ledger_repo.clone(),
         trade_repo.clone(),
     ));

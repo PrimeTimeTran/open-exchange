@@ -6,6 +6,7 @@ use ledger::domain::fills::service::FillService;
 use ledger::domain::orders::service::OrderService;
 use ledger::domain::ledger::service::LedgerService;
 use ledger::domain::settlement::service::SettlementService;
+use ledger::domain::fees::service::StandardFeeService;
 use ledger::infra::repositories::{
     InMemoryOrderRepository, InMemoryInstrumentRepository, InMemoryAssetRepository, 
     InMemoryAccountRepository, InMemoryWalletRepository, InMemoryFillRepository,
@@ -193,6 +194,7 @@ impl LedgerTestContext {
         let asset_service = Arc::new(AssetService::new(self.asset_repo.clone(), self.instrument_repo.clone()));
         let order_service = Arc::new(OrderService::new(self.repo.clone(), wallet_service.clone(), asset_service));
         let fill_service = Arc::new(FillService::new(self.fill_repo.clone()));
+        let fee_service = Arc::new(StandardFeeService::new());
 
         let settlement_service = SettlementService::new(
             None,
@@ -201,6 +203,7 @@ impl LedgerTestContext {
             ledger_service,
             wallet_service.clone(),
             fill_service,
+            fee_service,
             self.ledger_repo.clone(),
             self.trade_repo.clone(),
         );

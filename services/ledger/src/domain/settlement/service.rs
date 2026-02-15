@@ -3,6 +3,7 @@ use crate::proto::ledger::Match;
 use crate::error::{Result, AppError};
 use crate::domain::trade::TradeRepository;
 use crate::domain::wallets::WalletService;
+use crate::domain::fees::service::FeeService;
 use crate::domain::fills::service::FillService;
 use crate::domain::orders::service::OrderService;
 use crate::domain::ledger::service::LedgerService;
@@ -25,6 +26,7 @@ pub struct SettlementService {
     ledger_service: Arc<LedgerService>,
     wallet_service: Arc<WalletService>,
     fill_service: Arc<FillService>,
+    fee_service: Arc<dyn FeeService>,
     ledger_repo: Arc<dyn LedgerRepository>,
     trade_repo: Arc<dyn TradeRepository>,
 }
@@ -37,6 +39,7 @@ impl SettlementService {
         ledger_service: Arc<LedgerService>,
         wallet_service: Arc<WalletService>,
         fill_service: Arc<FillService>,
+        fee_service: Arc<dyn FeeService>,
         ledger_repo: Arc<dyn LedgerRepository>,
         trade_repo: Arc<dyn TradeRepository>,
     ) -> Self {
@@ -47,6 +50,7 @@ impl SettlementService {
             ledger_service,
             wallet_service,
             fill_service,
+            fee_service,
             ledger_repo,
             trade_repo,
         }
@@ -133,8 +137,13 @@ impl SettlementService {
         // 1. Persist Trade (needed for FKs)
         ctx.save_trade(trade.clone()).await?;
 
+        // Calculate Fees
+        let price_decimal = Decimal::from_str(&trade.price).unwrap_or_default();
+        let buy_fee = self.fee_service.calculate_fee(trade_qty, price_decimal, "taker");
+        let sell_fee = self.fee_service.calculate_fee(trade_qty, price_decimal, "maker");
+
         // 2. Generate and persist ledger events/entries
-        let (event, entries) = self.ledger_service.process_trade(trade.clone()).await?;
+        let (event, entries) = self.ledger_service.process_trade(trade.clone(), buy_fee, sell_fee).await?;
         ctx.save_ledger_event(event).await?;
         ctx.save_ledger_entries(entries.clone()).await?;
         
@@ -151,10 +160,10 @@ impl SettlementService {
 
         // 5. Create and persist fills
         let buy_fill = self.fill_service.create_fill_from_trade(
-            &trade, &trade.buy_order_id, "buy", "taker", trade_qty, &instrument.quote_asset_id
+            &trade, &trade.buy_order_id, "buy", "taker", trade_qty, buy_fee, &instrument.quote_asset_id
         )?;
         let sell_fill = self.fill_service.create_fill_from_trade(
-            &trade, &trade.sell_order_id, "sell", "maker", trade_qty, &instrument.quote_asset_id
+            &trade, &trade.sell_order_id, "sell", "maker", trade_qty, sell_fee, &instrument.quote_asset_id
         )?;
 
         ctx.save_fill(buy_fill).await?;

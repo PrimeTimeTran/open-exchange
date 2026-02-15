@@ -22,7 +22,7 @@ impl FillService {
         &self.repo
     }
 
-    pub fn create_fill_from_trade(&self, trade: &Trade, order_id: &str, side: &str, role: &str, quantity: Decimal, fee_currency: &str) -> Result<Fill> {
+    pub fn create_fill_from_trade(&self, trade: &Trade, order_id: &str, side: &str, role: &str, quantity: Decimal, fee: Decimal, fee_currency: &str) -> Result<Fill> {
         Ok(Fill {
             id: Uuid::new_v4(),
             trade_id: Uuid::parse_str(&trade.id).map_err(|_| AppError::ValidationError("Invalid trade ID".into()))?,
@@ -31,7 +31,7 @@ impl FillService {
             instrument_id: Uuid::parse_str(&trade.instrument_id).map_err(|_| AppError::ValidationError("Invalid instrument ID".into()))?,
             price: Decimal::from_str(&trade.price).map_err(|_| AppError::ValidationError("Invalid trade price".into()))?,
             quantity,
-            fee: Decimal::ZERO,
+            fee,
             fee_currency: fee_currency.to_string(),
             role: role.to_string(),
             side: side.to_string(),

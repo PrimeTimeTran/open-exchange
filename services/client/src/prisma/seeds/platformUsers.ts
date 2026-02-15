@@ -1,5 +1,3 @@
-import { OrderType } from '@/proto/common/order'; // Import Enum
-
 import { PrismaClient, Prisma } from '@prisma/client';
 import { seedUser } from './user';
 import {
@@ -8,6 +6,7 @@ import {
   createDeposit,
   createWithdrawal,
 } from './seedUtils';
+import { createOrder } from './orderUtils';
 
 const randomRange = (min: number, max: number) =>
   Math.random() * (max - min) + min;
@@ -197,90 +196,15 @@ export const seedUserWithData = async (
         continue;
       }
 
-      console.log(
-        `Processing Order for ${inst.symbol}: P=${order.price}, Q=${order.quantity}`,
+      await createOrder(
+        prisma,
+        tenantId,
+        membership.id,
+        user.id,
+        mainAccount.id,
+        inst,
+        order,
       );
-      console.log(
-        `Assets loaded? Base: ${!!inst.underlyingAsset}, Quote: ${!!inst.quoteAsset}`,
-      );
-
-      let finalPrice = order.price;
-      let finalQty = order.quantity;
-
-      if (inst.underlyingAsset && inst.quoteAsset) {
-        const baseDec = inst.underlyingAsset.decimals;
-        const quoteDec = inst.quoteAsset.decimals;
-
-        // Note: We use Human Readable values for Order persistence (finalPrice, finalQty are already set correctly above)
-        // We only need scaling for Wallet Locking (Atomic Units).
-
-        console.log(`Order Values: Price=${finalPrice}, Qty=${finalQty}`);
-
-        // Lock Funds Logic
-        let lockedAmount = new Prisma.Decimal(0);
-        let lockAssetId = '';
-        let lockAccount = mainAccount;
-
-        // Simulate locking for all instruments (Spot, Future, Option) assuming physical settlement logic
-        if (
-          inst.type === 'spot' ||
-          inst.type === 'future' ||
-          inst.type === 'option'
-        ) {
-          if (order.side === 'buy') {
-            lockedAmount = new Prisma.Decimal(order.price)
-              .mul(new Prisma.Decimal(order.quantity))
-              .mul(new Prisma.Decimal(10).pow(quoteDec))
-              .floor();
-            lockAssetId = inst.quoteAssetId;
-          } else {
-            lockedAmount = new Prisma.Decimal(order.quantity)
-              .mul(new Prisma.Decimal(10).pow(baseDec))
-              .floor();
-            lockAssetId = inst.underlyingAssetId;
-            // lockAccount is already mainAccount, no need to switch
-          }
-        }
-
-        await prisma.$transaction(async (tx) => {
-          await tx.$executeRaw`SELECT set_config('app.current_user_id', ${user.id}::text, true)`;
-          await tx.$executeRaw`SELECT set_config('app.current_tenant_id', ${tenantId}::text, true)`;
-          await tx.$executeRaw`SELECT set_config('app.current_membership_id', ${membership.id}::text, true)`;
-
-          if (lockAccount && lockAssetId && lockedAmount.gt(0)) {
-            const decimalLock = lockedAmount;
-            await tx.wallet.updateMany({
-              where: {
-                tenantId,
-                accountId: lockAccount.id,
-                assetId: lockAssetId,
-              },
-              data: {
-                locked: { increment: decimalLock },
-                available: { decrement: decimalLock },
-              },
-            });
-          }
-
-          await tx.order.create({
-            data: {
-              tenant: { connect: { id: tenantId } },
-              account: { connect: { id: mainAccount.id } },
-              instrument: { connect: { id: inst.id } },
-              side: order.side,
-              status: order.status,
-              price: finalPrice,
-              quantity: finalQty,
-              timeInFore: 'gtc',
-              createdAt: new Date(),
-              createdByMembership: { connect: { id: membership.id } },
-              updatedByMembership: { connect: { id: membership.id } },
-              quantityFilled: order.quantityFilled || 0,
-              type: OrderType[OrderType.ORDER_TYPE_LIMIT],
-            },
-          });
-        });
-      }
     }
   }
 

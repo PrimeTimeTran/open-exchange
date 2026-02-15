@@ -1,16 +1,47 @@
-use std::str::FromStr;
-use rust_decimal::Decimal;
 mod ledger_test_helpers;
 use ledger_test_helpers::LedgerTestContext;
 use ledger::domain::wallets::WalletRepository;
+use ledger::domain::fees::constants::FeeConstants;
 use ledger::domain::orders::repository::OrderRepository;
 use ledger::domain::accounts::repository::AccountRepository;
+use std::str::FromStr;
+use rust_decimal::Decimal;
+use rust_decimal::prelude::FromPrimitive;
+
+// --- Helpers for Future Proofing ---
+fn to_atomic_usd(amount: f64) -> Decimal {
+    // 2 decimals -> * 100
+    (Decimal::from_f64(amount).unwrap() * Decimal::new(100, 0)).floor()
+}
+
+fn to_atomic_btc(amount: f64) -> Decimal {
+    // 8 decimals -> * 100,000,000
+    (Decimal::from_f64(amount).unwrap() * Decimal::new(100000000, 0)).floor()
+}
+
+fn calc_taker_fee(amount_atomic: Decimal) -> Decimal {
+    (amount_atomic * FeeConstants::get_taker_fee()).floor()
+}
+
+fn calc_maker_fee(amount_atomic: Decimal) -> Decimal {
+    (amount_atomic * FeeConstants::get_maker_fee()).floor()
+}
 
 macro_rules! assert_decimal_eq {
     ($left:expr, $right:expr) => {
         assert_eq!(
             Decimal::from_str(&$left).unwrap(),
             Decimal::from_str($right).unwrap()
+        );
+    };
+}
+
+
+macro_rules! assert_decimal_val_eq {
+    ($left:expr, $right:expr) => {
+        assert_eq!(
+            Decimal::from_str(&$left).unwrap(),
+            $right
         );
     };
 }
@@ -43,30 +74,37 @@ async fn test_settlement_basic_buy_sell() {
     // 6. Process Trade
     settlement_service.process_trade_event(trade.clone()).await.unwrap();
 
+    // Calculate Expected Values
+    let trade_amount_atomic = to_atomic_usd(50000.0);
+    let buyer_fee = calc_taker_fee(trade_amount_atomic);
+    let seller_fee = calc_maker_fee(trade_amount_atomic);
+    
+    let buyer_avail_start = to_atomic_usd(50000.0); // 50k available initially
+    let buyer_expected_avail = buyer_avail_start - buyer_fee;
+    let buyer_expected_total = buyer_expected_avail; // Locked becomes 0
+    
+    let seller_expected_total = trade_amount_atomic - seller_fee;
+
     // 7. Verify Wallets
     let b_usd = wallet_service.get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await.unwrap().unwrap();
-    // 50k trade (5M atomic) + 50 USD fee (5000 atomic)
-    // Fee comes from available (5M start) -> 5M - 5000 = 4,995,000
-    assert_decimal_eq!(b_usd.available, "4995000"); 
-    assert_decimal_eq!(b_usd.locked, "0"); 
-    assert_decimal_eq!(b_usd.total, "4995000"); 
+    assert_decimal_val_eq!(b_usd.available, buyer_expected_avail); 
+    assert_decimal_val_eq!(b_usd.locked, Decimal::ZERO); 
+    assert_decimal_val_eq!(b_usd.total, buyer_expected_total); 
 
     let b_btc = wallet_service.get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string()).await.unwrap().unwrap();
-    assert_decimal_eq!(b_btc.available, "100000000"); 
-    assert_decimal_eq!(b_btc.locked, "0");
-    assert_decimal_eq!(b_btc.total, "100000000");
+    assert_decimal_val_eq!(b_btc.available, to_atomic_btc(1.0)); 
+    assert_decimal_val_eq!(b_btc.locked, Decimal::ZERO);
+    assert_decimal_val_eq!(b_btc.total, to_atomic_btc(1.0));
 
     let s_usd = wallet_service.get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &ctx.usd_id.to_string()).await.unwrap().unwrap();
-    assert_decimal_eq!(s_usd.available, "5000000"); 
-    assert_decimal_eq!(s_usd.locked, "0");
-    assert_decimal_eq!(s_usd.total, "5000000");
+    assert_decimal_val_eq!(s_usd.available, seller_expected_total); 
+    assert_decimal_val_eq!(s_usd.locked, Decimal::ZERO);
+    assert_decimal_val_eq!(s_usd.total, seller_expected_total);
 
     let s_btc = wallet_service.get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &ctx.btc_id.to_string()).await.unwrap().unwrap();
-    assert_decimal_eq!(s_btc.available, "100000000"); 
-    assert_decimal_eq!(s_btc.locked, "0"); 
-    assert_decimal_eq!(s_btc.total, "100000000");
-
-    // 8. Verify Fills
+    assert_decimal_val_eq!(s_btc.available, to_atomic_btc(1.0)); // Started with 2.0
+    assert_decimal_val_eq!(s_btc.locked, Decimal::ZERO); 
+    assert_decimal_val_eq!(s_btc.total, to_atomic_btc(1.0));
     use ledger::domain::fills::FillRepository;
     let buy_fills = ctx.fill_repo.list_by_order(buy_order.id).await.unwrap();
     assert_eq!(buy_fills.len(), 1);
@@ -114,21 +152,27 @@ async fn test_settlement_partial_fill() {
 
     // Verify Buyer Wallet (Partial Fill)
     let b_usd = wallet_service.get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await.unwrap().unwrap();
-    // 50k used (5M atomic). 10M Locked - 5M Debit = 5M Locked.
-    // Fee 50 USD (5000 atomic) deducted from Available (0) -> -5000.
-    // Total = 5M (locked) - 5000 (available) = 4,995,000.
-    assert_decimal_eq!(b_usd.locked, "5000000"); 
-    assert_decimal_eq!(b_usd.available, "-5000");
-    assert_decimal_eq!(b_usd.total, "4995000"); 
+    
+    // Dynamic Calculation
+    let trade_amt = to_atomic_usd(50000.0);
+    let taker_fee = calc_taker_fee(trade_amt);
+    
+    let expected_locked = to_atomic_usd(50000.0); // 50k remaining locked
+    let expected_available = -taker_fee;
+    let expected_total = expected_locked + expected_available;
+    
+    assert_decimal_val_eq!(b_usd.locked, expected_locked); 
+    assert_decimal_val_eq!(b_usd.available, expected_available);
+    assert_decimal_val_eq!(b_usd.total, expected_total); 
 
     let b_btc = wallet_service.get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string()).await.unwrap().unwrap();
-    assert_decimal_eq!(b_btc.available, "100000000");
-    assert_decimal_eq!(b_btc.total, "100000000");
+    assert_decimal_val_eq!(b_btc.available, to_atomic_btc(1.0));
+    assert_decimal_val_eq!(b_btc.total, to_atomic_btc(1.0));
 
     // Verify Seller Wallet (Fully filled)
     let s_btc = wallet_service.get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &ctx.btc_id.to_string()).await.unwrap().unwrap();
-    assert_decimal_eq!(s_btc.locked, "0"); // All sold
-    assert_decimal_eq!(s_btc.total, "0");
+    assert_decimal_val_eq!(s_btc.locked, Decimal::ZERO); // All sold
+    assert_decimal_val_eq!(s_btc.total, Decimal::ZERO);
 
     // Verify Ledger Persistence
     let events = ctx.ledger_repo.get_events();
@@ -166,9 +210,10 @@ async fn test_settlement_insufficient_funds() {
     
     // Expect negative balance because we didn't enforce non-negative
     // This confirms the current behavior
+    // 5M locked, 0.2% fee (100 USD = 10000 units)
     assert_decimal_eq!(b_usd.locked, "-5000000"); 
-    assert_decimal_eq!(b_usd.available, "-5000"); // Fee
-    assert_decimal_eq!(b_usd.total, "-5005000"); // 5,000,000 + 5,000
+    assert_decimal_eq!(b_usd.available, "-10000"); // Fee
+    assert_decimal_eq!(b_usd.total, "-5010000"); // 5,000,000 + 10,000
 
     // Verify Ledger Persistence
     let events = ctx.ledger_repo.get_events();
@@ -213,24 +258,34 @@ async fn test_settlement_multiple_matches() {
 
     // 6. Verify Wallets
     let b_usd = wallet_service.get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await.unwrap().unwrap();
-    // 100k used (2 trades) + 100 USD fee (50 * 2) (10,000 atomic)
-    // Available: 100,000 - 10,000 = 90,000
-    // Locked: 10,000,000 - 10,000,000 = 0
-    assert_decimal_eq!(b_usd.available, "90000"); 
-    assert_decimal_eq!(b_usd.locked, "0"); 
-    assert_decimal_eq!(b_usd.total, "90000"); 
+    
+    let trade_amt = to_atomic_usd(50000.0);
+    let taker_fee = calc_taker_fee(trade_amt);
+    let total_taker_fees = taker_fee * Decimal::from(2);
+    
+    let start_avail = Decimal::new(100000, 0); // 100k from setup
+    let expected_avail = start_avail - total_taker_fees;
+    let expected_total = expected_avail; // Locked is 0
+    
+    assert_decimal_val_eq!(b_usd.available, expected_avail); 
+    assert_decimal_val_eq!(b_usd.locked, Decimal::ZERO); 
+    assert_decimal_val_eq!(b_usd.total, expected_total); 
 
     let b_btc = wallet_service.get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string()).await.unwrap().unwrap();
-    assert_decimal_eq!(b_btc.available, "200000000"); 
-    assert_decimal_eq!(b_btc.total, "200000000");
+    assert_decimal_val_eq!(b_btc.available, to_atomic_btc(2.0)); 
+    assert_decimal_val_eq!(b_btc.total, to_atomic_btc(2.0));
 
     let s_usd = wallet_service.get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &ctx.usd_id.to_string()).await.unwrap().unwrap();
-    assert_decimal_eq!(s_usd.available, "10000000"); 
-    assert_decimal_eq!(s_usd.total, "10000000");
+    
+    let maker_fee = calc_maker_fee(trade_amt);
+    let expected_s_total = (trade_amt - maker_fee) * Decimal::from(2);
+
+    assert_decimal_val_eq!(s_usd.available, expected_s_total); 
+    assert_decimal_val_eq!(s_usd.total, expected_s_total);
 
     let s_btc = wallet_service.get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &ctx.btc_id.to_string()).await.unwrap().unwrap();
-    assert_decimal_eq!(s_btc.locked, "0"); 
-    assert_decimal_eq!(s_btc.total, "0");
+    assert_decimal_val_eq!(s_btc.locked, Decimal::ZERO); 
+    assert_decimal_val_eq!(s_btc.total, Decimal::ZERO);
 
     // 7. Verify Ledger Persistence
     let events = ctx.ledger_repo.get_events();
@@ -270,12 +325,13 @@ async fn test_settlement_idempotency_double_spend_prevention() {
     // 4. Verify Wallet - Should be deducted ONLY ONCE
     let b_usd = wallet_service.get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await.unwrap().unwrap();
     
-    // Expected: 
-    // Start: 5M Avail + 5M Locked = 10M Total
-    // Cost: 50k USD (5M atomic) + 50 USD Fee (5000 atomic)
-    // End: 10M - 5.005M = 4,995,000 Total.
+    // Dynamic Calculation
+    let start_total = to_atomic_usd(100000.0); // 10M
+    let trade_amt = to_atomic_usd(50000.0); // 5M
+    let taker_fee = calc_taker_fee(trade_amt);
+    let expected_total = start_total - trade_amt - taker_fee;
     
-    assert_decimal_eq!(b_usd.total, "4995000");
+    assert_decimal_val_eq!(b_usd.total, expected_total);
 }
 
 #[tokio::test]
@@ -340,7 +396,14 @@ async fn test_settlement_concurrent_updates() {
     // 4. Verify Balance
     let b_usd = wallet_service.get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await.unwrap().unwrap();
     
-    assert_decimal_eq!(b_usd.total, "999000");
+    // Dynamic Calculation
+    let start_total = to_atomic_usd(20000.0);
+    let single_trade_amt = to_atomic_usd(50000.0 * 0.02);
+    let single_fee = calc_taker_fee(single_trade_amt);
+    let total_cost = (single_trade_amt + single_fee) * Decimal::from(10);
+    let expected_total = start_total - total_cost;
+    
+    assert_decimal_val_eq!(b_usd.total, expected_total);
 }
 
 #[tokio::test]
@@ -405,8 +468,14 @@ async fn test_settlement_cross_tenant_isolation() {
     assert!(result.is_ok()); 
     
     let b_usd = wallet_service.get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await.unwrap().unwrap();
-    // 100k - 50k - 50 = 49,950 USD -> 4,995,000 cents
-    assert_decimal_eq!(b_usd.total, "4995000");
+    
+    // Dynamic Calc
+    let start_total = to_atomic_usd(100000.0);
+    let trade_amt = to_atomic_usd(50000.0);
+    let taker_fee = calc_taker_fee(trade_amt);
+    let expected_total = start_total - trade_amt - taker_fee;
+    
+    assert_decimal_val_eq!(b_usd.total, expected_total);
     
     let s_btc = wallet_service.get_wallet_by_account_and_asset(&account_t2.to_string(), &ctx.btc_id.to_string()).await.unwrap().unwrap();
     // 10 - 1 = 9 BTC -> 900,000,000 sats
@@ -531,9 +600,16 @@ async fn test_settlement_self_trade() {
 
     // USD: 
     // -50k (Buy Cost) + 50k (Sell Revenue) = 0 Net.
-    // -50 USD (Taker Fee) = -50 Net.
-    // Start: 10,000,000. End: 9,995,000.
-    assert_decimal_eq!(usd.total, "9995000");
+    // -Taker Fee - Maker Fee
+    // Start: 10,000,000. 
+    
+    let start_total = to_atomic_usd(100000.0);
+    let trade_amt = to_atomic_usd(50000.0);
+    let taker_fee = calc_taker_fee(trade_amt);
+    let maker_fee = calc_maker_fee(trade_amt);
+    let expected_total = start_total - taker_fee - maker_fee;
+
+    assert_decimal_val_eq!(usd.total, expected_total);
 
     // BTC:
     // +1 BTC (Buy) - 1 BTC (Sell) = 0 Net.

@@ -24,7 +24,8 @@ struct TradeData {
 struct TradeAmounts {
     qty_atomic: Decimal,
     total_atomic: Decimal,
-    fee_atomic: Decimal,
+    buyer_fee_atomic: Decimal,
+    seller_fee_atomic: Decimal,
 }
 
 struct OrderLockData {
@@ -98,14 +99,14 @@ impl LedgerService {
         }
     }
 
-    pub async fn process_trade(&self, trade: Trade) -> Result<(LedgerEvent, Vec<LedgerEntry>)> {
+    pub async fn process_trade(&self, trade: Trade, buyer_fee: Decimal, seller_fee: Decimal) -> Result<(LedgerEvent, Vec<LedgerEntry>)> {
         let event_id = Uuid::new_v4().to_string();
         
         // 1. Fetch context data
         let data = self.fetch_trade_data(&trade).await?;
 
         // 2. Calculate amounts
-        let amounts = self.calculate_trade_amounts(&trade, data.base_decimals, data.quote_decimals)?;
+        let amounts = self.calculate_trade_amounts(&trade, data.base_decimals, data.quote_decimals, buyer_fee, seller_fee)?;
 
         // 3. Create Ledger Event
         let event = Self::create_event(
@@ -183,14 +184,10 @@ impl LedgerService {
         })
     }
 
-    fn calculate_trade_amounts(&self, trade: &Trade, base_decimals: i32, quote_decimals: i32) -> Result<TradeAmounts> {
+    fn calculate_trade_amounts(&self, trade: &Trade, base_decimals: i32, quote_decimals: i32, buyer_fee: Decimal, seller_fee: Decimal) -> Result<TradeAmounts> {
         let trade_price = Decimal::from_str(&trade.price).map_err(|_| AppError::ValidationError("Invalid trade price".into()))?;
         let trade_qty = Decimal::from_str(&trade.quantity).map_err(|_| AppError::ValidationError("Invalid trade quantity".into()))?;
         let total_value = trade_price * trade_qty;
-
-        // Simplified Fee Logic: Assume 0.1% fee on Buyer
-        let fee_rate = Decimal::new(1, 3);
-        let fee_amount = total_value * fee_rate; 
 
         // Scale Amounts (to Atomic Units)
         let base_scale = Decimal::from(10).powi(base_decimals as i64);
@@ -199,7 +196,8 @@ impl LedgerService {
         Ok(TradeAmounts {
             qty_atomic: (trade_qty * base_scale).floor(),
             total_atomic: (total_value * quote_scale).floor(),
-            fee_atomic: (fee_amount * quote_scale).floor(),
+            buyer_fee_atomic: (buyer_fee * quote_scale).floor(),
+            seller_fee_atomic: (seller_fee * quote_scale).floor(),
         })
     }
 
@@ -218,11 +216,13 @@ impl LedgerService {
             format!("-{}", amounts.total_atomic), &data.quote_asset_id, "debit"
         ));
 
-        // Entry 3: Buyer pays Fee (-FeeAmount)
-        entries.push(Self::create_entry(
-            tenant_id, event_id, &data.buy_order.account_id.to_string(),
-            format!("-{}", amounts.fee_atomic), &data.quote_asset_id, "fee"
-        ));
+        // Entry 3: Buyer pays Fee (-BuyerFee)
+        if !amounts.buyer_fee_atomic.is_zero() {
+            entries.push(Self::create_entry(
+                tenant_id, event_id, &data.buy_order.account_id.to_string(),
+                format!("-{}", amounts.buyer_fee_atomic), &data.quote_asset_id, "fee"
+            ));
+        }
 
         // Entry 4: Seller pays Base Asset (-Qty)
         entries.push(Self::create_entry(
@@ -230,17 +230,21 @@ impl LedgerService {
             format!("-{}", amounts.qty_atomic), &data.base_asset_id, "debit"
         ));
 
-        // Entry 5: Seller receives Quote Asset (+Total)
+        // Entry 5: Seller receives Quote Asset (+NetProceeds)
+        let seller_proceeds = amounts.total_atomic - amounts.seller_fee_atomic;
         entries.push(Self::create_entry(
             tenant_id, event_id, &data.sell_order.account_id.to_string(),
-            format!("{}", amounts.total_atomic), &data.quote_asset_id, "credit"
+            format!("{}", seller_proceeds), &data.quote_asset_id, "credit"
         ));
 
-        // Entry 6: Exchange receives Fee (+FeeAmount)
-        entries.push(Self::create_entry(
-            tenant_id, event_id, &data.fees_account_id,
-            format!("{}", amounts.fee_atomic), &data.quote_asset_id, "revenue"
-        ));
+        // Entry 6: Exchange receives Fee (+TotalFee)
+        let total_fee = amounts.buyer_fee_atomic + amounts.seller_fee_atomic;
+        if !total_fee.is_zero() {
+            entries.push(Self::create_entry(
+                tenant_id, event_id, &data.fees_account_id,
+                format!("{}", total_fee), &data.quote_asset_id, "revenue"
+            ));
+        }
 
         entries
     }
@@ -415,7 +419,10 @@ mod tests {
             ..Default::default()
         };
 
-        let result = service.process_trade(trade).await;
+        // Pass fees (50 USD Buyer Fee, 0 Seller Fee) to match expected 6 entries
+        let buyer_fee = Decimal::new(50, 0);
+        let seller_fee = Decimal::ZERO;
+        let result = service.process_trade(trade, buyer_fee, seller_fee).await;
         assert!(result.is_ok());
         
         let (event, entries) = result.unwrap();
