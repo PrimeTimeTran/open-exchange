@@ -98,7 +98,10 @@ export default function RootLayout({
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
 
-          gtag('config', 'G-MFFQRL807K');
+          gtag('config', 'G-MFFQRL807K', {
+            user_id: 'root-real-user-id-123',
+            tenant_id: 'root-tenant-id-123'
+          });
         `}
         </Script>
       </html>

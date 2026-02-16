@@ -37,13 +37,13 @@ export function DashboardClient({
   });
   useEffect(() => {
     if (!window.gtag) return;
-
     window.gtag('set', {
       user_id: 'real-user-id',
+    });
+
+    window.gtag('event', 'page_view', {
       tenant_id: 'shop_123',
     });
-    // force a page_view AFTER setting user_id
-    window.gtag('event', 'page_view');
   }, []);
 
   return (
