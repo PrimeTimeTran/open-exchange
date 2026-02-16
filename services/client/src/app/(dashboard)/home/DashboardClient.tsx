@@ -37,16 +37,14 @@ export function DashboardClient({
   });
   useEffect(() => {
     if (!window.gtag) return;
-    if (userId) {
-      window.gtag('set', {
-        user_id: userId,
-      });
-    } else {
-      window.gtag('set', {
-        user_id: 'Loi-Tran-123',
-      });
-    }
-  }, [userId]);
+
+    window.gtag('set', {
+      user_id: 'real-user-id',
+    });
+
+    // force a page_view AFTER setting user_id
+    window.gtag('event', 'page_view');
+  }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
