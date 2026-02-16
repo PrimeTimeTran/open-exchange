@@ -99,8 +99,8 @@ export default function RootLayout({
           gtag('js', new Date());
 
           gtag('config', 'G-MFFQRL807K', {
-            user_id: 'root-real-user-id-123',
-            tenant_id: 'root-tenant-id-123'
+            user_id: 'root_user',
+            tenant_id: 'root_tenant',
           });
         `}
         </Script>
