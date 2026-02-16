@@ -1,6 +1,7 @@
 import 'tsconfig-paths/register';
 import { execSync } from 'child_process';
 import { join } from 'path';
+import { existsSync } from 'fs';
 import { prismaCreateAppUser } from 'src/prisma/prismaCreateAppUser';
 import { prismaCreateTriggers } from 'src/prisma/prismaCreateTriggers';
 
@@ -11,7 +12,7 @@ export default async function testGlobalSetup() {
     );
   }
 
-  const prismaBinary = join(
+  const localPrismaBinary = join(
     __dirname,
     '..',
     '..',
@@ -20,6 +21,22 @@ export default async function testGlobalSetup() {
     '.bin',
     'prisma',
   );
+
+  const rootPrismaBinary = join(
+    __dirname,
+    '..',
+    '..',
+    '..',
+    '..',
+    '..',
+    'node_modules',
+    '.bin',
+    'prisma',
+  );
+
+  const prismaBinary = existsSync(localPrismaBinary)
+    ? localPrismaBinary
+    : rootPrismaBinary;
 
   execSync(`${prismaBinary} migrate reset --force`, {
     env: process.env,

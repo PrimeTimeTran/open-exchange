@@ -38,19 +38,12 @@ export function DashboardClient({
   useEffect(() => {
     if (!window.gtag) return;
     if (userId) {
-      window.gtag('config', 'G-MFFQRL807K', {
-        user_id: 'Loi-Tran-123',
-      });
-
-      window.gtag('event', 'login', {
-        method: 'password',
+      window.gtag('set', {
+        user_id: userId,
       });
     } else {
-      window.gtag('event', 'login', {
-        method: 'password',
-      });
-      window.gtag('config', 'G-MFFQRL807K', {
-        user_id: 'Loi-Tran-123-SignedIn',
+      window.gtag('set', {
+        user_id: 'Loi-Tran-123',
       });
     }
   }, [userId]);
