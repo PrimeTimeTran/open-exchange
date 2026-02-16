@@ -20,15 +20,15 @@ use sqlx::{Transaction, Postgres, PgPool};
 pub struct SettlementService {
     pool: Option<PgPool>,
     #[allow(dead_code)]
-    order_service: Arc<OrderService>,
-    #[allow(dead_code)]
-    instrument_repo: Arc<dyn InstrumentRepository>,
-    ledger_service: Arc<LedgerService>,
-    wallet_service: Arc<WalletService>,
     fill_service: Arc<FillService>,
     fee_service: Arc<dyn FeeService>,
-    ledger_repo: Arc<dyn LedgerRepository>,
+    order_service: Arc<OrderService>,
+    ledger_service: Arc<LedgerService>,
+    wallet_service: Arc<WalletService>,
     trade_repo: Arc<dyn TradeRepository>,
+    ledger_repo: Arc<dyn LedgerRepository>,
+    #[allow(dead_code)]
+    instrument_repo: Arc<dyn InstrumentRepository>,
 }
 
 impl SettlementService {
