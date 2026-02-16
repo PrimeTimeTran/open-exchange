@@ -16,7 +16,6 @@ model User {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
-
   email                       String         @unique
   password                    String?
   emailVerified               Boolean        @default(false)
@@ -60,18 +59,14 @@ model ApiKey {
   updatedByUserId       String?     @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
   updatedByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
   updatedByMembership   Membership? @relation("updatedByMembership", fields: [updatedByMembershipId], references: [id], onDelete: SetNull)
-
   name      String
   keyPrefix String
   secret    String    @unique
   scopes    String[]
   expiresAt DateTime? @db.Timestamptz(3)
-
   disabledAt DateTime? @db.Timestamptz(3)
-
   membership   Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
   membershipId String     @db.Uuid
-
   @@unique([id, tenantId])
   @@unique([id, tenantId, membershipId])
 }
@@ -82,13 +77,10 @@ model Tenant {
   createdByUserId String?  @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
   updatedAt       DateTime @updatedAt @db.Timestamptz(3)
   updatedByUserId String?  @default(dbgenerated("NULLIF((current_setting('app.current_user_id'::text)), '')::uuid")) @db.Uuid
-
   name String
-
   memberships   Membership[]
   subscriptions Subscription[]
   apiKeys       ApiKey[]
-
   accountTenant Account[]
   depositTenant Deposit[]
   withdrawalTenant Withdrawal[]
@@ -138,7 +130,6 @@ model Membership {
   updatedByMembershipId String?     @default(dbgenerated("NULLIF((current_setting('app.current_membership_id'::text)), '')::uuid")) @db.Uuid
   updatedByMembership   Membership? @relation("updatedByMembership", fields: [updatedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   userId          String           @db.Uuid
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   firstName       String?
@@ -150,142 +141,103 @@ model Membership {
   apiKeys         ApiKey[]
   subscriptions   Subscription[]
   status          MembershipStatus @default(active)
-
   membershipCreatedBy Membership[] @relation("createdByMembership")
   membershipUpdatedBy Membership[] @relation("updatedByMembership")
   apiKeyCreatedBy ApiKey[] @relation("createdByMembership")
   apiKeyUpdatedBy ApiKey[] @relation("updatedByMembership")
-
   accountCreatedBy Account[] @relation("createdByMembership") 
   accountUpdatedBy Account[] @relation("updatedByMembership") 
   accountArchivedBy Account[] @relation("archivedByMembership")
-
   depositCreatedBy Deposit[] @relation("createdByMembership") 
   depositUpdatedBy Deposit[] @relation("updatedByMembership") 
   depositArchivedBy Deposit[] @relation("archivedByMembership")
-
   withdrawalCreatedBy Withdrawal[] @relation("createdByMembership") 
   withdrawalUpdatedBy Withdrawal[] @relation("updatedByMembership") 
   withdrawalArchivedBy Withdrawal[] @relation("archivedByMembership")
-
   walletCreatedBy Wallet[] @relation("createdByMembership") 
   walletUpdatedBy Wallet[] @relation("updatedByMembership") 
   walletArchivedBy Wallet[] @relation("archivedByMembership")
-
   orderCreatedBy Order[] @relation("createdByMembership") 
   orderUpdatedBy Order[] @relation("updatedByMembership") 
   orderArchivedBy Order[] @relation("archivedByMembership")
-
   fillCreatedBy Fill[] @relation("createdByMembership") 
   fillUpdatedBy Fill[] @relation("updatedByMembership") 
   fillArchivedBy Fill[] @relation("archivedByMembership")
-
   tradeCreatedBy Trade[] @relation("createdByMembership") 
   tradeUpdatedBy Trade[] @relation("updatedByMembership") 
   tradeArchivedBy Trade[] @relation("archivedByMembership")
-
   assetCreatedBy Asset[] @relation("createdByMembership") 
   assetUpdatedBy Asset[] @relation("updatedByMembership") 
   assetArchivedBy Asset[] @relation("archivedByMembership")
-
   instrumentCreatedBy Instrument[] @relation("createdByMembership") 
   instrumentUpdatedBy Instrument[] @relation("updatedByMembership") 
   instrumentArchivedBy Instrument[] @relation("archivedByMembership")
-
   feeScheduleCreatedBy FeeSchedule[] @relation("createdByMembership") 
   feeScheduleUpdatedBy FeeSchedule[] @relation("updatedByMembership") 
   feeScheduleArchivedBy FeeSchedule[] @relation("archivedByMembership")
-
   balanceSnapshotCreatedBy BalanceSnapshot[] @relation("createdByMembership") 
   balanceSnapshotUpdatedBy BalanceSnapshot[] @relation("updatedByMembership") 
   balanceSnapshotArchivedBy BalanceSnapshot[] @relation("archivedByMembership")
-
   systemAccountCreatedBy SystemAccount[] @relation("createdByMembership") 
   systemAccountUpdatedBy SystemAccount[] @relation("updatedByMembership") 
   systemAccountArchivedBy SystemAccount[] @relation("archivedByMembership")
-
   referralCreatedBy Referral[] @relation("createdByMembership") 
   referralUpdatedBy Referral[] @relation("updatedByMembership") 
   referralArchivedBy Referral[] @relation("archivedByMembership")
-
   listingCreatedBy Listing[] @relation("createdByMembership") 
   listingUpdatedBy Listing[] @relation("updatedByMembership") 
   listingArchivedBy Listing[] @relation("archivedByMembership")
-
   feedbackCreatedBy Feedback[] @relation("createdByMembership") 
   feedbackUpdatedBy Feedback[] @relation("updatedByMembership") 
   feedbackArchivedBy Feedback[] @relation("archivedByMembership")
-
   marketMakerCreatedBy MarketMaker[] @relation("createdByMembership") 
   marketMakerUpdatedBy MarketMaker[] @relation("updatedByMembership") 
   marketMakerArchivedBy MarketMaker[] @relation("archivedByMembership")
-
   ledgerEventCreatedBy LedgerEvent[] @relation("createdByMembership") 
   ledgerEventUpdatedBy LedgerEvent[] @relation("updatedByMembership") 
   ledgerEventArchivedBy LedgerEvent[] @relation("archivedByMembership")
-
   ledgerEntryCreatedBy LedgerEntry[] @relation("createdByMembership") 
   ledgerEntryUpdatedBy LedgerEntry[] @relation("updatedByMembership") 
   ledgerEntryArchivedBy LedgerEntry[] @relation("archivedByMembership")
-
   articleCreatedBy Article[] @relation("createdByMembership") 
   articleUpdatedBy Article[] @relation("updatedByMembership") 
   articleArchivedBy Article[] @relation("archivedByMembership")
-
   postCreatedBy Post[] @relation("createdByMembership") 
   postUpdatedBy Post[] @relation("updatedByMembership") 
   postArchivedBy Post[] @relation("archivedByMembership")
-
   commentCreatedBy Comment[] @relation("createdByMembership") 
   commentUpdatedBy Comment[] @relation("updatedByMembership") 
   commentArchivedBy Comment[] @relation("archivedByMembership")
-
   chatCreatedBy Chat[] @relation("createdByMembership") 
   chatUpdatedBy Chat[] @relation("updatedByMembership") 
   chatArchivedBy Chat[] @relation("archivedByMembership")
-
   chaterCreatedBy Chater[] @relation("createdByMembership") 
   chaterUpdatedBy Chater[] @relation("updatedByMembership") 
   chaterArchivedBy Chater[] @relation("archivedByMembership")
-
   messageCreatedBy Message[] @relation("createdByMembership") 
   messageUpdatedBy Message[] @relation("updatedByMembership") 
   messageArchivedBy Message[] @relation("archivedByMembership")
-
   notificationCreatedBy Notification[] @relation("createdByMembership") 
   notificationUpdatedBy Notification[] @relation("updatedByMembership") 
   notificationArchivedBy Notification[] @relation("archivedByMembership")
-
   userNotificationCreatedBy UserNotification[] @relation("createdByMembership") 
   userNotificationUpdatedBy UserNotification[] @relation("updatedByMembership") 
   userNotificationArchivedBy UserNotification[] @relation("archivedByMembership")
-
   jobCreatedBy Job[] @relation("createdByMembership") 
   jobUpdatedBy Job[] @relation("updatedByMembership") 
   jobArchivedBy Job[] @relation("archivedByMembership")
-
   candidateCreatedBy Candidate[] @relation("createdByMembership") 
   candidateUpdatedBy Candidate[] @relation("updatedByMembership") 
   candidateArchivedBy Candidate[] @relation("archivedByMembership")
   posts Post[] @relation("posts_user")
-
   comments Comment[] @relation("comments_user")
-
   articles Article[] @relation("articles_user")
-
   chats Chater[] @relation("chats_user")
-
   messages Message[] @relation("messages_sender")
-
   wallets Wallet[] @relation("user_wallets")
-
   accounts Account[] @relation("accounts_user")
-
   feedbacks Feedback[] @relation("feedbacks_user")
-
   notifications UserNotification[] @relation("notifications_user")
-
-
   @@unique([id, tenantId])
   @@unique([userId, tenantId])
 }
@@ -314,7 +266,6 @@ model Subscription {
   tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
-
   membershipId         String?            @db.Uuid
   membership           Membership?        @relation(fields: [membershipId], references: [id], onDelete: Cascade)
   userId               String             @db.Uuid
@@ -343,7 +294,6 @@ model Account {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   name String?
   isSystem Boolean @default(false)
   type String
@@ -353,17 +303,11 @@ model Account {
   meta Json?
   userId String? @db.Uuid
   user Membership? @relation("accounts_user", fields: [userId], references: [id])
-
   orders Order[] @relation("account_orders")
-
   wallets Wallet[] @relation("account_wallets")
-
   deposits Deposit[] @relation("account_deposits")
-
   withdrawals Withdrawal[] @relation("account_withdrawals")
-
   snapshots BalanceSnapshot[] @relation("account_snapshots")
-
   @@unique([id, tenantId])
 }
 
@@ -383,7 +327,6 @@ model Deposit {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   amount Decimal @db.Decimal(72, 0)
   status String?
   chain String?
@@ -397,12 +340,8 @@ model Deposit {
   meta Json?
   accountId String? @db.Uuid
   account Account? @relation("account_deposits", fields: [accountId], references: [id])
-
   assetId String? @db.Uuid
   asset Asset? @relation("asset_deposits", fields: [assetId], references: [id])
-
-
-
   @@unique([id, tenantId])
 }
 
@@ -422,7 +361,6 @@ model Withdrawal {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   amount Decimal @db.Decimal(72, 0)
   fee Decimal? @db.Decimal(72, 0)
   status String?
@@ -441,12 +379,8 @@ model Withdrawal {
   meta Json?
   accountId String? @db.Uuid
   account Account? @relation("account_withdrawals", fields: [accountId], references: [id])
-
   assetId String? @db.Uuid
   asset Asset? @relation("asset_withdrawals", fields: [assetId], references: [id])
-
-
-
   @@unique([id, tenantId])
 }
 
@@ -466,7 +400,6 @@ model Wallet {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   available Decimal? @db.Decimal(72, 0)
   locked Decimal? @db.Decimal(72, 0)
   total Decimal? @db.Decimal(72, 0)
@@ -474,17 +407,11 @@ model Wallet {
   meta Json?
   userId String? @db.Uuid
   user Membership? @relation("user_wallets", fields: [userId], references: [id])
-
   assetId String? @db.Uuid
   asset Asset? @relation("asset_wallets", fields: [assetId], references: [id])
-
   accountId String? @db.Uuid
   account Account? @relation("account_wallets", fields: [accountId], references: [id])
-
   snapshots BalanceSnapshot[] @relation("snapshots_wallet")
-
-
-
   @@unique([id, tenantId])
 }
 
@@ -504,7 +431,6 @@ model Order {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   side String?
   type String?
   price Decimal? @db.Decimal(72, 20)
@@ -515,16 +441,11 @@ model Order {
   meta Json?
   accountId String? @db.Uuid
   account Account? @relation("account_orders", fields: [accountId], references: [id])
-
   instrumentId String? @db.Uuid
   instrument Instrument? @relation("instrument_orders", fields: [instrumentId], references: [id])
-
   buys Trade[] @relation("buyOrderId_buys")
-
   sells Trade[] @relation("sellOrderId_sells")
-
   fills Fill[] @relation("order_fills")
-
   @@unique([id, tenantId])
 }
 
@@ -544,7 +465,6 @@ model Fill {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   side String
   price Decimal @db.Decimal(72, 20)
   quantity Decimal @db.Decimal(72, 20)
@@ -558,9 +478,6 @@ model Fill {
   meta Json?
   tradeId String? @db.Uuid
   trade Trade? @relation("fills_trade", fields: [tradeId], references: [id])
-
-
-
   @@unique([id, tenantId])
 }
 
@@ -580,21 +497,14 @@ model Trade {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   price Decimal? @db.Decimal(72, 20)
   quantity Decimal? @db.Decimal(72, 20)
   meta Json?
   buyOrderId Order[] @relation("buyOrderId_buys")
-
   sellOrderId Order[] @relation("sellOrderId_sells")
-
   instrumentId String? @db.Uuid
   instrument Instrument? @relation("instrument_trades", fields: [instrumentId], references: [id])
-
   fills Fill[] @relation("fills_trade")
-
-
-
   @@unique([id, tenantId])
 }
 
@@ -614,7 +524,6 @@ model Asset {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   symbol String
   klass String?
   precision Int?
@@ -622,18 +531,11 @@ model Asset {
   decimals Int?
   meta Json?
   baseInstruments Instrument[] @relation("baseInstruments_underlyingAsset")
-
   quoteInstruments Instrument[] @relation("quoteAsset_quoteInstruments")
-
   wallets Wallet[] @relation("asset_wallets")
-
   deposits Deposit[] @relation("asset_deposits")
-
   withdrawals Withdrawal[] @relation("asset_withdrawals")
-
   snapshots BalanceSnapshot[] @relation("asset_snapshots")
-
-
   @@unique([symbol, tenantId])
   @@unique([id, tenantId])
 }
@@ -685,7 +587,6 @@ model FeeSchedule {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   scope String?
   makerFeeBps Int?
   takerFeeBps Int?
@@ -696,9 +597,6 @@ model FeeSchedule {
   accountId String?
   instrumentId String?
   meta Json?
-
-
-
   @@unique([id, tenantId])
 }
 
@@ -718,7 +616,6 @@ model BalanceSnapshot {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   available Decimal? @db.Decimal(72, 0)
   locked Decimal? @db.Decimal(72, 0)
   total Decimal? @db.Decimal(72, 0)
@@ -726,15 +623,10 @@ model BalanceSnapshot {
   meta Json?
   accountId String? @db.Uuid
   account Account? @relation("account_snapshots", fields: [accountId], references: [id])
-
   walletId String? @db.Uuid
   wallet Wallet? @relation("snapshots_wallet", fields: [walletId], references: [id])
-
   assetId String? @db.Uuid
   asset Asset? @relation("asset_snapshots", fields: [assetId], references: [id])
-
-
-
   @@unique([id, tenantId])
 }
 
@@ -754,15 +646,11 @@ model SystemAccount {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   type String?
   name String?
   description String?
   isActive Boolean @default(false)
   meta Json?
-
-
-
   @@unique([id, tenantId])
 }
 
@@ -782,7 +670,6 @@ model Referral {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   referrerUserId String?
   referredUserId String?
   referralCode String?
@@ -793,9 +680,6 @@ model Referral {
   rewardCurrency String?
   rewardedAt DateTime? @db.Timestamptz(3)
   meta Json?
-
-
-
   @@unique([id, tenantId])
 }
 
@@ -815,7 +699,6 @@ model Listing {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   companyName String?
   legalName String?
   jurisdiction String?
@@ -834,9 +717,6 @@ model Listing {
   reviewedBy String?
   notes String?
   meta Json?
-
-
-
   @@unique([id, tenantId])
 }
 
@@ -856,7 +736,6 @@ model Feedback {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   title String?
   description String?
   attachments Json?
@@ -865,9 +744,6 @@ model Feedback {
   json Json?
   userId String? @db.Uuid
   user Membership? @relation("feedbacks_user", fields: [userId], references: [id])
-
-
-
   @@unique([id, tenantId])
 }
 
@@ -887,7 +763,6 @@ model MarketMaker {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   organizationName String
   contactEmail String?
   contactPhone String?
@@ -912,9 +787,6 @@ model MarketMaker {
   notesInternal String?
   specialOrderTypes String?
   minFeeAmount Decimal? @db.Decimal(72, 0)
-
-
-
   @@unique([id, tenantId])
 }
 
@@ -934,7 +806,6 @@ model LedgerEvent {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   type String?
   referenceId String?
   referenceType String?
@@ -942,9 +813,6 @@ model LedgerEvent {
   description String?
   meta Json?
   entries LedgerEntry[] @relation("entries_event")
-
-
-
   @@unique([id, tenantId])
 }
 
@@ -964,15 +832,11 @@ model LedgerEntry {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   amount Decimal? @db.Decimal(72, 0)
   accountId String?
   meta Json?
   eventId String? @db.Uuid
   event LedgerEvent? @relation("entries_event", fields: [eventId], references: [id])
-
-
-
   @@unique([id, tenantId])
 }
 
@@ -992,7 +856,6 @@ model Article {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   title String?
   body String?
   type String[] @default([])
@@ -1001,9 +864,6 @@ model Article {
   meta Json?
   userId String? @db.Uuid
   user Membership? @relation("articles_user", fields: [userId], references: [id])
-
-
-
   @@unique([id, tenantId])
 }
 
@@ -1023,7 +883,6 @@ model Post {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   title String?
   body String?
   files Json?
@@ -1032,9 +891,6 @@ model Post {
   meta Json?
   userId String @db.Uuid
   user Membership @relation("posts_user", fields: [userId], references: [id])
-
-
-
   @@unique([id, tenantId])
 }
 
@@ -1054,16 +910,12 @@ model Comment {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   body String?
   type String[] @default([])
   images Json?
   meta Json?
   userId String @db.Uuid
   user Membership @relation("comments_user", fields: [userId], references: [id])
-
-
-
   @@unique([id, tenantId])
 }
 
@@ -1083,17 +935,12 @@ model Chat {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   name String?
   media Json?
   meta Json?
   active Boolean @default(false)
   messages Message[] @relation("chat_messages")
-
   chaters Chater[] @relation("chat_chaters")
-
-
-
   @@unique([id, tenantId])
 }
 
@@ -1113,21 +960,15 @@ model Chater {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   nickname String?
   status String?
   role String[] @default([])
   meta Json?
   userId String? @db.Uuid
   user Membership? @relation("chats_user", fields: [userId], references: [id])
-
   chatId String? @db.Uuid
   chat Chat? @relation("chat_chaters", fields: [chatId], references: [id])
-
   messages Message[] @relation("chater_messages")
-
-
-
   @@unique([id, tenantId])
 }
 
@@ -1147,7 +988,6 @@ model Message {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   body String?
   attachment Json?
   images Json?
@@ -1155,15 +995,10 @@ model Message {
   meta Json?
   chatId String? @db.Uuid
   chat Chat? @relation("chat_messages", fields: [chatId], references: [id])
-
   chaterId String? @db.Uuid
   chater Chater? @relation("chater_messages", fields: [chaterId], references: [id])
-
   senderId String? @db.Uuid
   sender Membership? @relation("messages_sender", fields: [senderId], references: [id])
-
-
-
   @@unique([id, tenantId])
 }
 
@@ -1183,7 +1018,6 @@ model Notification {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   type String?
   severity String?
   title String?
@@ -1197,9 +1031,6 @@ model Notification {
   requiresAck Boolean @default(false)
   meta Json?
   userNotifications UserNotification[] @relation("notification_userNotifications")
-
-
-
   @@unique([id, tenantId])
 }
 
@@ -1219,7 +1050,6 @@ model UserNotification {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   readAt DateTime? @db.Timestamptz(3)
   dismissedAt DateTime? @db.Timestamptz(3)
   acknowledgedAt DateTime? @db.Timestamptz(3)
@@ -1228,12 +1058,8 @@ model UserNotification {
   meta Json?
   notificationId String? @db.Uuid
   notification Notification? @relation("notification_userNotifications", fields: [notificationId], references: [id])
-
   userId String? @db.Uuid
   user Membership? @relation("notifications_user", fields: [userId], references: [id])
-
-
-
   @@unique([id, tenantId])
 }
 
@@ -1253,7 +1079,6 @@ model Job {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   title String?
   team String?
   location String?
@@ -1269,9 +1094,6 @@ model Job {
   seniority String?
   currency String?
   meta Json?
-
-
-
   @@unique([id, tenantId])
 }
 
@@ -1291,7 +1113,6 @@ model Candidate {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-
   firstName String?
   lastName String?
   preferredName String?
@@ -1305,8 +1126,5 @@ model Candidate {
   resumeUrl String?
   resume Json?
   meta Json?
-
-
-
   @@unique([id, tenantId])
 }
