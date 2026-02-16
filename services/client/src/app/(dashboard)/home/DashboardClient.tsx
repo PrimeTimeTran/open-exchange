@@ -47,7 +47,7 @@ export function DashboardClient({
       });
     } else {
       window.gtag('config', 'G-MFFQRL807K', {
-        user_id: null,
+        user_id: 'Loi-Tran-123-SignedIn',
       });
     }
   }, [userId]);
