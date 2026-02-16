@@ -40,8 +40,8 @@ export function DashboardClient({
 
     window.gtag('set', {
       user_id: 'real-user-id',
+      tenant_id: 'shop_123',
     });
-
     // force a page_view AFTER setting user_id
     window.gtag('event', 'page_view');
   }, []);
