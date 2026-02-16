@@ -62,11 +62,35 @@ pub trait AssetRepository: Send + Sync + std::fmt::Debug {
 #[async_trait]
 impl AssetRepository for PostgresAssetRepository {
     async fn create(&self, asset: common::Asset) -> Result<common::Asset> {
-        // TODO: Implement actual SQL insert
-        // For now, we just return the asset to satisfy the interface, 
-        // as we are primarily fixing the test/InMemory behavior.
-        // In a real scenario, this MUST persist to DB.
-        Ok(asset)
+        let id = Uuid::parse_str(&asset.id).map_err(|_| AppError::ValidationError("Invalid asset ID".into()))?;
+        let tenant_id = Uuid::parse_str(&asset.tenant_id).map_err(|_| AppError::ValidationError("Invalid tenant ID".into()))?;
+        let meta: serde_json::Value = serde_json::from_str(&asset.meta).unwrap_or(serde_json::json!({}));
+
+        let (created_at, updated_at): (DateTime<Utc>, DateTime<Utc>) = sqlx::query_as(
+            r#"
+            INSERT INTO "Asset" (id, "tenantId", symbol, klass, precision, "isFractional", decimals, meta, "createdAt", "updatedAt")
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            RETURNING "createdAt", "updatedAt"
+            "#
+        )
+        .bind(id)
+        .bind(tenant_id)
+        .bind(&asset.symbol)
+        .bind(&asset.klass)
+        .bind(asset.precision)
+        .bind(asset.is_fractional)
+        .bind(asset.decimals)
+        .bind(meta)
+        .bind(chrono::Utc::now())
+        .bind(chrono::Utc::now())
+        .fetch_one(&self.pool)
+        .await
+        .map_err(AppError::DatabaseError)?;
+
+        let mut created = asset;
+        created.created_at = created_at.timestamp_millis();
+        created.updated_at = updated_at.timestamp_millis();
+        Ok(created)
     }
 
     async fn get(&self, id: Uuid) -> Result<Option<common::Asset>> {

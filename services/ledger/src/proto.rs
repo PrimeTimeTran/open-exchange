@@ -1,6 +1,5 @@
 // Centralized module for generated Protobuf code
 
-#[allow(dead_code)]
 pub mod common {
     tonic::include_proto!("common");
 }

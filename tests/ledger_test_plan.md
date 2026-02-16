@@ -82,4 +82,18 @@ Focus on external funding.
 - **`test_deposit_increases_balance`**: Verify a confirmed deposit increases `available` and `total` balance.
 - **`test_withdrawal_request_locks_funds`**: Verify requesting a withdrawal locks the amount immediately.
 - **`test_withdrawal_complete_deducts_funds`**: Verify completion removes the locked funds.
-- **`test_withdrawal_insufficient_funds`**: Verify withdrawal request is rejected if balance is too low.
+## 9. Critical Path Integration Tests (Implemented in `tests/integration_critical_path.rs`)
+
+These tests run against a real, migrated Postgres database (Open Exchange Test DB) to guarantee end-to-end correctness and SQL logic integrity.
+
+1.  **`test_deposit_increases_balance`**: Verifies that an external deposit correctly credits a user's wallet.
+2.  **`test_withdrawal_insufficient_funds`**: Verifies that a withdrawal request exceeding the available balance is rejected.
+3.  **`test_create_order_buy_limit_locks_quote`**: Verifies a Buy Limit order locks `Price * Qty` of the Quote asset.
+4.  **`test_create_order_sell_limit_locks_base`**: Verifies a Sell Limit order locks `Qty` of the Base asset.
+5.  **`test_create_order_insufficient_funds`**: Verifies that order placement fails if funds are insufficient (validating `AppError::InsufficientFunds`).
+6.  **`test_cancel_order_unlocks_funds`**: Verifies that cancelling an order returns the locked amount exactly to the available balance.
+7.  **`test_ledger_entry_integrity_check`**: **Audit**. Verifies that for a given account, `Wallet.total` equals the sum of all `LedgerEntry` amounts.
+8.  **`test_trade_settlement_full_fill`**: Verifies a complete trade execution updates Buyer/Seller balances correctly (debit locked, credit new asset).
+9.  **`test_trade_settlement_partial_fill`**: Verifies a partial fill correctly consumes a portion of the lock and leaves the rest locked.
+10. **`test_system_fee_collection`**: Verifies that trading fees are correctly deducted from users and credited to the system `fees_account`.
+

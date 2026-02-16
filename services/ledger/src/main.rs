@@ -30,6 +30,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matching_client = system::connect_to_matching_engine(&std::env::var("MATCHING_ENGINE_URL").unwrap_or_else(|_| "http://matching:50051".to_string())).await;
 
     // 3. Initialize Domain Services (Business Logic Layer) & API
+    // Services::new now expects the pool to be passed to OrderService internally
+    // We need to check services/ledger/src/container.rs to see how Services are constructed.
     let services = Services::new(db_pool.clone(), matching_client);
 
     // 6. Start Health Check Server

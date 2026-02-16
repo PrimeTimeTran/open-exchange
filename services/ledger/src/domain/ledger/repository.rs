@@ -11,4 +11,8 @@ pub trait LedgerRepository: Send + Sync {
     async fn save_entries_with_tx(&self, tx: &mut Transaction<'_, Postgres>, entries: Vec<LedgerEntry>) -> Result<Vec<LedgerEntry>>;
     async fn save_trade_with_tx(&self, tx: &mut Transaction<'_, Postgres>, trade: Trade) -> Result<Trade>;
     async fn save_trade(&self, trade: Trade) -> Result<Trade>;
+    
+    // Testing/Admin methods
+    async fn list_events(&self) -> Result<Vec<LedgerEvent>>;
+    async fn list_entries(&self) -> Result<Vec<LedgerEntry>>;
 }

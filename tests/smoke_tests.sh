@@ -10,10 +10,10 @@ PROJECT_ROOT="$SCRIPT_DIR/.."
 cd "$PROJECT_ROOT"
 
 # ANSI color codes
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 BOLD='\033[1m'
+RED='\033[0;31m'
+GREEN='\033[0;32m'
 
 # Report Setup
 TIMESTAMP=$(date +"%Y-%m-%d-%H%M%S")
@@ -92,7 +92,8 @@ run_service_test "Matching Service" "services/matching" "go test -v \$(go list .
 run_service_test "Market Service" "services/market" "go test -v \$(go list ./... | grep -v /proto/)" "go"
 
 # 3. Ledger Service (Rust)
-run_service_test "Ledger Service" "services/ledger" "cargo test" "rust"
+# We run with --test-threads=1 to prevent DB deadlocks during parallel TRUNCATE/INSERT in integration tests
+run_service_test "Ledger Service" "services/ledger" "cargo test -- --test-threads=1" "rust"
 
 # 4. Client Service (Node.js)
 if [ ! -d "services/client/node_modules" ]; then

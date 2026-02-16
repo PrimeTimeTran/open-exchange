@@ -77,6 +77,10 @@ impl AccountRepository for InMemoryAccountRepository {
         let accounts = self.accounts.lock().unwrap();
         Ok(accounts.iter().find(|a| a.name == name).cloned())
     }
+
+    async fn list_all(&self) -> Result<Vec<Account>> {
+        Ok(self.accounts.lock().unwrap().clone())
+    }
 }
 
 // --- InMemoryOrderRepository ---
@@ -104,6 +108,10 @@ impl OrderRepository for InMemoryOrderRepository {
         let mut orders = self.orders.lock().unwrap();
         orders.push(order.clone());
         Ok(order)
+    }
+
+    async fn create_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, order: Order) -> Result<Order> {
+        self.create(order).await
     }
 
     async fn get(&self, id: Uuid) -> Result<Option<Order>> {
@@ -394,6 +402,14 @@ impl LedgerRepository for InMemoryLedgerRepository {
 
     async fn save_trade(&self, trade: Trade) -> Result<Trade> {
         Ok(trade)
+    }
+
+    async fn list_events(&self) -> Result<Vec<LedgerEvent>> {
+        Ok(self.events.lock().unwrap().clone())
+    }
+
+    async fn list_entries(&self) -> Result<Vec<LedgerEntry>> {
+        Ok(self.entries.lock().unwrap().clone())
     }
 }
 

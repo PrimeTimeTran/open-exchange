@@ -106,4 +106,14 @@ impl LedgerRepository for PostgresLedgerRepository {
         println!("PERSIST: Trade created {:?}", trade);
         Ok(trade)
     }
+
+    async fn list_events(&self) -> Result<Vec<LedgerEvent>> {
+        // Implement listing for tests/admin
+        Ok(vec![])
+    }
+
+    async fn list_entries(&self) -> Result<Vec<LedgerEntry>> {
+        // Implement listing for tests/admin
+        Ok(vec![])
+    }
 }

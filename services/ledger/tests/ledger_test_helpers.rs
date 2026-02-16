@@ -49,18 +49,19 @@ impl LedgerTestContext {
         
         let btc_id = Uuid::new_v4();
         let usd_id = Uuid::new_v4();
+        let tenant_id = Uuid::new_v4();
 
         // Add Assets
         asset_repo.add(ledger::proto::common::Asset {
             id: btc_id.to_string(),
-            tenant_id: "default".to_string(),
+            tenant_id: tenant_id.to_string(),
             symbol: "BTC".to_string(),
             decimals: 8,
             ..Default::default()
         });
         asset_repo.add(ledger::proto::common::Asset {
             id: usd_id.to_string(),
-            tenant_id: "default".to_string(),
+            tenant_id: tenant_id.to_string(),
             symbol: "USD".to_string(),
             decimals: 2,
             ..Default::default()
@@ -69,7 +70,7 @@ impl LedgerTestContext {
         // Add Fee Account
         account_repo.add(ledger::domain::accounts::Account {
             id: Uuid::new_v4(),
-            tenant_id: "default".to_string(),
+            tenant_id: tenant_id.to_string(),
             user_id: "".to_string(),
             name: "fees_account".to_string(),
             r#type: "fees".to_string(),
@@ -82,7 +83,7 @@ impl LedgerTestContext {
         // Add default BTC-USD instrument
         instrument_repo.add(Instrument {
             id: instrument_id.to_string(),
-            tenant_id: "default".to_string(),
+            tenant_id: tenant_id.to_string(),
             symbol: "BTC-USD".to_string(),
             r#type: "spot".to_string(),
             status: "active".to_string(),
@@ -102,7 +103,7 @@ impl LedgerTestContext {
             fill_repo,
             ledger_repo,
             trade_repo,
-            tenant_id: Uuid::new_v4(),
+            tenant_id,
             account_a: Uuid::new_v4(),
             account_b: Uuid::new_v4(),
             instrument_id,
@@ -192,7 +193,7 @@ impl LedgerTestContext {
         let ledger_service = Arc::new(LedgerService::new(self.repo.clone(), self.instrument_repo.clone(), self.asset_repo.clone(), self.account_repo.clone()));
         let wallet_service = Arc::new(WalletService::new(self.wallet_repo.clone()));
         let asset_service = Arc::new(AssetService::new(self.asset_repo.clone(), self.instrument_repo.clone()));
-        let order_service = Arc::new(OrderService::new(self.repo.clone(), wallet_service.clone(), asset_service));
+        let order_service = Arc::new(OrderService::new(self.repo.clone(), wallet_service.clone(), asset_service, None));
         let fill_service = Arc::new(FillService::new(self.fill_repo.clone()));
         let fee_service = Arc::new(StandardFeeService::new());
 

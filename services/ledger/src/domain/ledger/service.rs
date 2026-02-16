@@ -147,23 +147,23 @@ impl LedgerService {
     }
 
     async fn fetch_trade_data(&self, trade: &Trade) -> Result<TradeData> {
-        let buy_order_uuid = Uuid::parse_str(&trade.buy_order_id).map_err(|_| AppError::ValidationError("Invalid buy order ID".to_string()))?;
-        let sell_order_uuid = Uuid::parse_str(&trade.sell_order_id).map_err(|_| AppError::ValidationError("Invalid sell order ID".to_string()))?;
+        let buy_order_uuid = Uuid::parse_str(&trade.buy_order_id).map_err(|_| AppError::MalformedRequest("Invalid buy order ID".to_string()))?;
+        let sell_order_uuid = Uuid::parse_str(&trade.sell_order_id).map_err(|_| AppError::MalformedRequest("Invalid sell order ID".to_string()))?;
 
         let buy_order = self.order_repo.get(buy_order_uuid).await?
             .ok_or(AppError::NotFound(format!("Buy order {} not found", buy_order_uuid)))?;
         let sell_order = self.order_repo.get(sell_order_uuid).await?
             .ok_or(AppError::NotFound(format!("Sell order {} not found", sell_order_uuid)))?;
 
-        let instrument_id = Uuid::parse_str(&trade.instrument_id).map_err(|_| AppError::ValidationError("Invalid instrument ID".to_string()))?;
+        let instrument_id = Uuid::parse_str(&trade.instrument_id).map_err(|_| AppError::MalformedRequest("Invalid instrument ID".to_string()))?;
         let instrument = self.instrument_repo.get(instrument_id).await?
             .ok_or(AppError::NotFound(format!("Instrument {} not found", trade.instrument_id)))?;
             
         let base_asset_id = instrument.underlying_asset_id;
         let quote_asset_id = instrument.quote_asset_id;
 
-        let base_asset_uuid = Uuid::parse_str(&base_asset_id).map_err(|_| AppError::ValidationError("Invalid base asset ID".into()))?;
-        let quote_asset_uuid = Uuid::parse_str(&quote_asset_id).map_err(|_| AppError::ValidationError("Invalid quote asset ID".into()))?;
+        let base_asset_uuid = Uuid::parse_str(&base_asset_id).map_err(|_| AppError::MalformedRequest("Invalid base asset ID".into()))?;
+        let quote_asset_uuid = Uuid::parse_str(&quote_asset_id).map_err(|_| AppError::MalformedRequest("Invalid quote asset ID".into()))?;
 
         let base_asset = self.asset_repo.get(base_asset_uuid).await?
             .ok_or(AppError::NotFound(format!("Base asset {} not found", base_asset_id)))?;
@@ -185,8 +185,8 @@ impl LedgerService {
     }
 
     fn calculate_trade_amounts(&self, trade: &Trade, base_decimals: i32, quote_decimals: i32, buyer_fee: Decimal, seller_fee: Decimal) -> Result<TradeAmounts> {
-        let trade_price = Decimal::from_str(&trade.price).map_err(|_| AppError::ValidationError("Invalid trade price".into()))?;
-        let trade_qty = Decimal::from_str(&trade.quantity).map_err(|_| AppError::ValidationError("Invalid trade quantity".into()))?;
+        let trade_price = Decimal::from_str(&trade.price).map_err(|_| AppError::MalformedRequest("Invalid trade price".into()))?;
+        let trade_qty = Decimal::from_str(&trade.quantity).map_err(|_| AppError::MalformedRequest("Invalid trade quantity".into()))?;
         let total_value = trade_price * trade_qty;
 
         // Scale Amounts (to Atomic Units)

@@ -11,18 +11,18 @@ use rust_decimal::Decimal;
 use sqlx::{Transaction, Postgres};
 use rust_decimal::MathematicalOps;
 
-// Constants to avoid magic strings
+const SIDE_BUY: &str = "buy";
 const STATUS_OPEN: &str = "open";
-const STATUS_PARTIAL_FILL: &str = "partial_fill";
 const STATUS_FILLED: &str = "filled";
 const STATUS_CANCELLED: &str = "cancelled";
-const SIDE_BUY: &str = "buy";
+const STATUS_PARTIAL_FILL: &str = "partial_fill";
 
 #[derive(Clone)]
 pub struct OrderService {
+    pool: Option<sqlx::PgPool>,
     repo: Arc<dyn OrderRepository>,
-    wallet_service: Arc<WalletService>,
     asset_service: Arc<AssetService>,
+    wallet_service: Arc<WalletService>,
 }
 
 impl fmt::Debug for OrderService {
@@ -36,8 +36,9 @@ impl OrderService {
         repo: Arc<dyn OrderRepository>,
         wallet_service: Arc<WalletService>,
         asset_service: Arc<AssetService>,
+        pool: Option<sqlx::PgPool>,
     ) -> Self {
-        Self { repo, wallet_service, asset_service }
+        Self { repo, wallet_service, asset_service, pool }
     }
 
     pub async fn create_order(&self, order: Order) -> Result<Order> {
@@ -47,8 +48,24 @@ impl OrderService {
             return Ok(existing);
         }
 
-        self.validate_and_reserve_funds(&order).await?;
-        self.repo.create(order).await
+        // Use transaction if pool is available (Postgres)
+        if let Some(pool) = &self.pool {
+            let mut tx = pool.begin().await.map_err(AppError::DatabaseError)?;
+            
+            // Bypass RLS for system operations if needed, or rely on service user
+            // In settlement service we saw RLS bypass, here we might need it too or assume
+            // the service connects as a superuser/service role. Let's keep it simple for now.
+
+            self.validate_and_reserve_funds_with_tx(&mut tx, &order).await?;
+            let created_order = self.repo.create_with_tx(&mut tx, order).await?;
+            
+            tx.commit().await.map_err(AppError::DatabaseError)?;
+            Ok(created_order)
+        } else {
+            // InMemory for Testing scenarios - no transactions, but we still want to validate funds
+            self.validate_and_reserve_funds(&order).await?;
+            self.repo.create(order).await
+        }
     }
 
     pub async fn get_order(&self, id: Uuid) -> Result<Option<Order>> {
@@ -75,6 +92,10 @@ impl OrderService {
         self.process_funds(order, true).await
     }
 
+    pub async fn validate_and_reserve_funds_with_tx(&self, tx: &mut Transaction<'_, Postgres>, order: &Order) -> Result<()> {
+        self.process_funds_with_tx(tx, order, true).await
+    }
+
     async fn release_funds(&self, order: &Order) -> Result<()> {
         self.process_funds(order, false).await
     }
@@ -83,6 +104,13 @@ impl OrderService {
     async fn process_funds(&self, order: &Order, is_reservation: bool) -> Result<()> {
         if let Some((asset_id, amount_atomic)) = self.calculate_fund_requirement(order).await? {
             self.update_wallet_balance(order.account_id, asset_id, amount_atomic, is_reservation).await?;
+        }
+        Ok(())
+    }
+
+    async fn process_funds_with_tx(&self, tx: &mut Transaction<'_, Postgres>, order: &Order, is_reservation: bool) -> Result<()> {
+        if let Some((asset_id, amount_atomic)) = self.calculate_fund_requirement(order).await? {
+            self.update_wallet_balance_with_tx(tx, order.account_id, asset_id, amount_atomic, is_reservation).await?;
         }
         Ok(())
     }
@@ -128,32 +156,61 @@ impl OrderService {
             .await
             .map_err(|e| AppError::Internal(e.to_string()))?;
 
+        self.apply_balance_update(wallet_opt, amount_atomic, is_reservation).await
+    }
+
+    async fn update_wallet_balance_with_tx(&self, tx: &mut Transaction<'_, Postgres>, account_id: Uuid, asset_id: String, amount_atomic: Decimal, is_reservation: bool) -> Result<()> {
+        let account_uuid: String = account_id.to_string();
+        
+        let wallet_opt = self.wallet_service.get_wallet_by_account_and_asset_with_tx(tx, &account_uuid, &asset_id)
+            .await
+            .map_err(|e| AppError::Internal(e.to_string()))?;
+
+        // Logic is the same, just the save method is different.
+        // But logic is inside `if let Some(mut wallet)`.
+        // I should extract the wallet mutation logic into a pure function `mutate_wallet` to avoid duplication.
+
         if let Some(mut wallet) = wallet_opt {
-            let available = Decimal::from_str(&wallet.available)
-                .map_err(|_| AppError::Internal("Invalid available balance".into()))?;
-            let locked = Decimal::from_str(&wallet.locked)
-                .map_err(|_| AppError::Internal("Invalid locked balance".into()))?;
-
-            if is_reservation {
-                if available < amount_atomic {
-                    return Err(AppError::ValidationError(format!(
-                        "Insufficient funds. Required: {}, Available: {}", 
-                        amount_atomic, available
-                    )));
-                }
-                wallet.available = (available - amount_atomic).to_string();
-                wallet.locked = (locked + amount_atomic).to_string();
-            } else {
-                wallet.available = (available + amount_atomic).to_string();
-                wallet.locked = (locked - amount_atomic).to_string();
-            }
-
-            wallet.updated_at = chrono::Utc::now().timestamp_millis();
-            self.wallet_service.update_wallet(wallet).await.map_err(|e| AppError::Internal(e.to_string()))?;
+             Self::mutate_wallet_balance(&mut wallet, amount_atomic, is_reservation)?;
+             self.wallet_service.update_wallet_with_tx(tx, wallet).await.map_err(|e| AppError::Internal(e.to_string()))?;
         } else if is_reservation {
             return Err(AppError::ValidationError("Wallet for required asset not found in account".to_string()));
         }
-        
+        Ok(())
+    }
+
+    async fn apply_balance_update(&self, wallet_opt: Option<crate::domain::wallets::Wallet>, amount_atomic: Decimal, is_reservation: bool) -> Result<()> {
+         if let Some(mut wallet) = wallet_opt {
+             Self::mutate_wallet_balance(&mut wallet, amount_atomic, is_reservation)?;
+             self.wallet_service.update_wallet(wallet).await.map_err(|e| AppError::Internal(e.to_string()))?;
+        } else if is_reservation {
+            return Err(AppError::ValidationError("Wallet for required asset not found in account".to_string()));
+        }
+        Ok(())
+    }
+
+    fn mutate_wallet_balance(wallet: &mut crate::domain::wallets::Wallet, amount_atomic: Decimal, is_reservation: bool) -> Result<()> {
+        let available = Decimal::from_str(&wallet.available)
+            .map_err(|_| AppError::Internal("Invalid available balance".into()))?;
+        let locked = Decimal::from_str(&wallet.locked)
+            .map_err(|_| AppError::Internal("Invalid locked balance".into()))?;
+
+        if is_reservation {
+            if available < amount_atomic {
+                return Err(AppError::InsufficientFunds {
+                    asset: wallet.asset_id.clone(),
+                    required: amount_atomic.to_string(),
+                    available: available.to_string(),
+                });
+            }
+            wallet.available = (available - amount_atomic).to_string();
+            wallet.locked = (locked + amount_atomic).to_string();
+        } else {
+            wallet.available = (available + amount_atomic).to_string();
+            wallet.locked = (locked - amount_atomic).to_string();
+        }
+
+        wallet.updated_at = chrono::Utc::now().timestamp_millis();
         Ok(())
     }
 

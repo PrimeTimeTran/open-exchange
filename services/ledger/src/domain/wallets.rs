@@ -69,8 +69,16 @@ impl WalletService {
         self.repo.get_by_account_and_asset(account_id, asset_id).await
     }
 
+    pub async fn get_wallet_by_account_and_asset_with_tx(&self, tx: &mut Transaction<'_, Postgres>, account_id: &str, asset_id: &str) -> Result<Option<Wallet>> {
+        self.repo.get_by_account_and_asset_with_tx(tx, account_id, asset_id).await
+    }
+
     pub async fn update_wallet(&self, wallet: Wallet) -> Result<Wallet> {
         self.repo.update(wallet).await
+    }
+
+    pub async fn update_wallet_with_tx(&self, tx: &mut Transaction<'_, Postgres>, wallet: Wallet) -> Result<Wallet> {
+        self.repo.update_with_tx(tx, wallet).await
     }
 
     pub async fn delete_wallet(&self, wallet_id: &str) -> Result<()> {

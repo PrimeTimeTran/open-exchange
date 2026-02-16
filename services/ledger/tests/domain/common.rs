@@ -78,7 +78,8 @@ impl TestContext {
         let order_service = Arc::new(OrderService::new(
             order_repo, 
             wallet_service.clone(), 
-            asset_service.clone()
+            asset_service.clone(),
+            None,
         ));
         
         let deposit_service = Arc::new(DepositService::new());

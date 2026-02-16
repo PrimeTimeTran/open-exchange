@@ -171,4 +171,19 @@ impl AccountRepository for PostgresAccountRepository {
         .map_err(AppError::DatabaseError)?;
 
         Ok(rec.map(|r| r.into()))
-    }}
+    }
+
+    async fn list_all(&self) -> Result<Vec<Account>> {
+        let recs: Vec<AccountRow> = sqlx::query_as(
+            r#"
+            SELECT id, "tenantId", "userId", name, type, status, meta, "createdAt", "updatedAt"
+            FROM "Account"
+            "#
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(AppError::DatabaseError)?;
+
+        Ok(recs.into_iter().map(|r| r.into()).collect())
+    }
+}

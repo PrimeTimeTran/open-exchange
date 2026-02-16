@@ -49,13 +49,17 @@ impl OrderServiceImpl {
         let price = Decimal::from_str(&proto_order.price).map_err(|_| Status::invalid_argument("Invalid price format"))?;
         let filled_quantity = Decimal::from_str(&proto_order.quantity_filled).unwrap_or(Decimal::ZERO);
 
-        let side = match OrderSide::try_from(proto_order.side).unwrap_or(OrderSide::Unspecified) {
+        let side_enum = OrderSide::try_from(proto_order.side)
+            .map_err(|_| Status::invalid_argument("Invalid side"))?;
+        let side = match side_enum {
             OrderSide::Buy => "buy",
             OrderSide::Sell => "sell",
-            _ => "unspecified",
+            _ => return Err(Status::invalid_argument("Unspecified side")),
         }.to_string();
 
-        let status = match OrderStatus::try_from(proto_order.status).unwrap_or(OrderStatus::Unspecified) {
+        let status_enum = OrderStatus::try_from(proto_order.status)
+            .map_err(|_| Status::invalid_argument("Invalid status"))?;
+        let status = match status_enum {
             OrderStatus::Open => "open",
             OrderStatus::PartialFill => "partial_fill",
             OrderStatus::Filled => "filled",
@@ -64,10 +68,12 @@ impl OrderServiceImpl {
             _ => "unspecified",
         }.to_string();
 
-        let type_str = match crate::proto::common::OrderType::try_from(proto_order.r#type).unwrap_or(crate::proto::common::OrderType::Unspecified) {
+        let type_enum = crate::proto::common::OrderType::try_from(proto_order.r#type)
+            .map_err(|_| Status::invalid_argument("Invalid order type"))?;
+        let type_str = match type_enum {
             crate::proto::common::OrderType::Limit => "limit",
             crate::proto::common::OrderType::Market => "market",
-            _ => "unspecified",
+            _ => return Err(Status::invalid_argument("Unspecified order type")),
         }.to_string();
 
         let meta = serde_json::from_str(&proto_order.meta).unwrap_or(serde_json::json!({}));
@@ -176,6 +182,12 @@ impl OrderService for OrderServiceImpl {
                     self.spawn_matching_engine_request(&order, proto_order.time_in_force);
                 },
                 Err(crate::error::AppError::ValidationError(msg)) => return Err(Status::failed_precondition(msg)),
+                Err(crate::error::AppError::InsufficientFunds { asset, required, available }) => {
+                    return Err(Status::failed_precondition(format!(
+                        "Insufficient funds for asset {}: required {}, available {}", 
+                        asset, required, available
+                    )));
+                },
                 Err(e) => return Err(Status::internal(e.to_string())),
             }
         }

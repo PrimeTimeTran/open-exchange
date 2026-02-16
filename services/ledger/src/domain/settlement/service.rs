@@ -19,7 +19,6 @@ use sqlx::{Transaction, Postgres, PgPool};
 
 pub struct SettlementService {
     pool: Option<PgPool>,
-    #[allow(dead_code)]
     fill_service: Arc<FillService>,
     fee_service: Arc<dyn FeeService>,
     order_service: Arc<OrderService>,
@@ -27,7 +26,6 @@ pub struct SettlementService {
     wallet_service: Arc<WalletService>,
     trade_repo: Arc<dyn TradeRepository>,
     ledger_repo: Arc<dyn LedgerRepository>,
-    #[allow(dead_code)]
     instrument_repo: Arc<dyn InstrumentRepository>,
 }
 
@@ -121,13 +119,13 @@ impl SettlementService {
         
         // Validation and Preparation
         let instrument_id = Uuid::parse_str(&trade.instrument_id)
-            .map_err(|_| AppError::ValidationError("Invalid instrument ID".into()))?;
+            .map_err(|_| AppError::MalformedRequest("Invalid instrument ID".into()))?;
             
         let instrument = self.instrument_repo.get(instrument_id).await?
             .ok_or_else(|| AppError::NotFound(format!("Instrument {} not found", trade.instrument_id)))?;
 
         let trade_qty = Decimal::from_str(&trade.quantity)
-            .map_err(|_| AppError::ValidationError("Invalid trade quantity".into()))?;
+            .map_err(|_| AppError::MalformedRequest("Invalid trade quantity".into()))?;
 
         // Transaction Management
         let tx = self.begin_system_transaction().await?;
@@ -179,11 +177,11 @@ impl SettlementService {
         if let Some(pool) = &self.pool {
             let mut tx = pool.begin().await.map_err(AppError::DatabaseError)?;
             
-            // Bypass RLS for system operations
-            sqlx::query("SET app.bypass_rls = 'on'").execute(&mut *tx).await.map_err(AppError::DatabaseError)?;
-            sqlx::query("SET app.current_user_id = ''").execute(&mut *tx).await.map_err(AppError::DatabaseError)?;
-            sqlx::query("SET app.current_tenant_id = ''").execute(&mut *tx).await.map_err(AppError::DatabaseError)?;
-            sqlx::query("SET app.current_membership_id = ''").execute(&mut *tx).await.map_err(AppError::DatabaseError)?;
+            // Bypass RLS for system operations using set_config for robustness
+            sqlx::query("SELECT set_config('app.bypass_rls', 'on', false)").execute(&mut *tx).await.map_err(AppError::DatabaseError)?;
+            sqlx::query("SELECT set_config('app.current_user_id', '', false)").execute(&mut *tx).await.map_err(AppError::DatabaseError)?;
+            sqlx::query("SELECT set_config('app.current_tenant_id', '', false)").execute(&mut *tx).await.map_err(AppError::DatabaseError)?;
+            sqlx::query("SELECT set_config('app.current_membership_id', '', false)").execute(&mut *tx).await.map_err(AppError::DatabaseError)?;
             
             Ok(Some(tx))
         } else {

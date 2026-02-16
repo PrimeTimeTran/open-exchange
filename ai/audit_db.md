@@ -18,7 +18,7 @@ For now, we'll focus on the state of the DB being correct AFTER seeding. In the 
 
 In other words, write tests that guarantee that the state of our DB is correct given the relationships of each model with one another and how many of one or the other we have.
 
-## Tests
+## Unit Tests
 
 - [x] 1. System Solvency (Internal Flow vs External Holdings)
   - **Description**: Verifies that the total amount of each asset held in all user wallets matches the net external flow (Total Deposits - Total Withdrawals). This ensures no money is created or destroyed within the system.
@@ -58,3 +58,5 @@ In other words, write tests that guarantee that the state of our DB is correct g
 - [x] 9. Trade Settlement Audit
   - **Description**: Ensures that for every Spot Trade, the Buyer received the Base Asset and the Seller received the Quote Asset (less fees), and that these movements are recorded in the Ledger.
   - **SQL Logic**: `Trade(Quantity * Price) == LedgerEntry(Seller, QuoteAsset) + LedgerEntry(Buyer, BaseAsset)` (simplified)
+
+## Integration Tests

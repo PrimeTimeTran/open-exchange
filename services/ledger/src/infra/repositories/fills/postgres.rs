@@ -6,7 +6,6 @@ use crate::domain::fills::{Fill, FillRepository};
 
 #[derive(Debug, Clone)]
 pub struct PostgresFillRepository {
-    #[allow(dead_code)]
     pool: PgPool,
 }
 

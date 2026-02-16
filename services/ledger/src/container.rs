@@ -75,7 +75,8 @@ impl Services {
         let order_svc = Arc::new(OrderService::new(
             order_repo.clone(), 
             wallet_svc.clone(), 
-            asset_svc.clone()
+            asset_svc.clone(),
+            Some(db_pool.clone()),
         ));
 
         let ledger_svc = Arc::new(LedgerService::new(

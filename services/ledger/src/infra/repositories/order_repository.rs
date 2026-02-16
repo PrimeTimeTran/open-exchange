@@ -94,6 +94,38 @@ impl OrderRepository for PostgresOrderRepository {
         Ok(created_order)
     }
 
+    async fn create_with_tx(&self, tx: &mut Transaction<'_, Postgres>, order: Order) -> Result<Order> {
+        let (created_at, updated_at): (DateTime<Utc>, DateTime<Utc>) = sqlx::query_as(
+            r#"
+            INSERT INTO "Order" (id, "tenantId", "accountId", "instrumentId", side, type, quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "createdByMembershipId", "updatedByMembershipId")
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NULL, NULL, NULL, NULL)
+            RETURNING "createdAt", "updatedAt"
+            "#
+        )
+        .bind(order.id)
+        .bind(order.tenant_id)
+        .bind(order.account_id)
+        .bind(order.instrument_id)
+        .bind(&order.side)
+        .bind(&order.r#type)
+        .bind(order.quantity)
+        .bind(order.price)
+        .bind(&order.status)
+        .bind(order.filled_quantity)
+        .bind(&order.meta)
+        .bind(order.created_at)
+        .bind(order.updated_at)
+        .fetch_one(&mut **tx)
+        .await
+        .map_err(AppError::DatabaseError)?;
+
+        let mut created_order = order;
+        created_order.created_at = created_at;
+        created_order.updated_at = updated_at;
+
+        Ok(created_order)
+    }
+
     async fn get(&self, id: Uuid) -> Result<Option<Order>> {
         let rec: Option<OrderRow> = sqlx::query_as(
             r#"
