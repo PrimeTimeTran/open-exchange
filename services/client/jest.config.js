@@ -16,6 +16,7 @@ const customJestConfig = {
   globalSetup: './src/shared/test/testGlobalSetup.ts',
   setupFilesAfterEnv: ['./src/shared/test/testSetupFilesAfterEnv.ts'],
   testEnvironment: 'node',
+  modulePathIgnorePatterns: ['<rootDir>/.next/'],
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

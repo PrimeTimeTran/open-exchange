@@ -46,6 +46,9 @@ export function DashboardClient({
         method: 'password',
       });
     } else {
+      window.gtag('event', 'login', {
+        method: 'password',
+      });
       window.gtag('config', 'G-MFFQRL807K', {
         user_id: 'Loi-Tran-123-SignedIn',
       });
