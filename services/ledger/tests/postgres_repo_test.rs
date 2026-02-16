@@ -1,7 +1,9 @@
 mod infra_test_helpers;
 use infra_test_helpers::TestDb;
 use ledger::domain::wallets::{Wallet, WalletRepository};
-use ledger::infra::repositories::PostgresWalletRepository;
+use ledger::infra::repositories::{PostgresWalletRepository, PostgresLedgerRepository};
+use ledger::domain::ledger::repository::LedgerRepository;
+use ledger::proto::common::LedgerEntry;
 use uuid::Uuid;
 use chrono::Utc;
 use std::str::FromStr;
@@ -86,4 +88,65 @@ async fn test_postgres_wallet_persistence() {
     // Verify error type if possible (string check)
     let err_msg = format!("{:?}", result.err().unwrap());
     assert!(err_msg.contains("OptimisticLockingError"), "Expected OptimisticLockingError, got {}", err_msg);
+}
+
+#[tokio::test]
+async fn test_postgres_ledger_batch_insert() {
+    let test_db = TestDb::new().await;
+    let repo = PostgresLedgerRepository::new(test_db.pool.clone());
+
+    // Setup Tenant, Account, Event dependencies
+    let tenant_id = Uuid::new_v4();
+    let account_id = Uuid::new_v4();
+    let event_id = Uuid::new_v4();
+
+    sqlx::query!(r#"
+        INSERT INTO "Tenant" (id, name, "createdAt", "updatedAt") 
+        VALUES ($1, 'Test Tenant', now(), now())
+    "#, tenant_id)
+    .execute(&test_db.pool).await.expect("Failed to insert tenant");
+
+    sqlx::query!(r#"
+        INSERT INTO "Account" (id, "tenantId", type, name, "createdAt", "updatedAt") 
+        VALUES ($1, $2, 'USER', 'Test Account', now(), now())
+    "#, account_id, tenant_id)
+    .execute(&test_db.pool).await.expect("Failed to insert account");
+
+    // Insert LedgerEvent manually
+    sqlx::query!(r#"
+        INSERT INTO "LedgerEvent" (id, "tenantId", type, "referenceId", "referenceType", status, description, meta, "createdAt", "updatedAt")
+        VALUES ($1, $2, 'trade', 'ref-123', 'trade', 'completed', 'desc', '{}', now(), now())
+    "#, event_id, tenant_id)
+    .execute(&test_db.pool).await.expect("Failed to insert event");
+
+    // Create entries
+    let mut entries = Vec::new();
+    for i in 0..10 {
+        entries.push(LedgerEntry {
+            id: Uuid::new_v4().to_string(),
+            tenant_id: tenant_id.to_string(),
+            event_id: event_id.to_string(),
+            account_id: account_id.to_string(),
+            amount: format!("{}.00", i + 1),
+            meta: "{}".to_string(),
+            created_at: Utc::now().timestamp_millis(),
+            updated_at: Utc::now().timestamp_millis(),
+        });
+    }
+
+    let mut tx = test_db.pool.begin().await.expect("Failed to begin tx");
+    
+    let result = repo.save_entries_with_tx(&mut tx, entries.clone()).await;
+    assert!(result.is_ok(), "Save entries failed: {:?}", result.err());
+    
+    tx.commit().await.expect("Failed to commit tx");
+
+    // Verify
+    let count: i64 = sqlx::query_scalar!(r#"SELECT count(*) as count FROM "LedgerEntry" WHERE "eventId" = $1"#, event_id)
+        .fetch_one(&test_db.pool)
+        .await
+        .expect("Failed to fetch count")
+        .unwrap_or(0);
+        
+    assert_eq!(count, 10);
 }

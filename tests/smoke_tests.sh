@@ -48,7 +48,13 @@ run_service_test() {
     OUTPUT=$(eval "$test_command" 2>&1)
     EXIT_CODE=$?
     
-    echo "$OUTPUT"
+    # Format output if script exists
+    FORMATTER="$PROJECT_ROOT/scripts/format_test_output.py"
+    if [ -f "$FORMATTER" ] && { [ "$type" == "rust" ] || [ "$type" == "go" ]; }; then
+        echo "$OUTPUT" | python3 "$FORMATTER"
+    else
+        echo "$OUTPUT"
+    fi
 
     if [ $EXIT_CODE -eq 0 ]; then
         echo -e "${GREEN}✅ $service_name Tests Passed${NC}"

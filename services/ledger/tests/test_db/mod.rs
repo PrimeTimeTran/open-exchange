@@ -26,6 +26,7 @@ pub struct IntegrationTestContext {
     pub tenant_id: String,
     pub order_service: Arc<OrderService>,
     pub wallet_service: Arc<WalletService>,
+    #[allow(dead_code)]
     pub asset_service: Arc<AssetService>,
     pub settlement_service: Arc<SettlementService>,
     pub account_repo: Arc<PostgresAccountRepository>,

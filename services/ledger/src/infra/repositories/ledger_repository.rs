@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use sqlx::{PgPool, Transaction, Postgres};
+use sqlx::{PgPool, Transaction, Postgres, QueryBuilder};
 use crate::error::Result;
 use crate::proto::common::{LedgerEvent, LedgerEntry, Trade};
 use crate::domain::ledger::repository::LedgerRepository;
@@ -65,33 +65,33 @@ impl LedgerRepository for PostgresLedgerRepository {
     }
 
     async fn save_entries_with_tx(&self, tx: &mut Transaction<'_, Postgres>, entries: Vec<LedgerEntry>) -> Result<Vec<LedgerEntry>> {
-        for entry in &entries {
+        if entries.is_empty() {
+            return Ok(entries);
+        }
+
+        let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(
+            "INSERT INTO \"LedgerEntry\" (id, \"tenantId\", \"eventId\", \"accountId\", amount, meta, \"createdAt\", \"updatedAt\") "
+        );
+
+        query_builder.push_values(entries.iter(), |mut b, entry| {
             let created_at = Utc.timestamp_millis_opt(entry.created_at).unwrap();
             let updated_at = Utc.timestamp_millis_opt(entry.updated_at).unwrap();
             let amount = Decimal::from_str(&entry.amount).unwrap_or_default();
+            
+            b.push_bind(Uuid::parse_str(&entry.id).unwrap_or_default())
+             .push_bind(Uuid::parse_str(&entry.tenant_id).unwrap_or_default())
+             .push_bind(Uuid::parse_str(&entry.event_id).unwrap_or_default())
+             .push_bind(Uuid::parse_str(&entry.account_id).unwrap_or_default())
+             .push_bind(amount)
+             .push_bind(serde_json::from_str::<serde_json::Value>(&entry.meta).unwrap_or(serde_json::json!({})))
+             .push_bind(created_at)
+             .push_bind(updated_at);
+        });
 
-            sqlx::query!(
-                r#"
-                INSERT INTO "LedgerEntry" (
-                    id, "tenantId", "eventId", "accountId", amount, meta, "createdAt", "updatedAt"
-                )
-                VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8)
-                "#,
-                Uuid::parse_str(&entry.id).unwrap(),
-                Uuid::parse_str(&entry.tenant_id).unwrap(),
-                Uuid::parse_str(&entry.event_id).unwrap(),
-                entry.account_id.to_string(),
-                amount,
-                serde_json::from_str::<serde_json::Value>(&entry.meta).unwrap_or(serde_json::json!({})),
-                created_at,
-                updated_at
-            )
-            .execute(&mut **tx)
-            .await
-            .map_err(crate::error::AppError::DatabaseError)?;
-        }
+        let query = query_builder.build();
+        query.execute(&mut **tx).await.map_err(crate::error::AppError::DatabaseError)?;
         
-        println!("PERSIST (TX): {} Ledger Entries created", entries.len());
+        println!("PERSIST (TX): {} Ledger Entries created (Bulk)", entries.len());
         Ok(entries)
     }
 

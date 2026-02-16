@@ -21,3 +21,8 @@ rust_decimal = { version = "1.40.0", features = ["serde-with-str"] }
 
 [build-dependencies]
 tonic-build = "0.12"
+
+[[bin]]
+name = "ledger"
+path = "src/main.rs"
+test = false
