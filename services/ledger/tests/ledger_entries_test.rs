@@ -1,5 +1,5 @@
-mod ledger_test_helpers;
-use ledger_test_helpers::LedgerTestContext;
+mod helpers;
+use helpers::memory::InMemoryTestContext;
 use ledger::domain::ledger::service::LedgerService;
 use std::sync::Arc;
 use std::str::FromStr;
@@ -8,14 +8,14 @@ use rust_decimal::Decimal;
 #[tokio::test]
 async fn test_process_trade_creates_entries() {
     // 1. Setup Test Context
-    let ctx = LedgerTestContext::new();
+    let ctx = InMemoryTestContext::new();
 
     // 2. Create Orders
     let buy_order = ctx.create_order(ctx.account_a, "buy", 30000.0, 1.0);
     let sell_order = ctx.create_order(ctx.account_b, "sell", 30000.0, 1.0);
 
     // 3. Initialize Service
-    let service = LedgerService::new(ctx.repo.clone(), ctx.instrument_repo.clone(), ctx.asset_repo.clone(), ctx.account_repo.clone());
+    let service = LedgerService::new(ctx.order_repo.clone(), ctx.instrument_repo.clone(), ctx.asset_repo.clone(), ctx.account_repo.clone());
 
     // 4. Create Trade Event
     let trade = ctx.create_trade(buy_order.id, sell_order.id, 30000.0, 1.0);
@@ -82,14 +82,14 @@ async fn test_process_trade_creates_entries() {
 #[tokio::test]
 async fn test_ledger_entries_must_balance() {
     // 1. Setup Test Context
-    let ctx = LedgerTestContext::new();
+    let ctx = InMemoryTestContext::new();
 
     // 2. Create Orders
     let buy_order = ctx.create_order(ctx.account_a, "buy", 30000.0, 1.25);
     let sell_order = ctx.create_order(ctx.account_b, "sell", 30000.0, 1.25);
 
     // 3. Initialize Service
-    let service = LedgerService::new(ctx.repo.clone(), ctx.instrument_repo.clone(), ctx.asset_repo.clone(), ctx.account_repo.clone());
+    let service = LedgerService::new(ctx.order_repo.clone(), ctx.instrument_repo.clone(), ctx.asset_repo.clone(), ctx.account_repo.clone());
 
     // 4. Create Trade Event
     let trade = ctx.create_trade(buy_order.id, sell_order.id, 30000.0, 1.25);
@@ -126,10 +126,10 @@ async fn test_ledger_entries_must_balance() {
 #[tokio::test]
 async fn test_order_placement_locks_funds() {
     // 1. Setup Test Context
-    let ctx = LedgerTestContext::new();
+    let ctx = InMemoryTestContext::new();
 
     // 2. Initialize Service
-    let service = LedgerService::new(ctx.repo.clone(), ctx.instrument_repo.clone(), ctx.asset_repo.clone(), ctx.account_repo.clone());
+    let service = LedgerService::new(ctx.order_repo.clone(), ctx.instrument_repo.clone(), ctx.asset_repo.clone(), ctx.account_repo.clone());
 
     // 3. Place Buy Order
     // Buying 1 BTC @ 30,000 USD -> Should lock 30,000 USD
@@ -171,17 +171,17 @@ async fn test_order_placement_locks_funds() {
 #[tokio::test]
 async fn test_trade_processor_flow() {
     // 1. Setup Context
-    let ctx = LedgerTestContext::new();
+    let ctx = InMemoryTestContext::new();
     
     // 2. Services
-    let ledger_service = Arc::new(LedgerService::new(ctx.repo.clone(), ctx.instrument_repo.clone(), ctx.asset_repo.clone(), ctx.account_repo.clone()));
+    let ledger_service = Arc::new(LedgerService::new(ctx.order_repo.clone(), ctx.instrument_repo.clone(), ctx.asset_repo.clone(), ctx.account_repo.clone()));
     let wallet_service = Arc::new(ledger::domain::wallets::WalletService::new(ctx.wallet_repo.clone()));
     let asset_service = Arc::new(ledger::domain::assets::AssetService::new(ctx.asset_repo.clone(), ctx.instrument_repo.clone()));
     
     // Explicitly coerce generic repo to trait object if needed, but implicit should work.
     // However, OrderService expects Arc<dyn OrderRepository>.
     let order_service = Arc::new(ledger::domain::orders::service::OrderService::new(
-        ctx.repo.clone(), 
+        ctx.order_repo.clone(), 
         wallet_service.clone(),
         asset_service,
         None,

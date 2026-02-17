@@ -1,16 +1,14 @@
 use ledger::error::{AppError, Result};
 use ledger::domain::orders::{Order, OrderRepository};
+use ledger::domain::orders::model::OrderStatus;
+use ledger::domain::transaction::RepositoryTransaction;
 use uuid::Uuid;
 use rust_decimal::Decimal;
 use async_trait::async_trait;
 
-use ledger::domain::orders::model::OrderStatus;
-
 // A repository that mimics success but FAILS on create to test rollback
 #[derive(Debug)]
 pub struct FailingOrderRepository;
-
-use ledger::domain::transaction::RepositoryTransaction;
 
 #[async_trait]
 impl OrderRepository for FailingOrderRepository {
@@ -35,15 +33,15 @@ impl OrderRepository for FailingOrderRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ledger::domain::orders::service::OrderService;
-    use ledger::domain::wallets::WalletService;
-    use ledger::domain::assets::AssetService;
-    use ledger::infra::repositories::memory::{InMemoryWalletRepository, InMemoryInstrumentRepository, InMemoryAssetRepository};
     use ledger::domain::wallets::Wallet;
-    use std::sync::Arc;
-    use rust_decimal::Decimal;
-    use std::str::FromStr;
+    use ledger::domain::assets::AssetService;
+    use ledger::domain::wallets::WalletService;
     use ledger::proto::common::{Instrument, Asset};
+    use ledger::domain::orders::service::OrderService;
+    use ledger::infra::repositories::memory::{InMemoryWalletRepository, InMemoryInstrumentRepository, InMemoryAssetRepository};
+    use std::sync::Arc;
+    use std::str::FromStr;
+    use rust_decimal::Decimal;
 
     #[tokio::test]
     async fn test_create_order_propagates_repo_failure() {

@@ -1,5 +1,5 @@
-mod test_db;
-use test_db::{IntegrationTestContext, atomic};
+mod helpers;
+use helpers::postgres::{PostgresTestContext, atomic};
 use ledger::domain::orders::model::{Order, OrderStatus};
 use ledger::proto::common::{LedgerEntry, Trade};
 use ledger::domain::wallets::Wallet;
@@ -14,7 +14,7 @@ use ledger::domain::accounts::repository::AccountRepository;
 // 1. Deposit
 #[tokio::test]
 async fn test_deposit_increases_balance() {
-    let ctx = IntegrationTestContext::new().await;
+    let ctx = PostgresTestContext::new(true).await;
 
     let asset_id = ctx.create_asset("USDT", 2).await;
     let user_id = ctx.create_user().await;
@@ -50,7 +50,7 @@ async fn test_deposit_increases_balance() {
 // 2. Withdrawal Insufficient Funds
 #[tokio::test]
 async fn test_withdrawal_insufficient_funds() {
-    let ctx = IntegrationTestContext::new().await;
+    let ctx = PostgresTestContext::new(true).await;
     
     let usd_id = ctx.create_asset("USD", 2).await;
     let btc_id = ctx.create_asset("BTC", 8).await;
@@ -88,7 +88,7 @@ async fn test_withdrawal_insufficient_funds() {
 // 3. Buy Limit Locks Quote
 #[tokio::test]
 async fn test_create_order_buy_limit_locks_quote() {
-    let ctx = IntegrationTestContext::new().await;
+    let ctx = PostgresTestContext::new(true).await;
     let usd_id = ctx.create_asset("USD", 2).await;
     let btc_id = ctx.create_asset("BTC", 8).await;
     let instr_id = ctx.create_instrument("BTC-USD", &btc_id, &usd_id).await;
@@ -127,7 +127,7 @@ async fn test_create_order_buy_limit_locks_quote() {
 // 4. Sell Limit Locks Base
 #[tokio::test]
 async fn test_create_order_sell_limit_locks_base() {
-    let ctx = IntegrationTestContext::new().await;
+    let ctx = PostgresTestContext::new(true).await;
     let usd_id = ctx.create_asset("USD", 2).await;
     let btc_id = ctx.create_asset("BTC", 8).await;
     let instr_id = ctx.create_instrument("BTC-USD", &btc_id, &usd_id).await;
@@ -166,7 +166,7 @@ async fn test_create_order_sell_limit_locks_base() {
 // 5. Insufficient Funds
 #[tokio::test]
 async fn test_create_order_insufficient_funds() {
-    let ctx = IntegrationTestContext::new().await;
+    let ctx = PostgresTestContext::new(true).await;
     let usd_id = ctx.create_asset("USD", 2).await;
     let btc_id = ctx.create_asset("BTC", 8).await;
     let instr_id = ctx.create_instrument("BTC-USD", &btc_id, &usd_id).await;
@@ -205,7 +205,7 @@ async fn test_create_order_insufficient_funds() {
 // 6. Cancel Unlocks Funds
 #[tokio::test]
 async fn test_cancel_order_unlocks_funds() {
-    let ctx = IntegrationTestContext::new().await;
+    let ctx = PostgresTestContext::new(true).await;
     let usd_id = ctx.create_asset("USD", 2).await;
     let btc_id = ctx.create_asset("BTC", 8).await;
     let instr_id = ctx.create_instrument("BTC-USD", &btc_id, &usd_id).await;
@@ -246,7 +246,7 @@ async fn test_cancel_order_unlocks_funds() {
 // 7. Full Fill Settlement
 #[tokio::test]
 async fn test_trade_settlement_full_fill() {
-    let ctx = IntegrationTestContext::new().await;
+    let ctx = PostgresTestContext::new(true).await;
     let usd_id = ctx.create_asset("USD", 2).await;
     let btc_id = ctx.create_asset("BTC", 8).await;
     let instr_id = ctx.create_instrument("BTC-USD", &btc_id, &usd_id).await;
@@ -331,7 +331,7 @@ async fn test_trade_settlement_full_fill() {
 // 8. Partial Fill
 #[tokio::test]
 async fn test_trade_settlement_partial_fill() {
-    let ctx = IntegrationTestContext::new().await;
+    let ctx = PostgresTestContext::new(true).await;
     let usd_id = ctx.create_asset("USD", 2).await;
     let btc_id = ctx.create_asset("BTC", 8).await;
     let instr_id = ctx.create_instrument("BTC-USD", &btc_id, &usd_id).await;
@@ -397,7 +397,7 @@ async fn test_trade_settlement_partial_fill() {
 // 9. Ledger Integrity Check
 #[tokio::test]
 async fn test_ledger_entry_integrity_check() {
-    let ctx = IntegrationTestContext::new().await;
+    let ctx = PostgresTestContext::new(true).await;
     let asset_id = ctx.create_asset("USDT", 2).await;
     let user_id = ctx.create_user().await;
     let account_id = ctx.create_account(&user_id).await;
@@ -437,7 +437,7 @@ async fn test_ledger_entry_integrity_check() {
 
 #[tokio::test]
 async fn test_system_fee_collection() {
-    let ctx = IntegrationTestContext::new().await;
+    let ctx = PostgresTestContext::new(true).await;
     let usd_id = ctx.create_asset("USD", 2).await;
     let btc_id = ctx.create_asset("BTC", 8).await;
     let instr_id = ctx.create_instrument("BTC-USD", &btc_id, &usd_id).await;

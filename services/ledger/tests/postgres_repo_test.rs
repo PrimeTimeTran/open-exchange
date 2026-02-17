@@ -1,5 +1,5 @@
-mod infra_test_helpers;
-use infra_test_helpers::TestDb;
+mod helpers;
+use helpers::postgres::PostgresTestContext;
 use ledger::proto::common::LedgerEntry;
 use ledger::domain::wallets::{Wallet, WalletRepository};
 use ledger::domain::ledger::repository::LedgerRepository;
@@ -13,8 +13,8 @@ use rust_decimal::Decimal;
 #[tokio::test]
 async fn test_postgres_wallet_persistence() {
     // 1. Setup DB
-    let test_db = TestDb::new().await;
-    let repo = PostgresWalletRepository::new(test_db.pool.clone());
+    let ctx = PostgresTestContext::new(true).await;
+    let repo = PostgresWalletRepository::new(ctx.pool.clone());
 
     // 2. Setup Data
     let tenant_id = Uuid::new_v4();
@@ -27,7 +27,7 @@ async fn test_postgres_wallet_persistence() {
         INSERT INTO "Tenant" (id, name, "createdAt", "updatedAt") 
         VALUES ($1, 'Test Tenant', now(), now())
     "#, tenant_id)
-    .execute(&test_db.pool).await.expect("Failed to insert tenant");
+    .execute(&ctx.pool).await.expect("Failed to insert event");
 
     // Insert Account (userId is null)
     // Note: 'type' is a reserved keyword in some SQL contexts, usually safe in string literals or quoted identifiers?
@@ -37,14 +37,14 @@ async fn test_postgres_wallet_persistence() {
         INSERT INTO "Account" (id, "tenantId", type, name, "createdAt", "updatedAt") 
         VALUES ($1, $2, 'USER', 'Test Account', now(), now())
     "#, account_id, tenant_id)
-    .execute(&test_db.pool).await.expect("Failed to insert account");
+    .execute(&ctx.pool).await.expect("Failed to insert account");
 
     // Insert Asset
     sqlx::query!(r#"
         INSERT INTO "Asset" (id, "tenantId", symbol, decimals, "createdAt", "updatedAt") 
         VALUES ($1, $2, 'USD', 2, now(), now())
     "#, asset_id, tenant_id)
-    .execute(&test_db.pool).await.expect("Failed to insert asset");
+    .execute(&ctx.pool).await.expect("Failed to insert asset");
 
     // 3. Test Create Wallet
     let wallet = Wallet {
@@ -93,8 +93,8 @@ async fn test_postgres_wallet_persistence() {
 
 #[tokio::test]
 async fn test_postgres_ledger_batch_insert() {
-    let test_db = TestDb::new().await;
-    let repo = PostgresLedgerRepository::new(test_db.pool.clone());
+    let ctx = PostgresTestContext::new(true).await;
+    let repo = PostgresLedgerRepository::new(ctx.pool.clone());
 
     // Setup Tenant, Account, Event dependencies
     let tenant_id = Uuid::new_v4();
@@ -105,20 +105,20 @@ async fn test_postgres_ledger_batch_insert() {
         INSERT INTO "Tenant" (id, name, "createdAt", "updatedAt") 
         VALUES ($1, 'Test Tenant', now(), now())
     "#, tenant_id)
-    .execute(&test_db.pool).await.expect("Failed to insert tenant");
+    .execute(&ctx.pool).await.expect("Failed to insert tenant");
 
     sqlx::query!(r#"
         INSERT INTO "Account" (id, "tenantId", type, name, "createdAt", "updatedAt") 
         VALUES ($1, $2, 'USER', 'Test Account', now(), now())
     "#, account_id, tenant_id)
-    .execute(&test_db.pool).await.expect("Failed to insert account");
+    .execute(&ctx.pool).await.expect("Failed to insert account");
 
     // Insert LedgerEvent manually
     sqlx::query!(r#"
         INSERT INTO "LedgerEvent" (id, "tenantId", type, "referenceId", "referenceType", status, description, meta, "createdAt", "updatedAt")
         VALUES ($1, $2, 'trade', 'ref-123', 'trade', 'completed', 'desc', '{}', now(), now())
     "#, event_id, tenant_id)
-    .execute(&test_db.pool).await.expect("Failed to insert event");
+    .execute(&ctx.pool).await.expect("Failed to insert asset");
 
     // Create entries
     let mut entries = Vec::new();
@@ -135,7 +135,7 @@ async fn test_postgres_ledger_batch_insert() {
         });
     }
 
-    let tx = test_db.pool.begin().await.expect("Failed to begin tx");
+    let tx = ctx.pool.begin().await.expect("Failed to begin tx");
     let mut pg_tx = PostgresTransaction { tx };
     
     let result = repo.save_entries_with_tx(&mut pg_tx, entries.clone()).await;
@@ -145,7 +145,7 @@ async fn test_postgres_ledger_batch_insert() {
 
     // Verify
     let count: i64 = sqlx::query_scalar!(r#"SELECT count(*) as count FROM "LedgerEntry" WHERE "eventId" = $1"#, event_id)
-        .fetch_one(&test_db.pool)
+        .fetch_one(&ctx.pool)
         .await
         .expect("Failed to fetch count")
         .unwrap_or(0);

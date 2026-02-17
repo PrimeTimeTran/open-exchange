@@ -1,5 +1,5 @@
-mod ledger_test_helpers;
-use ledger_test_helpers::LedgerTestContext;
+mod helpers;
+use helpers::memory::InMemoryTestContext;
 use ledger::domain::wallets::WalletRepository;
 use ledger::domain::fees::constants::FeeConstants;
 use ledger::domain::orders::repository::OrderRepository;
@@ -50,7 +50,7 @@ macro_rules! assert_decimal_val_eq {
 #[tokio::test]
 async fn test_settlement_basic_buy_sell() {
     // 1. Setup Context
-    let ctx = LedgerTestContext::new();
+    let ctx = InMemoryTestContext::new();
 
     // 2. Setup Wallets (Atomic Units)
     // Buyer: 100k USD -> 10,000,000 cents. 50k Locked -> 5,000,000.
@@ -130,7 +130,7 @@ async fn test_settlement_basic_buy_sell() {
 
 #[tokio::test]
 async fn test_settlement_partial_fill() {
-    let ctx = LedgerTestContext::new();
+    let ctx = InMemoryTestContext::new();
 
     // Buyer wants 2 BTC, has 100k USD locked (Price 50k)
     // 100k USD -> 10M atomic.
@@ -187,7 +187,7 @@ async fn test_settlement_partial_fill() {
 
 #[tokio::test]
 async fn test_settlement_insufficient_funds() {
-    let ctx = LedgerTestContext::new();
+    let ctx = InMemoryTestContext::new();
 
     // Buyer has 0 USD
     ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
@@ -228,7 +228,7 @@ async fn test_settlement_insufficient_funds() {
 
 #[tokio::test]
 async fn test_settlement_multiple_matches() {
-    let ctx = LedgerTestContext::new();
+    let ctx = InMemoryTestContext::new();
 
     // 1. Setup Wallets
     // Buyer: Needs 100k USD locked for 2 trades (50k each). Plus 1000 available for fees.
@@ -300,7 +300,7 @@ async fn test_settlement_multiple_matches() {
 
 #[tokio::test]
 async fn test_settlement_idempotency_double_spend_prevention() {
-    let ctx = LedgerTestContext::new();
+    let ctx = InMemoryTestContext::new();
 
     // 1. Setup Wallets (Buyer has 100k USD, 50k Locked)
     ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(), 5000000.0, 5000000.0, 10000000.0);
@@ -337,7 +337,7 @@ async fn test_settlement_idempotency_double_spend_prevention() {
 
 #[tokio::test]
 async fn test_settlement_concurrent_updates() {
-    let ctx = std::sync::Arc::new(LedgerTestContext::new());
+    let ctx = std::sync::Arc::new(InMemoryTestContext::new());
 
     // 1. Setup Wallet with 20k USD
     // 20k USD -> 2M cents. Locked 0.
@@ -409,7 +409,7 @@ async fn test_settlement_concurrent_updates() {
 
 #[tokio::test]
 async fn test_settlement_cross_tenant_isolation() {
-    let ctx = LedgerTestContext::new(); // Tenant 1 (Default)
+    let ctx = InMemoryTestContext::new(); // Tenant 1 (Default)
     let tenant2_id = uuid::Uuid::new_v4();
     
     // 1. Setup Wallet for Tenant 1 (Buyer)
@@ -458,7 +458,7 @@ async fn test_settlement_cross_tenant_isolation() {
         created_at: chrono::Utc::now(),
         updated_at: chrono::Utc::now(),
     };
-    ctx.repo.add(sell_order.clone());
+    ctx.order_repo.add(sell_order.clone());
 
     // 4. Attempt Match (Cross-Tenant)
     let trade = ctx.create_trade(buy_order.id, sell_order.id, 50000.0, 1.0);
@@ -485,7 +485,7 @@ async fn test_settlement_cross_tenant_isolation() {
 
 #[tokio::test]
 async fn test_settlement_fee_account_contention() {
-    let ctx = std::sync::Arc::new(LedgerTestContext::new());
+    let ctx = std::sync::Arc::new(InMemoryTestContext::new());
     let (settlement_service, _wallet_service) = ctx.init_test_services();
     let settlement_service = std::sync::Arc::new(settlement_service);
     
@@ -536,7 +536,7 @@ async fn test_settlement_fee_account_contention() {
 
 #[tokio::test]
 async fn test_settlement_dust_amounts() {
-    let ctx = LedgerTestContext::new();
+    let ctx = InMemoryTestContext::new();
 
     // 1. Setup Wallets
     // Buyer: 1 USD (100 cents).
@@ -576,7 +576,7 @@ async fn test_settlement_dust_amounts() {
 
 #[tokio::test]
 async fn test_settlement_self_trade() {
-    let ctx = LedgerTestContext::new();
+    let ctx = InMemoryTestContext::new();
 
     // 1. Setup Wallet (User A has both USD and BTC)
     // 100k USD, 2 BTC.
@@ -620,7 +620,7 @@ async fn test_settlement_self_trade() {
 
 #[tokio::test]
 async fn test_settlement_order_lifecycle_statuses() {
-    let ctx = LedgerTestContext::new();
+    let ctx = InMemoryTestContext::new();
 
     // 1. Setup Wallets
     // Buyer has 1M USD (enough for 10 BTC at 50k = 500k USD)
@@ -638,7 +638,7 @@ async fn test_settlement_order_lifecycle_statuses() {
     let (settlement_service, _wallet_service) = ctx.init_test_services();
 
     // Verify initial status
-    let order_init = ctx.repo.get(buy_order.id).await.unwrap().unwrap();
+    let order_init = ctx.order_repo.get(buy_order.id).await.unwrap().unwrap();
     assert_eq!(order_init.status, OrderStatus::Open);
     assert_eq!(order_init.filled_quantity, Decimal::ZERO);
 
@@ -647,7 +647,7 @@ async fn test_settlement_order_lifecycle_statuses() {
     settlement_service.process_trade_event(trade1.clone()).await.unwrap();
 
     // Verify status -> "partial_fill"
-    let order_step1 = ctx.repo.get(buy_order.id).await.unwrap().unwrap();
+    let order_step1 = ctx.order_repo.get(buy_order.id).await.unwrap().unwrap();
     assert_eq!(order_step1.status, OrderStatus::PartialFill);
     assert_decimal_eq!(order_step1.filled_quantity.to_string(), "5");
 
@@ -656,7 +656,7 @@ async fn test_settlement_order_lifecycle_statuses() {
     settlement_service.process_trade_event(trade2.clone()).await.unwrap();
 
     // Verify status -> "filled"
-    let order_step2 = ctx.repo.get(buy_order.id).await.unwrap().unwrap();
+    let order_step2 = ctx.order_repo.get(buy_order.id).await.unwrap().unwrap();
     assert_eq!(order_step2.status, OrderStatus::Filled);
     assert_decimal_eq!(order_step2.filled_quantity.to_string(), "10");
 }

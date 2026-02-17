@@ -1,22 +1,22 @@
+use crate::helpers::memory::InMemoryTestContext;
 use ledger::proto::ledger::wallet_service_server::WalletService;
 use ledger::proto::ledger::{
     CreateWalletRequest
 };
 use tonic::Request;
-use super::common::*;
 
 #[tokio::test]
 async fn test_create_duplicate_wallet() {
-    let ctx = TestContext::new();
-    let acc_id = create_account(&ctx.account_service, &ctx.user_id, "trading").await;
-    let asset_id = create_asset(&ctx.asset_service, "USD", "fiat", 2).await;
+    let ctx = InMemoryTestContext::new();
+    let acc_id = ctx.create_account_api(&ctx.user_id, "trading").await;
+    let asset_id = ctx.create_asset_api("USD", "fiat", 2).await;
 
     // Create First
     let req1 = Request::new(CreateWalletRequest {
         account_id: acc_id.clone(),
         asset_id: asset_id.clone(),
     });
-    let resp1 = ctx.wallet_service.create_wallet(req1).await;
+    let resp1 = ctx.wallet_api.create_wallet(req1).await;
     assert!(resp1.is_ok());
 
     // Create Second - Should Fail or Return Existing?
@@ -25,7 +25,7 @@ async fn test_create_duplicate_wallet() {
         account_id: acc_id.clone(),
         asset_id: asset_id.clone(),
     });
-    let _resp2 = ctx.wallet_service.create_wallet(req2).await;
+    let _resp2 = ctx.wallet_api.create_wallet(req2).await;
     
     // Check behavior. Ideally it should be unique constraint.
     // If mock doesn't enforce it, this test documents expected behavior vs actual.
