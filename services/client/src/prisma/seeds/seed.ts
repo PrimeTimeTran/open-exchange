@@ -34,18 +34,18 @@ async function main() {
         deposits: [
           {
             assetSymbol: 'USD',
-            amount: 10_000_000.0,
-            txHash: 'bank_transfer_001',
+            amount: 1_000_000.0,
+            txHash: 'bank_deposit_001',
           },
           {
             assetSymbol: 'USD',
             amount: 5_000_000.0,
-            txHash: 'bank_transfer_002',
+            txHash: 'bank_deposit_002',
           },
           {
             assetSymbol: 'USD',
-            amount: 1_000_000.0,
-            txHash: 'bank_transfer_003',
+            amount: 10_000_000.0,
+            txHash: 'bank_deposit_003',
           },
           {
             assetSymbol: 'USDT',
@@ -60,13 +60,13 @@ async function main() {
           { assetSymbol: 'ETH', amount: 100, txHash: '0x222bbb' },
           {
             assetSymbol: 'USD',
-            amount: 100_000.0,
-            txHash: 'large_seed_withdrawal_usd',
+            amount: 10_000.0,
+            txHash: 'bank_withdrawal_001',
           },
           {
             assetSymbol: 'USD',
-            amount: 10_000.0,
-            txHash: 'bank_transfer_withdrawal_001',
+            amount: 100_000.0,
+            txHash: 'bank_withdrawal_002',
           },
         ],
         openOrders: [

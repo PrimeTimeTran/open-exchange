@@ -1,5 +1,6 @@
 import { prisma } from 'src/prisma';
 import { AppContext } from 'src/shared/controller/appContext';
+import { marketClient } from 'src/services/MarketClient';
 
 export async function getAccountPageData(context: AppContext) {
   const { currentMembership, currentTenant } = context;
@@ -30,23 +31,50 @@ export async function getAccountPageData(context: AppContext) {
     },
   });
 
-  const balances = wallets.map((w) => {
-    const decimals = w.asset?.decimals || 0;
-    const amount = Number(w.available || 0) / Math.pow(10, decimals);
+  const balances = await Promise.all(
+    wallets.map(async (w) => {
+      const decimals = w.asset?.decimals || 0;
+      const amount = Number(w.available || 0) / Math.pow(10, decimals);
+      const symbol = w.asset?.symbol || 'USD';
+      const klass = w.asset?.klass || 'other';
 
-    // TODO: Fetch real prices
-    const price =
-      w.asset?.symbol === 'ETH' ? 2200 : w.asset?.symbol === 'BTC' ? 42000 : 1;
+      let price = 1;
 
-    return {
-      asset: w.asset?.symbol || 'Unknown',
-      name: (w.asset?.meta as any)?.name || w.asset?.symbol || 'Unknown',
-      klass: w.asset?.klass || 'unknown',
-      amount: amount,
-      value: amount * price,
-      decimals: decimals,
-    };
-  });
+      // Force stablecoins to $1.00
+      if (['USDT', 'USDC', 'DAI'].includes(symbol)) {
+        price = 1.0;
+      }
+      // Fetch real price for crypto assets
+      else if (klass === 'crypto' && symbol !== 'USD') {
+        try {
+          const priceData = await marketClient.getLatestPrice({
+            symbol: `${symbol}_USD`,
+          });
+          price = parseFloat(priceData.price || '0');
+        } catch (e) {
+          // Fallback or keep default 1 if failed (though 0 might be safer for value calc)
+          // For account page display, defaulting to 0 or cached price might be better
+          // but for consistency with investing page logic:
+          price = 0;
+        }
+      }
+
+      // Fallback for ETH/BTC if price fetch failed completely (optional, but good for dev experience if Market Service is down)
+      if (price === 0) {
+        if (symbol === 'ETH') price = 2200;
+        if (symbol === 'BTC') price = 42000;
+      }
+
+      return {
+        asset: symbol,
+        name: (w.asset?.meta as any)?.name || symbol,
+        klass,
+        amount: amount,
+        value: amount * price,
+        decimals: decimals,
+      };
+    }),
+  );
 
   // 2. Fetch Orders
   const ordersRaw = await prisma.order.findMany({

@@ -1,9 +1,13 @@
 import React from 'react';
 import { cookies } from 'next/headers';
-import { appContextForReact } from 'src/shared/controller/appContext';
+import { fetchMarketData } from 'src/actions/market';
 import { prismaDangerouslyBypassAuth } from 'src/prisma';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { marketClient } from 'src/services/MarketClient';
+import { appContextForReact } from 'src/shared/controller/appContext';
+import {
+  CryptoAssetData,
+  CryptoTableClient,
+} from '@/components/crypto/crypto-table-client';
 
 export default async function CryptoPage() {
   const context = await appContextForReact(cookies());
@@ -24,49 +28,68 @@ export default async function CryptoPage() {
     },
   });
 
+  const now = Date.now();
+  const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+  const oneHourAgo = now - 60 * 60 * 1000;
+
+  // Fetch all data in parallel
+  const marketDataPromises = assets.map(async (asset) => {
+    try {
+      const symbol = `${asset.symbol}_USD`;
+
+      // 1. Get Latest Price (24h change, vol)
+      const priceData = await marketClient.getLatestPrice({ symbol });
+
+      // 2. Get Historical Data (Sparkline) - 4h interval for 7d chart
+      const history7d = await fetchMarketData(symbol, '4h', sevenDaysAgo, now);
+
+      // 3. Get 1h Data for 1h Change (5m interval)
+      const history1h = await fetchMarketData(symbol, '5m', oneHourAgo, now);
+
+      // Ensure stable mock for supply if missing
+      const meta = (asset.meta as any) || {};
+      if (!meta.circulatingSupply) {
+        // Mock supply if missing
+        meta.circulatingSupply =
+          10000000 + Math.floor(Math.random() * 50000000);
+      }
+
+      return {
+        symbol: asset.symbol,
+        priceData,
+        history7d: history7d.map((h) => h.close),
+        history1h: history1h.map((h) => h.close),
+        meta,
+      };
+    } catch (error) {
+      console.error(`Failed to fetch data for ${asset.symbol}:`, error);
+      return {
+        symbol: asset.symbol,
+        priceData: null,
+        history7d: [],
+        history1h: [],
+        meta: (asset.meta as any) || {},
+      };
+    }
+  });
+
+  const rows = await Promise.all(marketDataPromises);
+
   return (
-    <div className="container mx-auto max-w-5xl py-10 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-on-surface">
-          Crypto Market
-        </h1>
-        <p className="text-on-surface-variant">
-          Explore and trade cryptocurrencies.
-        </p>
+    <div className="container mx-auto max-w-7xl py-10 px-4">
+      <div className="mb-8 flex justify-between items-end">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-on-surface">
+            Crypto Market
+          </h1>
+          <p className="text-on-surface-variant mt-2">
+            Real-time prices, market cap, and 7-day trends for top
+            cryptocurrencies.
+          </p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {assets.map((asset) => (
-          <div
-            key={asset.id}
-            className="rounded-xl border border-outline-variant bg-surface p-6 shadow-sm hover:border-primary/50 transition-colors"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-primary-container flex items-center justify-center font-bold text-on-primary-container">
-                  {asset.symbol[0]}
-                </div>
-                <div>
-                  <div className="font-semibold text-on-surface">
-                    {(asset?.meta as any)?.name}
-                  </div>
-                  <div className="text-sm text-on-surface-variant">
-                    {asset.symbol}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end">
-              <Link href={`assets/${asset.symbol}_USD`}>
-                <Button variant="secondary" size="sm">
-                  Trade
-                </Button>
-              </Link>
-            </div>
-          </div>
-        ))}
-      </div>
+      <CryptoTableClient initialData={rows} />
     </div>
   );
 }
