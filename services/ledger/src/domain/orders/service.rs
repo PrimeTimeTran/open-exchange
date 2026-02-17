@@ -71,10 +71,23 @@ impl OrderService {
     }
 
     pub async fn cancel_order(&self, id: Uuid) -> Result<()> {
-        if let Some(order) = self.repo.get(id).await? {
-            if order.status == OrderStatus::Open || order.status == OrderStatus::PartialFill {
-                self.release_funds(&order).await?;
-                self.repo.update_status(id, OrderStatus::Cancelled).await?;
+        if let Some(tx_manager) = &self.tx_manager {
+            let mut tx = tx_manager.begin().await?;
+            // Use explicit locking to prevent double release or status race
+            if let Some(order) = self.repo.get_for_update(&mut *tx, id).await? {
+                if order.status == OrderStatus::Open || order.status == OrderStatus::PartialFill {
+                    self.process_funds_with_tx(&mut *tx, &order, false).await?;
+                    self.repo.update_status_with_tx(&mut *tx, id, OrderStatus::Cancelled).await?;
+                }
+            }
+            tx.commit().await?;
+        } else {
+            // Fallback for non-transactional (test) environments
+            if let Some(order) = self.repo.get(id).await? {
+                if order.status == OrderStatus::Open || order.status == OrderStatus::PartialFill {
+                    self.release_funds(&order).await?;
+                    self.repo.update_status(id, OrderStatus::Cancelled).await?;
+                }
             }
         }
         Ok(())
@@ -156,13 +169,9 @@ impl OrderService {
     async fn update_wallet_balance_with_tx(&self, tx: &mut dyn RepositoryTransaction, account_id: Uuid, asset_id: String, amount_atomic: Decimal, is_reservation: bool) -> Result<()> {
         let account_uuid: String = account_id.to_string();
         
-        let wallet_opt = self.wallet_service.get_wallet_by_account_and_asset_with_tx(tx, &account_uuid, &asset_id)
+        let wallet_opt = self.wallet_service.get_wallet_by_account_and_asset_for_update(tx, &account_uuid, &asset_id)
             .await
             .map_err(|e| AppError::Internal(e.to_string()))?;
-
-        // Logic is the same, just the save method is different.
-        // But logic is inside `if let Some(mut wallet)`.
-        // I should extract the wallet mutation logic into a pure function `mutate_wallet` to avoid duplication.
 
         if let Some(mut wallet) = wallet_opt {
              Self::mutate_wallet_balance(&mut wallet, amount_atomic, is_reservation)?;

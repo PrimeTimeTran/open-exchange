@@ -11,6 +11,7 @@ pub trait OrderRepository: Send + Sync {
     async fn create(&self, order: Order) -> Result<Order>;
     async fn create_with_tx(&self, tx: &mut dyn RepositoryTransaction, order: Order) -> Result<Order>;
     async fn get(&self, id: Uuid) -> Result<Option<Order>>;
+    async fn get_for_update(&self, tx: &mut dyn RepositoryTransaction, id: Uuid) -> Result<Option<Order>>;
     async fn update_status(&self, id: Uuid, status: OrderStatus) -> Result<()>;
     async fn update_status_with_tx(&self, tx: &mut dyn RepositoryTransaction, id: Uuid, status: OrderStatus) -> Result<()>;
     async fn update_filled_amount(&self, id: Uuid, filled: Decimal) -> Result<()>;

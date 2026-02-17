@@ -34,8 +34,14 @@ impl LedgerRepository for PostgresLedgerRepository {
 
     async fn save_event_with_tx(&self, tx: &mut dyn RepositoryTransaction, event: LedgerEvent) -> Result<LedgerEvent> {
         let tx = unsafe { &mut *(tx.get_inner_ptr() as *mut Transaction<'_, Postgres>) };
-        let created_at = Utc.timestamp_millis_opt(event.created_at).unwrap();
-        let updated_at = Utc.timestamp_millis_opt(event.updated_at).unwrap();
+        
+        let created_at = Utc.timestamp_millis_opt(event.created_at)
+            .single()
+            .ok_or_else(|| crate::error::AppError::ValidationError("Invalid created_at timestamp".to_string()))?;
+            
+        let updated_at = Utc.timestamp_millis_opt(event.updated_at)
+            .single()
+            .ok_or_else(|| crate::error::AppError::ValidationError("Invalid updated_at timestamp".to_string()))?;
 
         sqlx::query!(
             r#"
@@ -44,8 +50,8 @@ impl LedgerRepository for PostgresLedgerRepository {
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10)
             "#,
-            Uuid::parse_str(&event.id).unwrap(),
-            Uuid::parse_str(&event.tenant_id).unwrap(),
+            Uuid::parse_str(&event.id).map_err(|_| crate::error::AppError::ValidationError("Invalid event ID".to_string()))?,
+            Uuid::parse_str(&event.tenant_id).map_err(|_| crate::error::AppError::ValidationError("Invalid tenant ID".to_string()))?,
             event.r#type,
             event.reference_id,
             event.reference_type,
@@ -74,21 +80,49 @@ impl LedgerRepository for PostgresLedgerRepository {
             return Ok(entries);
         }
 
+        // Pre-validate and parse all entries to avoid unwrap() inside query builder
+        let mut parsed_entries = Vec::with_capacity(entries.len());
+        for entry in &entries {
+            let created_at = Utc.timestamp_millis_opt(entry.created_at)
+                .single()
+                .ok_or_else(|| crate::error::AppError::ValidationError(format!("Invalid created_at for entry {}", entry.id)))?;
+            
+            let updated_at = Utc.timestamp_millis_opt(entry.updated_at)
+                .single()
+                .ok_or_else(|| crate::error::AppError::ValidationError(format!("Invalid updated_at for entry {}", entry.id)))?;
+            
+            let amount = Decimal::from_str(&entry.amount)
+                .map_err(|_| crate::error::AppError::ValidationError(format!("Invalid amount for entry {}", entry.id)))?;
+            
+            let id = Uuid::parse_str(&entry.id)
+                .map_err(|_| crate::error::AppError::ValidationError(format!("Invalid ID for entry {}", entry.id)))?;
+            
+            let tenant_id = Uuid::parse_str(&entry.tenant_id)
+                .map_err(|_| crate::error::AppError::ValidationError(format!("Invalid tenant ID for entry {}", entry.id)))?;
+            
+            let event_id = Uuid::parse_str(&entry.event_id)
+                .map_err(|_| crate::error::AppError::ValidationError(format!("Invalid event ID for entry {}", entry.id)))?;
+            
+            let account_id = Uuid::parse_str(&entry.account_id)
+                .map_err(|_| crate::error::AppError::ValidationError(format!("Invalid account ID for entry {}", entry.id)))?;
+            
+            let meta = serde_json::from_str::<serde_json::Value>(&entry.meta)
+                .unwrap_or(serde_json::json!({}));
+
+            parsed_entries.push((id, tenant_id, event_id, account_id, amount, meta, created_at, updated_at));
+        }
+
         let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(
             "INSERT INTO \"LedgerEntry\" (id, \"tenantId\", \"eventId\", \"accountId\", amount, meta, \"createdAt\", \"updatedAt\") "
         );
 
-        query_builder.push_values(entries.iter(), |mut b, entry| {
-            let created_at = Utc.timestamp_millis_opt(entry.created_at).unwrap();
-            let updated_at = Utc.timestamp_millis_opt(entry.updated_at).unwrap();
-            let amount = Decimal::from_str(&entry.amount).unwrap_or_default();
-            
-            b.push_bind(Uuid::parse_str(&entry.id).unwrap_or_default())
-             .push_bind(Uuid::parse_str(&entry.tenant_id).unwrap_or_default())
-             .push_bind(Uuid::parse_str(&entry.event_id).unwrap_or_default())
-             .push_bind(Uuid::parse_str(&entry.account_id).unwrap_or_default())
+        query_builder.push_values(parsed_entries, |mut b, (id, tenant_id, event_id, account_id, amount, meta, created_at, updated_at)| {
+            b.push_bind(id)
+             .push_bind(tenant_id)
+             .push_bind(event_id)
+             .push_bind(account_id)
              .push_bind(amount)
-             .push_bind(serde_json::from_str::<serde_json::Value>(&entry.meta).unwrap_or(serde_json::json!({})))
+             .push_bind(meta)
              .push_bind(created_at)
              .push_bind(updated_at);
         });

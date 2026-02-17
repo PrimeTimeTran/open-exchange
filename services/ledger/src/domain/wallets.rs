@@ -20,6 +20,7 @@ pub trait WalletRepository: Send + Sync + Debug {
     async fn get(&self, id: Uuid) -> Result<Option<Wallet>>;
     async fn get_by_account_and_asset(&self, account_id: &str, asset_id: &str) -> Result<Option<Wallet>>;
     async fn get_by_account_and_asset_with_tx(&self, tx: &mut dyn RepositoryTransaction, account_id: &str, asset_id: &str) -> Result<Option<Wallet>>;
+    async fn get_by_account_and_asset_for_update(&self, tx: &mut dyn RepositoryTransaction, account_id: &str, asset_id: &str) -> Result<Option<Wallet>>;
     async fn update(&self, wallet: Wallet) -> Result<Wallet>;
     async fn update_with_tx(&self, tx: &mut dyn RepositoryTransaction, wallet: Wallet) -> Result<Wallet>;
     async fn delete(&self, id: Uuid) -> Result<()>;
@@ -73,6 +74,10 @@ impl WalletService {
         self.repo.get_by_account_and_asset_with_tx(tx, account_id, asset_id).await
     }
 
+    pub async fn get_wallet_by_account_and_asset_for_update(&self, tx: &mut dyn RepositoryTransaction, account_id: &str, asset_id: &str) -> Result<Option<Wallet>> {
+        self.repo.get_by_account_and_asset_for_update(tx, account_id, asset_id).await
+    }
+
     pub async fn update_wallet(&self, wallet: Wallet) -> Result<Wallet> {
         self.repo.update(wallet).await
     }
@@ -109,7 +114,7 @@ impl WalletService {
         let meta: Value = serde_json::from_str(&entry.meta).map_err(|e| AppError::Internal(format!("Failed to parse ledger entry meta: {}", e)))?;
         let asset = meta["asset"].as_str().ok_or(AppError::ValidationError("Missing asset in ledger entry metadata".into()))?;
 
-        if let Some(mut wallet) = self.repo.get_by_account_and_asset_with_tx(tx, &entry.account_id, asset).await? {
+        if let Some(mut wallet) = self.repo.get_by_account_and_asset_for_update(tx, &entry.account_id, asset).await? {
             Self::update_wallet_from_entry(&mut wallet, &entry)?;
             self.repo.update_with_tx(tx, wallet).await?;
         } else {

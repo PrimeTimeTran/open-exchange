@@ -149,6 +149,26 @@ impl OrderRepository for PostgresOrderRepository {
         Ok(rec.map(|r| r.into()))
     }
 
+    async fn get_for_update(&self, tx: &mut dyn RepositoryTransaction, id: Uuid) -> Result<Option<Order>> {
+        let tx_ptr = unsafe { tx.get_inner_ptr() };
+        let tx = unsafe { &mut *(tx_ptr as *mut Transaction<'_, Postgres>) };
+        
+        let rec: Option<OrderRow> = sqlx::query_as(
+            r#"
+            SELECT id, "tenantId", "accountId", "instrumentId", side, type as "type", quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt"
+            FROM "Order"
+            WHERE id = $1
+            FOR UPDATE
+            "#
+        )
+        .bind(id)
+        .fetch_optional(&mut **tx)
+        .await
+        .map_err(AppError::DatabaseError)?;
+
+        Ok(rec.map(|r| r.into()))
+    }
+
     async fn update_status(&self, id: Uuid, status: OrderStatus) -> Result<()> {
         let result = sqlx::query(
             r#"UPDATE "Order" SET status = $2, "updatedAt" = $3 WHERE id = $1"#

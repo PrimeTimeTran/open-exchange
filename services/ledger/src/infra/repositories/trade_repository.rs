@@ -23,10 +23,19 @@ use crate::domain::transaction::RepositoryTransaction;
 #[async_trait]
 impl TradeRepository for PostgresTradeRepository {
     async fn create(&self, trade: Trade) -> Result<Trade> {
-        let created_at = Utc.timestamp_millis_opt(trade.created_at).unwrap();
-        let updated_at = Utc.timestamp_millis_opt(trade.updated_at).unwrap();
-        let price = Decimal::from_str(&trade.price).unwrap_or_default();
-        let quantity = Decimal::from_str(&trade.quantity).unwrap_or_default();
+        let created_at = Utc.timestamp_millis_opt(trade.created_at)
+            .single()
+            .ok_or_else(|| crate::error::AppError::ValidationError("Invalid created_at timestamp".to_string()))?;
+        
+        let updated_at = Utc.timestamp_millis_opt(trade.updated_at)
+            .single()
+            .ok_or_else(|| crate::error::AppError::ValidationError("Invalid updated_at timestamp".to_string()))?;
+        
+        let price = Decimal::from_str(&trade.price)
+            .map_err(|_| crate::error::AppError::ValidationError("Invalid price".to_string()))?;
+        
+        let quantity = Decimal::from_str(&trade.quantity)
+            .map_err(|_| crate::error::AppError::ValidationError("Invalid quantity".to_string()))?;
 
         // Note: buyOrderId/sellOrderId are not columns in Trade table in current schema.
         
@@ -37,9 +46,9 @@ impl TradeRepository for PostgresTradeRepository {
             )
             VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8)
             "#,
-            uuid::Uuid::parse_str(&trade.id).unwrap(),
-            uuid::Uuid::parse_str(&trade.tenant_id).unwrap(),
-            uuid::Uuid::parse_str(&trade.instrument_id).unwrap(),
+            uuid::Uuid::parse_str(&trade.id).map_err(|_| crate::error::AppError::ValidationError("Invalid trade ID".to_string()))?,
+            uuid::Uuid::parse_str(&trade.tenant_id).map_err(|_| crate::error::AppError::ValidationError("Invalid tenant ID".to_string()))?,
+            uuid::Uuid::parse_str(&trade.instrument_id).map_err(|_| crate::error::AppError::ValidationError("Invalid instrument ID".to_string()))?,
             price,
             quantity,
             serde_json::from_str::<serde_json::Value>(&trade.meta).unwrap_or(serde_json::json!({})),
@@ -55,10 +64,20 @@ impl TradeRepository for PostgresTradeRepository {
 
     async fn create_with_tx(&self, tx: &mut dyn RepositoryTransaction, trade: Trade) -> Result<Trade> {
         let tx = unsafe { &mut *(tx.get_inner_ptr() as *mut Transaction<'_, Postgres>) };
-        let created_at = Utc.timestamp_millis_opt(trade.created_at).unwrap();
-        let updated_at = Utc.timestamp_millis_opt(trade.updated_at).unwrap();
-        let price = Decimal::from_str(&trade.price).unwrap_or_default();
-        let quantity = Decimal::from_str(&trade.quantity).unwrap_or_default();
+        
+        let created_at = Utc.timestamp_millis_opt(trade.created_at)
+            .single()
+            .ok_or_else(|| crate::error::AppError::ValidationError("Invalid created_at timestamp".to_string()))?;
+        
+        let updated_at = Utc.timestamp_millis_opt(trade.updated_at)
+            .single()
+            .ok_or_else(|| crate::error::AppError::ValidationError("Invalid updated_at timestamp".to_string()))?;
+        
+        let price = Decimal::from_str(&trade.price)
+            .map_err(|_| crate::error::AppError::ValidationError("Invalid price".to_string()))?;
+        
+        let quantity = Decimal::from_str(&trade.quantity)
+            .map_err(|_| crate::error::AppError::ValidationError("Invalid quantity".to_string()))?;
 
         sqlx::query!(
             r#"
@@ -67,9 +86,9 @@ impl TradeRepository for PostgresTradeRepository {
             )
             VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8)
             "#,
-            uuid::Uuid::parse_str(&trade.id).unwrap(),
-            uuid::Uuid::parse_str(&trade.tenant_id).unwrap(),
-            uuid::Uuid::parse_str(&trade.instrument_id).unwrap(),
+            uuid::Uuid::parse_str(&trade.id).map_err(|_| crate::error::AppError::ValidationError("Invalid trade ID".to_string()))?,
+            uuid::Uuid::parse_str(&trade.tenant_id).map_err(|_| crate::error::AppError::ValidationError("Invalid tenant ID".to_string()))?,
+            uuid::Uuid::parse_str(&trade.instrument_id).map_err(|_| crate::error::AppError::ValidationError("Invalid instrument ID".to_string()))?,
             price,
             quantity,
             serde_json::from_str::<serde_json::Value>(&trade.meta).unwrap_or(serde_json::json!({})),

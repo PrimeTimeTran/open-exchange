@@ -21,6 +21,7 @@ impl OrderRepository for FailingOrderRepository {
     }
 
     async fn get(&self, _id: Uuid) -> Result<Option<Order>> { Ok(None) }
+    async fn get_for_update(&self, _tx: &mut dyn RepositoryTransaction, _id: Uuid) -> Result<Option<Order>> { Ok(None) }
     async fn update_status(&self, _id: Uuid, _status: OrderStatus) -> Result<()> { Ok(()) }
     async fn update_status_with_tx(&self, _tx: &mut dyn RepositoryTransaction, _id: Uuid, _status: OrderStatus) -> Result<()> { Ok(()) }
     async fn update_filled_amount(&self, _id: Uuid, _filled: Decimal) -> Result<()> { Ok(()) }

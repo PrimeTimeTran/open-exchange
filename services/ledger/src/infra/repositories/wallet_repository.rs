@@ -160,6 +160,31 @@ impl WalletRepository for PostgresWalletRepository {
         Ok(rec.map(|r| r.into()))
     }
 
+    async fn get_by_account_and_asset_for_update(&self, tx: &mut dyn RepositoryTransaction, account_id: &str, asset_id: &str) -> Result<Option<Wallet>> {
+        let tx_ptr = unsafe { tx.get_inner_ptr() };
+        let tx = unsafe { &mut *(tx_ptr as *mut Transaction<'_, Postgres>) };
+        let acc_uuid = Uuid::parse_str(account_id).map_err(|_| AppError::ValidationError("Invalid account_id".into()))?;
+        let asset_uuid = Uuid::parse_str(asset_id).map_err(|_| AppError::ValidationError("Invalid asset_id".into()))?;
+
+        let rec: Option<WalletRow> = sqlx::query_as(
+            r#"
+            SELECT id, "tenantId", "accountId", "assetId", 
+                   available, locked, total, 
+                   version, meta, "createdAt", "updatedAt"
+            FROM "Wallet"
+            WHERE "accountId" = $1 AND "assetId" = $2
+            FOR UPDATE
+            "#
+        )
+        .bind(acc_uuid)
+        .bind(asset_uuid)
+        .fetch_optional(&mut **tx)
+        .await
+        .map_err(AppError::DatabaseError)?;
+
+        Ok(rec.map(|r| r.into()))
+    }
+
     async fn update(&self, wallet: Wallet) -> Result<Wallet> {
         let id = Uuid::parse_str(&wallet.id).map_err(|_| AppError::ValidationError("Invalid wallet id".into()))?;
         

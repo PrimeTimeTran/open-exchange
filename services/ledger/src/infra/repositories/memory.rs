@@ -118,6 +118,10 @@ impl OrderRepository for InMemoryOrderRepository {
         Ok(orders.iter().find(|o| o.id == id).cloned())
     }
 
+    async fn get_for_update(&self, _tx: &mut dyn RepositoryTransaction, id: Uuid) -> Result<Option<Order>> {
+        self.get(id).await
+    }
+
     async fn update_status(&self, id: Uuid, status: OrderStatus) -> Result<()> {
         let mut orders = self.orders.lock().unwrap();
         if let Some(order) = orders.iter_mut().find(|o| o.id == id) {
@@ -211,6 +215,10 @@ impl WalletRepository for InMemoryWalletRepository {
     }
 
     async fn get_by_account_and_asset_with_tx(&self, _tx: &mut dyn RepositoryTransaction, account_id: &str, asset_id: &str) -> Result<Option<Wallet>> {
+        self.get_by_account_and_asset(account_id, asset_id).await
+    }
+
+    async fn get_by_account_and_asset_for_update(&self, _tx: &mut dyn RepositoryTransaction, account_id: &str, asset_id: &str) -> Result<Option<Wallet>> {
         self.get_by_account_and_asset(account_id, asset_id).await
     }
 
