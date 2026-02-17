@@ -72,11 +72,13 @@ impl Services {
         let account_svc = Arc::new(AccountService::new(account_repo.clone()));
         let asset_svc = Arc::new(AssetService::new(asset_repo.clone(), instrument_repo.clone()));
         
+        let tx_manager = Arc::new(crate::infra::transaction::PostgresTransactionManager::new(db_pool.clone()));
+
         let order_svc = Arc::new(OrderService::new(
             order_repo.clone(), 
             wallet_svc.clone(), 
             asset_svc.clone(),
-            Some(db_pool.clone()),
+            Some(tx_manager.clone()),
         ));
 
         let ledger_svc = Arc::new(LedgerService::new(
@@ -87,7 +89,7 @@ impl Services {
         ));
 
         let settlement_svc = Arc::new(SettlementService::new(
-            Some(db_pool.clone()),
+            Some(tx_manager.clone()),
             order_svc.clone(), 
             instrument_repo.clone(), 
             ledger_svc.clone(),

@@ -1,8 +1,9 @@
-use async_trait::async_trait;
-use sqlx::{PgPool, Transaction, Postgres};
-use uuid::Uuid;
 use crate::error::Result;
 use crate::domain::fills::{Fill, FillRepository};
+use crate::domain::transaction::RepositoryTransaction;
+use uuid::Uuid;
+use async_trait::async_trait;
+use sqlx::{PgPool, Transaction, Postgres};
 
 #[derive(Debug, Clone)]
 pub struct PostgresFillRepository {
@@ -14,6 +15,8 @@ impl PostgresFillRepository {
         Self { pool }
     }
 }
+
+
 
 #[async_trait]
 impl FillRepository for PostgresFillRepository {
@@ -52,7 +55,8 @@ impl FillRepository for PostgresFillRepository {
         .map_err(crate::error::AppError::DatabaseError)
     }
 
-    async fn create_with_tx(&self, tx: &mut Transaction<'_, Postgres>, fill: Fill) -> Result<Fill> {
+    async fn create_with_tx(&self, tx: &mut dyn RepositoryTransaction, fill: Fill) -> Result<Fill> {
+        let tx = unsafe { &mut *(tx.get_inner_ptr() as *mut Transaction<'_, Postgres>) };
         sqlx::query_as!(
             Fill,
             r#"

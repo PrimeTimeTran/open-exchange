@@ -1,12 +1,11 @@
-use async_trait::async_trait;
-use sqlx::{PgPool, FromRow};
-use uuid::Uuid;
-use crate::domain::wallets::{Wallet, WalletRepository};
 use crate::error::{AppError, Result};
-use chrono::{DateTime, Utc};
-use rust_decimal::Decimal;
+use crate::domain::wallets::{Wallet, WalletRepository};
+use uuid::Uuid;
 use std::str::FromStr;
-use sqlx::{Transaction, Postgres};
+use rust_decimal::Decimal;
+use sqlx::{PgPool, FromRow, Transaction, Postgres};
+use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 
 #[derive(Debug)]
 pub struct PostgresWalletRepository {
@@ -58,6 +57,10 @@ impl From<WalletRow> for Wallet {
         }
     }
 }
+
+// use crate::infra::transaction::PostgresTransaction;
+
+use crate::domain::transaction::RepositoryTransaction;
 
 #[async_trait]
 impl WalletRepository for PostgresWalletRepository {
@@ -133,7 +136,9 @@ impl WalletRepository for PostgresWalletRepository {
         Ok(rec.map(|r| r.into()))
     }
 
-    async fn get_by_account_and_asset_with_tx(&self, tx: &mut Transaction<'_, Postgres>, account_id: &str, asset_id: &str) -> Result<Option<Wallet>> {
+    async fn get_by_account_and_asset_with_tx(&self, tx: &mut dyn RepositoryTransaction, account_id: &str, asset_id: &str) -> Result<Option<Wallet>> {
+        let tx_ptr = unsafe { tx.get_inner_ptr() };
+        let tx = unsafe { &mut *(tx_ptr as *mut Transaction<'_, Postgres>) };
         let acc_uuid = Uuid::parse_str(account_id).map_err(|_| AppError::ValidationError("Invalid account_id".into()))?;
         let asset_uuid = Uuid::parse_str(asset_id).map_err(|_| AppError::ValidationError("Invalid asset_id".into()))?;
 
@@ -184,7 +189,9 @@ impl WalletRepository for PostgresWalletRepository {
         }
     }
 
-    async fn update_with_tx(&self, tx: &mut Transaction<'_, Postgres>, wallet: Wallet) -> Result<Wallet> {
+    async fn update_with_tx(&self, tx: &mut dyn RepositoryTransaction, wallet: Wallet) -> Result<Wallet> {
+        let tx_ptr = unsafe { tx.get_inner_ptr() };
+        let tx = unsafe { &mut *(tx_ptr as *mut Transaction<'_, Postgres>) };
         let id = Uuid::parse_str(&wallet.id).map_err(|_| AppError::ValidationError("Invalid wallet id".into()))?;
         
         let rec = sqlx::query_as::<_, WalletRow>(

@@ -1,18 +1,17 @@
 use crate::error::{AppError, Result};
 use crate::domain::fills::{Fill, FillRepository};
-use crate::domain::orders::{Order, OrderRepository, OrderStatus};
+pub use instrument::InMemoryInstrumentRepository;
+use crate::domain::transaction::RepositoryTransaction;
 use crate::domain::wallets::{Wallet, WalletRepository};
 use crate::domain::accounts::{Account, AccountRepository};
+use crate::domain::orders::{Order, OrderRepository, OrderStatus};
 use uuid::Uuid;
 pub mod instrument;
 use rust_decimal::Decimal;
 use std::sync::{Arc, Mutex};
 use async_trait::async_trait;
-use sqlx::{Transaction, Postgres};
-pub use instrument::InMemoryInstrumentRepository;
 
-
-// --- InMemoryAccountRepository ---
+// --- InMemoryOrderRepository ---
 
 #[derive(Clone, Default)]
 pub struct InMemoryAccountRepository {
@@ -110,7 +109,7 @@ impl OrderRepository for InMemoryOrderRepository {
         Ok(order)
     }
 
-    async fn create_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, order: Order) -> Result<Order> {
+    async fn create_with_tx(&self, _tx: &mut dyn RepositoryTransaction, order: Order) -> Result<Order> {
         self.create(order).await
     }
 
@@ -130,7 +129,7 @@ impl OrderRepository for InMemoryOrderRepository {
         }
     }
 
-    async fn update_status_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, id: Uuid, status: OrderStatus) -> Result<()> {
+    async fn update_status_with_tx(&self, _tx: &mut dyn RepositoryTransaction, id: Uuid, status: OrderStatus) -> Result<()> {
         self.update_status(id, status).await
     }
 
@@ -145,7 +144,7 @@ impl OrderRepository for InMemoryOrderRepository {
         }
     }
 
-    async fn update_filled_amount_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, id: Uuid, filled: Decimal) -> Result<()> {
+    async fn update_filled_amount_with_tx(&self, _tx: &mut dyn RepositoryTransaction, id: Uuid, filled: Decimal) -> Result<()> {
         self.update_filled_amount(id, filled).await
     }
 
@@ -160,7 +159,7 @@ impl OrderRepository for InMemoryOrderRepository {
         }
     }
 
-    async fn increment_filled_amount_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, id: Uuid, amount: Decimal) -> Result<Order> {
+    async fn increment_filled_amount_with_tx(&self, _tx: &mut dyn RepositoryTransaction, id: Uuid, amount: Decimal) -> Result<Order> {
         self.increment_filled_amount(id, amount).await
     }
 
@@ -211,7 +210,7 @@ impl WalletRepository for InMemoryWalletRepository {
         Ok(wallets.iter().find(|w| w.account_id == account_id && w.asset_id == asset_id).cloned())
     }
 
-    async fn get_by_account_and_asset_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, account_id: &str, asset_id: &str) -> Result<Option<Wallet>> {
+    async fn get_by_account_and_asset_with_tx(&self, _tx: &mut dyn RepositoryTransaction, account_id: &str, asset_id: &str) -> Result<Option<Wallet>> {
         self.get_by_account_and_asset(account_id, asset_id).await
     }
 
@@ -231,7 +230,7 @@ impl WalletRepository for InMemoryWalletRepository {
         }
     }
 
-    async fn update_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, wallet: Wallet) -> Result<Wallet> {
+    async fn update_with_tx(&self, _tx: &mut dyn RepositoryTransaction, wallet: Wallet) -> Result<Wallet> {
         self.update(wallet).await
     }
 
@@ -324,7 +323,7 @@ impl FillRepository for InMemoryFillRepository {
         Ok(fill)
     }
 
-    async fn create_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, fill: Fill) -> Result<Fill> {
+    async fn create_with_tx(&self, _tx: &mut dyn RepositoryTransaction, fill: Fill) -> Result<Fill> {
         self.create(fill).await
     }
 
@@ -382,7 +381,7 @@ impl LedgerRepository for InMemoryLedgerRepository {
         Ok(event)
     }
 
-    async fn save_event_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, event: LedgerEvent) -> Result<LedgerEvent> {
+    async fn save_event_with_tx(&self, _tx: &mut dyn RepositoryTransaction, event: LedgerEvent) -> Result<LedgerEvent> {
         self.save_event(event).await
     }
 
@@ -392,11 +391,11 @@ impl LedgerRepository for InMemoryLedgerRepository {
         Ok(entries)
     }
 
-    async fn save_entries_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, entries: Vec<LedgerEntry>) -> Result<Vec<LedgerEntry>> {
+    async fn save_entries_with_tx(&self, _tx: &mut dyn RepositoryTransaction, entries: Vec<LedgerEntry>) -> Result<Vec<LedgerEntry>> {
         self.save_entries(entries).await
     }
 
-    async fn save_trade_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, trade: Trade) -> Result<Trade> {
+    async fn save_trade_with_tx(&self, _tx: &mut dyn RepositoryTransaction, trade: Trade) -> Result<Trade> {
         Ok(trade)
     }
 
@@ -441,7 +440,7 @@ impl TradeRepository for InMemoryTradeRepository {
         Ok(trade)
     }
 
-    async fn create_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, trade: Trade) -> Result<Trade> {
+    async fn create_with_tx(&self, _tx: &mut dyn RepositoryTransaction, trade: Trade) -> Result<Trade> {
         self.create(trade).await
     }
 
@@ -450,7 +449,7 @@ impl TradeRepository for InMemoryTradeRepository {
         Ok(trades.iter().find(|t| t.id == id).cloned())
     }
 
-    async fn get_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, id: &str) -> Result<Option<Trade>> {
+    async fn get_with_tx(&self, _tx: &mut dyn RepositoryTransaction, id: &str) -> Result<Option<Trade>> {
         self.get(id).await
     }
 }

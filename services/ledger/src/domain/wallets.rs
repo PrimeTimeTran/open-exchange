@@ -1,27 +1,27 @@
-use crate::proto::common;
 pub use common::Wallet;
 use common::LedgerEntry;
-use std::sync::Arc;
+use crate::proto::common;
+use crate::error::{Result, AppError};
+use crate::domain::transaction::RepositoryTransaction;
 use uuid::Uuid;
 use chrono::Utc;
-use async_trait::async_trait;
-use crate::error::Result;
-use serde_json::Value;
-use rust_decimal::Decimal;
-use std::str::FromStr;
-use sqlx::{Transaction, Postgres};
-use crate::error::AppError;
-
+use std::sync::Arc;
 use std::fmt::Debug;
+use serde_json::Value;
+use std::str::FromStr;
+use rust_decimal::Decimal;
+use async_trait::async_trait;
+// use sqlx::{Transaction, Postgres}; // Removed to decouple from sqlx
+
 
 #[async_trait]
 pub trait WalletRepository: Send + Sync + Debug {
     async fn create(&self, wallet: Wallet) -> Result<Wallet>;
     async fn get(&self, id: Uuid) -> Result<Option<Wallet>>;
     async fn get_by_account_and_asset(&self, account_id: &str, asset_id: &str) -> Result<Option<Wallet>>;
-    async fn get_by_account_and_asset_with_tx(&self, tx: &mut Transaction<'_, Postgres>, account_id: &str, asset_id: &str) -> Result<Option<Wallet>>;
+    async fn get_by_account_and_asset_with_tx(&self, tx: &mut dyn RepositoryTransaction, account_id: &str, asset_id: &str) -> Result<Option<Wallet>>;
     async fn update(&self, wallet: Wallet) -> Result<Wallet>;
-    async fn update_with_tx(&self, tx: &mut Transaction<'_, Postgres>, wallet: Wallet) -> Result<Wallet>;
+    async fn update_with_tx(&self, tx: &mut dyn RepositoryTransaction, wallet: Wallet) -> Result<Wallet>;
     async fn delete(&self, id: Uuid) -> Result<()>;
     async fn list_by_account(&self, account_id: &str) -> Result<Vec<Wallet>>;
 }
@@ -69,7 +69,7 @@ impl WalletService {
         self.repo.get_by_account_and_asset(account_id, asset_id).await
     }
 
-    pub async fn get_wallet_by_account_and_asset_with_tx(&self, tx: &mut Transaction<'_, Postgres>, account_id: &str, asset_id: &str) -> Result<Option<Wallet>> {
+    pub async fn get_wallet_by_account_and_asset_with_tx(&self, tx: &mut dyn RepositoryTransaction, account_id: &str, asset_id: &str) -> Result<Option<Wallet>> {
         self.repo.get_by_account_and_asset_with_tx(tx, account_id, asset_id).await
     }
 
@@ -77,7 +77,7 @@ impl WalletService {
         self.repo.update(wallet).await
     }
 
-    pub async fn update_wallet_with_tx(&self, tx: &mut Transaction<'_, Postgres>, wallet: Wallet) -> Result<Wallet> {
+    pub async fn update_wallet_with_tx(&self, tx: &mut dyn RepositoryTransaction, wallet: Wallet) -> Result<Wallet> {
         self.repo.update_with_tx(tx, wallet).await
     }
 
@@ -103,7 +103,9 @@ impl WalletService {
         Ok(())
     }
 
-    pub async fn process_ledger_entry_with_tx(&self, tx: &mut Transaction<'_, Postgres>, entry: LedgerEntry) -> Result<()> {
+// ...
+
+    pub async fn process_ledger_entry_with_tx(&self, tx: &mut dyn RepositoryTransaction, entry: LedgerEntry) -> Result<()> {
         let meta: Value = serde_json::from_str(&entry.meta).map_err(|e| AppError::Internal(format!("Failed to parse ledger entry meta: {}", e)))?;
         let asset = meta["asset"].as_str().ok_or(AppError::ValidationError("Missing asset in ledger entry metadata".into()))?;
 

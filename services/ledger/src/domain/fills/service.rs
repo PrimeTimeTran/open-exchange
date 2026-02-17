@@ -6,7 +6,7 @@ use crate::error::{Result, AppError};
 use super::model::Fill;
 use super::repository::FillRepository;
 use crate::proto::common::Trade;
-use sqlx::{Transaction, Postgres};
+use crate::domain::transaction::RepositoryTransaction;
 
 #[derive(Clone)]
 pub struct FillService {
@@ -41,7 +41,7 @@ impl FillService {
         })
     }
 
-    pub async fn save_fill_with_tx(&self, tx: &mut Transaction<'_, Postgres>, fill: Fill) -> Result<Fill> {
+    pub async fn save_fill_with_tx(&self, tx: &mut dyn RepositoryTransaction, fill: Fill) -> Result<Fill> {
         self.repo.create_with_tx(tx, fill).await
     }
     

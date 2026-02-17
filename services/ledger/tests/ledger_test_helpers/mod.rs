@@ -194,7 +194,8 @@ impl LedgerTestContext {
         let ledger_service = Arc::new(LedgerService::new(self.repo.clone(), self.instrument_repo.clone(), self.asset_repo.clone(), self.account_repo.clone()));
         let wallet_service = Arc::new(WalletService::new(self.wallet_repo.clone()));
         let asset_service = Arc::new(AssetService::new(self.asset_repo.clone(), self.instrument_repo.clone()));
-        let order_service = Arc::new(OrderService::new(self.repo.clone(), wallet_service.clone(), asset_service, None));
+        let tx_manager = Arc::new(ledger::infra::transaction::InMemoryTransactionManager);
+        let order_service = Arc::new(OrderService::new(self.repo.clone(), wallet_service.clone(), asset_service, Some(tx_manager)));
         let fill_service = Arc::new(FillService::new(self.fill_repo.clone()));
         let fee_service = Arc::new(StandardFeeService::new());
 

@@ -3,17 +3,17 @@ use crate::error::{Result, AppError};
 use super::repository::OrderRepository;
 use crate::domain::assets::AssetService;
 use crate::domain::wallets::WalletService;
+use crate::domain::transaction::{TransactionManager, RepositoryTransaction};
 use std::fmt;
 use uuid::Uuid;
 use std::sync::Arc;
 use std::str::FromStr;
 use rust_decimal::Decimal;
-use sqlx::{Transaction, Postgres};
 use rust_decimal::MathematicalOps;
 
 #[derive(Clone)]
 pub struct OrderService {
-    pool: Option<sqlx::PgPool>,
+    tx_manager: Option<Arc<dyn TransactionManager>>,
     repo: Arc<dyn OrderRepository>,
     asset_service: Arc<AssetService>,
     wallet_service: Arc<WalletService>,
@@ -30,9 +30,9 @@ impl OrderService {
         repo: Arc<dyn OrderRepository>,
         wallet_service: Arc<WalletService>,
         asset_service: Arc<AssetService>,
-        pool: Option<sqlx::PgPool>,
+        tx_manager: Option<Arc<dyn TransactionManager>>,
     ) -> Self {
-        Self { repo, wallet_service, asset_service, pool }
+        Self { repo, wallet_service, asset_service, tx_manager }
     }
 
     pub async fn create_order(&self, order: Order) -> Result<Order> {
@@ -42,18 +42,18 @@ impl OrderService {
             return Ok(existing);
         }
 
-        // Use transaction if pool is available (Postgres)
-        if let Some(pool) = &self.pool {
-            let mut tx = pool.begin().await.map_err(AppError::DatabaseError)?;
+        // Use transaction if tx_manager is available
+        if let Some(tx_manager) = &self.tx_manager {
+            let mut tx = tx_manager.begin().await?;
             
             // Bypass RLS for system operations if needed, or rely on service user
             // In settlement service we saw RLS bypass, here we might need it too or assume
             // the service connects as a superuser/service role. Let's keep it simple for now.
 
-            self.validate_and_reserve_funds_with_tx(&mut tx, &order).await?;
-            let created_order = self.repo.create_with_tx(&mut tx, order).await?;
+            self.validate_and_reserve_funds_with_tx(&mut *tx, &order).await?;
+            let created_order = self.repo.create_with_tx(&mut *tx, order).await?;
             
-            tx.commit().await.map_err(AppError::DatabaseError)?;
+            tx.commit().await?;
             Ok(created_order)
         } else {
             // InMemory for Testing scenarios - no transactions, but we still want to validate funds
@@ -86,7 +86,7 @@ impl OrderService {
         self.process_funds(order, true).await
     }
 
-    pub async fn validate_and_reserve_funds_with_tx(&self, tx: &mut Transaction<'_, Postgres>, order: &Order) -> Result<()> {
+    pub async fn validate_and_reserve_funds_with_tx(&self, tx: &mut dyn RepositoryTransaction, order: &Order) -> Result<()> {
         self.process_funds_with_tx(tx, order, true).await
     }
 
@@ -102,7 +102,7 @@ impl OrderService {
         Ok(())
     }
 
-    async fn process_funds_with_tx(&self, tx: &mut Transaction<'_, Postgres>, order: &Order, is_reservation: bool) -> Result<()> {
+    async fn process_funds_with_tx(&self, tx: &mut dyn RepositoryTransaction, order: &Order, is_reservation: bool) -> Result<()> {
         if let Some((asset_id, amount_atomic)) = self.calculate_fund_requirement(order).await? {
             self.update_wallet_balance_with_tx(tx, order.account_id, asset_id, amount_atomic, is_reservation).await?;
         }
@@ -153,7 +153,7 @@ impl OrderService {
         self.apply_balance_update(wallet_opt, amount_atomic, is_reservation).await
     }
 
-    async fn update_wallet_balance_with_tx(&self, tx: &mut Transaction<'_, Postgres>, account_id: Uuid, asset_id: String, amount_atomic: Decimal, is_reservation: bool) -> Result<()> {
+    async fn update_wallet_balance_with_tx(&self, tx: &mut dyn RepositoryTransaction, account_id: Uuid, asset_id: String, amount_atomic: Decimal, is_reservation: bool) -> Result<()> {
         let account_uuid: String = account_id.to_string();
         
         let wallet_opt = self.wallet_service.get_wallet_by_account_and_asset_with_tx(tx, &account_uuid, &asset_id)
@@ -224,7 +224,7 @@ impl OrderService {
         Ok(())
     }
 
-    pub async fn update_status_with_tx(&self, tx: &mut Transaction<'_, Postgres>, order_id_str: &str, trade_qty: Decimal) -> Result<()> {
+    pub async fn update_status_with_tx(&self, tx: &mut dyn RepositoryTransaction, order_id_str: &str, trade_qty: Decimal) -> Result<()> {
         let order_uuid = self.parse_uuid(order_id_str)?;
         let updated_order = self.repo.increment_filled_amount_with_tx(tx, order_uuid, trade_qty).await?;
         

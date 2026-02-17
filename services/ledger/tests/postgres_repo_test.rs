@@ -1,9 +1,10 @@
 mod infra_test_helpers;
 use infra_test_helpers::TestDb;
-use ledger::domain::wallets::{Wallet, WalletRepository};
-use ledger::infra::repositories::{PostgresWalletRepository, PostgresLedgerRepository};
-use ledger::domain::ledger::repository::LedgerRepository;
 use ledger::proto::common::LedgerEntry;
+use ledger::domain::wallets::{Wallet, WalletRepository};
+use ledger::domain::ledger::repository::LedgerRepository;
+use ledger::infra::transaction::PostgresTransaction;
+use ledger::infra::repositories::{PostgresWalletRepository, PostgresLedgerRepository};
 use uuid::Uuid;
 use chrono::Utc;
 use std::str::FromStr;
@@ -134,12 +135,13 @@ async fn test_postgres_ledger_batch_insert() {
         });
     }
 
-    let mut tx = test_db.pool.begin().await.expect("Failed to begin tx");
+    let tx = test_db.pool.begin().await.expect("Failed to begin tx");
+    let mut pg_tx = PostgresTransaction { tx };
     
-    let result = repo.save_entries_with_tx(&mut tx, entries.clone()).await;
+    let result = repo.save_entries_with_tx(&mut pg_tx, entries.clone()).await;
     assert!(result.is_ok(), "Save entries failed: {:?}", result.err());
     
-    tx.commit().await.expect("Failed to commit tx");
+    pg_tx.tx.commit().await.expect("Failed to commit tx");
 
     // Verify
     let count: i64 = sqlx::query_scalar!(r#"SELECT count(*) as count FROM "LedgerEntry" WHERE "eventId" = $1"#, event_id)

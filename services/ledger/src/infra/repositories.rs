@@ -17,4 +17,5 @@ pub use wallet_repository::PostgresWalletRepository;
 pub use fills::postgres::PostgresFillRepository;
 pub use asset_repository::{PostgresAssetRepository, AssetRepository};
 pub use instrument_repository::{PostgresInstrumentRepository, InstrumentRepository};
-pub use memory::{InMemoryAccountRepository, InMemoryOrderRepository, InMemoryWalletRepository, InMemoryInstrumentRepository, InMemoryAssetRepository, InMemoryFillRepository, InMemoryLedgerRepository, InMemoryTradeRepository};
+pub use memory::{InMemoryAccountRepository, InMemoryOrderRepository, InMemoryWalletRepository, InMemoryAssetRepository, InMemoryFillRepository, InMemoryLedgerRepository, InMemoryTradeRepository};
+pub use memory::instrument::InMemoryInstrumentRepository;

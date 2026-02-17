@@ -1,13 +1,14 @@
-use async_trait::async_trait;
-use sqlx::{PgPool, Transaction, Postgres, QueryBuilder};
 use crate::error::Result;
-use crate::proto::common::{LedgerEvent, LedgerEntry, Trade};
+use crate::domain::transaction::RepositoryTransaction;
 use crate::domain::ledger::repository::LedgerRepository;
-use rust_decimal::Decimal;
-use std::str::FromStr;
+use crate::proto::common::{LedgerEvent, LedgerEntry, Trade};
+use uuid::Uuid;
 use chrono::Utc;
 use chrono::TimeZone;
-use uuid::Uuid;
+use std::str::FromStr;
+use rust_decimal::Decimal;
+use async_trait::async_trait;
+use sqlx::{PgPool, Transaction, Postgres, QueryBuilder};
 
 #[derive(Debug, Clone)]
 pub struct PostgresLedgerRepository {
@@ -21,6 +22,8 @@ impl PostgresLedgerRepository {
     }
 }
 
+
+
 #[async_trait]
 impl LedgerRepository for PostgresLedgerRepository {
     async fn save_event(&self, event: LedgerEvent) -> Result<LedgerEvent> {
@@ -29,7 +32,8 @@ impl LedgerRepository for PostgresLedgerRepository {
         Ok(event)
     }
 
-    async fn save_event_with_tx(&self, tx: &mut Transaction<'_, Postgres>, event: LedgerEvent) -> Result<LedgerEvent> {
+    async fn save_event_with_tx(&self, tx: &mut dyn RepositoryTransaction, event: LedgerEvent) -> Result<LedgerEvent> {
+        let tx = unsafe { &mut *(tx.get_inner_ptr() as *mut Transaction<'_, Postgres>) };
         let created_at = Utc.timestamp_millis_opt(event.created_at).unwrap();
         let updated_at = Utc.timestamp_millis_opt(event.updated_at).unwrap();
 
@@ -64,7 +68,8 @@ impl LedgerRepository for PostgresLedgerRepository {
         Ok(entries)
     }
 
-    async fn save_entries_with_tx(&self, tx: &mut Transaction<'_, Postgres>, entries: Vec<LedgerEntry>) -> Result<Vec<LedgerEntry>> {
+    async fn save_entries_with_tx(&self, tx: &mut dyn RepositoryTransaction, entries: Vec<LedgerEntry>) -> Result<Vec<LedgerEntry>> {
+        let tx = unsafe { &mut *(tx.get_inner_ptr() as *mut Transaction<'_, Postgres>) };
         if entries.is_empty() {
             return Ok(entries);
         }
@@ -95,7 +100,7 @@ impl LedgerRepository for PostgresLedgerRepository {
         Ok(entries)
     }
 
-    async fn save_trade_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, trade: Trade) -> Result<Trade> {
+    async fn save_trade_with_tx(&self, _tx: &mut dyn RepositoryTransaction, trade: Trade) -> Result<Trade> {
         // TODO: Implement actual DB persistence
         println!("PERSIST (TX): Trade created {:?}", trade);
         Ok(trade)

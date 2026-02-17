@@ -1,11 +1,11 @@
+use crate::error::{AppError, Result};
+use crate::domain::orders::{Order, OrderRepository, OrderSide, OrderType, OrderStatus};
+use uuid::Uuid;
+use std::str::FromStr;
+use rust_decimal::Decimal;
+use chrono::{DateTime, Utc};
 use async_trait::async_trait;
 use sqlx::{PgPool, FromRow, Transaction, Postgres};
-use uuid::Uuid;
-use crate::domain::orders::{Order, OrderRepository, OrderSide, OrderType, OrderStatus};
-use crate::error::{AppError, Result};
-use chrono::{DateTime, Utc};
-use rust_decimal::Decimal;
-use std::str::FromStr;
 
 pub struct PostgresOrderRepository {
     pool: PgPool,
@@ -61,6 +61,8 @@ impl From<OrderRow> for Order {
     }
 }
 
+use crate::domain::transaction::RepositoryTransaction;
+
 #[async_trait]
 impl OrderRepository for PostgresOrderRepository {
     async fn create(&self, order: Order) -> Result<Order> {
@@ -95,7 +97,11 @@ impl OrderRepository for PostgresOrderRepository {
         Ok(created_order)
     }
 
-    async fn create_with_tx(&self, tx: &mut Transaction<'_, Postgres>, order: Order) -> Result<Order> {
+    async fn create_with_tx(&self, tx: &mut dyn RepositoryTransaction, order: Order) -> Result<Order> {
+        // SAFETY: We know that in the Postgres implementation, the RepositoryTransaction is always a PostgresTransaction.
+        // We use get_inner_ptr() to bypass 'static lifetime requirement of Any.
+        let tx_ptr = unsafe { tx.get_inner_ptr() };
+        let tx = unsafe { &mut *(tx_ptr as *mut Transaction<'_, Postgres>) };
         let (created_at, updated_at): (DateTime<Utc>, DateTime<Utc>) = sqlx::query_as(
             r#"
             INSERT INTO "Order" (id, "tenantId", "accountId", "instrumentId", side, type, quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "createdByMembershipId", "updatedByMembershipId")
@@ -161,7 +167,9 @@ impl OrderRepository for PostgresOrderRepository {
         Ok(())
     }
 
-    async fn update_status_with_tx(&self, tx: &mut Transaction<'_, Postgres>, id: Uuid, status: OrderStatus) -> Result<()> {
+    async fn update_status_with_tx(&self, tx: &mut dyn RepositoryTransaction, id: Uuid, status: OrderStatus) -> Result<()> {
+        let tx_ptr = unsafe { tx.get_inner_ptr() };
+        let tx = unsafe { &mut *(tx_ptr as *mut Transaction<'_, Postgres>) };
         let result = sqlx::query(
             r#"UPDATE "Order" SET status = $2, "updatedAt" = $3 WHERE id = $1"#
         )
@@ -201,7 +209,9 @@ impl OrderRepository for PostgresOrderRepository {
         Ok(())
     }
 
-    async fn update_filled_amount_with_tx(&self, tx: &mut Transaction<'_, Postgres>, id: Uuid, filled: Decimal) -> Result<()> {
+    async fn update_filled_amount_with_tx(&self, tx: &mut dyn RepositoryTransaction, id: Uuid, filled: Decimal) -> Result<()> {
+        let tx_ptr = unsafe { tx.get_inner_ptr() };
+        let tx = unsafe { &mut *(tx_ptr as *mut Transaction<'_, Postgres>) };
         let result = sqlx::query(
             r#"
             UPDATE "Order" 
@@ -242,7 +252,9 @@ impl OrderRepository for PostgresOrderRepository {
         Ok(row.into())
     }
 
-    async fn increment_filled_amount_with_tx(&self, tx: &mut Transaction<'_, Postgres>, id: Uuid, amount: Decimal) -> Result<Order> {
+    async fn increment_filled_amount_with_tx(&self, tx: &mut dyn RepositoryTransaction, id: Uuid, amount: Decimal) -> Result<Order> {
+        let tx_ptr = unsafe { tx.get_inner_ptr() };
+        let tx = unsafe { &mut *(tx_ptr as *mut Transaction<'_, Postgres>) };
         let row: OrderRow = sqlx::query_as(
             r#"
             UPDATE "Order" 

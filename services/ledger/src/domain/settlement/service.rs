@@ -14,11 +14,13 @@ use uuid::Uuid;
 use std::sync::Arc;
 use std::str::FromStr;
 use rust_decimal::Decimal;
-use sqlx::{Transaction, Postgres, PgPool};
+// use sqlx::{Transaction, Postgres};
 
+
+use crate::domain::transaction::TransactionManager;
 
 pub struct SettlementService {
-    pool: Option<PgPool>,
+    tx_manager: Option<Arc<dyn TransactionManager>>,
     fill_service: Arc<FillService>,
     fee_service: Arc<dyn FeeService>,
     order_service: Arc<OrderService>,
@@ -31,7 +33,7 @@ pub struct SettlementService {
 
 impl SettlementService {
     pub fn new(
-        pool: Option<PgPool>,
+        tx_manager: Option<Arc<dyn TransactionManager>>,
         order_service: Arc<OrderService>,
         instrument_repo: Arc<dyn InstrumentRepository>,
         ledger_service: Arc<LedgerService>,
@@ -42,7 +44,7 @@ impl SettlementService {
         trade_repo: Arc<dyn TradeRepository>,
     ) -> Self {
         Self {
-            pool,
+            tx_manager,
             order_service,
             instrument_repo,
             ledger_service,
@@ -128,7 +130,7 @@ impl SettlementService {
             .map_err(|_| AppError::MalformedRequest("Invalid trade quantity".into()))?;
 
         // Transaction Management
-        let tx = self.begin_system_transaction().await?;
+        let tx = self.begin_transaction().await?;
         let mut ctx = SettlementContext::new(self, tx);
 
         // Core Business Logic
@@ -173,16 +175,9 @@ impl SettlementService {
         Ok(())
     }
 
-    async fn begin_system_transaction(&self) -> Result<Option<Transaction<'_, Postgres>>> {
-        if let Some(pool) = &self.pool {
-            let mut tx = pool.begin().await.map_err(AppError::DatabaseError)?;
-            
-            // Bypass RLS for system operations using set_config for robustness
-            sqlx::query("SELECT set_config('app.bypass_rls', 'on', false)").execute(&mut *tx).await.map_err(AppError::DatabaseError)?;
-            sqlx::query("SELECT set_config('app.current_user_id', '', false)").execute(&mut *tx).await.map_err(AppError::DatabaseError)?;
-            sqlx::query("SELECT set_config('app.current_tenant_id', '', false)").execute(&mut *tx).await.map_err(AppError::DatabaseError)?;
-            sqlx::query("SELECT set_config('app.current_membership_id', '', false)").execute(&mut *tx).await.map_err(AppError::DatabaseError)?;
-            
+    async fn begin_transaction(&self) -> Result<Option<Box<dyn crate::domain::transaction::Transaction>>> {
+        if let Some(manager) = &self.tx_manager {
+            let tx = manager.begin().await?;
             Ok(Some(tx))
         } else {
             Ok(None)
@@ -192,60 +187,60 @@ impl SettlementService {
 
 // Helper struct to abstract over Transaction vs No-Transaction
 struct SettlementContext<'a> {
-    tx: Option<Transaction<'a, Postgres>>,
+    tx: Option<Box<dyn crate::domain::transaction::Transaction>>,
     service: &'a SettlementService,
 }
 
 impl<'a> SettlementContext<'a> {
-    fn new(service: &'a SettlementService, tx: Option<Transaction<'a, Postgres>>) -> Self {
+    fn new(service: &'a SettlementService, tx: Option<Box<dyn crate::domain::transaction::Transaction>>) -> Self {
         Self { tx, service }
     }
 
     async fn commit(self) -> Result<()> {
         if let Some(tx) = self.tx {
-            tx.commit().await.map_err(AppError::DatabaseError)?;
+            tx.commit().await?;
         }
         Ok(())
     }
 
     async fn save_ledger_event(&mut self, event: LedgerEvent) -> Result<LedgerEvent> {
         match &mut self.tx {
-            Some(tx) => self.service.ledger_repo.save_event_with_tx(tx, event).await,
+            Some(tx) => self.service.ledger_repo.save_event_with_tx(tx.as_repository_transaction(), event).await,
             None => self.service.ledger_repo.save_event(event).await,
         }
     }
 
     async fn save_ledger_entries(&mut self, entries: Vec<LedgerEntry>) -> Result<Vec<LedgerEntry>> {
         match &mut self.tx {
-            Some(tx) => self.service.ledger_repo.save_entries_with_tx(tx, entries).await,
+            Some(tx) => self.service.ledger_repo.save_entries_with_tx(tx.as_repository_transaction(), entries).await,
             None => self.service.ledger_repo.save_entries(entries).await,
         }
     }
 
     async fn process_wallet_entry(&mut self, entry: LedgerEntry) -> Result<()> {
         match &mut self.tx {
-            Some(tx) => self.service.wallet_service.process_ledger_entry_with_tx(tx, entry).await,
+            Some(tx) => self.service.wallet_service.process_ledger_entry_with_tx(tx.as_repository_transaction(), entry).await,
             None => self.service.wallet_service.process_ledger_entry(entry).await,
         }
     }
 
     async fn update_order_status(&mut self, order_id: &str, trade_qty: Decimal) -> Result<()> {
         match &mut self.tx {
-            Some(tx) => self.service.order_service.update_status_with_tx(tx, order_id, trade_qty).await,
+            Some(tx) => self.service.order_service.update_status_with_tx(tx.as_repository_transaction(), order_id, trade_qty).await,
             None => self.service.order_service.update_status(order_id, trade_qty).await,
         }
     }
 
     async fn save_fill(&mut self, fill: Fill) -> Result<Fill> {
         match &mut self.tx {
-            Some(tx) => self.service.fill_service.save_fill_with_tx(tx, fill).await,
+            Some(tx) => self.service.fill_service.save_fill_with_tx(tx.as_repository_transaction(), fill).await,
             None => self.service.fill_service.save_fill(fill).await,
         }
     }
 
     async fn save_trade(&mut self, trade: Trade) -> Result<Trade> {
         match &mut self.tx {
-            Some(tx) => self.service.trade_repo.create_with_tx(tx, trade).await,
+            Some(tx) => self.service.trade_repo.create_with_tx(tx.as_repository_transaction(), trade).await,
             None => self.service.trade_repo.create(trade).await,
         }
     }

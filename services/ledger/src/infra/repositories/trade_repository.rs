@@ -18,6 +18,8 @@ impl PostgresTradeRepository {
     }
 }
 
+use crate::domain::transaction::RepositoryTransaction;
+
 #[async_trait]
 impl TradeRepository for PostgresTradeRepository {
     async fn create(&self, trade: Trade) -> Result<Trade> {
@@ -51,7 +53,8 @@ impl TradeRepository for PostgresTradeRepository {
         Ok(trade)
     }
 
-    async fn create_with_tx(&self, tx: &mut Transaction<'_, Postgres>, trade: Trade) -> Result<Trade> {
+    async fn create_with_tx(&self, tx: &mut dyn RepositoryTransaction, trade: Trade) -> Result<Trade> {
+        let tx = unsafe { &mut *(tx.get_inner_ptr() as *mut Transaction<'_, Postgres>) };
         let created_at = Utc.timestamp_millis_opt(trade.created_at).unwrap();
         let updated_at = Utc.timestamp_millis_opt(trade.updated_at).unwrap();
         let price = Decimal::from_str(&trade.price).unwrap_or_default();
@@ -108,7 +111,8 @@ impl TradeRepository for PostgresTradeRepository {
         }
     }
 
-    async fn get_with_tx(&self, tx: &mut Transaction<'_, Postgres>, id: &str) -> Result<Option<Trade>> {
+    async fn get_with_tx(&self, tx: &mut dyn RepositoryTransaction, id: &str) -> Result<Option<Trade>> {
+        let tx = unsafe { &mut *(tx.get_inner_ptr() as *mut Transaction<'_, Postgres>) };
         let uuid = uuid::Uuid::parse_str(id).map_err(|_| crate::error::AppError::ValidationError("Invalid trade ID".to_string()))?;
         
         let row = sqlx::query!(

@@ -3,7 +3,6 @@ use ledger::domain::orders::{Order, OrderRepository};
 use uuid::Uuid;
 use rust_decimal::Decimal;
 use async_trait::async_trait;
-use sqlx::{Transaction, Postgres};
 
 use ledger::domain::orders::model::OrderStatus;
 
@@ -11,23 +10,25 @@ use ledger::domain::orders::model::OrderStatus;
 #[derive(Debug)]
 pub struct FailingOrderRepository;
 
+use ledger::domain::transaction::RepositoryTransaction;
+
 #[async_trait]
 impl OrderRepository for FailingOrderRepository {
     async fn create(&self, _order: Order) -> Result<Order> {
         Err(AppError::DatabaseError(sqlx::Error::PoolTimedOut))
     }
 
-    async fn create_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, _order: Order) -> Result<Order> {
+    async fn create_with_tx(&self, _tx: &mut dyn RepositoryTransaction, _order: Order) -> Result<Order> {
         Err(AppError::DatabaseError(sqlx::Error::PoolTimedOut))
     }
 
     async fn get(&self, _id: Uuid) -> Result<Option<Order>> { Ok(None) }
     async fn update_status(&self, _id: Uuid, _status: OrderStatus) -> Result<()> { Ok(()) }
-    async fn update_status_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, _id: Uuid, _status: OrderStatus) -> Result<()> { Ok(()) }
+    async fn update_status_with_tx(&self, _tx: &mut dyn RepositoryTransaction, _id: Uuid, _status: OrderStatus) -> Result<()> { Ok(()) }
     async fn update_filled_amount(&self, _id: Uuid, _filled: Decimal) -> Result<()> { Ok(()) }
-    async fn update_filled_amount_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, _id: Uuid, _filled: Decimal) -> Result<()> { Ok(()) }
+    async fn update_filled_amount_with_tx(&self, _tx: &mut dyn RepositoryTransaction, _id: Uuid, _filled: Decimal) -> Result<()> { Ok(()) }
     async fn increment_filled_amount(&self, _id: Uuid, _amount: Decimal) -> Result<Order> { Err(AppError::Internal("Not impl".into())) }
-    async fn increment_filled_amount_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, _id: Uuid, _amount: Decimal) -> Result<Order> { Err(AppError::Internal("Not impl".into())) }
+    async fn increment_filled_amount_with_tx(&self, _tx: &mut dyn RepositoryTransaction, _id: Uuid, _amount: Decimal) -> Result<Order> { Err(AppError::Internal("Not impl".into())) }
     async fn list_open(&self) -> Result<Vec<Order>> { Ok(vec![]) }
 }
 

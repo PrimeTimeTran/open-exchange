@@ -156,7 +156,14 @@ async fn setup_services(pool: &sqlx::PgPool, tenant_id: &str) -> (
 
     let wallet_service = Arc::new(WalletService::new(wallet_repo.clone()));
     let asset_service = Arc::new(AssetService::new(asset_repo.clone(), instrument_repo.clone()));
-    let order_service = Arc::new(OrderService::new(order_repo.clone(), wallet_service.clone(), asset_service.clone(), Some(pool.clone())));
+    
+    let tx_manager = Arc::new(ledger::infra::transaction::PostgresTransactionManager::new(pool.clone()));
+    let order_service = Arc::new(OrderService::new(
+        order_repo.clone(), 
+        wallet_service.clone(), 
+        asset_service.clone(), 
+        Some(tx_manager.clone())
+    ));
     
     let ledger_service = Arc::new(LedgerService::new(
         order_repo.clone(), 
@@ -169,7 +176,7 @@ async fn setup_services(pool: &sqlx::PgPool, tenant_id: &str) -> (
     let fee_service = Arc::new(StandardFeeService::new());
 
     let settlement_service = Arc::new(SettlementService::new(
-        Some(pool.clone()),
+        Some(tx_manager.clone()),
         order_service.clone(),
         instrument_repo.clone(),
         ledger_service.clone(),
