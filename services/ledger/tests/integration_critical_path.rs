@@ -476,7 +476,6 @@ async fn test_system_fee_collection() {
     let fee_wallet = ctx.wallet_service.get_wallet_by_account_and_asset(&fee_acc.id.to_string(), &usd_id).await.unwrap();
     
     if let Some(w) = fee_wallet {
-        println!("Fee collected: {}", w.total);
         assert!(Decimal::from_str(&w.total).unwrap() >= Decimal::ZERO);
     }
 }

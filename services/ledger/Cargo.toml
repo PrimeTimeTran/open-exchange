@@ -18,6 +18,8 @@ uuid = { version = "1.20.0", features = ["v4", "serde"] }
 chrono = { version = "0.4.43", features = ["serde"] }
 async-trait = "0.1.89"
 rust_decimal = { version = "1.40.0", features = ["serde-with-str"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.22", features = ["env-filter", "json"] }
 
 [build-dependencies]
 tonic-build = "0.12"

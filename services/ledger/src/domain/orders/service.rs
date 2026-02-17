@@ -38,7 +38,7 @@ impl OrderService {
     pub async fn create_order(&self, order: Order) -> Result<Order> {
         if let Ok(Some(existing)) = self.repo.get(order.id).await {
             // Idempotency check
-            println!("Order {} already exists, skipping creation.", order.id);
+            tracing::info!(order_id = %order.id, "Order already exists, skipping creation");
             return Ok(existing);
         }
 
@@ -134,7 +134,7 @@ impl OrderService {
         let instrument = match self.asset_service.get_instrument(&instr_uuid).await? {
             Some(i) => i,
             None => {
-                println!("Warning: Instrument {} not found, skipping balance check/update", instr_uuid);
+                tracing::warn!(instrument_id = %instr_uuid, "Instrument not found, skipping balance check/update");
                 return Ok(None);
             }
         };

@@ -13,12 +13,12 @@ pub async fn start_health_server(port: u16) {
         }))
     });
 
-    println!("HTTP Health Server listening on :{}", port);
+    tracing::info!(port = port, "HTTP Health Server listening");
     warp::serve(health).run(([0, 0, 0, 0], port)).await;
 }
 
 pub async fn connect_to_matching_engine(url: &str) -> Option<MatchingClient<Channel>> {
-    println!("Configuring lazy connection to Matching Engine at {}", url);
+    tracing::info!(url = %url, "Configuring lazy connection to Matching Engine");
     match Endpoint::from_shared(url.to_string()) {
         Ok(endpoint) => {
              // connect_lazy returns a Channel immediately.
@@ -27,7 +27,7 @@ pub async fn connect_to_matching_engine(url: &str) -> Option<MatchingClient<Chan
             Some(MatchingClient::new(channel))
         },
         Err(e) => {
-            eprintln!("Invalid Matching Engine URL '{}': {}", url, e);
+            tracing::error!(url = %url, error = %e, "Invalid Matching Engine URL");
             None
         }
     }

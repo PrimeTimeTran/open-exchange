@@ -21,6 +21,8 @@ use ledger::infra::repositories::{
 use ledger::domain::accounts::repository::AccountRepository;
 use ledger::domain::accounts::Account;
 
+use ledger::domain::transaction::TransactionManager;
+
 pub struct PostgresTestContext {
     pub pool: PgPool,
     pub db_name: String,
@@ -31,6 +33,7 @@ pub struct PostgresTestContext {
     pub wallet_service: Arc<WalletService>,
     pub asset_service: Arc<AssetService>,
     pub settlement_service: Arc<SettlementService>,
+    pub tx_manager: Arc<dyn TransactionManager>,
     
     // Repositories
     pub account_repo: Arc<PostgresAccountRepository>,
@@ -53,7 +56,7 @@ impl PostgresTestContext {
         };
 
         let tenant_id = Self::create_tenant(&pool).await.to_string();
-        let (order_service, wallet_service, asset_service, settlement_service, account_repo) = Self::setup_services(&pool, &tenant_id).await;
+        let (order_service, wallet_service, asset_service, settlement_service, account_repo, tx_manager) = Self::setup_services(&pool, &tenant_id).await;
 
         Self {
             pool,
@@ -63,6 +66,7 @@ impl PostgresTestContext {
             wallet_service,
             asset_service,
             settlement_service,
+            tx_manager,
             account_repo,
             admin_conn_options,
         }
@@ -113,6 +117,7 @@ impl PostgresTestContext {
             asset_service: Arc::new(AssetService::new(Arc::new(PostgresAssetRepository::new(pool.clone())), Arc::new(PostgresInstrumentRepository::new(pool.clone())))),
             settlement_service: Arc::new(SettlementService::new(None, Arc::new(OrderService::new(Arc::new(PostgresOrderRepository::new(pool.clone())), Arc::new(WalletService::new(Arc::new(PostgresWalletRepository::new(pool.clone())))), Arc::new(AssetService::new(Arc::new(PostgresAssetRepository::new(pool.clone())), Arc::new(PostgresInstrumentRepository::new(pool.clone())))), None)), Arc::new(PostgresInstrumentRepository::new(pool.clone())), Arc::new(LedgerService::new(Arc::new(PostgresOrderRepository::new(pool.clone())), Arc::new(PostgresInstrumentRepository::new(pool.clone())), Arc::new(PostgresAssetRepository::new(pool.clone())), Arc::new(PostgresAccountRepository::new(pool.clone())))), Arc::new(WalletService::new(Arc::new(PostgresWalletRepository::new(pool.clone())))), Arc::new(FillService::new(Arc::new(PostgresFillRepository::new(pool.clone())))), Arc::new(StandardFeeService::new()), Arc::new(PostgresLedgerRepository::new(pool.clone())), Arc::new(PostgresTradeRepository::new(pool.clone())))),
             account_repo: Arc::new(PostgresAccountRepository::new(pool.clone())),
+            tx_manager: Arc::new(ledger::infra::transaction::PostgresTransactionManager::new(pool.clone())),
             admin_conn_options: admin_options.clone(),
         };
         
@@ -181,7 +186,8 @@ impl PostgresTestContext {
         Arc<WalletService>, 
         Arc<AssetService>,
         Arc<SettlementService>,
-        Arc<PostgresAccountRepository>
+        Arc<PostgresAccountRepository>,
+        Arc<dyn TransactionManager>
     ) {
         let order_repo = Arc::new(PostgresOrderRepository::new(pool.clone()));
         let wallet_repo = Arc::new(PostgresWalletRepository::new(pool.clone()));
@@ -238,7 +244,7 @@ impl PostgresTestContext {
             }).await.ok();
         }
 
-        (order_service, wallet_service, asset_service, settlement_service, account_repo)
+        (order_service, wallet_service, asset_service, settlement_service, account_repo, tx_manager)
     }
 
     pub async fn create_user(&self) -> String {

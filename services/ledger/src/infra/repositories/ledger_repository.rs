@@ -28,7 +28,7 @@ impl PostgresLedgerRepository {
 impl LedgerRepository for PostgresLedgerRepository {
     async fn save_event(&self, event: LedgerEvent) -> Result<LedgerEvent> {
         // TODO: Implement actual DB persistence
-        println!("PERSIST: Ledger Event created {:?}", event);
+        tracing::info!(?event, "PERSIST: Ledger Event created");
         Ok(event)
     }
 
@@ -70,7 +70,7 @@ impl LedgerRepository for PostgresLedgerRepository {
 
     async fn save_entries(&self, entries: Vec<LedgerEntry>) -> Result<Vec<LedgerEntry>> {
         // TODO: Implement actual DB persistence
-        println!("PERSIST: {} Ledger Entries created", entries.len());
+        tracing::info!(count = entries.len(), "PERSIST: Ledger Entries created");
         Ok(entries)
     }
 
@@ -130,19 +130,19 @@ impl LedgerRepository for PostgresLedgerRepository {
         let query = query_builder.build();
         query.execute(&mut **tx).await.map_err(crate::error::AppError::DatabaseError)?;
         
-        println!("PERSIST (TX): {} Ledger Entries created (Bulk)", entries.len());
+        tracing::info!(count = entries.len(), "PERSIST (TX): Ledger Entries created (Bulk)");
         Ok(entries)
     }
 
     async fn save_trade_with_tx(&self, _tx: &mut dyn RepositoryTransaction, trade: Trade) -> Result<Trade> {
         // TODO: Implement actual DB persistence
-        println!("PERSIST (TX): Trade created {:?}", trade);
+        tracing::info!(?trade, "PERSIST (TX): Trade created");
         Ok(trade)
     }
 
     async fn save_trade(&self, trade: Trade) -> Result<Trade> {
         // TODO: Implement actual DB persistence
-        println!("PERSIST: Trade created {:?}", trade);
+        tracing::info!(?trade, "PERSIST: Trade created");
         Ok(trade)
     }
 

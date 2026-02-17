@@ -20,12 +20,18 @@ use tonic::transport::Server;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 1. Setup Environment & Config
     dotenv().ok();
-    env_logger::init();
+    
+    // Initialize tracing (JSON logs for Cloud Run)
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env().add_directive(tracing::Level::INFO.into()))
+        .json()
+        .init();
+
     let config = Config::from_env().expect("Failed to load configuration");
 
     // 2. Infrastructure Setup
     let db_pool = infra::database::get_db_pool(&config.database_url, config.db_max_connections).await?;
-    println!("Connected to database: {}", config.database_url);
+    tracing::info!(database_url = %config.database_url, "Connected to database");
 
     let matching_client = system::connect_to_matching_engine(&std::env::var("MATCHING_ENGINE_URL").unwrap_or_else(|_| "http://matching:50051".to_string())).await;
 
@@ -42,7 +48,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 7. Start gRPC Server
     let addr = format!("[::]:{}", config.port).parse()?;
-    println!("LedgerService listening on {}", addr);
+    tracing::info!(address = %addr, "LedgerService listening");
 
     Server::builder()
         .add_service(UserServiceServer::new(services.user))

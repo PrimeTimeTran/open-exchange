@@ -154,8 +154,8 @@ impl OrderServiceImpl {
 
             tokio::spawn(async move {
                 match matching_client.place_order(request).await {
-                    Ok(response) => println!("Successfully forwarded order to matching engine: {:?}", response),
-                    Err(e) => eprintln!("Failed to forward order to matching engine: {}", e),
+                    Ok(response) => tracing::info!(?response, "Successfully forwarded order to matching engine"),
+                    Err(e) => tracing::error!(error = %e, "Failed to forward order to matching engine"),
                 }
             });
         }

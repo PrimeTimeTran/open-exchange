@@ -103,7 +103,7 @@ impl WalletService {
             Self::update_wallet_from_entry(&mut wallet, &entry)?;
             self.update_wallet(wallet).await?;
         } else {
-            log::warn!("Wallet not found for account {} asset {}", entry.account_id, asset);
+            tracing::warn!(account_id = %entry.account_id, asset = %asset, "Wallet not found");
         }
         Ok(())
     }
@@ -118,7 +118,7 @@ impl WalletService {
             Self::update_wallet_from_entry(&mut wallet, &entry)?;
             self.repo.update_with_tx(tx, wallet).await?;
         } else {
-            log::warn!("Wallet not found for account {} asset {}", entry.account_id, asset);
+            tracing::warn!(account_id = %entry.account_id, asset = %asset, "Wallet not found");
         }
         Ok(())
     }

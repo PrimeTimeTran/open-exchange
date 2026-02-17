@@ -45,9 +45,14 @@ pub async fn record_order(
             let quantity_raw = Decimal::from_str(&proto_order.quantity).map_err(|_| Status::invalid_argument("Invalid quantity format"))?;
             let price_raw = Decimal::from_str(&proto_order.price).map_err(|_| Status::invalid_argument("Invalid price format"))?;
 
-            println!("Ledger [Scaling]: Instrument ID: {}", proto_order.instrument_id);
-            println!("Ledger [Scaling]: Base Decimals: {}, Quote Decimals: {}", base_decimals, quote_decimals);
-            println!("Ledger [Scaling]: Quantity Raw: {}, Price Raw: {}", quantity_raw, price_raw);
+            tracing::info!(
+                instrument_id = %proto_order.instrument_id,
+                base_decimals = %base_decimals,
+                quote_decimals = %quote_decimals,
+                quantity_raw = %quantity_raw,
+                price_raw = %price_raw,
+                "Ledger [Scaling]: Input parameters"
+            );
             
             // Scaling logic:
             // Quantity (atomic) = Quantity (major) * 10^base_decimals
@@ -59,7 +64,7 @@ pub async fn record_order(
             let q_scaled = (quantity_raw * base_multiplier).round();
             let p_scaled = price_raw * quote_multiplier;
             
-            println!("Ledger [Scaling]: Scaled Quantity: {}, Scaled Price: {}", q_scaled, p_scaled);
+            tracing::info!(scaled_quantity = %q_scaled, scaled_price = %p_scaled, "Ledger [Scaling]: Output");
 
             (q_scaled, p_scaled)
         } else {
@@ -121,7 +126,7 @@ pub async fn record_order(
             Ok(_) => {
                 // Call Matching Engine
                 if let Some(client) = matching_client {
-                    println!("Ledger [Sending]: Sending order to matching engine: {:?}", order_for_matching);
+                    tracing::info!(?order_for_matching, "Ledger [Sending]: Sending order to matching engine");
                     let mut matching_client = client.clone();
                     let request = tonic::Request::new(crate::proto::matching::PlaceOrderRequest {
                         order: Some(order_for_matching),
@@ -129,8 +134,8 @@ pub async fn record_order(
 
                     tokio::spawn(async move {
                         match matching_client.place_order(request).await {
-                            Ok(response) => println!("Successfully forwarded order to matching engine: {:?}", response),
-                            Err(e) => eprintln!("Failed to forward order to matching engine: {}", e),
+                            Ok(response) => tracing::info!(?response, "Successfully forwarded order to matching engine"),
+                            Err(e) => tracing::error!(error = %e, "Failed to forward order to matching engine"),
                         }
                     });
                 }
