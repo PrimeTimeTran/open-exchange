@@ -16,8 +16,6 @@ impl PostgresFillRepository {
     }
 }
 
-
-
 #[async_trait]
 impl FillRepository for PostgresFillRepository {
     async fn create(&self, fill: Fill) -> Result<Fill> {
