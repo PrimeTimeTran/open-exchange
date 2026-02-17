@@ -24,7 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = Config::from_env().expect("Failed to load configuration");
 
     // 2. Infrastructure Setup
-    let db_pool = infra::database::get_db_pool(&config.database_url).await?;
+    let db_pool = infra::database::get_db_pool(&config.database_url, config.db_max_connections).await?;
     println!("Connected to database: {}", config.database_url);
 
     let matching_client = system::connect_to_matching_engine(&std::env::var("MATCHING_ENGINE_URL").unwrap_or_else(|_| "http://matching:50051".to_string())).await;

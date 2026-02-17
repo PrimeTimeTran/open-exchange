@@ -6,6 +6,7 @@ pub struct Config {
     pub database_url: String,
     pub port: u16,
     pub log_level: String,
+    pub db_max_connections: u32,
 }
 
 impl Config {
@@ -16,11 +17,16 @@ impl Config {
         let database_url = env::var("DATABASE_URL").map_err(|e| config::ConfigError::Message(format!("DATABASE_URL missing: {}", e)))?;
         let port = env::var("PORT").unwrap_or_else(|_| "50052".to_string()).parse().unwrap_or(50052);
         let log_level = env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
+        let db_max_connections = env::var("DATABASE_MAX_CONNECTIONS")
+            .unwrap_or_else(|_| "50".to_string())
+            .parse()
+            .unwrap_or(50);
 
         Ok(Config {
             database_url,
             port,
             log_level,
+            db_max_connections,
         })
     }
 }
