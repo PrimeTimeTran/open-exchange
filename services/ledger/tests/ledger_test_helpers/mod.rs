@@ -1,4 +1,5 @@
-use ledger::domain::orders::model::Order;
+use ledger::domain::orders::model::{Order, OrderSide, OrderType, OrderStatus};
+use std::str::FromStr;
 use ledger::domain::assets::AssetService;
 use ledger::domain::wallets::WalletService;
 use ledger::proto::common::{Trade, Instrument};
@@ -124,11 +125,11 @@ impl LedgerTestContext {
             tenant_id: self.tenant_id,
             account_id,
             instrument_id: self.instrument_id,
-            side: side.to_string(),
-            r#type: "limit".to_string(),
+            side: OrderSide::from_str(side).unwrap_or(OrderSide::Buy),
+            r#type: OrderType::Limit,
             quantity: Decimal::from_f64(quantity).unwrap_or(Decimal::ZERO),
             price: Decimal::from_f64(price).unwrap_or(Decimal::ZERO),
-            status: "open".to_string(),
+            status: OrderStatus::Open,
             filled_quantity: Decimal::ZERO,
             average_fill_price: Decimal::ZERO,
             meta: serde_json::json!({}),

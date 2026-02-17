@@ -1,10 +1,11 @@
 use async_trait::async_trait;
 use sqlx::{PgPool, FromRow, Transaction, Postgres};
 use uuid::Uuid;
-use crate::domain::orders::{Order, OrderRepository};
+use crate::domain::orders::{Order, OrderRepository, OrderSide, OrderType, OrderStatus};
 use crate::error::{AppError, Result};
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
+use std::str::FromStr;
 
 pub struct PostgresOrderRepository {
     pool: PgPool,
@@ -46,11 +47,11 @@ impl From<OrderRow> for Order {
             tenant_id: row.tenant_id,
             account_id: row.account_id,
             instrument_id: row.instrument_id,
-            side: row.side,
-            r#type: row.r#type.unwrap_or_else(|| "limit".to_string()),
+            side: OrderSide::from_str(&row.side).unwrap_or(OrderSide::Buy), // TODO: Handle error better
+            r#type: OrderType::from_str(&row.r#type.unwrap_or_else(|| "limit".to_string())).unwrap_or(OrderType::Limit),
             quantity: row.quantity,
             price: row.price,
-            status: row.status,
+            status: OrderStatus::from_str(&row.status).unwrap_or(OrderStatus::New),
             filled_quantity: row.filled_quantity,
             average_fill_price: Decimal::ZERO,
             meta: row.meta.unwrap_or(serde_json::json!({})),
@@ -74,11 +75,11 @@ impl OrderRepository for PostgresOrderRepository {
         .bind(order.tenant_id)
         .bind(order.account_id)
         .bind(order.instrument_id)
-        .bind(&order.side)
-        .bind(&order.r#type)
+        .bind(order.side.to_string())
+        .bind(order.r#type.to_string())
         .bind(order.quantity)
         .bind(order.price)
-        .bind(&order.status)
+        .bind(order.status.to_string())
         .bind(order.filled_quantity)
         .bind(&order.meta)
         .bind(order.created_at)
@@ -106,11 +107,11 @@ impl OrderRepository for PostgresOrderRepository {
         .bind(order.tenant_id)
         .bind(order.account_id)
         .bind(order.instrument_id)
-        .bind(&order.side)
-        .bind(&order.r#type)
+        .bind(order.side.to_string())
+        .bind(order.r#type.to_string())
         .bind(order.quantity)
         .bind(order.price)
-        .bind(&order.status)
+        .bind(order.status.to_string())
         .bind(order.filled_quantity)
         .bind(&order.meta)
         .bind(order.created_at)
@@ -142,12 +143,12 @@ impl OrderRepository for PostgresOrderRepository {
         Ok(rec.map(|r| r.into()))
     }
 
-    async fn update_status(&self, id: Uuid, status: String) -> Result<()> {
+    async fn update_status(&self, id: Uuid, status: OrderStatus) -> Result<()> {
         let result = sqlx::query(
             r#"UPDATE "Order" SET status = $2, "updatedAt" = $3 WHERE id = $1"#
         )
         .bind(id)
-        .bind(status)
+        .bind(status.to_string())
         .bind(chrono::Utc::now())
         .execute(&self.pool)
         .await
@@ -160,12 +161,12 @@ impl OrderRepository for PostgresOrderRepository {
         Ok(())
     }
 
-    async fn update_status_with_tx(&self, tx: &mut Transaction<'_, Postgres>, id: Uuid, status: String) -> Result<()> {
+    async fn update_status_with_tx(&self, tx: &mut Transaction<'_, Postgres>, id: Uuid, status: OrderStatus) -> Result<()> {
         let result = sqlx::query(
             r#"UPDATE "Order" SET status = $2, "updatedAt" = $3 WHERE id = $1"#
         )
         .bind(id)
-        .bind(status)
+        .bind(status.to_string())
         .bind(chrono::Utc::now())
         .execute(&mut **tx)
         .await

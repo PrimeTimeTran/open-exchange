@@ -1,4 +1,4 @@
-use super::model::Order;
+use super::model::{Order, OrderStatus, OrderSide};
 use crate::error::{Result, AppError};
 use super::repository::OrderRepository;
 use crate::domain::assets::AssetService;
@@ -10,12 +10,6 @@ use std::str::FromStr;
 use rust_decimal::Decimal;
 use sqlx::{Transaction, Postgres};
 use rust_decimal::MathematicalOps;
-
-const SIDE_BUY: &str = "buy";
-const STATUS_OPEN: &str = "open";
-const STATUS_FILLED: &str = "filled";
-const STATUS_CANCELLED: &str = "cancelled";
-const STATUS_PARTIAL_FILL: &str = "partial_fill";
 
 #[derive(Clone)]
 pub struct OrderService {
@@ -78,9 +72,9 @@ impl OrderService {
 
     pub async fn cancel_order(&self, id: Uuid) -> Result<()> {
         if let Some(order) = self.repo.get(id).await? {
-            if order.status == STATUS_OPEN || order.status == STATUS_PARTIAL_FILL {
+            if order.status == OrderStatus::Open || order.status == OrderStatus::PartialFill {
                 self.release_funds(&order).await?;
-                self.repo.update_status(id, STATUS_CANCELLED.to_string()).await?;
+                self.repo.update_status(id, OrderStatus::Cancelled).await?;
             }
         }
         Ok(())
@@ -132,7 +126,7 @@ impl OrderService {
             }
         };
 
-        let (asset_id, raw_amount) = if order.side == SIDE_BUY {
+        let (asset_id, raw_amount) = if order.side == OrderSide::Buy {
             (instrument.quote_asset_id, remaining_qty * order.price)
         } else {
             (instrument.underlying_asset_id, remaining_qty)
@@ -254,11 +248,11 @@ impl OrderService {
         Uuid::parse_str(id_str).map_err(|_| AppError::ValidationError("Invalid order ID".into()))
     }
 
-    fn determine_status(&self, filled: Decimal, total: Decimal) -> String {
+    fn determine_status(&self, filled: Decimal, total: Decimal) -> OrderStatus {
         if filled >= total {
-            STATUS_FILLED.to_string()
+            OrderStatus::Filled
         } else {
-            STATUS_PARTIAL_FILL.to_string()
+            OrderStatus::PartialFill
         }
     }
 }

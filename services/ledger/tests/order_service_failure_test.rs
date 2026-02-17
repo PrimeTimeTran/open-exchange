@@ -5,6 +5,8 @@ use rust_decimal::Decimal;
 use async_trait::async_trait;
 use sqlx::{Transaction, Postgres};
 
+use ledger::domain::orders::model::OrderStatus;
+
 // A repository that mimics success but FAILS on create to test rollback
 #[derive(Debug)]
 pub struct FailingOrderRepository;
@@ -20,8 +22,8 @@ impl OrderRepository for FailingOrderRepository {
     }
 
     async fn get(&self, _id: Uuid) -> Result<Option<Order>> { Ok(None) }
-    async fn update_status(&self, _id: Uuid, _status: String) -> Result<()> { Ok(()) }
-    async fn update_status_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, _id: Uuid, _status: String) -> Result<()> { Ok(()) }
+    async fn update_status(&self, _id: Uuid, _status: OrderStatus) -> Result<()> { Ok(()) }
+    async fn update_status_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, _id: Uuid, _status: OrderStatus) -> Result<()> { Ok(()) }
     async fn update_filled_amount(&self, _id: Uuid, _filled: Decimal) -> Result<()> { Ok(()) }
     async fn update_filled_amount_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, _id: Uuid, _filled: Decimal) -> Result<()> { Ok(()) }
     async fn increment_filled_amount(&self, _id: Uuid, _amount: Decimal) -> Result<Order> { Err(AppError::Internal("Not impl".into())) }
@@ -87,7 +89,7 @@ mod tests {
             id: Uuid::new_v4(),
             account_id: Uuid::parse_str(&account_id).unwrap(),
             instrument_id: instr_id,
-            side: "buy".into(),
+            side: ledger::domain::orders::model::OrderSide::Buy,
             quantity: Decimal::from_str("1.0").unwrap(),
             price: Decimal::from_str("100.0").unwrap(),
             ..Default::default()

@@ -1,10 +1,10 @@
 use crate::proto::ledger::*;
 use crate::domain::assets::AssetService;
 use crate::domain::fills::repository::FillRepository;
-use crate::proto::common::{OrderSide, OrderStatus};
+// use crate::proto::common::{OrderSide, OrderStatus}; // Removed to avoid conflict
 use crate::proto::ledger::order_service_server::OrderService;
 use crate::proto::matching::matching_client::MatchingClient;
-use crate::domain::orders::{OrderService as OrderDomainService, Order};
+use crate::domain::orders::{OrderService as OrderDomainService, Order, OrderSide, OrderType, OrderStatus};
 use uuid::Uuid;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -49,32 +49,32 @@ impl OrderServiceImpl {
         let price = Decimal::from_str(&proto_order.price).map_err(|_| Status::invalid_argument("Invalid price format"))?;
         let filled_quantity = Decimal::from_str(&proto_order.quantity_filled).unwrap_or(Decimal::ZERO);
 
-        let side_enum = OrderSide::try_from(proto_order.side)
+        let side_enum = crate::proto::common::OrderSide::try_from(proto_order.side)
             .map_err(|_| Status::invalid_argument("Invalid side"))?;
         let side = match side_enum {
-            OrderSide::Buy => "buy",
-            OrderSide::Sell => "sell",
+            crate::proto::common::OrderSide::Buy => OrderSide::Buy,
+            crate::proto::common::OrderSide::Sell => OrderSide::Sell,
             _ => return Err(Status::invalid_argument("Unspecified side")),
-        }.to_string();
+        };
 
-        let status_enum = OrderStatus::try_from(proto_order.status)
+        let status_enum = crate::proto::common::OrderStatus::try_from(proto_order.status)
             .map_err(|_| Status::invalid_argument("Invalid status"))?;
         let status = match status_enum {
-            OrderStatus::Open => "open",
-            OrderStatus::PartialFill => "partial_fill",
-            OrderStatus::Filled => "filled",
-            OrderStatus::Cancelled => "cancelled",
-            OrderStatus::Rejected => "rejected",
-            _ => "unspecified",
-        }.to_string();
+            crate::proto::common::OrderStatus::Open => OrderStatus::Open,
+            crate::proto::common::OrderStatus::PartialFill => OrderStatus::PartialFill,
+            crate::proto::common::OrderStatus::Filled => OrderStatus::Filled,
+            crate::proto::common::OrderStatus::Cancelled => OrderStatus::Cancelled,
+            crate::proto::common::OrderStatus::Rejected => OrderStatus::Rejected,
+            _ => OrderStatus::New,
+        };
 
         let type_enum = crate::proto::common::OrderType::try_from(proto_order.r#type)
             .map_err(|_| Status::invalid_argument("Invalid order type"))?;
-        let type_str = match type_enum {
-            crate::proto::common::OrderType::Limit => "limit",
-            crate::proto::common::OrderType::Market => "market",
+        let order_type = match type_enum {
+            crate::proto::common::OrderType::Limit => OrderType::Limit,
+            crate::proto::common::OrderType::Market => OrderType::Market,
             _ => return Err(Status::invalid_argument("Unspecified order type")),
-        }.to_string();
+        };
 
         let meta = serde_json::from_str(&proto_order.meta).unwrap_or(serde_json::json!({}));
 
@@ -84,7 +84,7 @@ impl OrderServiceImpl {
             account_id,
             instrument_id,
             side,
-            r#type: type_str,
+            r#type: order_type,
             quantity,
             price,
             status,
@@ -97,25 +97,23 @@ impl OrderServiceImpl {
     }
 
     fn map_domain_to_proto(order: Order) -> crate::proto::common::Order {
-        let side = match order.side.as_str() {
-            "buy" => OrderSide::Buy,
-            "sell" => OrderSide::Sell,
-            _ => OrderSide::Unspecified,
+        let side = match order.side {
+            OrderSide::Buy => crate::proto::common::OrderSide::Buy,
+            OrderSide::Sell => crate::proto::common::OrderSide::Sell,
         } as i32;
 
-        let status = match order.status.as_str() {
-            "open" => OrderStatus::Open,
-            "partial_fill" => OrderStatus::PartialFill,
-            "filled" => OrderStatus::Filled,
-            "cancelled" => OrderStatus::Cancelled,
-            "rejected" => OrderStatus::Rejected,
-            _ => OrderStatus::Unspecified,
+        let status = match order.status {
+            OrderStatus::New => crate::proto::common::OrderStatus::Unspecified,
+            OrderStatus::Open => crate::proto::common::OrderStatus::Open,
+            OrderStatus::PartialFill => crate::proto::common::OrderStatus::PartialFill,
+            OrderStatus::Filled => crate::proto::common::OrderStatus::Filled,
+            OrderStatus::Cancelled => crate::proto::common::OrderStatus::Cancelled,
+            OrderStatus::Rejected => crate::proto::common::OrderStatus::Rejected,
         } as i32;
 
-        let order_type = match order.r#type.as_str() {
-            "limit" => crate::proto::common::OrderType::Limit,
-            "market" => crate::proto::common::OrderType::Market,
-            _ => crate::proto::common::OrderType::Unspecified,
+        let order_type = match order.r#type {
+            OrderType::Limit => crate::proto::common::OrderType::Limit,
+            OrderType::Market => crate::proto::common::OrderType::Market,
         } as i32;
 
         crate::proto::common::Order {

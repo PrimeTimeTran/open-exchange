@@ -1,6 +1,6 @@
 use std::env;
 use warp::Filter;
-use tonic::transport::Channel;
+use tonic::transport::{Channel, Endpoint};
 use crate::proto::matching::matching_client::MatchingClient;
 
 pub async fn start_health_server(port: u16) {
@@ -18,24 +18,17 @@ pub async fn start_health_server(port: u16) {
 }
 
 pub async fn connect_to_matching_engine(url: &str) -> Option<MatchingClient<Channel>> {
-    let mut retry_count = 0;
-    let max_retries = 60;
-    
-    loop {
-        match MatchingClient::connect(url.to_string()).await {
-            Ok(client) => {
-                println!("Connected to Matching Engine.");
-                return Some(client);
-            },
-            Err(e) => {
-                retry_count += 1;
-                eprintln!("Failed to connect to Matching Engine: {}. Retry {}/{}...", e, retry_count, max_retries);
-                if retry_count >= max_retries {
-                    eprintln!("Giving up on Matching Engine connection. Orders will strictly be recorded but not matched.");
-                    return None;
-                }
-                tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
-            }
+    println!("Configuring lazy connection to Matching Engine at {}", url);
+    match Endpoint::from_shared(url.to_string()) {
+        Ok(endpoint) => {
+             // connect_lazy returns a Channel immediately.
+             // The actual connection happens in the background when requests are made.
+            let channel = endpoint.connect_lazy();
+            Some(MatchingClient::new(channel))
+        },
+        Err(e) => {
+            eprintln!("Invalid Matching Engine URL '{}': {}", url, e);
+            None
         }
     }
 }

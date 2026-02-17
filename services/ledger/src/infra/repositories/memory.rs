@@ -1,6 +1,6 @@
 use crate::error::{AppError, Result};
 use crate::domain::fills::{Fill, FillRepository};
-use crate::domain::orders::{Order, OrderRepository};
+use crate::domain::orders::{Order, OrderRepository, OrderStatus};
 use crate::domain::wallets::{Wallet, WalletRepository};
 use crate::domain::accounts::{Account, AccountRepository};
 use uuid::Uuid;
@@ -119,7 +119,7 @@ impl OrderRepository for InMemoryOrderRepository {
         Ok(orders.iter().find(|o| o.id == id).cloned())
     }
 
-    async fn update_status(&self, id: Uuid, status: String) -> Result<()> {
+    async fn update_status(&self, id: Uuid, status: OrderStatus) -> Result<()> {
         let mut orders = self.orders.lock().unwrap();
         if let Some(order) = orders.iter_mut().find(|o| o.id == id) {
             order.status = status;
@@ -130,7 +130,7 @@ impl OrderRepository for InMemoryOrderRepository {
         }
     }
 
-    async fn update_status_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, id: Uuid, status: String) -> Result<()> {
+    async fn update_status_with_tx(&self, _tx: &mut Transaction<'_, Postgres>, id: Uuid, status: OrderStatus) -> Result<()> {
         self.update_status(id, status).await
     }
 
@@ -168,7 +168,7 @@ impl OrderRepository for InMemoryOrderRepository {
         let orders = self.orders.lock().unwrap();
         // Assuming "open", "partial_fill", "new" are considered open
         Ok(orders.iter()
-            .filter(|o| o.status == "open" || o.status == "partial_fill" || o.status == "new")
+            .filter(|o| o.status == OrderStatus::Open || o.status == OrderStatus::PartialFill || o.status == OrderStatus::New)
             .cloned()
             .collect())
     }

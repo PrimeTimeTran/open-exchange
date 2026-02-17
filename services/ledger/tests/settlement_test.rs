@@ -4,6 +4,7 @@ use ledger::domain::wallets::WalletRepository;
 use ledger::domain::fees::constants::FeeConstants;
 use ledger::domain::orders::repository::OrderRepository;
 use ledger::domain::accounts::repository::AccountRepository;
+use ledger::domain::orders::model::{OrderSide, OrderType, OrderStatus};
 use std::str::FromStr;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
@@ -446,11 +447,11 @@ async fn test_settlement_cross_tenant_isolation() {
         tenant_id: tenant2_id,
         account_id: account_t2,
         instrument_id: ctx.instrument_id,
-        side: "sell".to_string(),
-        r#type: "limit".to_string(),
+        side: OrderSide::Sell,
+        r#type: OrderType::Limit,
         quantity: Decimal::from(1),
         price: Decimal::from(50000),
-        status: "open".to_string(),
+        status: OrderStatus::Open,
         filled_quantity: Decimal::ZERO,
         average_fill_price: Decimal::ZERO,
         meta: serde_json::json!({}),
@@ -638,7 +639,7 @@ async fn test_settlement_order_lifecycle_statuses() {
 
     // Verify initial status
     let order_init = ctx.repo.get(buy_order.id).await.unwrap().unwrap();
-    assert_eq!(order_init.status, "open");
+    assert_eq!(order_init.status, OrderStatus::Open);
     assert_eq!(order_init.filled_quantity, Decimal::ZERO);
 
     // 3. Process FIRST Match (5 BTC)
@@ -647,7 +648,7 @@ async fn test_settlement_order_lifecycle_statuses() {
 
     // Verify status -> "partial_fill"
     let order_step1 = ctx.repo.get(buy_order.id).await.unwrap().unwrap();
-    assert_eq!(order_step1.status, "partial_fill");
+    assert_eq!(order_step1.status, OrderStatus::PartialFill);
     assert_decimal_eq!(order_step1.filled_quantity.to_string(), "5");
 
     // 4. Process SECOND Match (Remaining 5 BTC)
@@ -656,6 +657,6 @@ async fn test_settlement_order_lifecycle_statuses() {
 
     // Verify status -> "filled"
     let order_step2 = ctx.repo.get(buy_order.id).await.unwrap().unwrap();
-    assert_eq!(order_step2.status, "filled");
+    assert_eq!(order_step2.status, OrderStatus::Filled);
     assert_decimal_eq!(order_step2.filled_quantity.to_string(), "10");
 }

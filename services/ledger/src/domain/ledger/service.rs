@@ -1,5 +1,5 @@
 use crate::proto::common::{Trade, LedgerEvent, LedgerEntry};
-use crate::domain::orders::model::Order;
+use crate::domain::orders::model::{Order, OrderSide};
 use crate::error::{Result, AppError};
 use crate::domain::orders::repository::OrderRepository;
 use crate::domain::accounts::repository::AccountRepository;
@@ -254,7 +254,7 @@ impl LedgerService {
         let instrument = self.instrument_repo.get(instrument_id).await?
             .ok_or(AppError::NotFound(format!("Instrument {} not found", order.instrument_id)))?;
 
-        let (asset_id, raw_amount) = if order.side == "buy" { 
+        let (asset_id, raw_amount) = if order.side == OrderSide::Buy { 
             (instrument.quote_asset_id, order.price * order.quantity)
         } else {
             (instrument.underlying_asset_id, order.quantity)
@@ -310,7 +310,7 @@ mod tests {
     use crate::domain::accounts::repository::AccountRepository;
     use crate::proto::common::{Instrument, Asset};
     use crate::domain::accounts::Account;
-    use crate::domain::orders::model::Order;
+    use crate::domain::orders::model::{Order, OrderType, OrderStatus};
     use rust_decimal::Decimal;
 
     #[tokio::test]
@@ -376,11 +376,11 @@ mod tests {
             tenant_id,
             account_id: account_a,
             instrument_id,
-            side: "buy".to_string(),
-            r#type: "limit".to_string(),
+            side: OrderSide::Buy,
+            r#type: OrderType::Limit,
             quantity: Decimal::new(10, 1),
             price: Decimal::from(50000),
-            status: "new".to_string(),
+            status: OrderStatus::New,
             filled_quantity: Decimal::ZERO,
             average_fill_price: Decimal::ZERO,
             meta: serde_json::json!({}),
@@ -393,11 +393,11 @@ mod tests {
              tenant_id,
              account_id: account_b,
              instrument_id,
-             side: "sell".to_string(),
-             r#type: "limit".to_string(),
+             side: OrderSide::Sell,
+             r#type: OrderType::Limit,
              quantity: Decimal::new(10, 1),
              price: Decimal::from(50000),
-             status: "new".to_string(),
+             status: OrderStatus::New,
              filled_quantity: Decimal::ZERO,
              average_fill_price: Decimal::ZERO,
              meta: serde_json::json!({}),
