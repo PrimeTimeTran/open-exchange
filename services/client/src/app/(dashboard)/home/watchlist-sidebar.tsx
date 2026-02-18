@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CSS } from '@dnd-kit/utilities';
 import {
   Plus,
@@ -199,9 +199,20 @@ function WatchlistSection({
 }
 
 export function WatchlistSidebar() {
+  // avoid mismatched IDs from dnd-kit during SSR hydration
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [watchlist, setWatchlist] = useState(WATCHLIST);
   const [categories, setCategories] = useState(LISTS);
   const [allExpanded, setAllExpanded] = useState<boolean | null>(null);
+
+  if (!mounted) {
+    // render nothing (or a placeholder) on the server / before hydration
+    return null;
+  }
 
   const handleCategoryReorder = (
     category: keyof typeof LISTS,

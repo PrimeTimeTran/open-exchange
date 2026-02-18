@@ -8,12 +8,12 @@ import { cn } from 'src/shared/components/cn';
 import { cookieGet } from 'src/shared/lib/cookie';
 import { fontSans } from 'src/shared/components/fonts';
 import { defaultLocale } from 'src/translation/locales';
+import { ThemeProvider } from '@/providers/ThemeProvider';
 import { Toaster } from 'src/shared/components/ui/toaster';
+import { DesignProvider } from '@/providers/DesignProvider';
 import { getDictionary } from 'src/translation/getDictionary';
-import { ThemeProvider } from 'src/shared/components/ThemeProvider';
+import { ClientProviders } from '@/providers/ClientProviders';
 import RQProvider from 'src/shared/components/reactQuery/RQProvider';
-import { PublicDesignSystem } from '@/providers/design-system-public';
-import { ClientProviders } from 'src/shared/components/ClientProviders';
 import { PublicThemeProvider } from '@/components/theme-provider-public';
 import { getLocaleFromCookies } from 'src/translation/getLocaleFromCookies';
 
@@ -69,19 +69,14 @@ export default function RootLayout({
                   defaultTheme="dark"
                   disableTransitionOnChange
                 >
-                  <PublicDesignSystem>
-                    {/* 
-                          Todo:
-                          Fix Hydration error warning.
-                        */}
-                    {/* <PublicNavbar currentUser={context.currentUser} /> */}
+                  <DesignProvider>
                     <main>
                       <div className="relative flex min-h-screen flex-col">
                         <div className="flex-1">{children}</div>
                       </div>
                     </main>
                     <Footer />
-                  </PublicDesignSystem>
+                  </DesignProvider>
                 </PublicThemeProvider>
               </RQProvider>
             </ThemeProvider>

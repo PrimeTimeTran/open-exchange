@@ -2,22 +2,20 @@
 
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
+import { useEffect, useState } from 'react';
+import { FeedbackModal } from './feedback-modal';
 import { authSignOutApiCall } from 'src/features/auth/authApiCalls';
 import {
   Moon,
   Sun,
   User,
+  LogIn,
   Wallet,
   LogOut,
-  Laptop,
   Settings,
-  MessageSquarePlus,
-  LogIn,
   UserPlus,
+  MessageSquarePlus,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { GlobalSidebar } from './global-sidebar';
-import { FeedbackModal } from './feedback-modal';
 import {
   DropdownMenu,
   DropdownMenuItem,
@@ -26,7 +24,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/shared/components/ui/dropdown-menu';
-// } from '@/components/ui/dropdown-menu';
 
 export function Navbar({ currentUser }: { currentUser?: any }) {
   const [mounted, setMounted] = useState(false);
@@ -42,19 +39,6 @@ export function Navbar({ currentUser }: { currentUser?: any }) {
     <>
       <nav className="w-full border-b border-outline-variant bg-surface transition-colors duration-300">
         <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
-          {/* <div className="flex items-center gap-4">
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="p-2 -ml-2 rounded-full text-on-surface hover:bg-surface-variant transition-colors"
-              aria-label="Open menu"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
-            <Link href="/home">
-              <div className="font-semibold text-on-surface">OpenExchange</div>
-            </Link>
-          </div> */}
-
           <div className="hidden md:flex items-center gap-2">
             <Link
               href="/home"
@@ -138,7 +122,7 @@ export function Navbar({ currentUser }: { currentUser?: any }) {
                       <DropdownMenuItem asChild>
                         <Link
                           href="/auth/sign-in"
-                          className="cursor-pointer w-full text-[var(--success)]"
+                          className="cursor-pointer w-full text-success"
                         >
                           <LogIn className="mr-2 h-4 w-4" />
                           <span>Sign In</span>
@@ -147,7 +131,7 @@ export function Navbar({ currentUser }: { currentUser?: any }) {
                       <DropdownMenuItem asChild>
                         <Link
                           href="/auth/sign-up"
-                          className="cursor-pointer w-full text-[var(--success)]"
+                          className="cursor-pointer w-full text-success"
                         >
                           <UserPlus className="mr-2 h-4 w-4" />
                           <span>Create Account</span>
@@ -202,13 +186,6 @@ export function Navbar({ currentUser }: { currentUser?: any }) {
           </div>
         </div>
       </nav>
-
-      <GlobalSidebar
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-        currentUser={currentUser}
-        onOpenFeedback={() => setIsFeedbackOpen(true)}
-      />
       <FeedbackModal
         isOpen={isFeedbackOpen}
         onClose={() => setIsFeedbackOpen(false)}

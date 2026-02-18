@@ -1,48 +1,39 @@
 'use server';
 
+import { v4 as uuidv4 } from 'uuid';
 import { prisma } from 'src/prisma';
-import { ledgerClient } from 'src/services/LedgerClient';
-import { PlaceOrderRequest } from 'src/proto/matching/engine';
+import { cookies } from 'next/headers';
 import {
+  Order,
   OrderSide,
   OrderType,
   TimeInForce,
   OrderStatus,
-  Order,
 } from 'src/proto/common/order';
-import { v4 as uuidv4 } from 'uuid';
-import { cookies } from 'next/headers';
+import { ledgerClient } from 'src/services/LedgerClient';
+import { PlaceOrderRequest } from 'src/proto/matching/engine';
 import { appContextForReact } from 'src/shared/controller/appContext';
 
-// --- Types ---
-
 interface OrderInput {
-  instrumentId: string;
-  side: 'buy' | 'sell';
-  type: 'market' | 'limit';
-  quantity: string;
   price?: string;
+  quantity: string;
   timeInForce: string;
+  side: 'buy' | 'sell';
+  instrumentId: string;
+  type: 'market' | 'limit';
 }
-
-// --- Main Action ---
 
 export async function placeMatchingEngineOrder(data: OrderInput) {
   const { currentMembership, currentTenant } = await getAuthenticatedContext();
   const account = await ensureAccount(currentMembership.id, currentTenant?.id);
-  // getInstrument is still good to ensure it exists locally, but strictly we could rely on ledger.
-  // Keeping it doesn't hurt.
   await getInstrument(data.instrumentId);
 
-  // 1. Construct the Order
   const { order } = constructOrderRequest(data, account.id, currentTenant?.id);
 
   if (!order) {
     throw new Error('Failed to construct order object');
   }
 
-  // 2. Validate & Reserve Funds (Call Ledger Service)
-  // This will also forward the order to the Matching Engine if validation succeeds.
   await validateAndReserveFunds(order);
 
   return {
@@ -103,7 +94,7 @@ async function validateAndReserveFunds(order: Order) {
   try {
     // This calls LedgerService.recordOrder which:
     // 1. Validates user has sufficient available balance.
-    // 2. Locks the required amount (decrements available, increments locked).
+    // 2. Locks the required amount (decrements available & increments locked from wallet).
     // 3. Persists the order in the Ledger DB with status 'Open'.
     // If validation fails, it throws an error and nothing is recorded.
     const response = await ledgerClient.recordOrder({ order });

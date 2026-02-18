@@ -2,27 +2,27 @@ import { credentials } from '@grpc/grpc-js';
 import {
   AssetServiceClient,
   OrderServiceClient,
-  AccountServiceClient,
   WalletServiceClient,
+  AccountServiceClient,
   DepositServiceClient,
 } from 'src/proto/ledger/ledger';
 import {
-  ListWalletsRequest,
-  ListWalletsResponse,
-  RecordOrderRequest,
-  RecordOrderResponse,
-  ListAccountsRequest,
-  ListAccountsResponse,
-  CreateAccountRequest,
-  CreateAccountResponse,
-  CreateWalletRequest,
-  CreateWalletResponse,
-  CreateDepositRequest,
-  CreateDepositResponse,
   GetAssetRequest,
   GetAssetResponse,
   ListAssetsRequest,
   ListAssetsResponse,
+  ListWalletsRequest,
+  RecordOrderRequest,
+  ListWalletsResponse,
+  RecordOrderResponse,
+  ListAccountsRequest,
+  CreateWalletRequest,
+  ListAccountsResponse,
+  CreateAccountRequest,
+  CreateWalletResponse,
+  CreateDepositRequest,
+  CreateAccountResponse,
+  CreateDepositResponse,
 } from 'src/proto/ledger/ledger';
 
 const LEDGER_SERVICE_URL = process.env.LEDGER_SERVICE_URL || 'localhost:50052';
@@ -50,115 +50,46 @@ const depositClient = new DepositServiceClient(
   credentials.createInsecure(),
 );
 
+const promisify = <TReq, TRes>(
+  fn: (req: TReq, callback: (err: any, response: TRes) => void) => void,
+  req: TReq,
+): Promise<TRes> => {
+  return new Promise((resolve, reject) => {
+    fn(req, (err, response) => {
+      if (err) reject(err);
+      else resolve(response);
+    });
+  });
+};
+
 export const ledgerClient = {
-  getAsset: async (request: GetAssetRequest): Promise<GetAssetResponse> => {
-    return new Promise((resolve, reject) => {
-      assetClient.getAsset(request, (err, response) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(response);
-        }
-      });
-    });
-  },
+  getAsset: (request: GetAssetRequest): Promise<GetAssetResponse> =>
+    promisify(assetClient.getAsset.bind(assetClient), request),
 
-  listAssets: async (
-    request: ListAssetsRequest,
-  ): Promise<ListAssetsResponse> => {
-    return new Promise((resolve, reject) => {
-      assetClient.listAssets(request, (err, response) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(response);
-        }
-      });
-    });
-  },
+  listAssets: (request: ListAssetsRequest): Promise<ListAssetsResponse> =>
+    promisify(assetClient.listAssets.bind(assetClient), request),
 
-  createAccount: async (
+  createAccount: (
     request: CreateAccountRequest,
-  ): Promise<CreateAccountResponse> => {
-    return new Promise((resolve, reject) => {
-      accountClient.createAccount(request, (err, response) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(response);
-        }
-      });
-    });
-  },
+  ): Promise<CreateAccountResponse> =>
+    promisify(accountClient.createAccount.bind(accountClient), request),
 
-  createWallet: async (
-    request: CreateWalletRequest,
-  ): Promise<CreateWalletResponse> => {
-    return new Promise((resolve, reject) => {
-      walletClient.createWallet(request, (err, response) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(response);
-        }
-      });
-    });
-  },
+  createWallet: (request: CreateWalletRequest): Promise<CreateWalletResponse> =>
+    promisify(walletClient.createWallet.bind(walletClient), request),
 
-  createDeposit: async (
+  createDeposit: (
     request: CreateDepositRequest,
-  ): Promise<CreateDepositResponse> => {
-    return new Promise((resolve, reject) => {
-      depositClient.createDeposit(request, (err, response) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(response);
-        }
-      });
-    });
-  },
+  ): Promise<CreateDepositResponse> =>
+    promisify(depositClient.createDeposit.bind(depositClient), request),
 
-  listAccounts: async (
-    request: ListAccountsRequest,
-  ): Promise<ListAccountsResponse> => {
-    return new Promise((resolve, reject) => {
-      accountClient.listAccounts(request, (err, response) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(response);
-        }
-      });
-    });
-  },
+  listAccounts: (request: ListAccountsRequest): Promise<ListAccountsResponse> =>
+    promisify(accountClient.listAccounts.bind(accountClient), request),
 
-  listWallets: async (
-    request: ListWalletsRequest,
-  ): Promise<ListWalletsResponse> => {
-    return new Promise((resolve, reject) => {
-      walletClient.listWallets(request, (err, response) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(response);
-        }
-      });
-    });
-  },
+  listWallets: (request: ListWalletsRequest): Promise<ListWalletsResponse> =>
+    promisify(walletClient.listWallets.bind(walletClient), request),
 
-  recordOrder: async (
-    request: RecordOrderRequest,
-  ): Promise<RecordOrderResponse> => {
+  recordOrder: (request: RecordOrderRequest): Promise<RecordOrderResponse> => {
     console.log('LedgerClient: recordOrder request:', request);
-    return new Promise((resolve, reject) => {
-      orderClient.recordOrder(request, (err, response) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(response);
-        }
-      });
-    });
+    return promisify(orderClient.recordOrder.bind(orderClient), request);
   },
 };

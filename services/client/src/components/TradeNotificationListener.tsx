@@ -1,10 +1,10 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useRef, useMemo } from 'react';
 import { orderFindManyApiCall } from 'src/features/order/orderApiCalls';
 import { orderEnumerators } from 'src/features/order/orderEnumerators';
-import { useTradeStream } from 'src/hooks/useTradeStream';
+import { useTradeStream } from '@/shared/hooks/useTradeStream';
 import { toast } from 'src/shared/components/ui/use-toast';
 
 export function TradeNotificationListener({
@@ -58,15 +58,20 @@ export function TradeNotificationListener({
       ...(openOrdersData(partialOrdersQuery) || []),
     ];
   }, [openOrdersQuery.data, partialOrdersQuery.data]);
-
   const myOrderIds = useMemo(() => new Set(orders.map((o) => o.id)), [orders]);
-
+  const prevIdsRef = useRef<string>('');
   const instrumentIds = useMemo(() => {
     const ids = new Set(orders.map((o) => o.instrumentId));
-    console.log('[Listener] Active Instruments:', Array.from(ids));
-    // Hardcoded BTC_USD ID for debugging
     ids.add('2873cb5e-d8e5-4965-9ac1-e23c9faacab1');
-    return Array.from(ids).join(',');
+    const idsArr = Array.from(ids).sort();
+    const idsStr = idsArr.join(',');
+
+    if (idsStr !== prevIdsRef.current) {
+      console.log('[Listener] Active Instruments:', idsArr);
+      prevIdsRef.current = idsStr;
+    }
+
+    return idsStr;
   }, [orders]);
 
   useTradeStream(

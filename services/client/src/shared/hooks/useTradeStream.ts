@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 
 export function useTradeStream(
   instrumentId: string | undefined,
@@ -6,10 +6,19 @@ export function useTradeStream(
   onMatch: (trade: any) => void,
   onOrderUpdate?: (order: any) => void,
 ) {
+  const lastInstrumentRef = useRef<string | undefined>();
+
   useEffect(() => {
     if (!instrumentId) return;
 
-    console.log('[useTradeStream] Connecting to stream for:', instrumentId);
+    // log only when the instrumentId has actually changed (useful because
+    // the parent may recreate the hook on every render even if the id is
+    // the same, triggering teardown/connect cycles).
+    if (lastInstrumentRef.current !== instrumentId) {
+      console.log('[useTradeStream] Connecting to stream for:', instrumentId);
+      lastInstrumentRef.current = instrumentId;
+    }
+
     const eventSource = new EventSource(
       `/api/stream/trades?instrumentId=${instrumentId}`,
     );

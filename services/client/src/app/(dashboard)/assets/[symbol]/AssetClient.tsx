@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { PriceUpdate } from 'src/proto/market/market';
-import { ChartDataPoint, useMarketChart } from 'src/hooks/use-market-chart';
+import { ChartDataPoint, useMarketChart } from '@/shared/hooks/useMarketChart';
 import { useMutation } from '@tanstack/react-query';
 import { placeMatchingEngineOrder } from 'src/actions/order';
 import { instrumentAutocompleteApiCall } from 'src/features/instrument/instrumentApiCalls';

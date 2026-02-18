@@ -192,16 +192,16 @@ export function useMarketChart({
   }
 
   return {
+    loading,
+    lineColor,
     timeRange,
     chartData,
-    loading,
     hoveredData,
-    setHoveredData,
-    handleRangeChange,
     displayPrice,
     displayChange,
-    displayPercentChange,
+    setHoveredData,
+    handleRangeChange,
     isDisplayPositive,
-    lineColor,
+    displayPercentChange,
   };
 }

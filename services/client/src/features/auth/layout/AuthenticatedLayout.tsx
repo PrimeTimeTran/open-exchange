@@ -2,7 +2,7 @@ import React from 'react';
 import { cookies, headers } from 'next/headers';
 import { authGuard } from 'src/features/auth/authGuard';
 import { ThemeProvider } from '@/components/theme-provider';
-import { DesignSystemProvider } from '@/providers/design-system';
+import { DesignSystemProvider } from '@/providers/DesignProvider';
 import { appContextForReact } from 'src/shared/controller/appContext';
 import AuthenticatedHeader from 'src/features/auth/layout/AuthenticatedHeader';
 import { AuthenticatedMenu } from 'src/features/auth/layout/AuthenticatedMenu';

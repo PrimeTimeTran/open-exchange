@@ -8,7 +8,7 @@ import { Typewriter, ShadowParticles, CursorFlock } from '@/components/ui'
 import { PALETTES } from '@/utils/color'
 import { ThemeController } from './theme-controller'
 import { SectionNavigation } from './section-navigation'
-import { useDesignSystem } from '@/providers/design-system'
+import { useDesignSystem } from '@/providers/DesignProvider'
 
 import { FormsSection } from './kits/forms'
 import { CardsSection } from './kits/cards'

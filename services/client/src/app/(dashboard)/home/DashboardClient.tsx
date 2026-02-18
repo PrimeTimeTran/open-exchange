@@ -7,7 +7,7 @@ import { TimeRangeSelector } from '@/components/charts/time-range-selector';
 import { NewsSection } from '@/components/news/news-section';
 import { WatchlistSidebar } from './watchlist-sidebar';
 import { PriceUpdate } from 'src/proto/market/market';
-import { ChartDataPoint, useMarketChart } from 'src/hooks/use-market-chart';
+import { ChartDataPoint, useMarketChart } from '@/shared/hooks/useMarketChart';
 
 interface DashboardClientProps {
   userId: string | null;
