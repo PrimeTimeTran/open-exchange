@@ -27,6 +27,9 @@ function formatCurrency(value: number) {
 }
 
 export default async function InvestingPage() {
+  // Temporary forced error to test error.tsx
+  // throw new Error('Forced error for testing');
+
   const context = await appContextForReact(cookies());
 
   if (!context.currentMembership || !context.currentTenant) {

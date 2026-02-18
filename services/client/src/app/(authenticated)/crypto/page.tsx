@@ -10,6 +10,7 @@ import {
 } from '@/components/crypto/crypto-table-client';
 
 export default async function CryptoPage() {
+  // throw new Error('Forced error for testing');
   const context = await appContextForReact(cookies());
 
   if (!context.currentTenant) {

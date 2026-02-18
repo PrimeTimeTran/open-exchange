@@ -2,7 +2,7 @@ import { Bell } from 'lucide-react';
 
 export default function NotificationsPage() {
   return (
-    <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+    <div className="min-h-[80vh] flex flex-col items-center justify-center p-8 text-center">
       <div className="bg-muted mb-4 rounded-full p-4">
         <Bell className="text-muted-foreground h-8 w-8" />
       </div>
