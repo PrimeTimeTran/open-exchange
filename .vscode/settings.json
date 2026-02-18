@@ -47,6 +47,7 @@
     "**/vercel.json": true,
     "**/next.config.js": true,
     "**/tsconfig.json": true,
+    "**/tsconfig.app.json": true,
     "**/public": true,
     "**/proto": true,
     "proto": true,

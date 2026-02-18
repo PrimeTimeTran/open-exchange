@@ -7,7 +7,7 @@ import { orderEnumerators } from 'src/features/order/orderEnumerators';
 import { useTradeStream } from '@/shared/hooks/useTradeStream';
 import { toast } from 'src/shared/components/ui/use-toast';
 
-export function TradeNotificationListener({
+export function TradeStreamProvider({
   currentUserId,
 }: {
   currentUserId?: string;

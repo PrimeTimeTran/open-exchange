@@ -3,10 +3,10 @@ import { cookies } from 'next/headers';
 
 import { Navbar } from '@/components';
 import { getDictionary } from '@/translation/getDictionary';
-import { getLocaleFromCookies } from '@/translation/getLocaleFromCookies';
-import { TradeNotificationListener } from '@/components/TradeNotificationListener';
-import { appContextForReact } from 'src/shared/controller/appContext';
 import { LedgerProvider } from 'src/contexts/LedgerProvider';
+import { TradeStreamProvider } from '@/providers/TradeStreamProvider';
+import { appContextForReact } from 'src/shared/controller/appContext';
+import { getLocaleFromCookies } from '@/translation/getLocaleFromCookies';
 
 export async function generateMetadata() {
   const locale = getLocaleFromCookies(cookies());
@@ -34,7 +34,7 @@ export default async function DashboardLayout({
   return (
     <LedgerProvider>
       {context.currentUser?.id && (
-        <TradeNotificationListener currentUserId={context.currentUser?.id} />
+        <TradeStreamProvider currentUserId={context.currentUser?.id} />
       )}
       <Navbar currentUser={context.currentUser} />
       <main className="min-h-screen bg-background">{children}</main>

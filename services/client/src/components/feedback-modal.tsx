@@ -68,7 +68,7 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
   }
 
   return createPortal(
-    <div className='fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6'>
+    <div className='fixed inset-0 z-60 flex items-center justify-center p-4 sm:p-6'>
       <div
         className='absolute inset-0 bg-black/60 backdrop-blur-sm'
         onClick={onClose}
@@ -107,7 +107,7 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
               Description
             </label>
             <textarea
-              className='flex min-h-[120px] w-full rounded-md border border-outline bg-surface px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-on-surface placeholder:text-on-surface-variant/50 resize-y'
+              className='flex min-h-30 w-full rounded-md border border-outline bg-surface px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-on-surface placeholder:text-on-surface-variant/50 resize-y'
               placeholder='Describe your suggestion, bug report, or feedback...'
               value={description}
               onChange={(e) => setDescription(e.target.value)}

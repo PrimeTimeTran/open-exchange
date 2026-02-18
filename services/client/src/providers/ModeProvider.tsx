@@ -1,14 +1,14 @@
 'use client';
 
 import * as React from 'react';
-import { ThemeProvider as NextThemesProvider } from 'next-themes';
+import { ThemeProvider } from 'next-themes';
 
-export function PublicThemeProvider({
+export function ModeProvider({
   children,
   ...props
-}: React.ComponentProps<typeof NextThemesProvider>) {
+}: React.ComponentProps<typeof ThemeProvider>) {
   // For public pages, we don’t gate mount or localStorage
   // We just use a default theme, optionally enable system
   // Everything renders immediately, so SSR matches
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
+  return <ThemeProvider {...props}>{children}</ThemeProvider>;
 }

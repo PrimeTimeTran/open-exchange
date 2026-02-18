@@ -8,13 +8,12 @@ import { cn } from 'src/shared/components/cn';
 import { cookieGet } from 'src/shared/lib/cookie';
 import { fontSans } from 'src/shared/components/fonts';
 import { defaultLocale } from 'src/translation/locales';
-import { ThemeProvider } from '@/providers/ThemeProvider';
+import { ModeProvider } from '@/providers/ModeProvider';
 import { Toaster } from 'src/shared/components/ui/toaster';
 import { DesignProvider } from '@/providers/DesignProvider';
 import { getDictionary } from 'src/translation/getDictionary';
 import { ClientProviders } from '@/providers/ClientProviders';
 import RQProvider from 'src/shared/components/reactQuery/RQProvider';
-import { PublicThemeProvider } from '@/components/theme-provider-public';
 import { getLocaleFromCookies } from 'src/translation/getLocaleFromCookies';
 
 export const viewport: Viewport = {
@@ -51,55 +50,53 @@ export default function RootLayout({
   const locale = cookieGet(cookies(), 'locale') || defaultLocale;
 
   return (
-    <>
-      <html lang={locale} suppressHydrationWarning>
-        <body
-          suppressHydrationWarning
-          className={cn(
-            'min-h-screen bg-background font-sans antialiased',
-            fontSans.variable,
-          )}
-        >
-          <ClientProviders>
-            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-              <RQProvider>
-                <PublicThemeProvider
+    <html lang={locale} suppressHydrationWarning>
+      <body
+        suppressHydrationWarning
+        className={cn(
+          'min-h-screen bg-background font-sans antialiased',
+          fontSans.variable,
+        )}
+      >
+        <ClientProviders>
+            <RQProvider>
+              <DesignProvider>
+                <ModeProvider
                   enableSystem
                   attribute="class"
                   defaultTheme="dark"
                   disableTransitionOnChange
                 >
-                  <DesignProvider>
+                  
                     <main>
                       <div className="relative flex min-h-screen flex-col">
                         <div className="flex-1">{children}</div>
                       </div>
                     </main>
                     <Footer />
-                  </DesignProvider>
-                </PublicThemeProvider>
-              </RQProvider>
-            </ThemeProvider>
-          </ClientProviders>
-          <Toaster />
-        </body>
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-MFFQRL807K"
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
+                  
+                </ModeProvider>
+              </DesignProvider>
+            </RQProvider>
+        </ClientProviders>
+        <Toaster />
+      </body>
+      <Script
+        src="https://www.googletagmanager.com/gtag/js?id=G-MFFQRL807K"
+        strategy="afterInteractive"
+      />
+      <Script id="google-analytics" strategy="afterInteractive">
+        {`
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
 
-          gtag('config', 'G-MFFQRL807K', {
-            user_id: 'root_user',
-            tenant_id: 'root_tenant',
-          });
-        `}
-        </Script>
-      </html>
-    </>
+        gtag('config', 'G-MFFQRL807K', {
+          user_id: 'root_user',
+          tenant_id: 'root_tenant',
+        });
+      `}
+      </Script>
+    </html>
   );
 }
