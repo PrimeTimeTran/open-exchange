@@ -1,20 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import {
-  User,
-  Shield,
-  Key,
-  Bell,
-  CreditCard,
-  Settings,
-  LogOut,
-  Mail,
-  Smartphone,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Key, Bell, User, Shield, Settings, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 type Tab =
   | 'general'
@@ -159,7 +149,7 @@ export default function ProfilePage() {
                     Bio
                   </label>
                   <textarea
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     id="bio"
                     placeholder="Tell us a little bit about yourself"
                   />

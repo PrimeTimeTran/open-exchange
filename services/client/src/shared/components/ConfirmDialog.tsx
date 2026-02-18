@@ -1,18 +1,19 @@
 import { VariantProps } from 'class-variance-authority';
 import {
   AlertDialog,
+  AlertDialogTitle,
   AlertDialogAction,
   AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogContent,
+  AlertDialogDescription,
 } from 'src/shared/components/ui/alert-dialog';
 import { Button, buttonVariants } from 'src/shared/components/ui/button';
 
-export interface ConfirmDialogProps
-  extends VariantProps<typeof buttonVariants> {
+export interface ConfirmDialogProps extends VariantProps<
+  typeof buttonVariants
+> {
   title: string;
   description?: string;
   confirmText: string;
