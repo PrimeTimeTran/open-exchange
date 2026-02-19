@@ -1,8 +1,8 @@
-use std::sync::Arc;
 use crate::proto::ledger::*;
-use tonic::{Request, Response, Status};
 use crate::proto::ledger::wallet_service_server::WalletService;
 use crate::domain::wallets::WalletService as WalletDomainService;
+use std::sync::Arc;
+use tonic::{Request, Response, Status};
 
 pub struct WalletServiceImpl {
     wallet_service: Arc<WalletDomainService>,

@@ -1,7 +1,7 @@
-use async_trait::async_trait;
 use crate::error::Result;
 use crate::proto::common::Trade;
 use crate::domain::transaction::RepositoryTransaction;
+use async_trait::async_trait;
 
 #[async_trait]
 pub trait TradeRepository: Send + Sync {

@@ -1,7 +1,7 @@
-use async_trait::async_trait;
-use super::super::super::proto::common::{LedgerEvent, LedgerEntry, Trade};
 use crate::error::Result;
 use crate::domain::transaction::RepositoryTransaction;
+use super::super::super::proto::common::{LedgerEvent, LedgerEntry, Trade};
+use async_trait::async_trait;
 
 #[async_trait]
 pub trait LedgerRepository: Send + Sync {

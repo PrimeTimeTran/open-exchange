@@ -1,8 +1,8 @@
-use std::sync::Arc;
-use tonic::{Request, Response, Status};
 use crate::proto::ledger::*;
 use crate::proto::ledger::user_service_server::UserService;
 use crate::domain::users::UserService as UserDomainService;
+use std::sync::Arc;
+use tonic::{Request, Response, Status};
 
 pub struct UserServiceImpl {
     user_service: Arc<UserDomainService>,

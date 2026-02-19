@@ -1,6 +1,6 @@
-use tonic::{Request, Response, Status};
 use crate::proto::ledger::*;
 use crate::domain::users::UserService;
+use tonic::{Request, Response, Status};
 
 pub async fn create_user(
     user_service: &UserService,

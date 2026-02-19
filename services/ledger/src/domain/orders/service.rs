@@ -1,8 +1,8 @@
-use super::model::{Order, OrderStatus, OrderSide};
 use crate::error::{Result, AppError};
 use super::repository::OrderRepository;
 use crate::domain::assets::AssetService;
 use crate::domain::wallets::WalletService;
+use super::model::{Order, OrderStatus, OrderSide};
 use crate::domain::transaction::{TransactionManager, RepositoryTransaction};
 use std::fmt;
 use uuid::Uuid;

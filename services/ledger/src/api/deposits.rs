@@ -1,11 +1,11 @@
-use tonic::{Request, Response, Status};
 use crate::proto::ledger::*;
+use crate::domain::wallets::WalletService;
 use crate::proto::ledger::deposit_service_server::DepositService;
 use crate::domain::deposits::DepositService as DepositDomainService;
-use crate::domain::wallets::WalletService;
 use std::sync::Arc;
-use rust_decimal::Decimal;
 use std::str::FromStr;
+use rust_decimal::Decimal;
+use tonic::{Request, Response, Status};
 
 pub struct DepositServiceImpl {
     deposit_service: Arc<DepositDomainService>,

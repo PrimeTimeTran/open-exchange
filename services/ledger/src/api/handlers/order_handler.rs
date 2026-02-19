@@ -1,13 +1,13 @@
-use uuid::Uuid;
-use tonic::transport::Channel;
-use tonic::{Request, Response, Status};
 use crate::proto::ledger::*;
+use crate::domain::assets::AssetService;
+use crate::domain::orders::{OrderService, Order};
 use crate::proto::common::{OrderSide, OrderStatus};
 use crate::proto::matching::matching_client::MatchingClient;
-use crate::domain::orders::{OrderService, Order};
-use crate::domain::assets::AssetService;
-use rust_decimal::Decimal;
+use uuid::Uuid;
 use std::str::FromStr;
+use rust_decimal::Decimal;
+use tonic::transport::Channel;
+use tonic::{Request, Response, Status};
 use rust_decimal::prelude::ToPrimitive;
 
 pub async fn record_order(

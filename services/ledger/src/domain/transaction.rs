@@ -17,9 +17,9 @@
 /// `sqlx::Transaction` within Postgres repositories. This bypasses lifetime limitations of Rust's `Any` trait for mutable references.
 /// It is safe as long as the `TransactionManager` and Repositories are wired correctly (e.g., Postgres Manager with Postgres Repos).
 
-use async_trait::async_trait;
-use std::any::Any;
 use crate::error::Result;
+use std::any::Any;
+use async_trait::async_trait;
 
 pub trait RepositoryTransaction: Send {
     fn as_any(&mut self) -> &mut dyn Any;

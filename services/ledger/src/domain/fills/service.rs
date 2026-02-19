@@ -1,12 +1,12 @@
-use std::sync::Arc;
-use uuid::Uuid;
-use rust_decimal::Decimal;
-use std::str::FromStr;
-use crate::error::{Result, AppError};
 use super::model::Fill;
-use super::repository::FillRepository;
 use crate::proto::common::Trade;
+use crate::error::{Result, AppError};
+use super::repository::FillRepository;
 use crate::domain::transaction::RepositoryTransaction;
+use uuid::Uuid;
+use std::sync::Arc;
+use std::str::FromStr;
+use rust_decimal::Decimal;
 
 #[derive(Clone)]
 pub struct FillService {

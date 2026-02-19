@@ -1,9 +1,9 @@
-use std::fmt;
-use std::sync::Arc;
-use uuid::Uuid;
+use crate::error::Result;
 use super::model::Account;
 use super::repository::AccountRepository;
-use crate::error::Result;
+use std::fmt;
+use uuid::Uuid;
+use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct AccountService {

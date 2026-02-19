@@ -1,9 +1,9 @@
 use crate::proto::common;
-use std::sync::Arc;
+use crate::error::Result;
+use crate::infra::repositories::{AssetRepository, InstrumentRepository};
 use uuid::Uuid;
 use chrono::Utc;
-use crate::infra::repositories::{AssetRepository, InstrumentRepository};
-use crate::error::Result;
+use std::sync::Arc;
 
 #[derive(Clone, Debug)]
 pub struct AssetService {

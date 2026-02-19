@@ -1,6 +1,6 @@
-use tonic::{Request, Response, Status};
 use crate::proto::ledger::*;
 use crate::domain::withdrawals::WithdrawalService;
+use tonic::{Request, Response, Status};
 
 pub async fn create_withdrawal(
     withdrawal_service: &WithdrawalService,

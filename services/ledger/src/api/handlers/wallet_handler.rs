@@ -1,6 +1,6 @@
-use tonic::{Request, Response, Status};
 use crate::proto::ledger::*;
 use crate::domain::wallets::WalletService;
+use tonic::{Request, Response, Status};
 
 pub async fn create_wallet(
     wallet_service: &WalletService,

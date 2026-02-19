@@ -1,9 +1,9 @@
-use crate::proto::common::{Trade, LedgerEvent, LedgerEntry};
-use crate::domain::orders::model::{Order, OrderSide};
 use crate::error::{Result, AppError};
+use crate::domain::orders::model::{Order, OrderSide};
+use crate::infra::repositories::InstrumentRepository;
 use crate::domain::orders::repository::OrderRepository;
 use crate::domain::accounts::repository::AccountRepository;
-use crate::infra::repositories::InstrumentRepository;
+use crate::proto::common::{Trade, LedgerEvent, LedgerEntry};
 use uuid::Uuid;
 use chrono::Utc;
 use std::sync::Arc;
@@ -306,11 +306,11 @@ impl LedgerService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::infra::repositories::{InMemoryOrderRepository, InMemoryInstrumentRepository, InMemoryAssetRepository, InMemoryAccountRepository, AssetRepository};
-    use crate::domain::accounts::repository::AccountRepository;
-    use crate::proto::common::{Instrument, Asset};
     use crate::domain::accounts::Account;
+    use crate::proto::common::{Instrument, Asset};
+    use crate::domain::accounts::repository::AccountRepository;
     use crate::domain::orders::model::{Order, OrderType, OrderStatus};
+    use crate::infra::repositories::{InMemoryOrderRepository, InMemoryInstrumentRepository, InMemoryAssetRepository, InMemoryAccountRepository, AssetRepository};
     use rust_decimal::Decimal;
 
     #[tokio::test]

@@ -1,6 +1,6 @@
+use super::constants::FeeConstants;
 use rust_decimal::Decimal;
 use async_trait::async_trait;
-use super::constants::FeeConstants;
 
 #[async_trait]
 pub trait FeeService: Send + Sync {

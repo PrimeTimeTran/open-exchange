@@ -1,6 +1,6 @@
-use tonic::{Request, Response, Status};
 use crate::proto::ledger::*;
 use crate::domain::assets::AssetService;
+use tonic::{Request, Response, Status};
 
 pub async fn get_asset(
     asset_service: &AssetService,

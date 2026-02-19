@@ -1,9 +1,9 @@
-use tonic::{Request, Response, Status};
 use crate::proto::ledger::*;
-use crate::domain::deposits::DepositService;
 use crate::domain::wallets::WalletService;
-use rust_decimal::Decimal;
+use crate::domain::deposits::DepositService;
 use std::str::FromStr;
+use rust_decimal::Decimal;
+use tonic::{Request, Response, Status};
 
 pub async fn create_deposit(
     deposit_service: &DepositService,

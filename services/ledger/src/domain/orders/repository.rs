@@ -1,6 +1,6 @@
-use uuid::Uuid;
-use super::model::{Order, OrderStatus};
 use crate::error::Result;
+use super::model::{Order, OrderStatus};
+use uuid::Uuid;
 use rust_decimal::Decimal;
 use async_trait::async_trait;
 

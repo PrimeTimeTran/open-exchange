@@ -1,8 +1,8 @@
-use tonic::{Request, Response, Status};
 use crate::proto::ledger::*;
 use crate::proto::ledger::asset_service_server::AssetService;
 use crate::domain::assets::AssetService as AssetDomainService;
 use std::sync::Arc;
+use tonic::{Request, Response, Status};
 
 pub struct AssetServiceImpl {
     asset_service: Arc<AssetDomainService>,

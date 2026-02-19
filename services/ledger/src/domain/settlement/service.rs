@@ -3,10 +3,12 @@ use crate::proto::ledger::Match;
 use crate::error::{Result, AppError};
 use crate::domain::trade::TradeRepository;
 use crate::domain::wallets::WalletService;
+use crate::domain::transaction::Transaction;
 use crate::domain::fees::service::FeeService;
 use crate::domain::fills::service::FillService;
 use crate::domain::orders::service::OrderService;
 use crate::domain::ledger::service::LedgerService;
+use crate::domain::transaction::TransactionManager;
 use crate::infra::repositories::InstrumentRepository;
 use crate::domain::ledger::repository::LedgerRepository;
 use crate::proto::common::{Trade, OrderSide, LedgerEvent, LedgerEntry};
@@ -14,10 +16,6 @@ use uuid::Uuid;
 use std::sync::Arc;
 use std::str::FromStr;
 use rust_decimal::Decimal;
-// use sqlx::{Transaction, Postgres};
-
-
-use crate::domain::transaction::TransactionManager;
 
 pub struct SettlementService {
     tx_manager: Option<Arc<dyn TransactionManager>>,
@@ -110,10 +108,6 @@ impl SettlementService {
     pub async fn process_trade_event(&self, trade: Trade) -> Result<()> {
         log::info!("Processing trade event: {}", trade.id);
 
-        // Idempotency Check
-        // If the trade already exists, we skip processing and return OK.
-        // This is safe because if it exists, it means the transaction that created it (and did the ledger updates)
-        // must have committed successfully (atomicity).
         if let Some(_) = self.trade_repo.get(&trade.id).await? {
             log::warn!("Trade {} already exists. Skipping processing (Idempotency).", trade.id);
             return Ok(());
@@ -175,7 +169,7 @@ impl SettlementService {
         Ok(())
     }
 
-    async fn begin_transaction(&self) -> Result<Option<Box<dyn crate::domain::transaction::Transaction>>> {
+    async fn begin_transaction(&self) -> Result<Option<Box<dyn Transaction>>> {
         if let Some(manager) = &self.tx_manager {
             let tx = manager.begin().await?;
             Ok(Some(tx))
@@ -185,14 +179,16 @@ impl SettlementService {
     }
 }
 
-// Helper struct to abstract over Transaction vs No-Transaction
+// Settlement Context helps manage transaction scope and provides helper methods for common operations during settlement processing. 
+// It abstracts away the details of whether a transaction is being used or not, allowing the core business logic to remain clean and focused on the domain operations.
+// This pattern also makes it easier to add additional operations in the future (e.g., logging, metrics) without cluttering the main settlement logic.
 struct SettlementContext<'a> {
-    tx: Option<Box<dyn crate::domain::transaction::Transaction>>,
+    tx: Option<Box<dyn Transaction>>,
     service: &'a SettlementService,
 }
 
 impl<'a> SettlementContext<'a> {
-    fn new(service: &'a SettlementService, tx: Option<Box<dyn crate::domain::transaction::Transaction>>) -> Self {
+    fn new(service: &'a SettlementService, tx: Option<Box<dyn Transaction>>) -> Self {
         Self { tx, service }
     }
 

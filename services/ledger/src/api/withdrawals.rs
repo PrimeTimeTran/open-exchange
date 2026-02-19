@@ -1,8 +1,8 @@
-use tonic::{Request, Response, Status};
 use crate::proto::ledger::*;
 use crate::proto::ledger::withdrawal_service_server::WithdrawalService;
 use crate::domain::withdrawals::WithdrawalService as WithdrawalDomainService;
 use std::sync::Arc;
+use tonic::{Request, Response, Status};
 
 pub struct WithdrawalServiceImpl {
     withdrawal_service: Arc<WithdrawalDomainService>,
