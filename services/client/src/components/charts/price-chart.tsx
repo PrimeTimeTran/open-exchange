@@ -70,7 +70,7 @@ export function PriceChart({
   };
 
   return (
-    <div className="h-[400px] w-full -ml-2">
+    <div className="h-100 w-full -ml-2">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={data}

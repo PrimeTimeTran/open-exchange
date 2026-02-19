@@ -30,8 +30,8 @@ export default async function AssetPage({
   const context = await appContextForReact(cookies());
   const isAuthenticated = !!context.currentUser;
 
-  let marketData;
   let chartData;
+  let marketData;
 
   const now = Date.now();
   // Default to 1M view for SSR

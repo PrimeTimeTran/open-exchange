@@ -19,7 +19,7 @@ export function useMarketChart({
   initialMarketData,
   initialChartData,
 }: UseMarketChartProps) {
-  const [timeRange, setTimeRange] = useState<string>('1W');
+  const [timeRange, setTimeRange] = useState<string>('1M');
   const [chartData, setChartData] = useState<ChartDataPoint[]>(
     initialChartData || [],
   );

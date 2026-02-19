@@ -13,10 +13,10 @@ export interface MarketDataPoint {
 }
 
 export async function fetchMarketData(
-  to: number,
-  from: number,
   symbol: string,
   interval: string,
+  from: number,
+  to: number,
 ): Promise<MarketDataPoint[]> {
   try {
     const response = await marketClient.getMarketData({
