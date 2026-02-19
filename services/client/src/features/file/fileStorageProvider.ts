@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
-import { FileAwsStorage } from 'src/features/file/fileAwsStorage';
-import { FileGoogleCloudFileStorage } from 'src/features/file/fileGoogleCloudStorage';
+// import { FileAwsStorage } from 'src/features/file/fileAwsStorage';
+// import { FileGoogleCloudFileStorage } from 'src/features/file/fileGoogleCloudStorage';
 import { FileLocalFileStorage } from 'src/features/file/fileLocalFileStorage';
 
 export interface FileStorageProvider {
@@ -27,11 +27,11 @@ export interface FileStorageProvider {
 
 export function fileStorageProvider(): FileStorageProvider {
   if (process.env.FILE_STORAGE_PROVIDER === 'gcp') {
-    return new FileGoogleCloudFileStorage();
+    // return new FileGoogleCloudFileStorage();
   }
 
   if (process.env.FILE_STORAGE_PROVIDER === 'aws') {
-    return new FileAwsStorage();
+    // return new FileAwsStorage();
   }
 
   if (process.env.FILE_STORAGE_PROVIDER === 'local') {
