@@ -72,10 +72,9 @@ func (s *RedisStore) LoadOrderBook(ctx context.Context, instrumentID string) (*e
 	}
 	
 	ob := engine.NewOrderBook(instrumentID)
-	ob.Bids = snapshot.Bids
-	ob.Asks = snapshot.Asks
+	ob.RestoreFromSnapshot(snapshot.Bids, snapshot.Asks)
 	
-	log.Printf("Loaded OrderBook %s from Redis: %d bids, %d asks", instrumentID, len(ob.Bids), len(ob.Asks))
+	log.Printf("Loaded OrderBook %s from Redis: %d bids, %d asks", instrumentID, len(snapshot.Bids), len(snapshot.Asks))
 	
 	return ob, nil
 }

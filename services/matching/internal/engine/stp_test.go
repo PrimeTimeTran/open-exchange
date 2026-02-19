@@ -30,13 +30,13 @@ func TestSelfTradePrevention_LimitBuy(t *testing.T) {
 	askOrder := createOrderWithAccount("ask1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 100.0, 10.0, "userA")
 	trades, events1, _ := ob.ProcessOrder(askOrder, nil)
 	assert.Empty(t, trades)
-	assert.Len(t, ob.Asks, 1)
+	assert.Len(t, ob.Asks(), 1)
 	assert.Equal(t, events.OrderCreated, events1[0].Type)
 
 	// 2. Setup: User B places a Sell Order (Ask) at 101.0 (Worse price)
 	askOrderB := createOrderWithAccount("ask2", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 101.0, 10.0, "userB")
 	ob.ProcessOrder(askOrderB, nil)
-	assert.Len(t, ob.Asks, 2)
+	assert.Len(t, ob.Asks(), 2)
 
 	// 3. Action: User A places a Buy Order (Bid) at 101.0
 	// This should normally match ask1 (100.0) then ask2 (101.0).
@@ -83,9 +83,10 @@ func TestSelfTradePrevention_LimitBuy(t *testing.T) {
 	// Check Order Book State
 	// ask1 should be gone.
 	// ask2 should be there with remaining qty 5.0.
-	assert.Len(t, ob.Asks, 1)
-	assert.Equal(t, "ask2", ob.Asks[0].ID)
-	assert.Equal(t, 5.0, ob.Asks[0].Remaining())
+	asks := ob.Asks()
+	assert.Len(t, asks, 1)
+	assert.Equal(t, "ask2", asks[0].ID)
+	assert.Equal(t, 5.0, asks[0].Remaining())
 }
 
 func TestSelfTradePrevention_LimitSell(t *testing.T) {
@@ -116,7 +117,8 @@ func TestSelfTradePrevention_LimitSell(t *testing.T) {
 	// Check Order Book
 	// bid1 should be removed.
 	// sell1 should be added as a resting Ask (since it didn't match anything after bid1 was removed).
-	assert.Empty(t, ob.Bids)
-	assert.Len(t, ob.Asks, 1)
-	assert.Equal(t, "sell1", ob.Asks[0].ID)
+	assert.Empty(t, ob.Bids())
+	asks := ob.Asks()
+	assert.Len(t, asks, 1)
+	assert.Equal(t, "sell1", asks[0].ID)
 }

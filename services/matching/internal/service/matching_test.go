@@ -43,7 +43,7 @@ func TestPlaceOrder(t *testing.T) {
 	assert.Equal(t, "new_order", id)
 
 	book := eng.GetOrderBook("BTC-USD")
-	assert.Len(t, book.Bids, 1)
+	assert.Len(t, book.Bids(), 1)
 
 	mockPublisher.AssertExpectations(t)
 }
@@ -106,7 +106,7 @@ func TestCancelOrder(t *testing.T) {
 	assert.NoError(t, err)
 
 	book := eng.GetOrderBook("BTC-USD")
-	assert.Len(t, book.Bids, 0)
+	assert.Len(t, book.Bids(), 0)
 
 	mockLedger.AssertExpectations(t)
 	mockPublisher.AssertExpectations(t)
@@ -134,10 +134,10 @@ func TestRecoverState(t *testing.T) {
 	assert.NoError(t, err)
 	
 	book := eng.GetOrderBook("BTC-USD")
-	assert.Len(t, book.Bids, 1)
-	assert.Equal(t, "order1", book.Bids[0].ID)
-	assert.Len(t, book.Asks, 1)
-	assert.Equal(t, "order2", book.Asks[0].ID)
+	assert.Len(t, book.Bids(), 1)
+	assert.Equal(t, "order1", book.Bids()[0].ID)
+	assert.Len(t, book.Asks(), 1)
+	assert.Equal(t, "order2", book.Asks()[0].ID)
 	
 	mockLedger.AssertExpectations(t)
 }

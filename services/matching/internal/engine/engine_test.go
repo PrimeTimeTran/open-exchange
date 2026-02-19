@@ -30,9 +30,9 @@ func TestEngine_ProcessOrder_Limit_AddsToBook(t *testing.T) {
 	assert.NotNil(t, btcBook)
 
 	// Check that the order is in the book
-	assert.Len(t, btcBook.Bids, 1)
-	assert.Equal(t, "btc_order_1", btcBook.Bids[0].ID)
-	assert.Equal(t, 1.5, btcBook.Bids[0].Quantity)
+	assert.Len(t, btcBook.Bids(), 1)
+	assert.Equal(t, "btc_order_1", btcBook.Bids()[0].ID)
+	assert.Equal(t, 1.5, btcBook.Bids()[0].Quantity)
 }
 
 func TestEngine_ProcessOrder_Isolation_MultipleInstruments(t *testing.T) {
@@ -49,15 +49,15 @@ func TestEngine_ProcessOrder_Isolation_MultipleInstruments(t *testing.T) {
 
 	// Verify BTC Book
 	btcBook := eng.GetOrderBook("BTC-USD")
-	assert.Len(t, btcBook.Asks, 1)
-	assert.Equal(t, "btc_1", btcBook.Asks[0].ID)
-	assert.Empty(t, btcBook.Bids)
+	assert.Len(t, btcBook.Asks(), 1)
+	assert.Equal(t, "btc_1", btcBook.Asks()[0].ID)
+	assert.Empty(t, btcBook.Bids())
 
 	// Verify ETH Book
 	ethBook := eng.GetOrderBook("ETH-USD")
-	assert.Len(t, ethBook.Bids, 1)
-	assert.Equal(t, "eth_1", ethBook.Bids[0].ID)
-	assert.Empty(t, ethBook.Asks)
+	assert.Len(t, ethBook.Bids(), 1)
+	assert.Equal(t, "eth_1", ethBook.Bids()[0].ID)
+	assert.Empty(t, ethBook.Asks())
 }
 
 func TestEngine_CancelOrder_Success(t *testing.T) {
@@ -71,7 +71,7 @@ func TestEngine_CancelOrder_Success(t *testing.T) {
 
 	// Verify exists
 	eng.mu.RLock()
-	assert.Len(t, eng.OrderBooks[instrumentID].Bids, 1)
+	assert.Len(t, eng.OrderBooks[instrumentID].Bids(), 1)
 	eng.mu.RUnlock()
 
 	// 2. Cancel Order
@@ -82,7 +82,7 @@ func TestEngine_CancelOrder_Success(t *testing.T) {
 
 	// 3. Verify Removed
 	eng.mu.RLock()
-	assert.Len(t, eng.OrderBooks[instrumentID].Bids, 0, "Order book should be empty after cancellation")
+	assert.Len(t, eng.OrderBooks[instrumentID].Bids(), 0, "Order book should be empty after cancellation")
 	eng.mu.RUnlock()
 
 	// 4. Cancel Non-Existent
@@ -122,14 +122,15 @@ func TestEngine_ProcessOrder_Limit_Match_SellMaker_BuyTaker(t *testing.T) {
 	eng.mu.RUnlock()
 
 	// Sell side (Asks) should have 1 order with 5 remaining
-	assert.Len(t, book.Asks, 1)
-	remainingSell := book.Asks[0]
+	asks := book.Asks()
+	assert.Len(t, asks, 1)
+	remainingSell := asks[0]
 	assert.Equal(t, "sell_order_1", remainingSell.ID)
 	assert.Equal(t, 5.0, remainingSell.Quantity-remainingSell.QuantityFilled, "Sell order should have 5 items remaining")
 	assert.False(t, remainingSell.Filled(), "Sell order should be PARTIAL_FILL")
 
 	// Buy side (Bids) should be empty because the buy order was fully filled
-	assert.Len(t, book.Bids, 0, "Buy order should be fully filled and removed from book")
+	assert.Len(t, book.Bids(), 0, "Buy order should be fully filled and removed from book")
 	
 	// Verify Buy Order state (simulated check as if we fetched it from DB)
 	assert.True(t, buyOrder.Filled(), "Buy order should be marked FILLED")
@@ -168,14 +169,15 @@ func TestEngine_ProcessOrder_Limit_Match_BuyMaker_SellTaker(t *testing.T) {
 	eng.mu.RUnlock()
 
 	// Buy side (Bids) should have 1 order with 5 remaining
-	assert.Len(t, book.Bids, 1)
-	remainingBuy := book.Bids[0]
+	bids := book.Bids()
+	assert.Len(t, bids, 1)
+	remainingBuy := bids[0]
 	assert.Equal(t, "buy_order_rest", remainingBuy.ID)
 	assert.Equal(t, 5.0, remainingBuy.Quantity-remainingBuy.QuantityFilled, "Buy order should have 5 items remaining")
 	assert.False(t, remainingBuy.Filled(), "Buy order should be PARTIAL_FILL")
 
 	// Sell side (Asks) should be empty because the sell order was fully filled
-	assert.Len(t, book.Asks, 0, "Sell order should be fully filled and removed from book")
+	assert.Len(t, book.Asks(), 0, "Sell order should be fully filled and removed from book")
 
 	// Verify Sell Order state
 	assert.True(t, sellOrder.Filled(), "Sell order should be marked FILLED")
@@ -222,9 +224,10 @@ func TestEngine_ProcessOrder_Limit_Match_MultiLevel_Buy(t *testing.T) {
 	eng.mu.RUnlock()
 
 	// Should have 5 remaining from sell_expensive
-	assert.Len(t, book.Asks, 1)
-	assert.Equal(t, "sell_expensive", book.Asks[0].ID)
-	assert.Equal(t, 5.0, book.Asks[0].Remaining())
+	asks := book.Asks()
+	assert.Len(t, asks, 1)
+	assert.Equal(t, "sell_expensive", asks[0].ID)
+	assert.Equal(t, 5.0, asks[0].Remaining())
 }
 
 func TestEngine_ProcessOrder_Limit_Match_MultiLevel_Sell(t *testing.T) {
@@ -267,14 +270,15 @@ func TestEngine_ProcessOrder_Limit_Match_MultiLevel_Sell(t *testing.T) {
 	eng.mu.RUnlock()
 
 	// Sell order fully filled and removed
-	assert.Len(t, book.Asks, 0)
+	assert.Len(t, book.Asks(), 0)
 	assert.True(t, sell.Filled())
 
 	// Bid 1 fully filled and removed
 	// Bid 2 partial fill (5 remaining)
-	assert.Len(t, book.Bids, 1)
-	assert.Equal(t, "bid_low", book.Bids[0].ID)
-	assert.Equal(t, 5.0, book.Bids[0].Remaining())
+	bids := book.Bids()
+	assert.Len(t, bids, 1)
+	assert.Equal(t, "bid_low", bids[0].ID)
+	assert.Equal(t, 5.0, bids[0].Remaining())
 }
 
 func TestEngine_ProcessOrder_Limit_Priority_PriceTime(t *testing.T) {
@@ -309,8 +313,9 @@ func TestEngine_ProcessOrder_Limit_Priority_PriceTime(t *testing.T) {
 	book := eng.OrderBooks[instrumentID]
 	eng.mu.RUnlock()
 	
-	assert.Len(t, book.Asks, 1)
-	assert.Equal(t, "sell_late", book.Asks[0].ID)
+	asks := book.Asks()
+	assert.Len(t, asks, 1)
+	assert.Equal(t, "sell_late", asks[0].ID)
 }
 
 func TestEngine_ProcessOrder_Limit_PriceImprovement(t *testing.T) {
@@ -357,7 +362,7 @@ func TestEngine_ProcessOrder_Market_NoLiquidity(t *testing.T) {
 	// Current implementation might add them if logic is simple.
 	// Let's check behavior: matchMarketBuy adds to nothing? 
 	// If current logic doesn't handle "rest", it might just disappear.
-	assert.Len(t, book.Bids, 0, "Market order should not rest in book if no liquidity")
+	assert.Len(t, book.Bids(), 0, "Market order should not rest in book if no liquidity")
 }
 
 func TestEngine_ProcessOrder_Market_PartialLiquidity(t *testing.T) {
@@ -385,8 +390,8 @@ func TestEngine_ProcessOrder_Market_PartialLiquidity(t *testing.T) {
 	book := eng.OrderBooks[instrumentID]
 	eng.mu.RUnlock()
 
-	assert.Len(t, book.Asks, 0, "Liquidity should be drained")
-	assert.Len(t, book.Bids, 0, "Market order remainder should be cancelled/dropped")
+	assert.Len(t, book.Asks(), 0, "Liquidity should be drained")
+	assert.Len(t, book.Bids(), 0, "Market order remainder should be cancelled/dropped")
 }
 
 func TestEngine_CancelOrder_AlreadyFilled(t *testing.T) {

@@ -40,9 +40,10 @@ func TestLimitOrder_MatchBuy(t *testing.T) {
 	assert.Equal(t, 5.0, trades[0].Quantity)
 
 	// Check Order Book State
-	assert.Len(t, ob.Asks, 1) // Partial Fill ask remains
-	assert.Equal(t, 5.0, ob.Asks[0].Remaining())
-	assert.Len(t, ob.Bids, 0) // Buy order fully filled
+	asks := ob.Asks()
+	assert.Len(t, asks, 1) // Partial Fill ask remains
+	assert.Equal(t, 5.0, asks[0].Remaining())
+	assert.Len(t, ob.Bids(), 0) // Buy order fully filled
 }
 
 func TestLimitOrder_MatchSell(t *testing.T) {
@@ -64,9 +65,10 @@ func TestLimitOrder_MatchSell(t *testing.T) {
 	assert.Equal(t, 5.0, trades[0].Quantity)
 
 	// Check Order Book State
-	assert.Len(t, ob.Bids, 1) // Partial Fill bid remains
-	assert.Equal(t, 5.0, ob.Bids[0].Remaining())
-	assert.Len(t, ob.Asks, 0) // Sell order fully filled
+	bids := ob.Bids()
+	assert.Len(t, bids, 1) // Partial Fill bid remains
+	assert.Equal(t, 5.0, bids[0].Remaining())
+	assert.Len(t, ob.Asks(), 0) // Sell order fully filled
 }
 
 func TestLimitOrder_NoMatch_AddToBook(t *testing.T) {
@@ -78,8 +80,9 @@ func TestLimitOrder_NoMatch_AddToBook(t *testing.T) {
 
 	// Assert
 	assert.Empty(t, trades)
-	assert.Len(t, ob.Bids, 1)
-	assert.Equal(t, "bid1", ob.Bids[0].ID)
+	bids := ob.Bids()
+	assert.Len(t, bids, 1)
+	assert.Equal(t, "bid1", bids[0].ID)
 
 	// Action: Add a sell order (Ask) higher than bid
 	askOrder := createOrder("ask1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 101.0, 10.0, "BTC-USD", "user_ask1")
@@ -87,8 +90,9 @@ func TestLimitOrder_NoMatch_AddToBook(t *testing.T) {
 
 	// Assert
 	assert.Empty(t, trades2)
-	assert.Len(t, ob.Asks, 1)
-	assert.Equal(t, "ask1", ob.Asks[0].ID)
+	asks := ob.Asks()
+	assert.Len(t, asks, 1)
+	assert.Equal(t, "ask1", asks[0].ID)
 }
 
 func TestOrderBook_CancelOrder(t *testing.T) {
@@ -99,13 +103,13 @@ func TestOrderBook_CancelOrder(t *testing.T) {
 	ob.ProcessOrder(order, nil)
 
 	// Assert it's there
-	assert.Len(t, ob.Bids, 1)
+	assert.Len(t, ob.Bids(), 1)
 
 	// Cancel it
 	cancelled := ob.CancelOrder("bid1")
 	assert.NotNil(t, cancelled)
 	assert.Equal(t, "bid1", cancelled.ID)
-	assert.Len(t, ob.Bids, 0)
+	assert.Len(t, ob.Bids(), 0)
 
 	// Cancel non-existent
 	cancelled2 := ob.CancelOrder("bid1")
@@ -121,10 +125,10 @@ func TestOrderBook_Sorting(t *testing.T) {
 	ob.ProcessOrder(createOrder("bid3", common.OrderSide_ORDER_SIDE_BUY, common.OrderType_ORDER_TYPE_LIMIT, 101.0, 10.0, "BTC-USD", "user_bid3"), nil)
 
 	// Expected Bids Order: 102, 101, 100 (DESC)
-	assert.Len(t, ob.Bids, 3)
-	assert.Equal(t, 102.0, ob.Bids[0].Price)
-	assert.Equal(t, 101.0, ob.Bids[1].Price)
-	assert.Equal(t, 100.0, ob.Bids[2].Price)
+	assert.Len(t, ob.Bids(), 3)
+	assert.Equal(t, 102.0, ob.Bids()[0].Price)
+	assert.Equal(t, 101.0, ob.Bids()[1].Price)
+	assert.Equal(t, 100.0, ob.Bids()[2].Price)
 
 	// Add Asks: 105, 103, 104
 	ob.ProcessOrder(createOrder("ask1", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 105.0, 10.0, "BTC-USD", "user_ask1"), nil)
@@ -132,10 +136,10 @@ func TestOrderBook_Sorting(t *testing.T) {
 	ob.ProcessOrder(createOrder("ask3", common.OrderSide_ORDER_SIDE_SELL, common.OrderType_ORDER_TYPE_LIMIT, 104.0, 10.0, "BTC-USD", "user_ask3"), nil)
 
 	// Expected Asks Order: 103, 104, 105 (ASC)
-	assert.Len(t, ob.Asks, 3)
-	assert.Equal(t, 103.0, ob.Asks[0].Price)
-	assert.Equal(t, 104.0, ob.Asks[1].Price)
-	assert.Equal(t, 105.0, ob.Asks[2].Price)
+	assert.Len(t, ob.Asks(), 3)
+	assert.Equal(t, 103.0, ob.Asks()[0].Price)
+	assert.Equal(t, 104.0, ob.Asks()[1].Price)
+	assert.Equal(t, 105.0, ob.Asks()[2].Price)
 }
 
 func TestMarketOrder_Match(t *testing.T) {
@@ -163,7 +167,8 @@ func TestMarketOrder_Match(t *testing.T) {
 	assert.Equal(t, 3.0, trades[1].Quantity) // Remaining 3.0
 
 	// Check book
-	assert.Len(t, ob.Asks, 1)
-	assert.Equal(t, "ask2", ob.Asks[0].ID)
-	assert.Equal(t, 2.0, ob.Asks[0].Remaining()) // 5.0 - 3.0 = 2.0
+	asks := ob.Asks()
+	assert.Len(t, asks, 1)
+	assert.Equal(t, "ask2", asks[0].ID)
+	assert.Equal(t, 2.0, asks[0].Remaining()) // 5.0 - 3.0 = 2.0
 }

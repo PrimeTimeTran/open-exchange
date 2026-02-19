@@ -46,8 +46,8 @@ func TestMatchingScenarios_NoMatch(t *testing.T) {
 	
 	// Verify order book state: Both orders sit on the book
 	book := eng.GetOrderBook("BTC-USD")
-	assert.Len(t, book.Bids, 1) // The new bid
-	assert.Len(t, book.Asks, 1) // The existing ask
+	assert.Len(t, book.Bids(), 1) // The new bid
+	assert.Len(t, book.Asks(), 1) // The existing ask
 
 	mockPublisher.AssertNotCalled(t, "PublishTrade")
 	mockPublisher.AssertExpectations(t)
@@ -92,8 +92,8 @@ func TestMatchingScenarios_SingleMatch(t *testing.T) {
 
 	// Verify order book state: Both orders matched fully and are removed
 	book := eng.GetOrderBook("BTC-USD")
-	assert.Empty(t, book.Bids)
-	assert.Empty(t, book.Asks)
+	assert.Empty(t, book.Bids())
+	assert.Empty(t, book.Asks())
 
 	mockStore.AssertExpectations(t)
 }
@@ -143,8 +143,8 @@ func TestMatchingScenarios_MultiMatch(t *testing.T) {
 
 	// Verify order book state: All orders matched fully and are removed
 	book := eng.GetOrderBook("BTC-USD")
-	assert.Empty(t, book.Bids)
-	assert.Empty(t, book.Asks)
+	assert.Empty(t, book.Bids())
+	assert.Empty(t, book.Asks())
 
 	mockStore.AssertExpectations(t)
 }

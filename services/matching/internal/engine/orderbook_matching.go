@@ -2,7 +2,6 @@ package engine
 
 import (
 	"log"
-	"sort"
 	"time"
 
 	"github.com/open-exchange/matching_engine/internal/events"
@@ -12,15 +11,21 @@ func (ob *OrderBook) matchLimitBuy(order *Order, onMatch func(Trade) error) ([]T
 	trades := []Trade{}
 	bookEvents := []events.OrderBookEvent{}
 
+	orderTicks := priceToTicks(order.Price)
+
 	// Match against Asks (lowest sell price first)
-	// While we have asks and the best ask is <= our limit price
-	for len(ob.Asks) > 0 && ob.Asks[0].Price <= order.Price && !order.Filled() {
-		bestAsk := ob.Asks[0]
-		
-		// Self-Trade Prevention: Cancel resting order from same user
+	// While we have ask levels and the best ask price is <= our limit
+	for len(ob.askPrices) > 0 && ob.askPrices[0] <= orderTicks && !order.Filled() {
+		bestPrice := ob.askPrices[0]
+		pl := ob.asks[bestPrice]
+		bestNode := pl.head
+		bestAsk := bestNode.order
+
+		// Self-Trade Prevention: same as before
 		if bestAsk.AccountID == order.AccountID {
 			log.Printf("Self-Trade Prevention: Cancelling resting Ask %s for User %s", bestAsk.ID, bestAsk.AccountID)
-			ob.Asks = ob.Asks[1:]
+			pl.remove(bestNode)
+			delete(ob.orderMap, bestAsk.ID)
 			bookEvents = append(bookEvents, events.OrderBookEvent{
 				Type:         events.OrderCancelled,
 				OrderID:      bestAsk.ID,
@@ -30,12 +35,16 @@ func (ob *OrderBook) matchLimitBuy(order *Order, onMatch func(Trade) error) ([]T
 				Side:         "SELL",
 				Timestamp:    time.Now().Unix(),
 			})
+			if pl.size == 0 {
+				ob.removeAskPrice(bestPrice)
+				delete(ob.asks, bestPrice)
+			}
 			continue
 		}
 
 		tradePrice := bestAsk.Price
 		tradeQty := min(order.Remaining(), bestAsk.Remaining())
-		
+
 		trade := Trade{
 			MakerOrderID: bestAsk.ID,
 			TakerOrderID: order.ID,
@@ -51,12 +60,13 @@ func (ob *OrderBook) matchLimitBuy(order *Order, onMatch func(Trade) error) ([]T
 		}
 
 		trades = append(trades, trade)
-		
+
 		order.QuantityFilled += tradeQty
 		bestAsk.QuantityFilled += tradeQty
-		
+
 		if bestAsk.Filled() {
-			ob.Asks = ob.Asks[1:]
+			pl.remove(bestNode)
+			delete(ob.orderMap, bestAsk.ID)
 			bookEvents = append(bookEvents, events.OrderBookEvent{
 				Type:         events.OrderFilled,
 				OrderID:      bestAsk.ID,
@@ -66,6 +76,10 @@ func (ob *OrderBook) matchLimitBuy(order *Order, onMatch func(Trade) error) ([]T
 				Side:         "SELL",
 				Timestamp:    time.Now().Unix(),
 			})
+			if pl.size == 0 {
+				ob.removeAskPrice(bestPrice)
+				delete(ob.asks, bestPrice)
+			}
 		} else {
 			bookEvents = append(bookEvents, events.OrderBookEvent{
 				Type:         events.OrderUpdated,
@@ -100,15 +114,19 @@ func (ob *OrderBook) matchLimitSell(order *Order, onMatch func(Trade) error) ([]
 	trades := []Trade{}
 	bookEvents := []events.OrderBookEvent{}
 
-	// Match against Bids (highest buy price first)
-	// While we have bids and the best bid is >= our limit price
-	for len(ob.Bids) > 0 && ob.Bids[0].Price >= order.Price && !order.Filled() {
-		bestBid := ob.Bids[0]
-		
-		// Self-Trade Prevention: Cancel resting order from same user
+	orderTicks := priceToTicks(order.Price)
+
+	// match against best bids while price allows
+	for len(ob.bidPrices) > 0 && ob.bidPrices[0] >= orderTicks && !order.Filled() {
+		bestPrice := ob.bidPrices[0]
+		pl := ob.bids[bestPrice]
+		bestNode := pl.head
+		bestBid := bestNode.order
+
 		if bestBid.AccountID == order.AccountID {
 			log.Printf("Self-Trade Prevention: Cancelling resting Bid %s for User %s", bestBid.ID, bestBid.AccountID)
-			ob.Bids = ob.Bids[1:]
+			pl.remove(bestNode)
+			delete(ob.orderMap, bestBid.ID)
 			bookEvents = append(bookEvents, events.OrderBookEvent{
 				Type:         events.OrderCancelled,
 				OrderID:      bestBid.ID,
@@ -118,12 +136,16 @@ func (ob *OrderBook) matchLimitSell(order *Order, onMatch func(Trade) error) ([]
 				Side:         "BUY",
 				Timestamp:    time.Now().Unix(),
 			})
+			if pl.size == 0 {
+				ob.removeBidPrice(bestPrice)
+				delete(ob.bids, bestPrice)
+			}
 			continue
 		}
 
 		tradePrice := bestBid.Price
 		tradeQty := min(order.Remaining(), bestBid.Remaining())
-		
+
 		trade := Trade{
 			MakerOrderID: bestBid.ID,
 			TakerOrderID: order.ID,
@@ -134,18 +156,18 @@ func (ob *OrderBook) matchLimitSell(order *Order, onMatch func(Trade) error) ([]
 
 		if onMatch != nil {
 			if err := onMatch(trade); err != nil {
-				// Stop matching if callback fails
 				return trades, bookEvents, err
 			}
 		}
 
 		trades = append(trades, trade)
-		
+
 		order.QuantityFilled += tradeQty
 		bestBid.QuantityFilled += tradeQty
-		
+
 		if bestBid.Filled() {
-			ob.Bids = ob.Bids[1:]
+			pl.remove(bestNode)
+			delete(ob.orderMap, bestBid.ID)
 			bookEvents = append(bookEvents, events.OrderBookEvent{
 				Type:         events.OrderFilled,
 				OrderID:      bestBid.ID,
@@ -155,6 +177,10 @@ func (ob *OrderBook) matchLimitSell(order *Order, onMatch func(Trade) error) ([]
 				Side:         "BUY",
 				Timestamp:    time.Now().Unix(),
 			})
+			if pl.size == 0 {
+				ob.removeBidPrice(bestPrice)
+				delete(ob.bids, bestPrice)
+			}
 		} else {
 			bookEvents = append(bookEvents, events.OrderBookEvent{
 				Type:         events.OrderUpdated,
@@ -168,7 +194,6 @@ func (ob *OrderBook) matchLimitSell(order *Order, onMatch func(Trade) error) ([]
 		}
 	}
 
-	// If not filled, add to Asks
 	if !order.Filled() {
 		ob.addAsk(order)
 		bookEvents = append(bookEvents, events.OrderBookEvent{
@@ -188,14 +213,17 @@ func (ob *OrderBook) matchLimitSell(order *Order, onMatch func(Trade) error) ([]
 func (ob *OrderBook) matchMarketBuy(order *Order, onMatch func(Trade) error) ([]Trade, []events.OrderBookEvent, error) {
 	trades := []Trade{}
 	bookEvents := []events.OrderBookEvent{}
-	
-	// Match against Asks regardless of price (up to available liquidity)
-	for len(ob.Asks) > 0 && !order.Filled() {
-		bestAsk := ob.Asks[0]
-		
+
+	// consume from best ask levels until filled or empty
+	for len(ob.askPrices) > 0 && !order.Filled() {
+		bestPrice := ob.askPrices[0]
+		pl := ob.asks[bestPrice]
+		bestNode := pl.head
+		bestAsk := bestNode.order
+
 		tradePrice := bestAsk.Price
 		tradeQty := min(order.Remaining(), bestAsk.Remaining())
-		
+
 		trade := Trade{
 			MakerOrderID: bestAsk.ID,
 			TakerOrderID: order.ID,
@@ -206,18 +234,18 @@ func (ob *OrderBook) matchMarketBuy(order *Order, onMatch func(Trade) error) ([]
 
 		if onMatch != nil {
 			if err := onMatch(trade); err != nil {
-				// Stop matching if callback fails
 				return trades, bookEvents, err
 			}
 		}
 
 		trades = append(trades, trade)
-		
+
 		order.QuantityFilled += tradeQty
 		bestAsk.QuantityFilled += tradeQty
-		
+
 		if bestAsk.Filled() {
-			ob.Asks = ob.Asks[1:]
+			pl.remove(bestNode)
+			delete(ob.orderMap, bestAsk.ID)
 			bookEvents = append(bookEvents, events.OrderBookEvent{
 				Type:         events.OrderFilled,
 				OrderID:      bestAsk.ID,
@@ -227,6 +255,10 @@ func (ob *OrderBook) matchMarketBuy(order *Order, onMatch func(Trade) error) ([]
 				Side:         "SELL",
 				Timestamp:    time.Now().Unix(),
 			})
+			if pl.size == 0 {
+				ob.removeAskPrice(bestPrice)
+				delete(ob.asks, bestPrice)
+			}
 		} else {
 			bookEvents = append(bookEvents, events.OrderBookEvent{
 				Type:         events.OrderUpdated,
@@ -239,21 +271,23 @@ func (ob *OrderBook) matchMarketBuy(order *Order, onMatch func(Trade) error) ([]
 			})
 		}
 	}
-	
+
 	return trades, bookEvents, nil
 }
 
 func (ob *OrderBook) matchMarketSell(order *Order, onMatch func(Trade) error) ([]Trade, []events.OrderBookEvent, error) {
 	trades := []Trade{}
 	bookEvents := []events.OrderBookEvent{}
-	
-	// Match against Bids regardless of price
-	for len(ob.Bids) > 0 && !order.Filled() {
-		bestBid := ob.Bids[0]
-		
+
+	for len(ob.bidPrices) > 0 && !order.Filled() {
+		bestPrice := ob.bidPrices[0]
+		pl := ob.bids[bestPrice]
+		bestNode := pl.head
+		bestBid := bestNode.order
+
 		tradePrice := bestBid.Price
 		tradeQty := min(order.Remaining(), bestBid.Remaining())
-		
+
 		trade := Trade{
 			MakerOrderID: bestBid.ID,
 			TakerOrderID: order.ID,
@@ -264,18 +298,18 @@ func (ob *OrderBook) matchMarketSell(order *Order, onMatch func(Trade) error) ([
 
 		if onMatch != nil {
 			if err := onMatch(trade); err != nil {
-				// Stop matching if callback fails
 				return trades, bookEvents, err
 			}
 		}
 
 		trades = append(trades, trade)
-		
+
 		order.QuantityFilled += tradeQty
 		bestBid.QuantityFilled += tradeQty
-		
+
 		if bestBid.Filled() {
-			ob.Bids = ob.Bids[1:]
+			pl.remove(bestNode)
+			delete(ob.orderMap, bestBid.ID)
 			bookEvents = append(bookEvents, events.OrderBookEvent{
 				Type:         events.OrderFilled,
 				OrderID:      bestBid.ID,
@@ -285,6 +319,10 @@ func (ob *OrderBook) matchMarketSell(order *Order, onMatch func(Trade) error) ([
 				Side:         "BUY",
 				Timestamp:    time.Now().Unix(),
 			})
+			if pl.size == 0 {
+				ob.removeBidPrice(bestPrice)
+				delete(ob.bids, bestPrice)
+			}
 		} else {
 			bookEvents = append(bookEvents, events.OrderBookEvent{
 				Type:         events.OrderUpdated,
@@ -297,39 +335,35 @@ func (ob *OrderBook) matchMarketSell(order *Order, onMatch func(Trade) error) ([
 			})
 		}
 	}
-	
+
 	return trades, bookEvents, nil
 }
 
 func (ob *OrderBook) addBid(order *Order) {
-	// Insert into Bids (Sorted DESC by Price, then ASC by Timestamp)
-	index := sort.Search(len(ob.Bids), func(i int) bool {
-		if ob.Bids[i].Price < order.Price {
-			return true
-		}
-		if ob.Bids[i].Price == order.Price {
-			return ob.Bids[i].Timestamp > order.Timestamp
-		}
-		return false
-	})
-	
-	ob.Bids = insert(ob.Bids, index, order)
+	// locate or create level
+	ticks := priceToTicks(order.Price)
+	pl, ok := ob.bids[ticks]
+	if !ok {
+		pl = &priceLevel{price: ticks}
+		ob.bids[ticks] = pl
+		ob.insertBidPrice(ticks)
+	}
+	// append to FIFO queue
+	node := pl.append(order)
+	ob.orderMap[order.ID] = node
 	log.Printf("Added to Bids: %v @ %v", order.Quantity, order.Price)
 }
 
 func (ob *OrderBook) addAsk(order *Order) {
-	// Insert into Asks (Sorted ASC by Price, then ASC by Timestamp)
-	index := sort.Search(len(ob.Asks), func(i int) bool {
-		if ob.Asks[i].Price > order.Price {
-			return true
-		}
-		if ob.Asks[i].Price == order.Price {
-			return ob.Asks[i].Timestamp > order.Timestamp
-		}
-		return false
-	})
-	
-	ob.Asks = insert(ob.Asks, index, order)
+	ticks := priceToTicks(order.Price)
+	pl, ok := ob.asks[ticks]
+	if !ok {
+		pl = &priceLevel{price: ticks}
+		ob.asks[ticks] = pl
+		ob.insertAskPrice(ticks)
+	}
+	node := pl.append(order)
+	ob.orderMap[order.ID] = node
 	log.Printf("Added to Asks: %v @ %v", order.Quantity, order.Price)
 }
 
