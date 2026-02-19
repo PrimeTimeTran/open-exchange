@@ -8,7 +8,7 @@ import { cn } from 'src/shared/components/cn';
 import { cookieGet } from 'src/shared/lib/cookie';
 import { fontSans } from 'src/shared/components/fonts';
 import { defaultLocale } from 'src/translation/locales';
-import { ModeProvider } from '@/providers/ModeProvider';
+import { ThemeProvider } from '@/providers/ThemeProvider';
 import { Toaster } from 'src/shared/components/ui/toaster';
 import { DesignProvider } from '@/providers/DesignProvider';
 import { getDictionary } from 'src/translation/getDictionary';
@@ -59,25 +59,18 @@ export default function RootLayout({
         )}
       >
         <ClientProviders>
+          <ThemeProvider enableSystem attribute="class" defaultTheme="system">
             <RQProvider>
               <DesignProvider>
-                <ModeProvider
-                  enableSystem
-                  attribute="class"
-                  defaultTheme="dark"
-                  disableTransitionOnChange
-                >
-                  
-                    <main>
-                      <div className="relative flex min-h-screen flex-col">
-                        <div className="flex-1">{children}</div>
-                      </div>
-                    </main>
-                    <Footer />
-                  
-                </ModeProvider>
+                <main>
+                  <div className="relative flex min-h-screen flex-col">
+                    <div className="flex-1">{children}</div>
+                  </div>
+                </main>
+                <Footer />
               </DesignProvider>
             </RQProvider>
+          </ThemeProvider>
         </ClientProviders>
         <Toaster />
       </body>
