@@ -45,7 +45,7 @@
     "proto": true,
     
     "**/.vscode": true,
-    "docs": true,
+    // "docs": true,
     "**/Dockerfile": true,
     "**/Dockerfile.dev": true,
     "**/tsconfig.json": true,

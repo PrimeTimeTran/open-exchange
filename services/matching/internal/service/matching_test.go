@@ -24,7 +24,7 @@ func setupServiceTest(startWorker bool) (*MatchingService, *engine.Engine, *test
 	
 	// Default mock behavior for background worker
 	if startWorker {
-		mockStore.On("DequeueMatches", mock.Anything).Return([]byte(nil), fmt.Errorf("queue empty"))
+		mockStore.On("DequeueMatches", mock.Anything).Return([]byte(nil), fmt.Errorf("queue empty")).Maybe()
 	}
 
 	svc := &MatchingService{
