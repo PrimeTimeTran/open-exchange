@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func setupServiceTest() (*MatchingService, *engine.Engine, *testutil.MockLedgerClient, *testutil.MockSettlementClient, *testutil.MockPublisher, *testutil.MockStore) {
+func setupServiceTest(startWorker bool) (*MatchingService, *engine.Engine, *testutil.MockLedgerClient, *testutil.MockSettlementClient, *testutil.MockPublisher, *testutil.MockStore) {
 	eng := engine.NewEngine()
 	mockLedger := new(testutil.MockLedgerClient)
 	mockSettlement := new(testutil.MockSettlementClient)
@@ -23,14 +23,27 @@ func setupServiceTest() (*MatchingService, *engine.Engine, *testutil.MockLedgerC
 	mockStore := new(testutil.MockStore)
 	
 	// Default mock behavior for background worker
-	mockStore.On("DequeueMatches", mock.Anything).Return([]byte(nil), fmt.Errorf("queue empty"))
+	if startWorker {
+		mockStore.On("DequeueMatches", mock.Anything).Return([]byte(nil), fmt.Errorf("queue empty"))
+	}
 
-	svc := NewMatchingService(eng, mockLedger, mockSettlement, mockPublisher, mockStore)
+	svc := &MatchingService{
+		Engine:           eng,
+		LedgerClient:     mockLedger,
+		SettlementClient: mockSettlement,
+		Publisher:        mockPublisher,
+		Store:            mockStore,
+	}
+	
+	if startWorker {
+		go svc.startSettlementWorker()
+	}
+	
 	return svc, eng, mockLedger, mockSettlement, mockPublisher, mockStore
 }
 
 func TestPlaceOrder(t *testing.T) {
-	svc, eng, _, _, mockPublisher, mockStore := setupServiceTest()
+	svc, eng, _, _, mockPublisher, mockStore := setupServiceTest(true)
 
 	order := testutil.NewOrder("new_order", common.OrderSide_ORDER_SIDE_BUY, 55000, 0.5)
 
@@ -49,7 +62,7 @@ func TestPlaceOrder(t *testing.T) {
 }
 
 func TestPlaceOrder_WithMatch(t *testing.T) {
-	svc, eng, _, mockSettlement, mockPublisher, mockStore := setupServiceTest()
+	svc, eng, _, mockSettlement, mockPublisher, mockStore := setupServiceTest(true)
 
 	sellOrder := testutil.NewOrder("sell_1", common.OrderSide_ORDER_SIDE_SELL, 50000, 1.0)
 	eng.ProcessOrder(engine.NewOrderFromProto(sellOrder), nil)
@@ -85,7 +98,7 @@ func TestPlaceOrder_WithMatch(t *testing.T) {
 }
 
 func TestCancelOrder(t *testing.T) {
-	svc, eng, mockLedger, _, mockPublisher, mockStore := setupServiceTest()
+	svc, eng, mockLedger, _, mockPublisher, mockStore := setupServiceTest(true)
 
 	eng.ProcessOrder(engine.NewOrderFromProto(testutil.NewOrder("order_to_cancel", common.OrderSide_ORDER_SIDE_BUY, 50000, 1.0)), nil)
 
@@ -113,7 +126,7 @@ func TestCancelOrder(t *testing.T) {
 }
 
 func TestRecoverState(t *testing.T) {
-	svc, eng, mockLedger, _, _, mockStore := setupServiceTest()
+	svc, eng, mockLedger, _, _, mockStore := setupServiceTest(true)
 
 	existingOrders := []*common.Order{
 		testutil.NewOrder("order1", common.OrderSide_ORDER_SIDE_BUY, 50000, 1.0),
@@ -143,7 +156,7 @@ func TestRecoverState(t *testing.T) {
 }
 
 func TestRecoverState_LedgerError(t *testing.T) {
-	svc, _, mockLedger, _, _, mockStore := setupServiceTest()
+	svc, _, mockLedger, _, _, mockStore := setupServiceTest(true)
 
 	mockStore.On("ListOrderBooks", mock.Anything).Return([]string{}, nil)
 	mockLedger.On("GetOpenOrders", mock.Anything, mock.Anything, mock.Anything).Return(nil, assert.AnError)

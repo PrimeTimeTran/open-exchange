@@ -73,6 +73,21 @@ func (m *MockLedgerClient) RecordOrder(ctx context.Context, in *ledger.RecordOrd
 }
 
 func (m *MockLedgerClient) GetOpenOrders(ctx context.Context, in *ledger.GetOpenOrdersRequest, opts ...grpc.CallOption) (*ledger.GetOpenOrdersResponse, error) {
+	// Variadic arguments (opts) are often tricky to match in testify/mock.
+	// Since we don't use opts in our service logic yet, we can either ignore them in matching or pass them explicitly.
+	// For simplicity in tests, let's just pass `in` to Called, effectively ignoring opts unless we want to assert on them.
+	// However, the signature requires we handle them.
+	
+	// Better approach for strict mocking:
+	// If the test calls with opts, we must match them.
+	// If the test calls without, we match nil/empty.
+	
+	// BUT, the test failure says: "Provided 2 arguments, mocked for 3 arguments".
+	// The implementation of GetOpenOrders (in the mock above) calls m.Called(ctx, in, opts).
+	// That's 3 arguments (ctx, in, opts).
+	// The test setup likely did `mockLedger.On("GetOpenOrders", mock.Anything, mock.Anything)` which is only 2 matchers!
+	// We need 3 matchers in the test setup: context, request, options.
+	
 	args := m.Called(ctx, in, opts)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)

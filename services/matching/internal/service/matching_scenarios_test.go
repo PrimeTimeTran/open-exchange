@@ -17,7 +17,7 @@ import (
 // Create 1 open ask for BTC_USD at $50,000 and then 1 open bid for BTC_USD at $49,500.
 // The matching service should not create any matches and not call settlement.
 func TestMatchingScenarios_NoMatch(t *testing.T) {
-	svc, eng, _, mockSettlement, mockPublisher, mockStore := setupServiceTest()
+	svc, eng, _, mockSettlement, mockPublisher, mockStore := setupServiceTest(true)
 
 	// 1. Setup: Place 1 Open Ask at $50,000
 	// We inject directly into the engine to simulate "Existing Orders"
@@ -57,7 +57,7 @@ func TestMatchingScenarios_NoMatch(t *testing.T) {
 // Create 1 open ask for BTC_USD at $49,000 and then 1 open bid for BTC_USD at limit of $50,000.
 // Matching service should create 1 match (Incoming Bid consumes Resting Ask).
 func TestMatchingScenarios_SingleMatch(t *testing.T) {
-	svc, eng, _, mockSettlement, mockPublisher, mockStore := setupServiceTest()
+	svc, eng, _, mockSettlement, mockPublisher, mockStore := setupServiceTest(true)
 
 	// 1. Setup: Place 1 Open Ask at $49,000
 	askOrder := testutil.NewOrder("ask_49k", common.OrderSide_ORDER_SIDE_SELL, 49000, 1.0)
@@ -102,7 +102,7 @@ func TestMatchingScenarios_SingleMatch(t *testing.T) {
 // Create 2 open ask for BTC_USD at $49,000 and then 1 open bid for BTC_USD at limit of $50,000.
 // Matching service should create 2 matches (Bid consumes Ask1, then Bid consumes Ask2).
 func TestMatchingScenarios_MultiMatch(t *testing.T) {
-	svc, eng, _, mockSettlement, mockPublisher, mockStore := setupServiceTest()
+	svc, eng, _, mockSettlement, mockPublisher, mockStore := setupServiceTest(true)
 
 	// 1. Setup: Place 2 Open Asks at $49,000 (0.5 BTC each)
 	ask1 := testutil.NewOrder("ask1", common.OrderSide_ORDER_SIDE_SELL, 49000, 0.5)
