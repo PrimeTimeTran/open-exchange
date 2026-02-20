@@ -26,10 +26,7 @@ export const fillCreateApiDoc: RouteConfig = {
   },
 };
 
-export async function fillCreateController(
-  body: unknown,
-  context: AppContext,
-) {
+export async function fillCreateController(body: unknown, context: AppContext) {
   validateHasPermission(permissions.fillCreate, context);
   return await fillCreate(body, context);
 }
@@ -38,8 +35,6 @@ export async function fillCreate(body: unknown, context: AppContext) {
   const data = fillCreateInputSchema.parse(body);
 
   const prisma = prismaAuth(context);
-
-
 
   let fill = await prisma.fill.create({
     data: {
@@ -50,7 +45,7 @@ export async function fillCreate(body: unknown, context: AppContext) {
       meta: data.meta,
       trade: prismaRelationship.connectOne(data.trade),
       importHash: data.importHash,
-    },
+    } as any,
     include: {
       trade: true,
       createdByMembership: true,

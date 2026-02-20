@@ -69,7 +69,7 @@ export async function authSignUpController(body: unknown, context: AppContext) {
     });
   }
 
-  const queries = [];
+  const queries: any[] = [];
 
   context.currentUser = user;
 
@@ -123,7 +123,7 @@ export async function authSignUpController(body: unknown, context: AppContext) {
     queries.push(...onboardSingleTenantQueries);
   }
 
-  let verifyEmailToken = null;
+  let verifyEmailToken: string | null = null;
 
   if (!emailVerified) {
     verifyEmailToken = uniqid();

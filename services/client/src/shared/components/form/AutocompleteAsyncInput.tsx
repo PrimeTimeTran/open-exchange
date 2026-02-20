@@ -60,7 +60,7 @@ export default function AutocompleteAsyncInput<T extends { id: string }>({
   const excludedIds = [
     ...(exclude?.map((item) => item?.id!) || []),
     value?.id,
-  ].filter(Boolean);
+  ].filter(Boolean) as string[];
 
   const query = useQuery({
     queryKey: [...queryId, excludedIds, searchDebounced],

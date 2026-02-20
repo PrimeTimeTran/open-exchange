@@ -55,7 +55,7 @@ export async function seedSystemAccounts(
       console.log(
         `Ensuring all asset wallets for System Account ${accountData.name} (${accountData.type})...`,
       );
-      for (const asset of assetsMap.values()) {
+      for (const asset of Array.from(assetsMap.values())) {
         const existingWallet = await prisma.wallet.findFirst({
           where: {
             tenantId,

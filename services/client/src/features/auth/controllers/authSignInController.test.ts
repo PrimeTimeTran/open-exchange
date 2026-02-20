@@ -145,7 +145,7 @@ describe('authSignIn', () => {
 
       const decodedToken = jwtVerify(token);
       let currentUser = await prisma.user.findFirstOrThrow();
-      expect(decodedToken.id).toBe(currentUser.id);
+      expect(decodedToken!.id).toBe(currentUser.id);
     });
 
     describe('invitation', () => {
@@ -413,7 +413,7 @@ describe('authSignIn', () => {
         expect(token).not.toBeNull();
 
         const decodedToken = jwtVerify(token);
-        expect(decodedToken.id).toBe(invitedUser.id);
+        expect(decodedToken!.id).toBe(invitedUser.id);
 
         invitedUser = await prisma.user.findFirstOrThrow({
           where: {

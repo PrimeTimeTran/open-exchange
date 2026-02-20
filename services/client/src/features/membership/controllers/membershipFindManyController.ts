@@ -75,7 +75,7 @@ export async function membershipFindManyController(
   }
 
   if (filter?.statuses?.length) {
-    const whereOr = [];
+    const whereOr: any[] = [];
     for (let status of filter.statuses) {
       if (status === MembershipStatus.invited) {
         whereOr.push({

@@ -41,6 +41,7 @@
   "include": [
     "next-env.d.ts",
     "src",
+    "types",
     ".next/types/**/*.ts"
   ],
   "exclude": [

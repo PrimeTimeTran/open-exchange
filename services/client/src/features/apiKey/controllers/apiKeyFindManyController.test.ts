@@ -74,7 +74,7 @@ describe('apiKeyFindMany', () => {
         name: 'Other',
         scopes: Object.values(permissions)
           .filter((permission) =>
-            permission.allowedRoles.includes(roles.custom),
+            (permission.allowedRoles as string[]).includes(roles.custom),
           )
           .map((permission) => permission.id),
         expiresAt: dayjs().add(1, 'day').toISOString(),
@@ -93,7 +93,9 @@ describe('apiKeyFindMany', () => {
       {
         name: 'Admin',
         scopes: Object.values(permissions)
-          .filter((permission) => permission.allowedRoles.includes(roles.admin))
+          .filter((permission) =>
+            (permission.allowedRoles as string[]).includes(roles.admin),
+          )
           .map((permission) => permission.id),
         expiresAt: dayjs().add(1, 'day').toISOString(),
       },

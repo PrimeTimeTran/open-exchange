@@ -29,7 +29,7 @@ export default async function LandingPage() {
         <div className="container mx-auto px-6 relative z-10 text-center space-y-8">
           <h1 className="text-5xl md:text-7xl font-display font-bold text-primary tracking-tight">
             The World's First <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-secondary">
               Open Exchange
             </span>
           </h1>
@@ -56,12 +56,12 @@ export default async function LandingPage() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
             <Link href="/auth/sign-in">
-              <Button size="lg" variant="primary" className="min-w-[160px]">
+              <Button size="lg" variant="primary" className="min-w-40">
                 Start Trading
               </Button>
             </Link>
             <Link href="/home">
-              <Button size="lg" variant="outline" className="min-w-[160px]">
+              <Button size="lg" variant="outline" className="min-w-40">
                 View Markets
               </Button>
             </Link>
@@ -177,7 +177,7 @@ export default async function LandingPage() {
               </div>
 
               {/* Center Panel: Chart Placeholder */}
-              <div className="flex-1 flex flex-col border-b md:border-b-0 md:border-r border-white/10 min-h-[300px] md:min-h-0 order-1 md:order-2">
+              <div className="flex-1 flex flex-col border-b md:border-b-0 md:border-r border-white/10 min-h-75 md:min-h-0 order-1 md:order-2">
                 <div className="h-10 border-b border-white/10 flex items-center px-4 gap-4">
                   <span className="text-white font-bold">Timeframe:</span>
                   <span className="cursor-pointer hover:text-white">1m</span>
@@ -185,7 +185,7 @@ export default async function LandingPage() {
                   <span className="cursor-pointer hover:text-white">15m</span>
                   <span className="cursor-pointer hover:text-white">1h</span>
                 </div>
-                <div className="flex-1 relative bg-gradient-to-b from-transparent to-primary/5 p-8 flex items-center justify-center">
+                <div className="flex-1 relative bg-linear-to-b from-transparent to-primary/5 p-8 flex items-center justify-center">
                   <div className="absolute inset-0 flex items-end justify-around px-8 pb-8 opacity-30">
                     {[40, 60, 45, 70, 65, 80, 75, 90, 85, 95].map((h, i) => (
                       <div
@@ -314,7 +314,7 @@ export default async function LandingPage() {
                   'Open Source Security Models',
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-3">
-                    <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="14"
@@ -613,7 +613,7 @@ function FeatureCard({
         )}
       </div>
       <h3 className="text-xl font-bold mb-3 text-on-surface">{title}</h3>
-      <p className="text-muted-foreground leading-relaxed flex-grow">
+      <p className="text-muted-foreground leading-relaxed grow">
         {description}
       </p>
       <div className="mt-6 pt-6 border-t border-outline-variant/20 flex items-center text-primary font-medium group-hover:underline cursor-pointer">

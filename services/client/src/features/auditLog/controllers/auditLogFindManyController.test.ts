@@ -65,7 +65,9 @@ describe('auditLogFindMany', () => {
       {
         name: 'Admin Api Key',
         scopes: Object.values(permissions)
-          .filter((permission) => permission.allowedRoles.includes(roles.admin))
+          .filter((permission) =>
+            (permission.allowedRoles as string[]).includes(roles.admin),
+          )
           .map((permission) => permission.id),
         expiresAt: dayjs().add(1, 'day').toISOString(),
       },

@@ -1,4 +1,5 @@
 import { prisma } from '@/prisma';
+import { InstrumentWithRelationships } from '@/features/instrument/instrumentSchemas';
 import { matchingClient } from '@/services/MatchingClient';
 import { GetOrderBookResponse } from '@/proto/matching/engine';
 import { OrderTable } from './components/OrderTable';
@@ -11,7 +12,7 @@ async function getInstrumentWithAssets(instrumentId: string) {
       instrumentId,
     );
 
-  let instrument = null;
+  let instrument: InstrumentWithRelationships | null = null;
 
   if (isUuid) {
     instrument = await prisma.instrument.findUnique({

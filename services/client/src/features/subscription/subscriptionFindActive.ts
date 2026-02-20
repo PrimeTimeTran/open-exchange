@@ -6,7 +6,7 @@ import { AppContext } from 'src/shared/controller/appContext';
 export async function subscriptionFindActive(context: AppContext) {
   const subscriptionMode = subscriptionSelectAndValidateDefaultMode(context);
 
-  let criteriaAnd = [];
+  let criteriaAnd: any[] = [];
 
   criteriaAnd.push({ status: { in: subscriptionStatuses.active } });
   criteriaAnd.push({ mode: subscriptionMode });

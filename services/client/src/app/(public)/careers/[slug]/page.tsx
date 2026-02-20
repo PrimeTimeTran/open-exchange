@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { prisma } from '@/prisma';
+import { Job } from '@prisma/client';
 import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui';
 import { Badge } from '@/shared/components/ui/badge';
@@ -118,7 +119,7 @@ export default async function JobPage({
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
       params.slug,
     );
-  let job = null;
+  let job: Job | null = null;
 
   if (isUuid) {
     job = await prisma.job.findUnique({

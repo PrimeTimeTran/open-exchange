@@ -197,7 +197,7 @@ async function matchSingleOrder(
     if (feeAccount && (buyerFeeVal.gt(0) || sellerFeeVal.gt(0))) {
       const totalFee = buyerFeeVal.add(sellerFeeVal);
       await ensureWallet(
-        tx,
+        tx as any,
         tenantId,
         feeAccount.createdByMembershipId!,
         feeAccount.createdByUserId!,
@@ -398,7 +398,7 @@ export async function seedMatchedTrades(
         where: { email: 'primetimetran1@gmail.com' },
       });
 
-      if (buyer1) {
+      if (buyer1 && superUser) {
         const sellerOrder150k = await prisma.order.findFirst({
           where: {
             createdByUserId: superUser.id,
@@ -442,7 +442,7 @@ export async function seedMatchedTrades(
         where: { email: 'primetimetran2@gmail.com' },
       });
 
-      if (buyer2) {
+      if (buyer2 && superUser) {
         const sellerOrderEth = await prisma.order.findFirst({
           where: {
             createdByUserId: superUser.id,

@@ -135,7 +135,9 @@ export async function auditLogFindManyController(
     where: {
       id: {
         in: uniq(
-          auditLogs.map((auditLog) => auditLog.membershipId).filter(Boolean),
+          auditLogs
+            .map((auditLog) => auditLog.membershipId)
+            .filter((id): id is string => Boolean(id)),
         ),
       },
     },
@@ -152,7 +154,9 @@ export async function auditLogFindManyController(
     where: {
       id: {
         in: uniq(
-          auditLogs.map((auditLog) => auditLog.apiKeyId).filter(Boolean),
+          auditLogs
+            .map((auditLog) => auditLog.apiKeyId)
+            .filter((id): id is string => Boolean(id)),
         ),
       },
     },
@@ -167,7 +171,9 @@ export async function auditLogFindManyController(
   const auditLogsWithAuthorAndApiKey = auditLogs.map((auditLog) => {
     const apiKey = apiKeys.find((apiKey) => apiKey.id === auditLog.apiKeyId);
 
-    let author = authors.find((author) => author.id === auditLog.membershipId);
+    let author = authors.find(
+      (author) => author.id === auditLog.membershipId,
+    ) as any;
 
     return {
       ...auditLog,

@@ -25,7 +25,7 @@ export default function AceWrapper({ code, language }: AceWrapperProps) {
       maxLines={Infinity}
       showPrintMargin={false}
       highlightActiveLine={false}
-      className="!bg-transparent"
+      className="bg-transparent!"
       style={{ backgroundColor: 'transparent' }}
       name={`code-window-${Math.random().toString(36).substring(7)}`}
       setOptions={{

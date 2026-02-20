@@ -5,7 +5,10 @@ import { orderBySchema } from 'src/shared/schemas/orderBySchema';
 import { z } from 'zod';
 import { instrumentEnumerators } from 'src/features/instrument/instrumentEnumerators';
 import { jsonSchema } from 'src/shared/schemas/jsonSchema';
-import { objectToUuidSchema, objectToUuidSchemaOptional } from 'src/shared/schemas/objectToUuidSchema';
+import {
+  objectToUuidSchema,
+  objectToUuidSchemaOptional,
+} from 'src/shared/schemas/objectToUuidSchema';
 import { Asset } from '@prisma/client';
 import { Order } from '@prisma/client';
 import { Trade } from '@prisma/client';
@@ -22,23 +25,19 @@ export const instrumentFilterFormSchema = z
     type: z.nativeEnum(instrumentEnumerators.type).nullable().optional(),
     status: z.nativeEnum(instrumentEnumerators.status).nullable().optional(),
     archived: z
-    .any()
-    .transform((val) =>
-      val != null && val !== ''
-        ? val === 'true' || val === true
-          ? true
-          : null
-        : null,
-    ),
+      .any()
+      .transform((val) =>
+        val != null && val !== ''
+          ? val === 'true' || val === true
+            ? true
+            : null
+          : null,
+      ),
   })
   .partial();
 
 export const instrumentFilterInputSchema = instrumentFilterFormSchema
-  .merge(
-    z.object({
-
-    }),
-  )
+  .merge(z.object({}))
   .partial();
 
 export const instrumentFindManyInputSchema = z.object({
@@ -104,8 +103,8 @@ export const instrumentUpdateBodyInputSchema =
   instrumentCreateInputSchema.partial();
 
 export interface InstrumentWithRelationships extends Instrument {
-  underlyingAsset?: Asset;
-  quoteAsset?: Asset;
+  underlyingAsset?: Asset | null;
+  quoteAsset?: Asset | null;
   orders?: Order[];
   trades?: Trade[];
   createdByMembership?: Membership;

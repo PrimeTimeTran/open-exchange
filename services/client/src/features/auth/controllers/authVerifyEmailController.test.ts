@@ -41,6 +41,7 @@ describe('authVerifyEmail', () => {
       mockSendEmail.mockClear();
 
       await authVerifyEmailRequestController(
+        {},
         await testContext({
           currentUserId: currentUser.id,
         }),
@@ -59,6 +60,7 @@ describe('authVerifyEmail', () => {
       });
 
       await authVerifyEmailRequestController(
+        {},
         await testContext({
           currentUserId: currentUser.id,
         }),
@@ -71,7 +73,7 @@ describe('authVerifyEmail', () => {
 
     it('fails when user not authenticated', async () => {
       try {
-        await authVerifyEmailRequestController(await testContext());
+        await authVerifyEmailRequestController({}, await testContext());
         fail();
       } catch (error) {
         expect(error).toBeInstanceOf(Error403);

@@ -114,7 +114,7 @@ describe('authSignUp', () => {
 
     it('returns jwt token', async () => {
       let currentUser = await prisma.user.findFirstOrThrow();
-      expect(jwtVerify(token).id).toBe(currentUser.id);
+      expect(jwtVerify(token)!.id).toBe(currentUser.id);
     });
 
     it('creates the first user', async () => {
@@ -408,7 +408,7 @@ describe('authSignUp', () => {
 
     it('returns jwt token', async () => {
       let currentUser = await prisma.user.findFirstOrThrow();
-      expect(jwtVerify(token).id).toBe(currentUser.id);
+      expect(jwtVerify(token)!.id).toBe(currentUser.id);
     });
 
     it('creates the first user', async () => {

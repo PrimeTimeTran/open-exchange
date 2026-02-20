@@ -34,7 +34,7 @@ export class FileLocalFileStorage implements FileStorageProvider {
     }
     ensureDirectoryExistence(internalUrl);
     const buffer = Buffer.from(await fileBlob.arrayBuffer());
-    await fs.writeFile(internalUrl, buffer);
+    await fs.writeFile(internalUrl, buffer as any);
     return this.downloadUrl(relativeFilePath, publicRead);
   }
 

@@ -52,7 +52,7 @@ export function auditLogReadableOperation(
 
   if (
     [auditLogOperations.update, auditLogOperations.delete].includes(
-      auditLog?.operation,
+      auditLog?.operation as any,
     )
   ) {
     if (!labelFunction) {
@@ -67,7 +67,7 @@ export function auditLogReadableOperation(
     ).trim();
   }
 
-  if ([auditLogOperations.create].includes(auditLog?.operation)) {
+  if ([auditLogOperations.create].includes(auditLog?.operation as any)) {
     if (!labelFunction) {
       return null;
     }

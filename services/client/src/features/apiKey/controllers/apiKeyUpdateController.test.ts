@@ -70,7 +70,7 @@ describe('apiKeyUpdate', () => {
         name: 'Other',
         scopes: Object.values(permissions)
           .filter((permission) =>
-            permission.allowedRoles.includes(roles.custom),
+            (permission.allowedRoles as string[]).includes(roles.custom),
           )
           .map((permission) => permission.id),
         expiresAt: dayjs().add(1, 'day').toISOString(),
@@ -89,7 +89,9 @@ describe('apiKeyUpdate', () => {
       {
         name: 'Admin',
         scopes: Object.values(permissions)
-          .filter((permission) => permission.allowedRoles.includes(roles.admin))
+          .filter((permission) =>
+            (permission.allowedRoles as string[]).includes(roles.admin),
+          )
           .map((permission) => permission.id),
         expiresAt: dayjs().add(1, 'day').toISOString(),
       },
@@ -245,7 +247,9 @@ describe('apiKeyUpdate', () => {
     // Admin roles (not allowed)
     let body = {
       scopes: Object.values(permissions)
-        .filter((permission) => permission.allowedRoles.includes(roles.admin))
+        .filter((permission) =>
+          (permission.allowedRoles as string[]).includes(roles.admin),
+        )
         .map((permission) => permission.id),
     };
 

@@ -15,7 +15,9 @@ async function buildApiKey() {
   return {
     name: 'Test API Key',
     scopes: Object.values(permissions)
-      .filter((permission) => permission.allowedRoles.includes(roles.custom))
+      .filter((permission) =>
+        (permission.allowedRoles as string[]).includes(roles.custom),
+      )
       .map((permission) => permission.id),
     expiresAt: dayjs().add(1, 'day').toISOString(),
   };
@@ -136,7 +138,9 @@ describe('apiKeyCreate', () => {
 
     // Admin roles (not allowed)
     body.scopes = Object.values(permissions)
-      .filter((permission) => permission.allowedRoles.includes(roles.admin))
+      .filter((permission) =>
+        (permission.allowedRoles as string[]).includes(roles.admin),
+      )
       .map((permission) => permission.id);
 
     try {
