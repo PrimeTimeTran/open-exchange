@@ -140,8 +140,8 @@ export function CryptoTableClient({ initialData }: CryptoTableClientProps) {
       return 0;
     })();
 
-    const aCirculatingSupply = a.meta?.circulatingSupply || 10000000; // Simplified mock logic here if needed, but sort should be consistent
-    const bCirculatingSupply = b.meta?.circulatingSupply || 10000000;
+    const aCirculatingSupply = a.meta?.circulatingSupply || 0;
+    const bCirculatingSupply = b.meta?.circulatingSupply || 0;
 
     const aMarketCap = aPrice * aCirculatingSupply;
     const bMarketCap = bPrice * bCirculatingSupply;
@@ -281,9 +281,7 @@ export function CryptoTableClient({ initialData }: CryptoTableClientProps) {
               }
             }
 
-            const circulatingSupply = row.meta?.circulatingSupply || 10000000; // Use same fallback logic or ensure data consistency upstream
-            // In render, I used random before. Ideally pass pre-calculated mock from server to keep sort stable.
-            // But for now let's just use what's in meta or a fixed fallback to avoid hydration mismatch if random.
+            const circulatingSupply = row.meta?.circulatingSupply || 0;
 
             const marketCap = price * circulatingSupply;
             const volume = row.priceData?.volume24h;
@@ -345,7 +343,7 @@ export function CryptoTableClient({ initialData }: CryptoTableClientProps) {
                 </TableCell>
                 <TableCell className="text-right text-on-surface-variant text-sm">
                   {formatCompact(circulatingSupply)?.replace('$', '')}{' '}
-                  {row.symbol}
+                  {/* {row.symbol} */}
                 </TableCell>
                 <TableCell>
                   <div className="h-10 w-35">

@@ -18,8 +18,16 @@ export async function seedAssets(
     });
 
     if (existing) {
-      console.log(`Asset ${assetData.symbol} already exists.`);
-      assetsMap.set(assetData.symbol, existing);
+      console.log(`Asset ${assetData.symbol} already exists. Updating meta...`);
+      const updated = await prisma.asset.update({
+        where: {
+          id: existing.id,
+        },
+        data: {
+          meta: (assetData as any).meta || existing.meta || {},
+        },
+      });
+      assetsMap.set(assetData.symbol, updated);
     } else {
       console.log(`Creating asset ${assetData.symbol}...`);
       const created = await prisma.asset.create({
@@ -32,6 +40,7 @@ export async function seedAssets(
           decimals: assetData.decimals,
           createdByMembershipId: membershipId,
           updatedByMembershipId: membershipId,
+          meta: (assetData as any).meta || {},
         },
       });
       assetsMap.set(assetData.symbol, created);

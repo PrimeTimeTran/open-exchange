@@ -4,10 +4,7 @@ import { fetchMarketData } from 'src/actions/market';
 import { prismaDangerouslyBypassAuth } from 'src/prisma';
 import { marketClient } from 'src/services/MarketClient';
 import { appContextForReact } from 'src/shared/controller/appContext';
-import {
-  CryptoAssetData,
-  CryptoTableClient,
-} from '@/components/crypto/crypto-table-client';
+import { CryptoTableClient } from '@/components/crypto/crypto-table-client';
 
 export default async function CryptoPage() {
   // throw new Error('Forced error for testing');
@@ -49,11 +46,6 @@ export default async function CryptoPage() {
 
       // Ensure stable mock for supply if missing
       const meta = (asset.meta as any) || {};
-      if (!meta.circulatingSupply) {
-        // Mock supply if missing
-        meta.circulatingSupply =
-          10000000 + Math.floor(Math.random() * 50000000);
-      }
 
       return {
         symbol: asset.symbol,
