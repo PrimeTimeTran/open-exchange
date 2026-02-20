@@ -1,7 +1,7 @@
 import 'src/styles/globals.css';
 import { Viewport } from 'next';
 import Script from 'next/script';
-import { Footer } from '@/components';
+// import { Footer } from '@/components';
 import { cookies } from 'next/headers';
 
 import { cn } from 'src/shared/components/cn';
@@ -67,7 +67,7 @@ export default function RootLayout({
                     <div className="flex-1">{children}</div>
                   </div>
                 </main>
-                <Footer />
+                {/* <Footer /> */}
               </DesignProvider>
             </RQProvider>
           </ThemeProvider>

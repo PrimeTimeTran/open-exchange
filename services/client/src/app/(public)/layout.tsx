@@ -1,5 +1,6 @@
 import React from 'react';
 import { cookies } from 'next/headers';
+import { Footer } from '@/components';
 import { getDictionary } from '@/translation/getDictionary';
 import { getLocaleFromCookies } from '@/translation/getLocaleFromCookies';
 
@@ -24,5 +25,10 @@ export default async function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <main>{children}</main>;
+  return (
+    <>
+      <main>{children}</main>
+      <Footer />
+    </>
+  );
 }

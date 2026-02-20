@@ -250,14 +250,14 @@ export function WatchlistSidebar() {
           </div>
 
           <div>
-            <div className="border-none">
+            {/* <div className="border-none">
               <WatchlistSection
                 title="Watchlist"
                 items={watchlist}
                 onReorder={setWatchlist}
                 allExpanded={allExpanded}
               />
-            </div>
+            </div> */}
 
             {/* Render Categories */}
             {(Object.keys(categories) as Array<keyof typeof LISTS>).map(
