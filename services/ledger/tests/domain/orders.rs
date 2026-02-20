@@ -1,10 +1,10 @@
 use crate::helpers::memory::InMemoryTestContext;
-use uuid::Uuid;
-use ledger::proto::ledger::{RecordOrderRequest, ProcessTradeRequest, GetOpenOrdersRequest};
 use ledger::proto::common::{OrderSide, OrderStatus};
-use tonic::Request;
-// Import traits to use service methods
+use ledger::proto::ledger::settlement_server::Settlement;
 use ledger::proto::ledger::order_service_server::OrderService; 
+use ledger::proto::ledger::{RecordOrderRequest, GetOpenOrdersRequest, CommitRequest, Match};
+use uuid::Uuid;
+use tonic::Request;
 
 #[tokio::test]
 async fn test_create_order_flow() {
@@ -68,18 +68,25 @@ async fn test_match_orders_market() {
     order_b.id = Uuid::new_v4().to_string();
     ctx.order_api.record_order(Request::new(RecordOrderRequest { order: Some(order_b.clone()) })).await.unwrap();
 
-    // 6. Simulate Match (RecordTrade)
-    let trade_req = ProcessTradeRequest {
+    // 6. Simulate Match (Commit)
+    let match_data = Match {
+        match_id: Uuid::new_v4().to_string(),
         maker_order_id: order_a.id.clone(),
         taker_order_id: order_b.id.clone(),
+        instrument_id: instr_id.clone(),
         price: "50000.0".to_string(),
         quantity: "1.0".to_string(),
-        timestamp: 1234567890,
-        instrument_id: instr_id.clone(),
+        taker_side: OrderSide::Sell as i32, // User B is taker (sold into User A's buy)
+        matched_at: 1234567890,
+    };
+
+    let commit_req = CommitRequest {
+        matches: vec![match_data],
+        tenant_id: ctx.tenant_id.to_string(),
     };
     
-    let trade_resp = ctx.order_api.process_trade(Request::new(trade_req)).await.expect("Failed to record trade");
-    assert!(trade_resp.into_inner().success);
+    let commit_resp = ctx.settlement_api.commit(Request::new(commit_req)).await.expect("Failed to commit trade");
+    assert!(commit_resp.into_inner().success);
 
     // 7. Verify Orders are Filled
     // list_open_orders returns "open", "partial", "new". If filled, they should be gone.
@@ -118,16 +125,23 @@ async fn test_partial_fill() {
     ctx.order_api.record_order(Request::new(RecordOrderRequest { order: Some(order_b.clone()) })).await.unwrap();
 
     // Simulate Match (0.5 BTC)
-    let trade_req = ProcessTradeRequest {
+    let match_data = Match {
+        match_id: Uuid::new_v4().to_string(),
         maker_order_id: order_a.id.clone(),
         taker_order_id: order_b.id.clone(),
+        instrument_id: instr_id.clone(),
         price: "50000.0".to_string(),
         quantity: "0.5".to_string(),
-        timestamp: 1234567890,
-        instrument_id: instr_id.clone(),
+        taker_side: OrderSide::Sell as i32,
+        matched_at: 1234567890,
+    };
+
+    let commit_req = CommitRequest {
+        matches: vec![match_data],
+        tenant_id: ctx.tenant_id.to_string(),
     };
     
-    ctx.order_api.process_trade(Request::new(trade_req)).await.expect("Failed to record trade");
+    ctx.settlement_api.commit(Request::new(commit_req)).await.expect("Failed to commit trade");
 
     // Verify Order A is Partial Fill
     let open_orders = ctx.order_api.get_open_orders(Request::new(GetOpenOrdersRequest::default())).await.unwrap().into_inner().orders;
@@ -180,26 +194,36 @@ async fn test_multi_fill() {
     ctx.order_api.record_order(Request::new(RecordOrderRequest { order: Some(order_c.clone()) })).await.unwrap();
 
     // Match A and C (1 BTC)
-    let trade_req_ac = ProcessTradeRequest {
+    let match_ac = Match {
+        match_id: Uuid::new_v4().to_string(),
         maker_order_id: order_a.id.clone(),
         taker_order_id: order_c.id.clone(),
+        instrument_id: instr_id.clone(),
         price: "50000.0".to_string(),
         quantity: "1.0".to_string(),
-        timestamp: 1234567890,
-        instrument_id: instr_id.clone(),
+        taker_side: OrderSide::Buy as i32, // User C (Buy) hit User A (Sell)
+        matched_at: 1234567890,
     };
-    ctx.order_api.process_trade(Request::new(trade_req_ac)).await.expect("Failed to record trade A-C");
+    ctx.settlement_api.commit(Request::new(CommitRequest {
+        matches: vec![match_ac],
+        tenant_id: ctx.tenant_id.to_string(),
+    })).await.expect("Failed to commit trade A-C");
 
     // Match B and C (1 BTC)
-    let trade_req_bc = ProcessTradeRequest {
+    let match_bc = Match {
+        match_id: Uuid::new_v4().to_string(),
         maker_order_id: order_b.id.clone(),
         taker_order_id: order_c.id.clone(),
+        instrument_id: instr_id.clone(),
         price: "50000.0".to_string(),
         quantity: "1.0".to_string(),
-        timestamp: 1234567891,
-        instrument_id: instr_id.clone(),
+        taker_side: OrderSide::Buy as i32,
+        matched_at: 1234567891,
     };
-    ctx.order_api.process_trade(Request::new(trade_req_bc)).await.expect("Failed to record trade B-C");
+    ctx.settlement_api.commit(Request::new(CommitRequest {
+        matches: vec![match_bc],
+        tenant_id: ctx.tenant_id.to_string(),
+    })).await.expect("Failed to commit trade B-C");
 
     // Verify All Filled
     let open_orders = ctx.order_api.get_open_orders(Request::new(GetOpenOrdersRequest::default())).await.unwrap().into_inner().orders;

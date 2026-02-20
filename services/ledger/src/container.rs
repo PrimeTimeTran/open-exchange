@@ -1,3 +1,4 @@
+use crate::infra::matching_gateway::GrpcMatchingGateway;
 use crate::infra::transaction::PostgresTransactionManager;
 use crate::infra::repositories::{
     PostgresFillRepository,
@@ -75,11 +76,14 @@ impl Services {
         
         let tx_manager = Arc::new(PostgresTransactionManager::new(db_pool.clone()));
 
+        let gateway = Arc::new(GrpcMatchingGateway::new(matching_client));
+
         let order_svc = Arc::new(OrderService::new(
             order_repo.clone(), 
             wallet_svc.clone(), 
             asset_svc.clone(),
             Some(tx_manager.clone()),
+            Some(gateway),
         ));
 
         let ledger_svc = Arc::new(LedgerService::new(
@@ -109,7 +113,7 @@ impl Services {
         let withdrawal_api = WithdrawalServiceImpl::new(withdrawal_svc);
         let settlement_api = SettlementServiceImpl::new(settlement_svc);
         let deposit_api = DepositServiceImpl::new(deposit_svc, wallet_svc.clone());
-        let order_api = OrderServiceImpl::new(order_svc, asset_svc, fill_svc.repo().clone(), matching_client);
+        let order_api = OrderServiceImpl::new(order_svc, fill_svc.clone());
 
         Self {
             user: user_api,

@@ -11,12 +11,18 @@ use std::str::FromStr;
 use rust_decimal::Decimal;
 use rust_decimal::MathematicalOps;
 
+#[tonic::async_trait]
+pub trait MatchingGateway: Send + Sync {
+    async fn place_order(&self, order: &Order) -> Result<()>;
+}
+
 #[derive(Clone)]
 pub struct OrderService {
     tx_manager: Option<Arc<dyn TransactionManager>>,
     repo: Arc<dyn OrderRepository>,
     asset_service: Arc<AssetService>,
     wallet_service: Arc<WalletService>,
+    matching_gateway: Option<Arc<dyn MatchingGateway>>,
 }
 
 impl fmt::Debug for OrderService {
@@ -31,35 +37,52 @@ impl OrderService {
         wallet_service: Arc<WalletService>,
         asset_service: Arc<AssetService>,
         tx_manager: Option<Arc<dyn TransactionManager>>,
+        matching_gateway: Option<Arc<dyn MatchingGateway>>,
     ) -> Self {
-        Self { repo, wallet_service, asset_service, tx_manager }
+        Self { repo, wallet_service, asset_service, tx_manager, matching_gateway }
     }
 
     pub async fn create_order(&self, order: Order) -> Result<Order> {
+        // Validate Instrument first
+        let instr_uuid = order.instrument_id.to_string();
+        if self.asset_service.get_instrument(&instr_uuid).await?.is_none() {
+             return Err(AppError::NotFound(format!("Instrument {} not found", instr_uuid)));
+        }
+
         if let Ok(Some(existing)) = self.repo.get(order.id).await {
             // Idempotency check
             tracing::info!(order_id = %order.id, "Order already exists, skipping creation");
             return Ok(existing);
         }
 
-        // Use transaction if tx_manager is available
-        if let Some(tx_manager) = &self.tx_manager {
+        let created_order = if let Some(tx_manager) = &self.tx_manager {
             let mut tx = tx_manager.begin().await?;
             
             // Bypass RLS for system operations if needed, or rely on service user
-            // In settlement service we saw RLS bypass, here we might need it too or assume
-            // the service connects as a superuser/service role. Let's keep it simple for now.
-
             self.validate_and_reserve_funds_with_tx(&mut *tx, &order).await?;
-            let created_order = self.repo.create_with_tx(&mut *tx, order).await?;
+            let o = self.repo.create_with_tx(&mut *tx, order.clone()).await?;
             
             tx.commit().await?;
-            Ok(created_order)
+            o
         } else {
             // InMemory for Testing scenarios - no transactions, but we still want to validate funds
             self.validate_and_reserve_funds(&order).await?;
-            self.repo.create(order).await
+            self.repo.create(order.clone()).await?
+        };
+
+        // Side Effect: Push to Matching Engine
+        // Note: Ideally this should be part of the transaction via Outbox pattern to ensure atomicity,
+        // but for now, we do it after commit. If this fails, the order is in Ledger but not Matching (inconsistent).
+        // The Matching Engine's "RecoverState" from Ledger fixes this eventual consistency issue.
+        if let Some(gateway) = &self.matching_gateway {
+            if let Err(e) = gateway.place_order(&created_order).await {
+                tracing::error!(order_id = %created_order.id, error = %e, "Failed to push order to matching engine");
+                // We don't fail the request because the order is persisted and funds locked.
+                // A background reconciliation process (or matching engine recovery) will pick it up.
+            }
         }
+
+        Ok(created_order)
     }
 
     pub async fn get_order(&self, id: Uuid) -> Result<Option<Order>> {
@@ -177,7 +200,11 @@ impl OrderService {
              Self::mutate_wallet_balance(&mut wallet, amount_atomic, is_reservation)?;
              self.wallet_service.update_wallet_with_tx(tx, wallet).await.map_err(|e| AppError::Internal(e.to_string()))?;
         } else if is_reservation {
-            return Err(AppError::ValidationError("Wallet for required asset not found in account".to_string()));
+            return Err(AppError::InsufficientFunds {
+                asset: asset_id,
+                required: amount_atomic.to_string(),
+                available: "0".to_string(),
+            });
         }
         Ok(())
     }
@@ -187,6 +214,7 @@ impl OrderService {
              Self::mutate_wallet_balance(&mut wallet, amount_atomic, is_reservation)?;
              self.wallet_service.update_wallet(wallet).await.map_err(|e| AppError::Internal(e.to_string()))?;
         } else if is_reservation {
+            // Note: In real app we should thread the asset_id here to give better error
             return Err(AppError::ValidationError("Wallet for required asset not found in account".to_string()));
         }
         Ok(())
@@ -218,20 +246,6 @@ impl OrderService {
     }
 
     // --- Order Updates ---
-
-    pub async fn fill_order(&self, id: Uuid, fill_qty: Decimal, _fill_price: Decimal) -> Result<()> {
-        if let Some(order) = self.repo.get(id).await? {
-            let new_filled = order.filled_quantity + fill_qty;
-            let status = self.determine_status(new_filled, order.quantity);
-
-            self.repo.update_filled_amount(id, new_filled).await?;
-            self.repo.update_status(id, status).await?;
-            
-            // TODO: Update wallet balances (unlock funds, transfer assets)
-            // For this task, we focus on order status updates as requested by the tests.
-        }
-        Ok(())
-    }
 
     pub async fn update_status_with_tx(&self, tx: &mut dyn RepositoryTransaction, order_id_str: &str, trade_qty: Decimal) -> Result<()> {
         let order_uuid = self.parse_uuid(order_id_str)?;

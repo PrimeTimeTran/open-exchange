@@ -185,6 +185,7 @@ async fn test_trade_processor_flow() {
         wallet_service.clone(),
         asset_service,
         None,
+        None,
     ));
     
     let fill_service = Arc::new(ledger::domain::fills::service::FillService::new(ctx.fill_repo.clone()));

@@ -24,7 +24,6 @@ impl AssetService {
         self.repo.get(uuid).await
     }
 
-
     pub async fn get_asset_by_symbol(&self, symbol: &str) -> Result<Option<common::Asset>> {
         self.repo.get_by_symbol(symbol).await
     }

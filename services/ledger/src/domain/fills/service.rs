@@ -48,4 +48,18 @@ impl FillService {
     pub async fn save_fill(&self, fill: Fill) -> Result<Fill> {
         self.repo.create(fill).await
     }
+
+    pub async fn get_trades_by_instrument(
+        &self, 
+        instrument_id: Uuid, 
+        start_time: chrono::DateTime<chrono::Utc>, 
+        end_time: chrono::DateTime<chrono::Utc>
+    ) -> Result<Vec<Fill>> {
+        let fills = self.repo.list_by_instrument_and_time(instrument_id, start_time, end_time).await?;
+        
+        // Filter for Taker fills only to represent unique trades
+        Ok(fills.into_iter()
+            .filter(|f| f.role == "taker")
+            .collect())
+    }
 }

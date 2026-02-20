@@ -1,11 +1,12 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
-use std::sync::Arc;
 use uuid::Uuid;
 use chrono::Utc;
+use std::sync::Arc;
+use tonic::Request;
+use std::str::FromStr;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
-use std::str::FromStr;
 
 use ledger::domain::orders::model::{Order, OrderSide, OrderType, OrderStatus};
 use ledger::proto::common::{Trade, Instrument};
@@ -13,41 +14,58 @@ use ledger::domain::transaction::TransactionManager;
 
 // Services
 use ledger::domain::{
-    orders::OrderService,
-    accounts::AccountService,
-    wallets::WalletService,
-    assets::AssetService,
-    deposits::DepositService,
-    withdrawals::WithdrawalService,
     users::UserService,
+    orders::OrderService,
+    assets::AssetService,
+    wallets::WalletService,
+    accounts::AccountService,
+    deposits::DepositService,
     fills::service::FillService,
     ledger::service::LedgerService,
-    settlement::service::SettlementService,
+    withdrawals::WithdrawalService,
     fees::service::StandardFeeService,
+    settlement::service::SettlementService,
 };
 
 // API Implementations
 use ledger::api::{
-    orders::OrderServiceImpl,
-    accounts::AccountServiceImpl,
-    wallets::WalletServiceImpl,
-    assets::AssetServiceImpl,
-    deposits::DepositServiceImpl,
-    withdrawals::WithdrawalServiceImpl,
     users::UserServiceImpl,
+    assets::AssetServiceImpl,
+    orders::OrderServiceImpl,
+    wallets::WalletServiceImpl,
+    accounts::AccountServiceImpl,
+    deposits::DepositServiceImpl,
+    settlement::SettlementServiceImpl,
+    withdrawals::WithdrawalServiceImpl,
 };
 
 // Repositories
 use ledger::infra::repositories::{
     InMemoryOrderRepository, 
-    InMemoryInstrumentRepository, 
-    InMemoryAssetRepository, 
-    InMemoryAccountRepository, 
-    InMemoryWalletRepository, 
     InMemoryFillRepository,
+    InMemoryAssetRepository, 
+    InMemoryTradeRepository,
+    InMemoryWalletRepository, 
     InMemoryLedgerRepository, 
-    InMemoryTradeRepository
+    InMemoryAccountRepository, 
+    InMemoryInstrumentRepository, 
 };
+
+// Proto Requests
+
+use ledger::proto::ledger::{
+    CreateAssetRequest, 
+    CreateAccountRequest, 
+    CreateWalletRequest, 
+    CreateDepositRequest,
+    CreateInstrumentRequest, 
+};
+
+// Proto Traits (Aliased to avoid conflicts with Domain Services)
+use ledger::proto::ledger::asset_service_server::AssetService as AssetServiceTrait;
+use ledger::proto::ledger::account_service_server::AccountService as AccountServiceTrait;
+use ledger::proto::ledger::wallet_service_server::WalletService as WalletServiceTrait;
+use ledger::proto::ledger::deposit_service_server::DepositService as DepositServiceTrait;
 
 // Transaction
 use ledger::infra::transaction::InMemoryTransactionManager;
@@ -87,6 +105,7 @@ pub struct InMemoryTestContext {
     pub deposit_api: DepositServiceImpl,
     pub withdrawal_api: WithdrawalServiceImpl,
     pub user_api: UserServiceImpl,
+    pub settlement_api: SettlementServiceImpl,
 
     // Test Data
     pub tenant_id: Uuid,
@@ -127,6 +146,7 @@ impl InMemoryTestContext {
             wallet_service.clone(), 
             asset_service.clone(), 
             Some(tx_manager.clone()),
+            None,
         ));
 
         let ledger_service = Arc::new(LedgerService::new(
@@ -149,13 +169,14 @@ impl InMemoryTestContext {
         ));
 
         // 3. Initialize API Services
-        let order_api = OrderServiceImpl::new(order_service.clone(), asset_service.clone(), fill_repo.clone(), None);
+        let order_api = OrderServiceImpl::new(order_service.clone(), fill_service.clone());
         let account_api = AccountServiceImpl::new(account_service.clone());
         let wallet_api = WalletServiceImpl::new(wallet_service.clone());
         let asset_api = AssetServiceImpl::new(asset_service.clone());
         let deposit_api = DepositServiceImpl::new(deposit_service.clone(), wallet_service.clone());
         let withdrawal_api = WithdrawalServiceImpl::new(withdrawal_service.clone());
         let user_api = UserServiceImpl::new(user_service.clone());
+        let settlement_api = SettlementServiceImpl::new(settlement_service.clone());
 
         // 4. Setup Default Data
         let tenant_id = Uuid::new_v4();
@@ -233,6 +254,7 @@ impl InMemoryTestContext {
             deposit_api,
             withdrawal_api,
             user_api,
+            settlement_api,
 
             tenant_id,
             user_id,
@@ -322,10 +344,6 @@ impl InMemoryTestContext {
     }
 
     pub async fn create_asset_api(&self, symbol: &str, klass: &str, precision: i32) -> String {
-        use tonic::Request;
-        use ledger::proto::ledger::CreateAssetRequest;
-        use ledger::proto::ledger::asset_service_server::AssetService;
-
         let req = Request::new(CreateAssetRequest {
             symbol: symbol.to_string(),
             klass: klass.to_string(),
@@ -335,10 +353,6 @@ impl InMemoryTestContext {
     }
 
     pub async fn create_instrument_api(&self, symbol: &str, base_id: &str, quote_id: &str) -> String {
-        use tonic::Request;
-        use ledger::proto::ledger::CreateInstrumentRequest;
-        use ledger::proto::ledger::asset_service_server::AssetService;
-
         let req = Request::new(CreateInstrumentRequest {
             symbol: symbol.to_string(),
             r#type: "spot".to_string(),
@@ -349,10 +363,6 @@ impl InMemoryTestContext {
     }
 
     pub async fn create_account_api(&self, user_id: impl ToString, type_: &str) -> String {
-        use tonic::Request;
-        use ledger::proto::ledger::CreateAccountRequest;
-        use ledger::proto::ledger::account_service_server::AccountService;
-
         let req = Request::new(CreateAccountRequest {
             user_id: user_id.to_string(),
             r#type: type_.to_string(),
@@ -361,10 +371,6 @@ impl InMemoryTestContext {
     }
 
     pub async fn create_wallet_api(&self, account_id: impl ToString, asset_id: impl ToString) -> String {
-        use tonic::Request;
-        use ledger::proto::ledger::CreateWalletRequest;
-        use ledger::proto::ledger::wallet_service_server::WalletService;
-
         let req = Request::new(CreateWalletRequest {
             account_id: account_id.to_string(),
             asset_id: asset_id.to_string(),
@@ -373,10 +379,6 @@ impl InMemoryTestContext {
     }
 
     pub async fn deposit_funds_api(&self, wallet_id: impl ToString, amount: &str) {
-        use tonic::Request;
-        use ledger::proto::ledger::CreateDepositRequest;
-        use ledger::proto::ledger::deposit_service_server::DepositService;
-
         let req = Request::new(CreateDepositRequest {
             wallet_id: wallet_id.to_string(),
             amount: amount.to_string(),
@@ -384,7 +386,6 @@ impl InMemoryTestContext {
         });
         self.deposit_api.create_deposit(req).await.unwrap();
     }
-
 
     pub fn create_order_object(
         &self,

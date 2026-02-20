@@ -81,7 +81,7 @@ mod tests {
 
         // Service with FAILING Repo
         let order_repo = Arc::new(FailingOrderRepository);
-        let order_service = OrderService::new(order_repo, wallet_service.clone(), asset_service, None);
+        let order_service = OrderService::new(order_repo, wallet_service.clone(), asset_service, None, None);
 
         // Action: Create Order
         // 1.0 @ 100.0 = 100 USD -> 10000 atomic.
