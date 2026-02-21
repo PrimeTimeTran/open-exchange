@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -34,9 +35,19 @@ var (
 func main() {
 	flag.Parse()
 
+	// Handle PORT env var for Render
+	if portEnv := os.Getenv("PORT"); portEnv != "" {
+		if p, err := strconv.Atoi(portEnv); err == nil {
+			*port = p
+		}
+	}
+
 	// 1. Configuration
 	ledgerAddr := getEnv("LEDGER_URL", "ledger:50052")
 	redisAddr := getEnv("REDIS_URL", "redis:6379")
+
+	// Start Health Check early so deployment succeeds even if Ledger is down
+	go system.StartHealthServer(":8080")
 
 	// 2. Infrastructure Setup
 	ledgerConn, ledgerClient, settlementClient := connectToLedger(ledgerAddr)
@@ -49,11 +60,8 @@ func main() {
 	eng := engine.NewEngine()
 	svc := service.NewMatchingService(eng, ledgerClient, settlementClient, publisher, redisStore)
 
-	// Start Health Check early so deployment succeeds even if Ledger is down
-	go system.StartHealthServer(":8080")
-
 	// 4. State Recovery
-	recoverState(svc)
+	go recoverState(svc)
 
 	// 5. Server Startup
 	startServer(svc)
@@ -92,7 +100,7 @@ func connectToLedger(addr string) (*grpc.ClientConn, ledger.OrderServiceClient, 
 	}
 
 	// Block until connection is ready (helps surface real errors)
-	opts = append(opts, grpc.WithBlock())
+	// opts = append(opts, grpc.WithBlock())
 
 	log.Printf("Dialing Ledger Service target: %s", addr)
 
