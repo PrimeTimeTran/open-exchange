@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strings"
 
 	"time"
 
@@ -16,9 +17,18 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-const port = ":50053"
 
 func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "50053"
+	}
+	if !strings.Contains(port, ":") {
+		port = ":" + port
+	}
+
+	log.Printf("Starting server on port: %s (raw PORT: %s)", port, os.Getenv("PORT"))
+
 	redisUrl := os.Getenv("REDIS_URL")
 	if redisUrl == "" {
 		redisUrl = "redis://localhost:6379"

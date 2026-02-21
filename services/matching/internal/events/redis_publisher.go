@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -13,12 +14,26 @@ type RedisPublisher struct {
 }
 
 func NewRedisPublisher(addr string) (*RedisPublisher, error) {
-	client := redis.NewClient(&redis.Options{
-		Addr: addr,
-	})
+	var client *redis.Client
+	var err error
+
+	// If it's a full redis:// or rediss:// URL, parse it
+	if strings.HasPrefix(addr, "redis://") || strings.HasPrefix(addr, "rediss://") {
+		var opt *redis.Options
+		opt, err = redis.ParseURL(addr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid redis url: %w", err)
+		}
+		client = redis.NewClient(opt)
+	} else {
+		// Otherwise treat it as host:port (dev mode)
+		client = redis.NewClient(&redis.Options{
+			Addr: addr,
+		})
+	}
 
 	// Test connection
-	_, err := client.Ping(context.Background()).Result()
+	_, err = client.Ping(context.Background()).Result()
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to redis: %w", err)
 	}

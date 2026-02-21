@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/open-exchange/market/internal/backfill"
@@ -17,19 +18,30 @@ type RedisStore struct {
 // Compile-time check to ensure RedisStore implements Store
 var _ Store = (*RedisStore)(nil)
 
-func NewStore(redisUrl string) (*RedisStore, error) {
-	opts, err := redis.ParseURL(redisUrl)
-	if err != nil {
-		return nil, err
+func NewStore(redisAddr string) (*RedisStore, error) {
+	var client *redis.Client
+	var err error
+
+	// If full Redis URL (production)
+	if strings.HasPrefix(redisAddr, "redis://") || strings.HasPrefix(redisAddr, "rediss://") {
+		var opts *redis.Options
+		opts, err = redis.ParseURL(redisAddr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid redis url: %w", err)
+		}
+		client = redis.NewClient(opts)
+	} else {
+		// Dev mode: host:port
+		client = redis.NewClient(&redis.Options{
+			Addr: redisAddr,
+		})
 	}
 
-	client := redis.NewClient(opts)
-	
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := client.Ping(ctx).Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to connect to redis: %w", err)
 	}
 
 	return &RedisStore{client: client}, nil

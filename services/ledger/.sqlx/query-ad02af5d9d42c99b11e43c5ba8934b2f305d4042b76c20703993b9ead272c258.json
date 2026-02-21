@@ -1,0 +1,106 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT * FROM \"Trade\" WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "tenantId",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "createdAt",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 3,
+        "name": "createdByUserId",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 4,
+        "name": "createdByMembershipId",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 5,
+        "name": "updatedAt",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 6,
+        "name": "updatedByUserId",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 7,
+        "name": "updatedByMembershipId",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 8,
+        "name": "archivedAt",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 9,
+        "name": "archivedByMembershipId",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 10,
+        "name": "importHash",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 11,
+        "name": "price",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 12,
+        "name": "quantity",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 13,
+        "name": "meta",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 14,
+        "name": "instrumentId",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "ad02af5d9d42c99b11e43c5ba8934b2f305d4042b76c20703993b9ead272c258"
+}

@@ -16,11 +16,23 @@ type RedisStore struct {
 }
 
 func NewRedisStore(addr string) (*RedisStore, error) {
-	client := redis.NewClient(&redis.Options{
-		Addr: addr,
-	})
+	var client *redis.Client
+	var err error
 
-	if _, err := client.Ping(context.Background()).Result(); err != nil {
+	if strings.HasPrefix(addr, "redis://") || strings.HasPrefix(addr, "rediss://") {
+		var opt *redis.Options
+		opt, err = redis.ParseURL(addr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid redis url: %w", err)
+		}
+		client = redis.NewClient(opt)
+	} else {
+		client = redis.NewClient(&redis.Options{
+			Addr: addr,
+		})
+	}
+
+	if _, err = client.Ping(context.Background()).Result(); err != nil {
 		return nil, fmt.Errorf("failed to connect to redis: %w", err)
 	}
 

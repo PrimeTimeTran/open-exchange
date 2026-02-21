@@ -1,0 +1,102 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT \n                id, \"tradeId\" as \"trade_id!\", \"orderId\" as \"order_id!\", \"tenantId\" as \"tenant_id!\",\n                \"instrumentId\" as \"instrument_id!\", price, quantity, fee as \"fee!\",\n                \"feeCurrency\" as \"fee_currency!\", role, side, meta, \"createdAt\" as created_at,\n                \"updatedAt\" as updated_at\n            FROM \"Fill\" \n            WHERE \"instrumentId\" = $1 \n            AND \"createdAt\" >= $2 \n            AND \"createdAt\" <= $3\n            ORDER BY \"createdAt\" ASC\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "trade_id!",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "order_id!",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "tenant_id!",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 4,
+        "name": "instrument_id!",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 5,
+        "name": "price",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 6,
+        "name": "quantity",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 7,
+        "name": "fee!",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 8,
+        "name": "fee_currency!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "role",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 10,
+        "name": "side",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 11,
+        "name": "meta",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 12,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 13,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "04c3c2ec6f270b62aa223b70518cd8239ca0e013ec0716f03f2fc1189e66342b"
+}

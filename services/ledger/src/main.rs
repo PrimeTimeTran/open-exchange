@@ -41,8 +41,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let services = Services::new(db_pool.clone(), matching_client);
 
     // 5. Start gRPC Server
-    let addr = format!("[::]:{}", config.port).parse()?;
+    let port = std::env::var("PORT")
+        .unwrap_or_else(|_| config.port.to_string());
+
+    let addr = format!("0.0.0.0:{}", port).parse()?;
     tracing::info!(address = %addr, "LedgerService listening");
+
+    // 6. Start Health Check Server
+    // We spawn it BEFORE blocking on serve so it actually runs
+    let health_port = 8081;
+    tokio::spawn(async move {
+        system::start_health_server(health_port).await;
+    });
 
     Server::builder()
         .add_service(UserServiceServer::new(services.user))
@@ -56,11 +66,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .serve(addr)
         .await?;
 
-    // 6. Start Health Check Server
-    let health_port = 8081;
-    tokio::spawn(async move {
-        system::start_health_server(health_port).await;
-    });
     Ok(())
 }
 

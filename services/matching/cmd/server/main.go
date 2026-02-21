@@ -11,7 +11,10 @@ import (
 	"syscall"
 	"time"
 
+	"strings"
+
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/open-exchange/matching_engine/internal/engine"
@@ -46,6 +49,9 @@ func main() {
 	eng := engine.NewEngine()
 	svc := service.NewMatchingService(eng, ledgerClient, settlementClient, publisher, redisStore)
 
+	// Start Health Check early so deployment succeeds even if Ledger is down
+	go system.StartHealthServer(":8080")
+
 	// 4. State Recovery
 	recoverState(svc)
 
@@ -66,11 +72,38 @@ func getEnv(key, fallback string) string {
 
 func connectToLedger(addr string) (*grpc.ClientConn, ledger.OrderServiceClient, ledger.SettlementClient) {
 	log.Printf("Connecting to Ledger Service at %s...", addr)
-	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	var opts []grpc.DialOption
+
+	// If using a public HTTPS URL (Render Web Service)
+	if strings.HasPrefix(addr, "https://") {
+		addr = strings.TrimPrefix(addr, "https://")
+
+		// Ensure port 443 if not specified
+		if !strings.Contains(addr, ":") {
+			addr = addr + ":443"
+		}
+
+		creds := credentials.NewClientTLSFromCert(nil, "")
+		opts = append(opts, grpc.WithTransportCredentials(creds))
+	} else {
+		// Internal private service (e.g., "ledger:50051")
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	}
+
+	// Block until connection is ready (helps surface real errors)
+	opts = append(opts, grpc.WithBlock())
+
+	log.Printf("Dialing Ledger Service target: %s", addr)
+
+	conn, err := grpc.Dial(addr, opts...)
 	if err != nil {
 		log.Fatalf("did not connect to ledger: %v", err)
 	}
-	return conn, ledger.NewOrderServiceClient(conn), ledger.NewSettlementClient(conn)
+
+	return conn,
+		ledger.NewOrderServiceClient(conn),
+		ledger.NewSettlementClient(conn)
 }
 
 func setupPublisher(redisAddr string) events.Publisher {
@@ -123,9 +156,6 @@ func startServer(svc *service.MatchingService) {
 	
 	// Register services
 	pb.RegisterMatchingServer(s, server.NewMatchingServer(svc))
-
-	// Start Health Check
-	go system.StartHealthServer(":8080")
 
 	// Start gRPC Server
 	go func() {
