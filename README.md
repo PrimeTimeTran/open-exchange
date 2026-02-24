@@ -1,12 +1,14 @@
 # Open Exchange
 
-![Preview](./docs/architecture.png)
+![Preview](./docs/preview.png)
 
 https://open-exchange-one.vercel.app/
 
 A multi-service monorepo for a modern trading exchange.
 
 ## Architecture
+
+![Preview](./docs/architecture.png)
 
 - **Client (`services/client`)**: Next.js frontend application.
 - **Ledger (`services/ledger`)**: Rust-based high-performance ledger.
