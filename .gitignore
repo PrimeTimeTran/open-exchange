@@ -4,6 +4,7 @@ node_modules
 target
 **/target
 */.next
+.env
 */.env
 **/.env
 */.env.test

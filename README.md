@@ -2,6 +2,8 @@
 
 ![Preview](./docs/architecture.png)
 
+https://open-exchange-one.vercel.app/
+
 A multi-service monorepo for a modern trading exchange.
 
 ## Architecture
