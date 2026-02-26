@@ -3,7 +3,7 @@ use helpers::memory::InMemoryTestContext;
 use ledger::domain::fees::constants::FeeConstants;
 use ledger::domain::fees::service::{FeeService, StandardFeeService};
 use rust_decimal::Decimal;
-use rust_decimal::prelude::FromPrimitive;
+use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
 use std::str::FromStr;
 
 fn to_atomic_usd(amount: f64) -> Decimal {

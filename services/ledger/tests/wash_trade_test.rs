@@ -1,6 +1,8 @@
 mod helpers;
 use helpers::memory::InMemoryTestContext;
 use rust_decimal::Decimal;
+use rust_decimal::prelude::ToPrimitive;
+use ledger::domain::orders::OrderRepository;
 use std::str::FromStr;
 
 macro_rules! assert_decimal_val_eq {

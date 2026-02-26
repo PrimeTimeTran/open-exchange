@@ -4,7 +4,7 @@ use ledger::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
 use ledger::domain::fees::constants::FeeConstants;
 use ledger::error::AppError;
 use rust_decimal::Decimal;
-use rust_decimal::prelude::FromPrimitive;
+use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
 use std::str::FromStr;
 use uuid::Uuid;
 use chrono::Utc;
