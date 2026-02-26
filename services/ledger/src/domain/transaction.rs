@@ -12,20 +12,14 @@
 /// - **`RepositoryTransaction`**: Trait object representing an active transaction. Passed to repositories.
 /// - **`Transaction`**: Extension of `RepositoryTransaction` that adds `commit()` and `rollback()` control for the Service layer.
 ///
-/// ## Unsafe Inner Pointer
-/// The `get_inner_ptr()` method is a necessary workaround to allow downcasting `&mut dyn RepositoryTransaction` back to a concrete
-/// `sqlx::Transaction` within Postgres repositories. This bypasses lifetime limitations of Rust's `Any` trait for mutable references.
-/// It is safe as long as the `TransactionManager` and Repositories are wired correctly (e.g., Postgres Manager with Postgres Repos).
+/// ## Downcasting
+/// `as_any()` is provided to allow repositories to safely downcast the transaction object to their concrete implementation (e.g., `PostgresTransaction`) at runtime.
 use crate::error::Result;
 use async_trait::async_trait;
 use std::any::Any;
 
 pub trait RepositoryTransaction: Send {
     fn as_any(&mut self) -> &mut dyn Any;
-    /// Unsafe because strict type checking is bypassed.
-    /// Implementations must return a raw pointer to the underlying transaction object.
-    /// Callers must know what type to cast it back to.
-    unsafe fn get_inner_ptr(&mut self) -> *mut ();
 }
 
 #[async_trait]

@@ -1,9 +1,10 @@
 use crate::domain::orders::{Order, OrderRepository, OrderSide, OrderStatus, OrderType};
 use crate::error::{AppError, Result};
+use crate::infra::transaction::PostgresTransaction;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
-use sqlx::{FromRow, PgPool, Postgres, Transaction};
+use sqlx::{FromRow, PgPool};
 use std::str::FromStr;
 use uuid::Uuid;
 
@@ -67,29 +68,29 @@ use crate::domain::transaction::RepositoryTransaction;
 #[async_trait]
 impl OrderRepository for PostgresOrderRepository {
     async fn create(&self, order: Order) -> Result<Order> {
-        let (created_at, updated_at): (DateTime<Utc>, DateTime<Utc>) = sqlx::query_as(
-            r#"
+        let (created_at, updated_at): (DateTime<Utc>, DateTime<Utc>) = sqlx
+            ::query_as(
+                r#"
             INSERT INTO "Order" (id, "tenantId", "accountId", "instrumentId", side, type, quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "createdByMembershipId", "updatedByMembershipId")
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NULL, NULL, NULL, NULL)
             RETURNING "createdAt", "updatedAt"
             "#
-        )
-        .bind(order.id)
-        .bind(order.tenant_id)
-        .bind(order.account_id)
-        .bind(order.instrument_id)
-        .bind(order.side.to_string())
-        .bind(order.r#type.to_string())
-        .bind(order.quantity)
-        .bind(order.price)
-        .bind(order.status.to_string())
-        .bind(order.filled_quantity)
-        .bind(&order.meta)
-        .bind(order.created_at)
-        .bind(order.updated_at)
-        .fetch_one(&self.pool)
-        .await
-        .map_err(AppError::DatabaseError)?;
+            )
+            .bind(order.id)
+            .bind(order.tenant_id)
+            .bind(order.account_id)
+            .bind(order.instrument_id)
+            .bind(order.side.to_string())
+            .bind(order.r#type.to_string())
+            .bind(order.quantity)
+            .bind(order.price)
+            .bind(order.status.to_string())
+            .bind(order.filled_quantity)
+            .bind(&order.meta)
+            .bind(order.created_at)
+            .bind(order.updated_at)
+            .fetch_one(&self.pool).await
+            .map_err(AppError::DatabaseError)?;
 
         let mut created_order = order;
         created_order.created_at = created_at;
@@ -103,33 +104,34 @@ impl OrderRepository for PostgresOrderRepository {
         tx: &mut dyn RepositoryTransaction,
         order: Order,
     ) -> Result<Order> {
-        // SAFETY: We know that in the Postgres implementation, the RepositoryTransaction is always a PostgresTransaction.
-        // We use get_inner_ptr() to bypass 'static lifetime requirement of Any.
-        let tx_ptr = unsafe { tx.get_inner_ptr() };
-        let tx = unsafe { &mut *(tx_ptr as *mut Transaction<'_, Postgres>) };
-        let (created_at, updated_at): (DateTime<Utc>, DateTime<Utc>) = sqlx::query_as(
-            r#"
+        let tx = tx
+            .as_any()
+            .downcast_mut::<PostgresTransaction>()
+            .ok_or_else(|| AppError::Internal("Transaction is not a PostgresTransaction".into()))?;
+        let tx = &mut tx.conn;
+        let (created_at, updated_at): (DateTime<Utc>, DateTime<Utc>) = sqlx
+            ::query_as(
+                r#"
             INSERT INTO "Order" (id, "tenantId", "accountId", "instrumentId", side, type, quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "createdByMembershipId", "updatedByMembershipId")
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NULL, NULL, NULL, NULL)
             RETURNING "createdAt", "updatedAt"
             "#
-        )
-        .bind(order.id)
-        .bind(order.tenant_id)
-        .bind(order.account_id)
-        .bind(order.instrument_id)
-        .bind(order.side.to_string())
-        .bind(order.r#type.to_string())
-        .bind(order.quantity)
-        .bind(order.price)
-        .bind(order.status.to_string())
-        .bind(order.filled_quantity)
-        .bind(&order.meta)
-        .bind(order.created_at)
-        .bind(order.updated_at)
-        .fetch_one(&mut **tx)
-        .await
-        .map_err(AppError::DatabaseError)?;
+            )
+            .bind(order.id)
+            .bind(order.tenant_id)
+            .bind(order.account_id)
+            .bind(order.instrument_id)
+            .bind(order.side.to_string())
+            .bind(order.r#type.to_string())
+            .bind(order.quantity)
+            .bind(order.price)
+            .bind(order.status.to_string())
+            .bind(order.filled_quantity)
+            .bind(&order.meta)
+            .bind(order.created_at)
+            .bind(order.updated_at)
+            .fetch_one(&mut **tx).await
+            .map_err(AppError::DatabaseError)?;
 
         let mut created_order = order;
         created_order.created_at = created_at;
@@ -139,17 +141,17 @@ impl OrderRepository for PostgresOrderRepository {
     }
 
     async fn get(&self, id: Uuid) -> Result<Option<Order>> {
-        let rec: Option<OrderRow> = sqlx::query_as(
-            r#"
+        let rec: Option<OrderRow> = sqlx
+            ::query_as(
+                r#"
             SELECT id, "tenantId", "accountId", "instrumentId", side, type as "type", quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt"
             FROM "Order"
             WHERE id = $1
             "#
-        )
-        .bind(id)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(AppError::DatabaseError)?;
+            )
+            .bind(id)
+            .fetch_optional(&self.pool).await
+            .map_err(AppError::DatabaseError)?;
 
         Ok(rec.map(|r| r.into()))
     }
@@ -159,21 +161,24 @@ impl OrderRepository for PostgresOrderRepository {
         tx: &mut dyn RepositoryTransaction,
         id: Uuid,
     ) -> Result<Option<Order>> {
-        let tx_ptr = unsafe { tx.get_inner_ptr() };
-        let tx = unsafe { &mut *(tx_ptr as *mut Transaction<'_, Postgres>) };
+        let tx = tx
+            .as_any()
+            .downcast_mut::<PostgresTransaction>()
+            .ok_or_else(|| AppError::Internal("Transaction is not a PostgresTransaction".into()))?;
+        let tx = &mut tx.conn;
 
-        let rec: Option<OrderRow> = sqlx::query_as(
-            r#"
+        let rec: Option<OrderRow> = sqlx
+            ::query_as(
+                r#"
             SELECT id, "tenantId", "accountId", "instrumentId", side, type as "type", quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt"
             FROM "Order"
             WHERE id = $1
             FOR UPDATE
             "#
-        )
-        .bind(id)
-        .fetch_optional(&mut **tx)
-        .await
-        .map_err(AppError::DatabaseError)?;
+            )
+            .bind(id)
+            .fetch_optional(&mut **tx).await
+            .map_err(AppError::DatabaseError)?;
 
         Ok(rec.map(|r| r.into()))
     }
@@ -201,8 +206,11 @@ impl OrderRepository for PostgresOrderRepository {
         id: Uuid,
         status: OrderStatus,
     ) -> Result<()> {
-        let tx_ptr = unsafe { tx.get_inner_ptr() };
-        let tx = unsafe { &mut *(tx_ptr as *mut Transaction<'_, Postgres>) };
+        let tx = tx
+            .as_any()
+            .downcast_mut::<PostgresTransaction>()
+            .ok_or_else(|| AppError::Internal("Transaction is not a PostgresTransaction".into()))?;
+        let tx = &mut tx.conn;
         let result =
             sqlx::query(r#"UPDATE "Order" SET status = $2, "updatedAt" = $3 WHERE id = $1"#)
                 .bind(id)
@@ -247,8 +255,11 @@ impl OrderRepository for PostgresOrderRepository {
         id: Uuid,
         filled: Decimal,
     ) -> Result<()> {
-        let tx_ptr = unsafe { tx.get_inner_ptr() };
-        let tx = unsafe { &mut *(tx_ptr as *mut Transaction<'_, Postgres>) };
+        let tx = tx
+            .as_any()
+            .downcast_mut::<PostgresTransaction>()
+            .ok_or_else(|| AppError::Internal("Transaction is not a PostgresTransaction".into()))?;
+        let tx = &mut tx.conn;
         let result = sqlx::query(
             r#"
             UPDATE "Order" 
@@ -271,20 +282,20 @@ impl OrderRepository for PostgresOrderRepository {
     }
 
     async fn increment_filled_amount(&self, id: Uuid, amount: Decimal) -> Result<Order> {
-        let row: OrderRow = sqlx::query_as(
-            r#"
+        let row: OrderRow = sqlx
+            ::query_as(
+                r#"
             UPDATE "Order" 
             SET "quantityFilled" = "quantityFilled" + $2, "updatedAt" = $3 
             WHERE id = $1 
             RETURNING id, "tenantId", "accountId", "instrumentId", side, type as "type", quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt"
             "#
-        )
-        .bind(id)
-        .bind(amount)
-        .bind(chrono::Utc::now())
-        .fetch_one(&self.pool)
-        .await
-        .map_err(AppError::DatabaseError)?;
+            )
+            .bind(id)
+            .bind(amount)
+            .bind(chrono::Utc::now())
+            .fetch_one(&self.pool).await
+            .map_err(AppError::DatabaseError)?;
 
         Ok(row.into())
     }
@@ -295,37 +306,40 @@ impl OrderRepository for PostgresOrderRepository {
         id: Uuid,
         amount: Decimal,
     ) -> Result<Order> {
-        let tx_ptr = unsafe { tx.get_inner_ptr() };
-        let tx = unsafe { &mut *(tx_ptr as *mut Transaction<'_, Postgres>) };
-        let row: OrderRow = sqlx::query_as(
-            r#"
+        let tx = tx
+            .as_any()
+            .downcast_mut::<PostgresTransaction>()
+            .ok_or_else(|| AppError::Internal("Transaction is not a PostgresTransaction".into()))?;
+        let tx = &mut tx.conn;
+        let row: OrderRow = sqlx
+            ::query_as(
+                r#"
             UPDATE "Order" 
             SET "quantityFilled" = "quantityFilled" + $2, "updatedAt" = $3 
             WHERE id = $1 
             RETURNING id, "tenantId", "accountId", "instrumentId", side, type as "type", quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt"
             "#
-        )
-        .bind(id)
-        .bind(amount)
-        .bind(chrono::Utc::now())
-        .fetch_one(&mut **tx)
-        .await
-        .map_err(AppError::DatabaseError)?;
+            )
+            .bind(id)
+            .bind(amount)
+            .bind(chrono::Utc::now())
+            .fetch_one(&mut **tx).await
+            .map_err(AppError::DatabaseError)?;
 
         Ok(row.into())
     }
 
     async fn list_open(&self) -> Result<Vec<Order>> {
-        let recs: Vec<OrderRow> = sqlx::query_as(
-            r#"
+        let recs: Vec<OrderRow> = sqlx
+            ::query_as(
+                r#"
             SELECT id, "tenantId", "accountId", "instrumentId", side, type as "type", quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt"
             FROM "Order"
             WHERE status = 'new' OR status = 'partial_fill' OR status = 'open'
             "#
-        )
-        .fetch_all(&self.pool)
-        .await
-        .map_err(AppError::DatabaseError)?;
+            )
+            .fetch_all(&self.pool).await
+            .map_err(AppError::DatabaseError)?;
 
         Ok(recs.into_iter().map(|r| r.into()).collect())
     }

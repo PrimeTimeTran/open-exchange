@@ -5,8 +5,7 @@ use crate::domain::ledger::repository::LedgerRepository;
 use crate::domain::ledger::service::LedgerService;
 use crate::domain::orders::service::OrderService;
 use crate::domain::trade::TradeRepository;
-use crate::domain::transaction::Transaction;
-use crate::domain::transaction::TransactionManager;
+use crate::domain::transaction::{RepositoryTransaction, TransactionManager};
 use crate::domain::wallets::WalletService;
 use crate::error::{AppError, Result};
 use crate::infra::mappers::match_mapper::MatchMapper;
@@ -14,10 +13,13 @@ use crate::infra::repositories::InstrumentRepository;
 use crate::proto::common::{LedgerEntry, LedgerEvent, Trade};
 use crate::proto::ledger::Match;
 use rust_decimal::Decimal;
+use std::future::Future;
+use std::pin::Pin;
 use std::str::FromStr;
 use std::sync::Arc;
 use uuid::Uuid;
 
+#[derive(Clone)]
 pub struct SettlementService {
     tx_manager: Option<Arc<dyn TransactionManager>>,
     fill_service: Arc<FillService>,
@@ -141,83 +143,127 @@ impl SettlementService {
             }
         }
 
-        // Transaction Management
-        let tx = self.begin_transaction().await?;
-        let mut ctx = SettlementContext::new(self, tx);
+        let this = self.clone();
+        self.execute_atomic(move |ctx| {
+            Box::pin(async move {
+                // Core Business Logic
+                // 1. Persist Trade (needed for FKs)
+                ctx.save_trade(trade.clone()).await?;
 
-        // Core Business Logic
-        // 1. Persist Trade (needed for FKs)
-        ctx.save_trade(trade.clone()).await?;
+                // Calculate Fees
+                let price_decimal = Decimal::from_str(&trade.price).unwrap_or_default();
+                let buy_fee = this
+                    .fee_service
+                    .calculate_fee(trade_qty, price_decimal, "taker");
+                let sell_fee = this
+                    .fee_service
+                    .calculate_fee(trade_qty, price_decimal, "maker");
 
-        // Calculate Fees
-        let price_decimal = Decimal::from_str(&trade.price).unwrap_or_default();
-        let buy_fee = self
-            .fee_service
-            .calculate_fee(trade_qty, price_decimal, "taker");
-        let sell_fee = self
-            .fee_service
-            .calculate_fee(trade_qty, price_decimal, "maker");
+                // 2. Generate and persist ledger events/entries
+                let (event, entries) = this
+                    .ledger_service
+                    .process_trade(trade.clone(), buy_fee, sell_fee)
+                    .await?;
+                ctx.save_ledger_event(event).await?;
+                ctx.save_ledger_entries(entries.clone()).await?;
 
-        // 2. Generate and persist ledger events/entries
-        let (event, entries) = self
-            .ledger_service
-            .process_trade(trade.clone(), buy_fee, sell_fee)
-            .await?;
-        ctx.save_ledger_event(event).await?;
-        ctx.save_ledger_entries(entries.clone()).await?;
+                log::info!(
+                    "Generated {} ledger entries for trade {}",
+                    entries.len(),
+                    trade.id
+                );
 
-        log::info!(
-            "Generated {} ledger entries for trade {}",
-            entries.len(),
-            trade.id
-        );
+                // 3. Process wallet updates
+                for entry in entries {
+                    ctx.process_wallet_entry(entry).await?;
+                }
 
-        // 3. Process wallet updates
-        for entry in entries {
-            ctx.process_wallet_entry(entry).await?;
-        }
+                // 4. Update order statuses
+                ctx.update_order_status(&trade.buy_order_id, trade_qty)
+                    .await?;
+                ctx.update_order_status(&trade.sell_order_id, trade_qty)
+                    .await?;
 
-        // 4. Update order statuses
-        ctx.update_order_status(&trade.buy_order_id, trade_qty)
-            .await?;
-        ctx.update_order_status(&trade.sell_order_id, trade_qty)
-            .await?;
+                // 5. Create and persist fills
+                let buy_fill = this.fill_service.create_fill_from_trade(
+                    &trade,
+                    &trade.buy_order_id,
+                    "buy",
+                    "taker",
+                    trade_qty,
+                    buy_fee,
+                    &instrument.quote_asset_id,
+                )?;
+                let sell_fill = this.fill_service.create_fill_from_trade(
+                    &trade,
+                    &trade.sell_order_id,
+                    "sell",
+                    "maker",
+                    trade_qty,
+                    sell_fee,
+                    &instrument.quote_asset_id,
+                )?;
 
-        // 5. Create and persist fills
-        let buy_fill = self.fill_service.create_fill_from_trade(
-            &trade,
-            &trade.buy_order_id,
-            "buy",
-            "taker",
-            trade_qty,
-            buy_fee,
-            &instrument.quote_asset_id,
-        )?;
-        let sell_fill = self.fill_service.create_fill_from_trade(
-            &trade,
-            &trade.sell_order_id,
-            "sell",
-            "maker",
-            trade_qty,
-            sell_fee,
-            &instrument.quote_asset_id,
-        )?;
+                ctx.save_fill(buy_fill).await?;
+                ctx.save_fill(sell_fill).await?;
 
-        ctx.save_fill(buy_fill).await?;
-        ctx.save_fill(sell_fill).await?;
-
-        // 6. Commit
-        ctx.commit().await?;
-
-        Ok(())
+                Ok(())
+            })
+        })
+        .await
     }
 
-    async fn begin_transaction(&self) -> Result<Option<Box<dyn Transaction>>> {
+    /// Executes a closure within a database transaction scope.
+    ///
+    /// This method abstracts away the complexity of transaction management (begin, commit, rollback).
+    /// If a transaction manager is present, it starts a transaction, runs the closure, and:
+    /// - Commits if the closure returns `Ok`.
+    /// - Rolls back if the closure returns `Err`.
+    ///
+    /// If no transaction manager is configured (e.g., in unit tests or certain deployment modes),
+    /// it simply runs the closure without a transaction.
+    ///
+    /// # Advanced Types Explanation
+    ///
+    /// The function signature uses Higher-Ranked Trait Bounds (HRTB) `for<'a>` to express that the closure `F`
+    /// must be valid for *any* lifetime `'a` of the `SettlementContext`. This is necessary because the context
+    /// is created inside `execute_atomic` and passed to the closure by reference.
+    ///
+    /// The return type `Pin<Box<dyn Future<...>>>` is required to type-erase the future returned by the closure.
+    /// Since the future borrows from the temporary `SettlementContext`, its type depends on the lifetime of that
+    /// context, which cannot be named in a generic parameter without HRTB. Boxing and pinning allow us to
+    /// return a concrete type that implements `Future`.
+    async fn execute_atomic<T, F>(&self, f: F) -> Result<T>
+    where
+        T: Send,
+        F: for<'a> FnOnce(
+                &'a mut SettlementContext<'_>,
+            ) -> Pin<Box<dyn Future<Output = Result<T>> + Send + 'a>>
+            + Send,
+    {
         if let Some(manager) = &self.tx_manager {
-            let tx = manager.begin().await?;
-            Ok(Some(tx))
+            let mut tx = manager.begin().await?;
+            let mut ctx = SettlementContext {
+                tx: Some(tx.as_repository_transaction()),
+                service: self,
+            };
+
+            match f(&mut ctx).await {
+                Ok(result) => {
+                    tx.commit().await?;
+                    Ok(result)
+                }
+                Err(e) => {
+                    let _ = tx.rollback().await;
+                    Err(e)
+                }
+            }
         } else {
-            Ok(None)
+            let mut ctx = SettlementContext {
+                tx: None,
+                service: self,
+            };
+            f(&mut ctx).await
         }
     }
 }
@@ -226,28 +272,17 @@ impl SettlementService {
 // It abstracts away the details of whether a transaction is being used or not, allowing the core business logic to remain clean and focused on the domain operations.
 // This pattern also makes it easier to add additional operations in the future (e.g., logging, metrics) without cluttering the main settlement logic.
 struct SettlementContext<'a> {
-    tx: Option<Box<dyn Transaction>>,
+    tx: Option<&'a mut dyn RepositoryTransaction>,
     service: &'a SettlementService,
 }
 
 impl<'a> SettlementContext<'a> {
-    fn new(service: &'a SettlementService, tx: Option<Box<dyn Transaction>>) -> Self {
-        Self { tx, service }
-    }
-
-    async fn commit(self) -> Result<()> {
-        if let Some(tx) = self.tx {
-            tx.commit().await?;
-        }
-        Ok(())
-    }
-
     async fn save_ledger_event(&mut self, event: LedgerEvent) -> Result<LedgerEvent> {
         match &mut self.tx {
             Some(tx) => {
                 self.service
                     .ledger_repo
-                    .save_event_with_tx(tx.as_repository_transaction(), event)
+                    .save_event_with_tx(&mut **tx, event)
                     .await
             }
             None => self.service.ledger_repo.save_event(event).await,
@@ -259,7 +294,7 @@ impl<'a> SettlementContext<'a> {
             Some(tx) => {
                 self.service
                     .ledger_repo
-                    .save_entries_with_tx(tx.as_repository_transaction(), entries)
+                    .save_entries_with_tx(&mut **tx, entries)
                     .await
             }
             None => self.service.ledger_repo.save_entries(entries).await,
@@ -271,7 +306,7 @@ impl<'a> SettlementContext<'a> {
             Some(tx) => {
                 self.service
                     .wallet_service
-                    .process_ledger_entry_with_tx(tx.as_repository_transaction(), entry)
+                    .process_ledger_entry_with_tx(&mut **tx, entry)
                     .await
             }
             None => {
@@ -288,7 +323,7 @@ impl<'a> SettlementContext<'a> {
             Some(tx) => {
                 self.service
                     .order_service
-                    .update_status_with_tx(tx.as_repository_transaction(), order_id, trade_qty)
+                    .update_status_with_tx(&mut **tx, order_id, trade_qty)
                     .await
             }
             None => {
@@ -305,7 +340,7 @@ impl<'a> SettlementContext<'a> {
             Some(tx) => {
                 self.service
                     .fill_service
-                    .save_fill_with_tx(tx.as_repository_transaction(), fill)
+                    .save_fill_with_tx(&mut **tx, fill)
                     .await
             }
             None => self.service.fill_service.save_fill(fill).await,
@@ -317,7 +352,7 @@ impl<'a> SettlementContext<'a> {
             Some(tx) => {
                 self.service
                     .trade_repo
-                    .create_with_tx(tx.as_repository_transaction(), trade)
+                    .create_with_tx(&mut **tx, trade)
                     .await
             }
             None => self.service.trade_repo.create(trade).await,

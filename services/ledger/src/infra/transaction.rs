@@ -3,37 +3,36 @@ use crate::domain::transaction::{
 };
 use crate::error::Result;
 use async_trait::async_trait;
-use sqlx::{PgPool, Postgres, Transaction};
+use sqlx::pool::PoolConnection;
+use sqlx::{Executor, PgPool, Postgres};
 use std::any::Any;
 
-pub struct PostgresTransaction<'c> {
-    pub tx: Transaction<'c, Postgres>,
+pub struct PostgresTransaction {
+    pub conn: PoolConnection<Postgres>,
 }
 
-impl<'c> RepositoryTransaction for PostgresTransaction<'c> {
+impl RepositoryTransaction for PostgresTransaction {
     fn as_any(&mut self) -> &mut dyn Any {
-        panic!("as_any not supported for PostgresTransaction with non-static lifetime");
-    }
-
-    unsafe fn get_inner_ptr(&mut self) -> *mut () {
-        &mut self.tx as *mut Transaction<'c, Postgres> as *mut ()
+        self
     }
 }
 
 #[async_trait]
-impl<'c> TransactionTrait for PostgresTransaction<'c> {
-    async fn commit(self: Box<Self>) -> Result<()> {
-        self.tx
-            .commit()
+impl TransactionTrait for PostgresTransaction {
+    async fn commit(mut self: Box<Self>) -> Result<()> {
+        self.conn
+            .execute("COMMIT")
             .await
-            .map_err(crate::error::AppError::DatabaseError)
+            .map_err(crate::error::AppError::DatabaseError)?;
+        Ok(())
     }
 
-    async fn rollback(self: Box<Self>) -> Result<()> {
-        self.tx
-            .rollback()
+    async fn rollback(mut self: Box<Self>) -> Result<()> {
+        self.conn
+            .execute("ROLLBACK")
             .await
-            .map_err(crate::error::AppError::DatabaseError)
+            .map_err(crate::error::AppError::DatabaseError)?;
+        Ok(())
     }
 
     fn as_repository_transaction(&mut self) -> &mut dyn RepositoryTransaction {
@@ -54,12 +53,17 @@ impl PostgresTransactionManager {
 #[async_trait]
 impl TransactionManager for PostgresTransactionManager {
     async fn begin(&self) -> Result<Box<dyn TransactionTrait>> {
-        let tx = self
+        let mut conn = self
             .pool
-            .begin()
+            .acquire()
             .await
             .map_err(crate::error::AppError::DatabaseError)?;
-        Ok(Box::new(PostgresTransaction { tx }))
+
+        conn.execute("BEGIN")
+            .await
+            .map_err(crate::error::AppError::DatabaseError)?;
+
+        Ok(Box::new(PostgresTransaction { conn }))
     }
 }
 
@@ -68,10 +72,6 @@ pub struct InMemoryTransaction;
 impl RepositoryTransaction for InMemoryTransaction {
     fn as_any(&mut self) -> &mut dyn Any {
         self
-    }
-
-    unsafe fn get_inner_ptr(&mut self) -> *mut () {
-        std::ptr::null_mut()
     }
 }
 

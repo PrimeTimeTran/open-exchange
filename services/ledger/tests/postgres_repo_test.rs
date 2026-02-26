@@ -183,13 +183,22 @@ async fn test_postgres_ledger_batch_insert() {
         });
     }
 
-    let tx = ctx.pool.begin().await.expect("Failed to begin tx");
-    let mut pg_tx = PostgresTransaction { tx };
+    let mut conn = ctx
+        .pool
+        .acquire()
+        .await
+        .expect("Failed to acquire connection");
+    sqlx::Executor::execute(&mut *conn, "BEGIN")
+        .await
+        .expect("Failed to begin transaction");
+    let mut pg_tx = PostgresTransaction { conn };
 
     let result = repo.save_entries_with_tx(&mut pg_tx, entries.clone()).await;
     assert!(result.is_ok(), "Save entries failed: {:?}", result.err());
 
-    pg_tx.tx.commit().await.expect("Failed to commit tx");
+    sqlx::Executor::execute(&mut *pg_tx.conn, "COMMIT")
+        .await
+        .expect("Failed to commit tx");
 
     // Verify
     let count: i64 = sqlx::query_scalar!(

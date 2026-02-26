@@ -1,9 +1,10 @@
 use crate::domain::wallets::{Wallet, WalletRepository};
 use crate::error::{AppError, Result};
+use crate::infra::transaction::PostgresTransaction;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
-use sqlx::{FromRow, PgPool, Postgres, Transaction};
+use sqlx::{FromRow, PgPool};
 use std::str::FromStr;
 use uuid::Uuid;
 
@@ -71,29 +72,33 @@ impl WalletRepository for PostgresWalletRepository {
             .map_err(|_| AppError::ValidationError("Invalid asset_id".into()))?;
         let tenant_id = Uuid::parse_str(&wallet.tenant_id).unwrap_or_default();
 
-        let rec: WalletRow = sqlx::query_as(
-            r#"
+        let rec: WalletRow = sqlx
+            ::query_as(
+                r#"
             INSERT INTO "Wallet" (id, "tenantId", "accountId", "assetId", available, locked, total, version, meta, "createdAt", "updatedAt")
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING id, "tenantId", "accountId", "assetId", 
                       available, locked, total, 
                       version, meta, "createdAt", "updatedAt"
             "#
-        )
-        .bind(Uuid::parse_str(&wallet.id).unwrap_or(Uuid::new_v4()))
-        .bind(tenant_id)
-        .bind(account_id)
-        .bind(asset_id)
-        .bind(Decimal::from_str(&wallet.available).unwrap_or_default())
-        .bind(Decimal::from_str(&wallet.locked).unwrap_or_default())
-        .bind(Decimal::from_str(&wallet.total).unwrap_or_default())
-        .bind(wallet.version)
-        .bind(serde_json::from_str::<serde_json::Value>(&wallet.meta).unwrap_or(serde_json::json!({})))
-        .bind(chrono::Utc::now())
-        .bind(chrono::Utc::now())
-        .fetch_one(&self.pool)
-        .await
-        .map_err(AppError::DatabaseError)?;
+            )
+            .bind(Uuid::parse_str(&wallet.id).unwrap_or(Uuid::new_v4()))
+            .bind(tenant_id)
+            .bind(account_id)
+            .bind(asset_id)
+            .bind(Decimal::from_str(&wallet.available).unwrap_or_default())
+            .bind(Decimal::from_str(&wallet.locked).unwrap_or_default())
+            .bind(Decimal::from_str(&wallet.total).unwrap_or_default())
+            .bind(wallet.version)
+            .bind(
+                serde_json
+                    ::from_str::<serde_json::Value>(&wallet.meta)
+                    .unwrap_or(serde_json::json!({}))
+            )
+            .bind(chrono::Utc::now())
+            .bind(chrono::Utc::now())
+            .fetch_one(&self.pool).await
+            .map_err(AppError::DatabaseError)?;
 
         Ok(rec.into())
     }
@@ -150,8 +155,11 @@ impl WalletRepository for PostgresWalletRepository {
         account_id: &str,
         asset_id: &str,
     ) -> Result<Option<Wallet>> {
-        let tx_ptr = unsafe { tx.get_inner_ptr() };
-        let tx = unsafe { &mut *(tx_ptr as *mut Transaction<'_, Postgres>) };
+        let tx = tx
+            .as_any()
+            .downcast_mut::<PostgresTransaction>()
+            .ok_or_else(|| AppError::Internal("Transaction is not a PostgresTransaction".into()))?;
+        let tx = &mut tx.conn;
         let acc_uuid = Uuid::parse_str(account_id)
             .map_err(|_| AppError::ValidationError("Invalid account_id".into()))?;
         let asset_uuid = Uuid::parse_str(asset_id)
@@ -181,8 +189,11 @@ impl WalletRepository for PostgresWalletRepository {
         account_id: &str,
         asset_id: &str,
     ) -> Result<Option<Wallet>> {
-        let tx_ptr = unsafe { tx.get_inner_ptr() };
-        let tx = unsafe { &mut *(tx_ptr as *mut Transaction<'_, Postgres>) };
+        let tx = tx
+            .as_any()
+            .downcast_mut::<PostgresTransaction>()
+            .ok_or_else(|| AppError::Internal("Transaction is not a PostgresTransaction".into()))?;
+        let tx = &mut tx.conn;
         let acc_uuid = Uuid::parse_str(account_id)
             .map_err(|_| AppError::ValidationError("Invalid account_id".into()))?;
         let asset_uuid = Uuid::parse_str(asset_id)
@@ -245,8 +256,11 @@ impl WalletRepository for PostgresWalletRepository {
         tx: &mut dyn RepositoryTransaction,
         wallet: Wallet,
     ) -> Result<Wallet> {
-        let tx_ptr = unsafe { tx.get_inner_ptr() };
-        let tx = unsafe { &mut *(tx_ptr as *mut Transaction<'_, Postgres>) };
+        let tx = tx
+            .as_any()
+            .downcast_mut::<PostgresTransaction>()
+            .ok_or_else(|| AppError::Internal("Transaction is not a PostgresTransaction".into()))?;
+        let tx = &mut tx.conn;
         let id = Uuid::parse_str(&wallet.id)
             .map_err(|_| AppError::ValidationError("Invalid wallet id".into()))?;
 

@@ -1,12 +1,13 @@
 use crate::domain::ledger::repository::LedgerRepository;
 use crate::domain::transaction::RepositoryTransaction;
 use crate::error::Result;
+use crate::infra::transaction::PostgresTransaction;
 use crate::proto::common::{LedgerEntry, LedgerEvent, Trade};
 use async_trait::async_trait;
 use chrono::TimeZone;
 use chrono::Utc;
 use rust_decimal::Decimal;
-use sqlx::{PgPool, Postgres, QueryBuilder, Transaction};
+use sqlx::{PgPool, Postgres, QueryBuilder};
 use std::str::FromStr;
 use uuid::Uuid;
 
@@ -35,7 +36,13 @@ impl LedgerRepository for PostgresLedgerRepository {
         tx: &mut dyn RepositoryTransaction,
         event: LedgerEvent,
     ) -> Result<LedgerEvent> {
-        let tx = unsafe { &mut *(tx.get_inner_ptr() as *mut Transaction<'_, Postgres>) };
+        let tx = tx
+            .as_any()
+            .downcast_mut::<PostgresTransaction>()
+            .ok_or_else(|| {
+                crate::error::AppError::Internal("Transaction is not a PostgresTransaction".into())
+            })?;
+        let tx = &mut tx.conn;
 
         let created_at = Utc
             .timestamp_millis_opt(event.created_at)
@@ -51,27 +58,39 @@ impl LedgerRepository for PostgresLedgerRepository {
                 crate::error::AppError::ValidationError("Invalid updated_at timestamp".to_string())
             })?;
 
-        sqlx::query!(
-            r#"
+        sqlx
+            ::query(
+                r#"
             INSERT INTO "LedgerEvent" (
                 id, "tenantId", type, "referenceId", "referenceType", status, description, meta, "createdAt", "updatedAt"
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10)
-            "#,
-            Uuid::parse_str(&event.id).map_err(|_| crate::error::AppError::ValidationError("Invalid event ID".to_string()))?,
-            Uuid::parse_str(&event.tenant_id).map_err(|_| crate::error::AppError::ValidationError("Invalid tenant ID".to_string()))?,
-            event.r#type,
-            event.reference_id,
-            event.reference_type,
-            event.status,
-            event.description,
-            serde_json::from_str::<serde_json::Value>(&event.meta).unwrap_or(serde_json::json!({})),
-            created_at,
-            updated_at
-        )
-        .execute(&mut **tx)
-        .await
-        .map_err(crate::error::AppError::DatabaseError)?;
+            "#
+            )
+            .bind(
+                Uuid::parse_str(&event.id).map_err(|_| {
+                    crate::error::AppError::ValidationError("Invalid event ID".to_string())
+                })?
+            )
+            .bind(
+                Uuid::parse_str(&event.tenant_id).map_err(|_| {
+                    crate::error::AppError::ValidationError("Invalid tenant ID".to_string())
+                })?
+            )
+            .bind(event.r#type.clone())
+            .bind(event.reference_id.clone())
+            .bind(event.reference_type.clone())
+            .bind(event.status.clone())
+            .bind(event.description.clone())
+            .bind(
+                serde_json
+                    ::from_str::<serde_json::Value>(&event.meta)
+                    .unwrap_or(serde_json::json!({}))
+            )
+            .bind(created_at)
+            .bind(updated_at)
+            .execute(&mut **tx).await
+            .map_err(crate::error::AppError::DatabaseError)?;
 
         Ok(event)
     }
@@ -87,7 +106,13 @@ impl LedgerRepository for PostgresLedgerRepository {
         tx: &mut dyn RepositoryTransaction,
         entries: Vec<LedgerEntry>,
     ) -> Result<Vec<LedgerEntry>> {
-        let tx = unsafe { &mut *(tx.get_inner_ptr() as *mut Transaction<'_, Postgres>) };
+        let tx = tx
+            .as_any()
+            .downcast_mut::<PostgresTransaction>()
+            .ok_or_else(|| {
+                crate::error::AppError::Internal("Transaction is not a PostgresTransaction".into())
+            })?;
+        let tx = &mut tx.conn;
         if entries.is_empty() {
             return Ok(entries);
         }
