@@ -14,19 +14,10 @@
 ///   - Margin wallet concept (isolated or cross)
 mod helpers;
 use helpers::memory::InMemoryTestContext;
+use helpers::to_atomic_usd;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
 use std::str::FromStr;
-
-fn to_atomic_usd(amount: f64) -> Decimal {
-    use rust_decimal::prelude::FromPrimitive;
-    (Decimal::from_f64(amount).unwrap() * Decimal::new(100, 0)).floor()
-}
-
-fn to_atomic_btc(amount: f64) -> Decimal {
-    use rust_decimal::prelude::FromPrimitive;
-    (Decimal::from_f64(amount).unwrap() * Decimal::new(100_000_000, 0)).floor()
-}
 
 /// Test: Futures Order Locks Initial Margin Only, Not Full Notional
 ///

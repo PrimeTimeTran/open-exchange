@@ -97,7 +97,12 @@ impl InMemoryOrderRepository {
     }
 
     pub fn add(&self, order: Order) {
-        self.orders.lock().unwrap().push(order);
+        let mut orders = self.orders.lock().unwrap();
+        if let Some(pos) = orders.iter().position(|o| o.id == order.id) {
+            orders[pos] = order;
+        } else {
+            orders.push(order);
+        }
     }
 }
 
@@ -255,6 +260,11 @@ impl WalletRepository for InMemoryWalletRepository {
     async fn list_by_account(&self, account_id: &str) -> Result<Vec<Wallet>> {
         let wallets = self.wallets.lock().unwrap();
         Ok(wallets.iter().filter(|w| w.account_id == account_id).cloned().collect())
+    }
+
+    async fn list_by_asset(&self, asset_id: &str) -> Result<Vec<Wallet>> {
+        let wallets = self.wallets.lock().unwrap();
+        Ok(wallets.iter().filter(|w| w.asset_id == asset_id).cloned().collect())
     }
 }
 

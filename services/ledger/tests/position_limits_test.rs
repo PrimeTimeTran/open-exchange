@@ -38,7 +38,7 @@ fn dec(s: &str) -> Decimal {
 ///   - Order creation returns an error (PositionLimitExceeded or ValidationError)
 ///   - Account wallet balances are completely unchanged (no funds locked)
 #[tokio::test]
-#[ignore = "Track B: Requires PositionLimitService implementation"]
+// #[ignore = "Track B: Requires PositionLimitService implementation"]
 async fn test_order_exceeding_max_size_rejected() {
     let ctx = InMemoryTestContext::new();
 
@@ -49,61 +49,51 @@ async fn test_order_exceeding_max_size_rejected() {
     // Fund the account with enough USD to cover the order so only the size
     // limit (not balance) triggers the rejection.
     let required_usd = oversized_qty_atomic * price_atomic;
-    ctx.create_wallet(
+    ctx.create_wallet_decimal(
         ctx.account_a,
         &ctx.usd_id.to_string(),
-        required_usd.to_string().parse::<f64>().unwrap_or(f64::MAX),
-        0.0,
-        required_usd.to_string().parse::<f64>().unwrap_or(f64::MAX),
+        required_usd,
+        Decimal::ZERO,
+        required_usd
     );
-    ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
+    ctx.create_wallet_decimal(
+        ctx.account_a,
+        &ctx.btc_id.to_string(),
+        Decimal::ZERO,
+        Decimal::ZERO,
+        Decimal::ZERO
+    );
 
     // TODO: configure PositionLimitService with max_order_size = 100 BTC for BTC-USD
     // TODO: inject PositionLimitService into OrderService
 
-    use ledger::domain::orders::model::{Order, OrderSide, OrderType, OrderStatus};
-    use uuid::Uuid;
-    use chrono::Utc;
+    use ledger::domain::orders::model::{ Order, OrderSide, OrderType };
 
-    let oversized_order = Order {
-        id: Uuid::new_v4(),
-        tenant_id: ctx.tenant_id,
-        account_id: ctx.account_a,
-        instrument_id: ctx.instrument_id,
-        side: OrderSide::Buy,
-        r#type: OrderType::Limit,
-        quantity: oversized_qty_atomic,
-        price: price_atomic,
-        status: OrderStatus::Open,
-        filled_quantity: Decimal::ZERO,
-        average_fill_price: Decimal::ZERO,
-        meta: serde_json::json!({}),
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
+    let _oversized_order = Order::new(
+        ctx.tenant_id,
+        ctx.account_a,
+        ctx.instrument_id,
+        OrderSide::Buy,
+        OrderType::Limit,
+        oversized_qty_atomic,
+        price_atomic
+    );
 
-    // TODO: let result = ctx.order_service.create_order(oversized_order).await;
-    // assert!(result.is_err(), "Oversized order must be rejected");
-    // match result.unwrap_err() {
-    //     AppError::ValidationError(msg) => assert!(msg.contains("position limit") || msg.contains("max size")),
-    //     AppError::PositionLimitExceeded { .. } => {} // expected
-    //     e => panic!("Unexpected error: {:?}", e),
-    // }
+    let result = ctx.order_service.create_order(_oversized_order).await;
+    assert!(result.is_err(), "Oversized order must be rejected");
+    match result.unwrap_err() {
+        ledger::error::AppError::ValidationError(msg) =>
+            assert!(msg.contains("position limit") || msg.contains("max allowed")),
+        e => panic!("Unexpected error: {:?}", e),
+    }
 
     // Verify no wallet mutation occurred
-    let wallet = ctx
-        .wallet_service
-        .get_wallet_by_account_and_asset(
-            &ctx.account_a.to_string(),
-            &ctx.usd_id.to_string(),
-        )
-        .await
+    let wallet = ctx.wallet_service
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await
         .unwrap()
         .unwrap();
 
     assert_eq!(wallet.locked, "0", "No funds should be locked for a rejected order");
-
-    todo!("Implement PositionLimitService then complete this test")
 }
 
 /// Test: Account Blocked When Maximum Notional Exposure Is Reached
@@ -133,7 +123,7 @@ async fn test_max_notional_exposure_blocks_new_order() {
         &ctx.usd_id.to_string(),
         usd_balance.to_string().parse::<f64>().unwrap(),
         0.0,
-        usd_balance.to_string().parse::<f64>().unwrap(),
+        usd_balance.to_string().parse::<f64>().unwrap()
     );
     ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
 
@@ -182,7 +172,7 @@ async fn test_open_interest_cap_prevents_new_positions() {
         &ctx.usd_id.to_string(),
         100_000_000.0, // $1,000,000 in cents
         0.0,
-        100_000_000.0,
+        100_000_000.0
     );
     ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
 
@@ -192,7 +182,7 @@ async fn test_open_interest_cap_prevents_new_positions() {
         &ctx.usd_id.to_string(),
         99_900_000_000.0, // enough for 999 BTC of open orders
         0.0,
-        99_900_000_000.0,
+        99_900_000_000.0
     );
     ctx.create_wallet(ctx.account_b, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
 
@@ -245,7 +235,7 @@ async fn test_concentration_limit_per_single_asset() {
         &ctx.btc_id.to_string(),
         65_000_000.0, // 0.65 BTC
         0.0,
-        65_000_000.0,
+        65_000_000.0
     );
     // USD holding: $80,500 = 8_050_000 cents
     ctx.create_wallet(
@@ -253,13 +243,16 @@ async fn test_concentration_limit_per_single_asset() {
         &ctx.usd_id.to_string(),
         8_050_000.0, // $80,500.00
         0.0,
-        8_050_000.0,
+        8_050_000.0
     );
 
     // TODO: configure PositionLimitService with max_concentration = 0.20 (20%) per asset
     // TODO: configure mark-to-market oracle: BTC price = $30,000 (3_000_000 cents)
+    // NOTE: Default concentration is 1.0 (100%), so this test would need custom config
+    // or we assume it applies only to margin accounts if we implemented that check.
+    // For now, this test is verifying a specific configuration override.
 
-    // New buy: 0.034 BTC @ $30,000 ≈ $1,020 → BTC becomes $20,520 = 20.52% — should be rejected
+    // ...
     // TODO: let buy_order = Order { side: Buy, qty: 3_400_000, price: 3_000_000, ... };
     // TODO: let result = ctx.order_service.create_order(buy_order).await;
     // assert!(result.is_err(), "Buy must be rejected: would breach 20% concentration limit");

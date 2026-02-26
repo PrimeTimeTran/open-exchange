@@ -1,6 +1,7 @@
 use ledger::error::{AppError, Result};
-use ledger::domain::orders::{Order, OrderRepository};
+use ledger::domain::orders::model::OrderSide;
 use ledger::domain::orders::model::OrderStatus;
+use ledger::domain::orders::{Order, OrderRepository};
 use ledger::domain::transaction::RepositoryTransaction;
 use uuid::Uuid;
 use rust_decimal::Decimal;
@@ -81,19 +82,19 @@ mod tests {
 
         // Service with FAILING Repo
         let order_repo = Arc::new(FailingOrderRepository);
-        let order_service = OrderService::new(order_repo, wallet_service.clone(), asset_service, None, None);
+        let order_service = OrderService::builder(order_repo, wallet_service.clone(), asset_service).build();
 
         // Action: Create Order
         // 1.0 @ 100.0 = 100 USD -> 10000 atomic.
-        let order = Order {
-            id: Uuid::new_v4(),
-            account_id: Uuid::parse_str(&account_id).unwrap(),
-            instrument_id: instr_id,
-            side: ledger::domain::orders::model::OrderSide::Buy,
-            quantity: Decimal::from_str("1.0").unwrap(),
-            price: Decimal::from_str("100.0").unwrap(),
-            ..Default::default()
-        };
+        let order = Order::new(
+            Uuid::new_v4(),
+            Uuid::parse_str(&account_id).unwrap(),
+            instr_id,  
+            OrderSide::Buy,
+            ledger::domain::orders::model::OrderType::Limit,
+            Decimal::from_str("1.0").unwrap(),
+            Decimal::from_str("100.0").unwrap(),
+        );
 
         let result = order_service.create_order(order).await;
 

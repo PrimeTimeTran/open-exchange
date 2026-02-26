@@ -100,6 +100,35 @@ impl SettlementService {
         let trade_qty = Decimal::from_str(&trade.quantity)
             .map_err(|_| AppError::MalformedRequest("Invalid trade quantity".into()))?;
 
+        // Wash-trade detection
+        let buy_order_id  = Uuid::parse_str(&trade.buy_order_id)
+            .map_err(|_| AppError::MalformedRequest("Invalid buy_order_id".into()))?;
+        let sell_order_id = Uuid::parse_str(&trade.sell_order_id)
+            .map_err(|_| AppError::MalformedRequest("Invalid sell_order_id".into()))?;
+
+        if let (Some(buy_order), Some(sell_order)) = (
+            self.order_service.get_order(buy_order_id).await?,
+            self.order_service.get_order(sell_order_id).await?,
+        ) {
+            // Same account on both sides
+            if buy_order.account_id == sell_order.account_id {
+                return Err(AppError::ValidationError(
+                    "Self-trade detected: buy and sell orders belong to the same account".into()
+                ));
+            }
+
+            // Same user_id embedded in order meta (cross-account wash trade)
+            let buy_user  = buy_order.meta.get("user_id").and_then(|v| v.as_str());
+            let sell_user = sell_order.meta.get("user_id").and_then(|v| v.as_str());
+            if let (Some(b), Some(s)) = (buy_user, sell_user) {
+                if !b.is_empty() && b == s {
+                    return Err(AppError::ValidationError(
+                        "Wash trade detected: buy and sell orders belong to the same user".into()
+                    ));
+                }
+            }
+        }
+
         // Transaction Management
         let tx = self.begin_transaction().await?;
         let mut ctx = SettlementContext::new(self, tx);
@@ -156,7 +185,7 @@ impl SettlementService {
     }
 }
 
-// Settlement Context helps manage transaction scope and provides helper methods for common operations during settlement processing. 
+// Settlement Context helps manage transaction scope and provides helper methods for common operations during settlement processing.
 // It abstracts away the details of whether a transaction is being used or not, allowing the core business logic to remain clean and focused on the domain operations.
 // This pattern also makes it easier to add additional operations in the future (e.g., logging, metrics) without cluttering the main settlement logic.
 struct SettlementContext<'a> {

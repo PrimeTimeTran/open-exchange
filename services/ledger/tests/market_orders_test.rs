@@ -1,37 +1,12 @@
+#[macro_use]
 mod helpers;
 use helpers::memory::InMemoryTestContext;
-use ledger::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
-use ledger::domain::fees::constants::FeeConstants;
+use helpers::{to_atomic_usd, to_atomic_btc, calc_taker_fee};
+use ledger::domain::orders::model::{Order, OrderSide, OrderType};
 use ledger::error::AppError;
 use rust_decimal::Decimal;
-use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
+use rust_decimal::prelude::ToPrimitive;
 use std::str::FromStr;
-use uuid::Uuid;
-use chrono::Utc;
-
-fn to_atomic_usd(amount: f64) -> Decimal {
-    (Decimal::from_f64(amount).unwrap() * Decimal::new(100, 0)).floor()
-}
-
-fn to_atomic_btc(amount: f64) -> Decimal {
-    (Decimal::from_f64(amount).unwrap() * Decimal::new(100_000_000, 0)).floor()
-}
-
-fn calc_taker_fee(amount_atomic: Decimal) -> Decimal {
-    (amount_atomic * FeeConstants::get_taker_fee()).floor()
-}
-
-macro_rules! assert_decimal_val_eq {
-    ($left:expr, $right:expr) => {
-        assert_eq!(
-            Decimal::from_str(&$left).unwrap(),
-            $right,
-            "Expected {} but got {}",
-            $right,
-            &$left
-        );
-    };
-}
 
 /// Test: Market Buy Locks Full Budget
 ///
@@ -51,22 +26,15 @@ async fn test_market_buy_locks_max_budget() {
 
     ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(), 100_000.0, 0.0, 100_000.0);
 
-    let order = Order {
-        id:            Uuid::new_v4(),
-        tenant_id:     ctx.tenant_id,
-        account_id:    ctx.account_a,
-        instrument_id: ctx.instrument_id,
-        side:          OrderSide::Buy,
-        r#type:        OrderType::Market,
-        quantity:      Decimal::from_str("1.0").unwrap(),
-        price:         Decimal::from_str("500.0").unwrap(),
-        status:        OrderStatus::Open,
-        filled_quantity: Decimal::ZERO,
-        average_fill_price: Decimal::ZERO,
-        meta:          serde_json::json!({}),
-        created_at:    Utc::now(),
-        updated_at:    Utc::now(),
-    };
+    let order = Order::new(
+        ctx.tenant_id,
+        ctx.account_a,
+        ctx.instrument_id,
+        OrderSide::Buy,
+        OrderType::Market,
+        Decimal::from_str("1.0").unwrap(),
+        Decimal::from_str("500.0").unwrap(),
+    );
 
     ctx.order_service.create_order(order).await
         .expect("Market buy order should be accepted");
@@ -100,22 +68,15 @@ async fn test_market_sell_locks_full_base_quantity() {
     ctx.create_wallet(ctx.account_b, &ctx.btc_id.to_string(),
         200_000_000.0, 0.0, 200_000_000.0);
 
-    let order = Order {
-        id:            Uuid::new_v4(),
-        tenant_id:     ctx.tenant_id,
-        account_id:    ctx.account_b,
-        instrument_id: ctx.instrument_id,
-        side:          OrderSide::Sell,
-        r#type:        OrderType::Market,
-        quantity:      Decimal::from_str("1.0").unwrap(),
-        price:         Decimal::ZERO, // Price unknown for market sell
-        status:        OrderStatus::Open,
-        filled_quantity: Decimal::ZERO,
-        average_fill_price: Decimal::ZERO,
-        meta:          serde_json::json!({}),
-        created_at:    Utc::now(),
-        updated_at:    Utc::now(),
-    };
+    let order = Order::new(
+        ctx.tenant_id,
+        ctx.account_b,
+        ctx.instrument_id,
+        OrderSide::Sell,
+        OrderType::Market,
+        Decimal::from_str("1.0").unwrap(),
+        Decimal::ZERO,
+    );
 
     ctx.order_service.create_order(order).await
         .expect("Market sell order should be accepted");
@@ -204,22 +165,15 @@ async fn test_market_buy_partial_fill_refunds_unused_budget() {
     ctx.create_wallet(ctx.account_b, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
 
     // Create market buy order
-    let buy_order = Order {
-        id:            Uuid::new_v4(),
-        tenant_id:     ctx.tenant_id,
-        account_id:    ctx.account_a,
-        instrument_id: ctx.instrument_id,
-        side:          OrderSide::Buy,
-        r#type:        OrderType::Market,
-        quantity:      Decimal::from_str("1.0").unwrap(),
-        price:         Decimal::from_str("500.0").unwrap(),
-        status:        OrderStatus::Open,
-        filled_quantity: Decimal::ZERO,
-        average_fill_price: Decimal::ZERO,
-        meta:          serde_json::json!({}),
-        created_at:    Utc::now(),
-        updated_at:    Utc::now(),
-    };
+    let buy_order = Order::new(
+        ctx.tenant_id,
+        ctx.account_a,
+        ctx.instrument_id,
+        OrderSide::Buy,
+        OrderType::Market,
+        Decimal::from_str("1.0").unwrap(),
+        Decimal::from_str("500.0").unwrap(),
+    );
     ctx.order_repo.add(buy_order.clone());
 
     let sell_order = ctx.create_order(ctx.account_b, "sell", 500.0, 0.5);
@@ -253,22 +207,15 @@ async fn test_market_order_zero_balance_rejected() {
     // Wallet exists but has zero balance
     ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
 
-    let order = Order {
-        id:            Uuid::new_v4(),
-        tenant_id:     ctx.tenant_id,
-        account_id:    ctx.account_a,
-        instrument_id: ctx.instrument_id,
-        side:          OrderSide::Buy,
-        r#type:        OrderType::Market,
-        quantity:      Decimal::from_str("1.0").unwrap(),
-        price:         Decimal::from_str("500.0").unwrap(),
-        status:        OrderStatus::Open,
-        filled_quantity: Decimal::ZERO,
-        average_fill_price: Decimal::ZERO,
-        meta:          serde_json::json!({}),
-        created_at:    Utc::now(),
-        updated_at:    Utc::now(),
-    };
+    let order = Order::new(
+        ctx.tenant_id,
+        ctx.account_a,
+        ctx.instrument_id,
+        OrderSide::Buy,
+        OrderType::Market,
+        Decimal::from_str("1.0").unwrap(),
+        Decimal::from_str("500.0").unwrap(),
+    );
 
     let result = ctx.order_service.create_order(order).await;
     assert!(result.is_err(), "Should reject order with zero balance");

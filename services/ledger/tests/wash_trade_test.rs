@@ -1,30 +1,22 @@
+#[macro_use]
 mod helpers;
 use helpers::memory::InMemoryTestContext;
+use helpers::{to_atomic_usd, to_atomic_btc};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
 use ledger::domain::orders::OrderRepository;
 use std::str::FromStr;
 
-macro_rules! assert_decimal_val_eq {
-    ($left:expr, $right:expr) => {
-        assert_eq!(
-            Decimal::from_str(&$left).unwrap(),
-            $right,
-            "Expected {} but got {}",
-            $right, &$left
-        );
-    };
-}
-
-fn to_atomic_usd(amount: f64) -> Decimal {
-    use rust_decimal::prelude::FromPrimitive;
-    (Decimal::from_f64(amount).unwrap() * Decimal::new(100, 0)).floor()
-}
-
-fn to_atomic_btc(amount: f64) -> Decimal {
-    use rust_decimal::prelude::FromPrimitive;
-    (Decimal::from_f64(amount).unwrap() * Decimal::new(100_000_000, 0)).floor()
-}
+// macro_rules! assert_decimal_val_eq {
+//     ($left:expr, $right:expr) => {
+//         assert_eq!(
+//             Decimal::from_str(&$left).unwrap(),
+//             $right,
+//             "Expected {} but got {}",
+//             $right, &$left
+//         );
+//     };
+// }
 
 /// Test: Self-Trade — Same Account on Both Sides Is Flagged
 ///

@@ -2,8 +2,10 @@ use crate::error::{Result, AppError};
 use super::repository::OrderRepository;
 use crate::domain::assets::AssetService;
 use crate::domain::wallets::WalletService;
-use super::model::{Order, OrderStatus, OrderSide};
+use crate::domain::position_limits::PositionLimitService;
+use super::model::{Order, OrderStatus};
 use crate::domain::transaction::{TransactionManager, RepositoryTransaction};
+use crate::domain::instruments::factory::InstrumentHandlerFactory;
 use std::fmt;
 use uuid::Uuid;
 use std::sync::Arc;
@@ -23,6 +25,7 @@ pub struct OrderService {
     asset_service: Arc<AssetService>,
     wallet_service: Arc<WalletService>,
     matching_gateway: Option<Arc<dyn MatchingGateway>>,
+    position_limit_service: Option<Arc<PositionLimitService>>,
 }
 
 impl fmt::Debug for OrderService {
@@ -31,15 +34,65 @@ impl fmt::Debug for OrderService {
     }
 }
 
-impl OrderService {
+pub struct OrderServiceBuilder {
+    repo: Arc<dyn OrderRepository>,
+    wallet_service: Arc<WalletService>,
+    asset_service: Arc<AssetService>,
+    tx_manager: Option<Arc<dyn TransactionManager>>,
+    matching_gateway: Option<Arc<dyn MatchingGateway>>,
+    position_limit_service: Option<Arc<PositionLimitService>>,
+}
+
+impl OrderServiceBuilder {
     pub fn new(
         repo: Arc<dyn OrderRepository>,
         wallet_service: Arc<WalletService>,
         asset_service: Arc<AssetService>,
-        tx_manager: Option<Arc<dyn TransactionManager>>,
-        matching_gateway: Option<Arc<dyn MatchingGateway>>,
     ) -> Self {
-        Self { repo, wallet_service, asset_service, tx_manager, matching_gateway }
+        Self {
+            repo,
+            wallet_service,
+            asset_service,
+            tx_manager: None,
+            matching_gateway: None,
+            position_limit_service: None,
+        }
+    }
+
+    pub fn with_transaction_manager(mut self, tx_manager: Arc<dyn TransactionManager>) -> Self {
+        self.tx_manager = Some(tx_manager);
+        self
+    }
+
+    pub fn with_matching_gateway(mut self, gateway: Arc<dyn MatchingGateway>) -> Self {
+        self.matching_gateway = Some(gateway);
+        self
+    }
+
+    pub fn with_position_limit_service(mut self, service: Arc<PositionLimitService>) -> Self {
+        self.position_limit_service = Some(service);
+        self
+    }
+
+    pub fn build(self) -> OrderService {
+        OrderService {
+            repo: self.repo,
+            wallet_service: self.wallet_service,
+            asset_service: self.asset_service,
+            tx_manager: self.tx_manager,
+            matching_gateway: self.matching_gateway,
+            position_limit_service: self.position_limit_service,
+        }
+    }
+}
+
+impl OrderService {
+    pub fn builder(
+        repo: Arc<dyn OrderRepository>,
+        wallet_service: Arc<WalletService>,
+        asset_service: Arc<AssetService>,
+    ) -> OrderServiceBuilder {
+        OrderServiceBuilder::new(repo, wallet_service, asset_service)
     }
 
     pub async fn create_order(&self, order: Order) -> Result<Order> {
@@ -53,6 +106,19 @@ impl OrderService {
             // Idempotency check
             tracing::info!(order_id = %order.id, "Order already exists, skipping creation");
             return Ok(existing);
+        }
+
+        // --- Position Limits Check ---
+        if let Some(pos_limit) = &self.position_limit_service {
+            // 1. Max Order Size Check
+            // Need atomic units for BASE asset
+            if let Some(instr) = self.asset_service.get_instrument(&order.instrument_id.to_string()).await? {
+                if let Some(base_asset) = self.asset_service.get_asset(&instr.underlying_asset_id).await? {
+                    let scale = Decimal::from(10).powi(base_asset.decimals as i64);
+                    let qty_atomic = (order.quantity * scale).floor();
+                    pos_limit.check_order_size(qty_atomic)?;
+                }
+            }
         }
 
         let created_order = if let Some(tx_manager) = &self.tx_manager {
@@ -162,20 +228,20 @@ impl OrderService {
             }
         };
 
-        let (asset_id, raw_amount) = if order.side == OrderSide::Buy {
-            (instrument.quote_asset_id, remaining_qty * order.price)
-        } else {
-            (instrument.underlying_asset_id, remaining_qty)
-        };
+        // Delegate to Instrument Handler
+        let handler = InstrumentHandlerFactory::get_handler(&instrument.r#type);
+        
+        let asset_id = handler.identify_collateral_asset(order, &instrument)?;
+        let raw_amount = handler.calculate_raw_collateral_amount(order, &instrument)?;
 
         // Fetch asset to get decimals for scaling
-        let asset = self.asset_service.get_asset(&asset_id.to_string()).await?
+        let asset = self.asset_service.get_asset(&asset_id).await?
             .ok_or_else(|| AppError::NotFound(format!("Asset {} not found", asset_id)))?;
         
         let scale_factor = Decimal::from(10).powi(asset.decimals as i64);
         let amount_atomic = (raw_amount * scale_factor).floor();
 
-        Ok(Some((asset_id.to_string(), amount_atomic)))
+        Ok(Some((asset_id, amount_atomic)))
     }
 
     /// Performs the actual wallet update: locking or releasing the specified atomic amount.

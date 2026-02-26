@@ -1,20 +1,27 @@
 use crate::proto::ledger::*;
 use crate::domain::wallets::WalletService;
-use crate::proto::ledger::deposit_service_server::DepositService;
+use crate::domain::accounts::AccountService;
+ use crate::proto::ledger::deposit_service_server::DepositService;
 use crate::domain::deposits::DepositService as DepositDomainService;
 use std::sync::Arc;
 use std::str::FromStr;
 use rust_decimal::Decimal;
+use uuid::Uuid;
 use tonic::{Request, Response, Status};
 
 pub struct DepositServiceImpl {
     deposit_service: Arc<DepositDomainService>,
     wallet_service: Arc<WalletService>,
+    account_service: Arc<AccountService>,
 }
 
 impl DepositServiceImpl {
-    pub fn new(deposit_service: Arc<DepositDomainService>, wallet_service: Arc<WalletService>) -> Self {
-        Self { deposit_service, wallet_service }
+    pub fn new(
+        deposit_service: Arc<DepositDomainService>,
+        wallet_service: Arc<WalletService>,
+        account_service: Arc<AccountService>,
+    ) -> Self {
+        Self { deposit_service, wallet_service, account_service }
     }
 }
 
@@ -26,6 +33,32 @@ impl DepositService for DepositServiceImpl {
     ) -> Result<Response<CreateDepositResponse>, Status> {
         let req = request.into_inner();
         
+        // Idempotency: if a deposit with the same tx_hash already exists for
+        // this wallet, return it without crediting the wallet a second time.
+        let existing = self.deposit_service
+            .list_deposits(&req.wallet_id)
+            .into_iter()
+            .find(|d| d.tx_hash == req.transaction_ref);
+
+        if let Some(deposit) = existing {
+            return Ok(Response::new(CreateDepositResponse {
+                deposit: Some(deposit),
+            }));
+        }
+
+        // Reject deposits to closed accounts
+        if let Ok(Some(wallet)) = self.wallet_service.get_wallet(&req.wallet_id).await {
+            if let Ok(account_id) = Uuid::parse_str(&wallet.account_id) {
+                if let Ok(Some(account)) = self.account_service.get_account(account_id).await {
+                    if account.status == "closed" {
+                        return Err(Status::failed_precondition(
+                            "Cannot deposit to a closed account"
+                        ));
+                    }
+                }
+            }
+        }
+
         let deposit = self.deposit_service.create_new_deposit(
             req.wallet_id.clone(),
             req.amount.clone(),

@@ -1,48 +1,27 @@
+#[macro_use]
 mod helpers;
 use helpers::memory::InMemoryTestContext;
-use ledger::domain::wallets::WalletRepository;
-use ledger::domain::fees::constants::FeeConstants;
+use helpers::{to_atomic_usd, to_atomic_btc, calc_taker_fee, calc_maker_fee};
+use ledger::domain::wallets::{WalletRepository, Wallet};
 use ledger::domain::orders::repository::OrderRepository;
 use ledger::domain::accounts::repository::AccountRepository;
-use ledger::domain::orders::model::{OrderSide, OrderType, OrderStatus};
+use ledger::domain::orders::model::{Order, OrderSide, OrderType, OrderStatus};
+use ledger::domain::fills::FillRepository;
+use ledger::proto::ledger::CreateInstrumentRequest;
+use ledger::proto::ledger::asset_service_server::AssetService as AssetServiceTrait;
+use ledger::proto::common::Trade;
 use std::str::FromStr;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
-
-// --- Helpers for Future Proofing ---
-fn to_atomic_usd(amount: f64) -> Decimal {
-    // 2 decimals -> * 100
-    (Decimal::from_f64(amount).unwrap() * Decimal::new(100, 0)).floor()
-}
-
-fn to_atomic_btc(amount: f64) -> Decimal {
-    // 8 decimals -> * 100,000,000
-    (Decimal::from_f64(amount).unwrap() * Decimal::new(100000000, 0)).floor()
-}
-
-fn calc_taker_fee(amount_atomic: Decimal) -> Decimal {
-    (amount_atomic * FeeConstants::get_taker_fee()).floor()
-}
-
-fn calc_maker_fee(amount_atomic: Decimal) -> Decimal {
-    (amount_atomic * FeeConstants::get_maker_fee()).floor()
-}
+use tonic::Request;
+use uuid::Uuid;
+use chrono::Utc;
 
 macro_rules! assert_decimal_eq {
     ($left:expr, $right:expr) => {
         assert_eq!(
             Decimal::from_str(&$left).unwrap(),
             Decimal::from_str($right).unwrap()
-        );
-    };
-}
-
-
-macro_rules! assert_decimal_val_eq {
-    ($left:expr, $right:expr) => {
-        assert_eq!(
-            Decimal::from_str(&$left).unwrap(),
-            $right
         );
     };
 }
@@ -106,7 +85,6 @@ async fn test_settlement_basic_buy_sell() {
     assert_decimal_val_eq!(s_btc.available, to_atomic_btc(1.0)); // Started with 2.0
     assert_decimal_val_eq!(s_btc.locked, Decimal::ZERO); 
     assert_decimal_val_eq!(s_btc.total, to_atomic_btc(1.0));
-    use ledger::domain::fills::FillRepository;
     let buy_fills = ctx.fill_repo.list_by_order(buy_order.id).await.unwrap();
     assert_eq!(buy_fills.len(), 1);
     assert_eq!(buy_fills[0].side, "buy");
@@ -410,16 +388,16 @@ async fn test_settlement_concurrent_updates() {
 #[tokio::test]
 async fn test_settlement_cross_tenant_isolation() {
     let ctx = InMemoryTestContext::new(); // Tenant 1 (Default)
-    let tenant2_id = uuid::Uuid::new_v4();
+    let tenant2_id = Uuid::new_v4();
     
     // 1. Setup Wallet for Tenant 1 (Buyer)
     // 100k USD -> 10M atomic (2 decimals)
     ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(), 10000000.0, 0.0, 10000000.0);
     
     // 2. Setup Wallet for Tenant 2 (Seller)
-    let account_t2 = uuid::Uuid::new_v4();
-    let wallet_t2 = ledger::domain::wallets::Wallet {
-        id: uuid::Uuid::new_v4().to_string(),
+    let account_t2 = Uuid::new_v4();
+    let wallet_t2 = Wallet {
+        id: Uuid::new_v4().to_string(),
         account_id: account_t2.to_string(),
         asset_id: ctx.btc_id.to_string(),
         available: "1000000000.0".to_string(), // 10 BTC
@@ -442,22 +420,15 @@ async fn test_settlement_cross_tenant_isolation() {
     let buy_order = ctx.create_order(ctx.account_a, "buy", 50000.0, 1.0);
     
     // Seller is in Tenant 2
-    let sell_order = ledger::domain::orders::model::Order {
-        id: uuid::Uuid::new_v4(),
-        tenant_id: tenant2_id,
-        account_id: account_t2,
-        instrument_id: ctx.instrument_id,
-        side: OrderSide::Sell,
-        r#type: OrderType::Limit,
-        quantity: Decimal::from(1),
-        price: Decimal::from(50000),
-        status: OrderStatus::Open,
-        filled_quantity: Decimal::ZERO,
-        average_fill_price: Decimal::ZERO,
-        meta: serde_json::json!({}),
-        created_at: chrono::Utc::now(),
-        updated_at: chrono::Utc::now(),
-    };
+    let sell_order = Order::new(
+        tenant2_id,
+        account_t2,
+        ctx.instrument_id,
+        OrderSide::Sell,
+        OrderType::Limit,
+        Decimal::from(1),
+        Decimal::from(50000),
+    );
     ctx.order_repo.add(sell_order.clone());
 
     // 4. Attempt Match (Cross-Tenant)
@@ -496,8 +467,8 @@ async fn test_settlement_fee_account_contention() {
         let svc_clone = settlement_service.clone();
         
         handles.push(tokio::spawn(async move {
-            let buyer = uuid::Uuid::new_v4();
-            let seller = uuid::Uuid::new_v4();
+            let buyer = Uuid::new_v4();
+            let seller = Uuid::new_v4();
             
             ctx_clone.create_wallet(buyer, &ctx_clone.usd_id.to_string(), 100000.0, 0.0, 100000.0);
             ctx_clone.create_wallet(seller, &ctx_clone.btc_id.to_string(), 10.0, 0.0, 10.0);
@@ -578,43 +549,24 @@ async fn test_settlement_dust_amounts() {
 async fn test_settlement_self_trade() {
     let ctx = InMemoryTestContext::new();
 
-    // 1. Setup Wallet (User A has both USD and BTC)
-    // 100k USD, 2 BTC.
+    // Setup: account_a has both USD and BTC and places orders on both sides.
     ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(), 10000000.0, 0.0, 10000000.0);
     ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 200000000.0, 0.0, 200000000.0);
 
     let (settlement_service, wallet_service) = ctx.init_test_services();
 
-    // 2. Create Orders (Same Account)
-    let buy_order = ctx.create_order(ctx.account_a, "buy", 50000.0, 1.0);
+    let buy_order  = ctx.create_order(ctx.account_a, "buy",  50000.0, 1.0);
     let sell_order = ctx.create_order(ctx.account_a, "sell", 50000.0, 1.0);
-
-    // 3. Self Trade
     let trade = ctx.create_trade(buy_order.id, sell_order.id, 50000.0, 1.0);
 
-    // 4. Process
-    settlement_service.process_trade_event(trade.clone()).await.unwrap();
+    // Self-trades are now rejected: buy and sell belong to the same account.
+    let result = settlement_service.process_trade_event(trade).await;
+    assert!(result.is_err(), "Self-trade must be rejected");
 
-    // 5. Verify Balance
+    // Wallet balances must be completely unchanged.
     let usd = wallet_service.get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await.unwrap().unwrap();
     let btc = wallet_service.get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string()).await.unwrap().unwrap();
-
-    // USD: 
-    // -50k (Buy Cost) + 50k (Sell Revenue) = 0 Net.
-    // -Taker Fee - Maker Fee
-    // Start: 10,000,000. 
-    
-    let start_total = to_atomic_usd(100000.0);
-    let trade_amt = to_atomic_usd(50000.0);
-    let taker_fee = calc_taker_fee(trade_amt);
-    let maker_fee = calc_maker_fee(trade_amt);
-    let expected_total = start_total - taker_fee - maker_fee;
-
-    assert_decimal_val_eq!(usd.total, expected_total);
-
-    // BTC:
-    // +1 BTC (Buy) - 1 BTC (Sell) = 0 Net.
-    // Start: 200,000,000. End: 200,000,000.
+    assert_decimal_eq!(usd.total, "10000000");
     assert_decimal_eq!(btc.total, "200000000");
 }
 
@@ -685,10 +637,6 @@ async fn test_settlement_equity_stock_trade() {
     let usd_id  = ctx.create_asset_api("USD_EQ", "fiat", 2).await;
 
     let instr_id = {
-        use tonic::Request;
-        use ledger::proto::ledger::CreateInstrumentRequest;
-        use ledger::proto::ledger::asset_service_server::AssetService as AssetServiceTrait;
-
         let req = Request::new(CreateInstrumentRequest {
             symbol:         "AAPL-USD".to_string(),
             r#type:         "equity".to_string(),
@@ -710,77 +658,53 @@ async fn test_settlement_equity_stock_trade() {
     let seller_account = ctx.create_account_api(&ctx.user_id, "cash").await;
 
     ctx.create_wallet(
-        uuid::Uuid::parse_str(&buyer_account).unwrap(), &usd_id,
+        Uuid::parse_str(&buyer_account).unwrap(), &usd_id,
         0.0, usd_atomic as f64, usd_atomic as f64,
     );
     ctx.create_wallet(
-        uuid::Uuid::parse_str(&buyer_account).unwrap(), &aapl_id,
+        Uuid::parse_str(&buyer_account).unwrap(), &aapl_id,
         0.0, 0.0, 0.0,
     );
     ctx.create_wallet(
-        uuid::Uuid::parse_str(&seller_account).unwrap(), &aapl_id,
+        Uuid::parse_str(&seller_account).unwrap(), &aapl_id,
         0.0, aapl_atomic as f64, aapl_atomic as f64,
     );
     ctx.create_wallet(
-        uuid::Uuid::parse_str(&seller_account).unwrap(), &usd_id,
+        Uuid::parse_str(&seller_account).unwrap(), &usd_id,
         0.0, 0.0, 0.0,
     );
 
     let buy_order = {
-        use ledger::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
-        use rust_decimal::Decimal;
-        use std::str::FromStr;
-        use chrono::Utc;
-        let o = Order {
-            id:            uuid::Uuid::new_v4(),
-            tenant_id:     ctx.tenant_id,
-            account_id:    uuid::Uuid::parse_str(&buyer_account).unwrap(),
-            instrument_id: uuid::Uuid::parse_str(&instr_id).unwrap(),
-            side:          OrderSide::Buy,
-            r#type:        OrderType::Limit,
-            quantity:      Decimal::from_f64(shares).unwrap(),
-            price:         Decimal::from_str("180.50").unwrap(),
-            status:        OrderStatus::Open,
-            filled_quantity: Decimal::ZERO,
-            average_fill_price: Decimal::ZERO,
-            meta:          serde_json::json!({}),
-            created_at:    Utc::now(),
-            updated_at:    Utc::now(),
-        };
+        let o = Order::new(
+            ctx.tenant_id,
+            Uuid::parse_str(&buyer_account).unwrap(),
+            Uuid::parse_str(&instr_id).unwrap(),
+            OrderSide::Buy,
+            OrderType::Limit,
+            Decimal::from_f64(shares).unwrap(),
+            Decimal::from_str("180.50").unwrap(),
+        );
         ctx.order_repo.add(o.clone());
         o
     };
 
     let sell_order = {
-        use ledger::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
-        use rust_decimal::Decimal;
-        use std::str::FromStr;
-        use chrono::Utc;
-        let o = Order {
-            id:            uuid::Uuid::new_v4(),
-            tenant_id:     ctx.tenant_id,
-            account_id:    uuid::Uuid::parse_str(&seller_account).unwrap(),
-            instrument_id: uuid::Uuid::parse_str(&instr_id).unwrap(),
-            side:          OrderSide::Sell,
-            r#type:        OrderType::Limit,
-            quantity:      Decimal::from_f64(shares).unwrap(),
-            price:         Decimal::from_str("180.50").unwrap(),
-            status:        OrderStatus::Open,
-            filled_quantity: Decimal::ZERO,
-            average_fill_price: Decimal::ZERO,
-            meta:          serde_json::json!({}),
-            created_at:    Utc::now(),
-            updated_at:    Utc::now(),
-        };
+        let o = Order::new(
+            ctx.tenant_id,
+            Uuid::parse_str(&seller_account).unwrap(),
+            Uuid::parse_str(&instr_id).unwrap(),
+            OrderSide::Sell,
+            OrderType::Limit,
+            Decimal::from_f64(shares).unwrap(),
+            Decimal::from_str("180.50").unwrap(),
+        );
         ctx.order_repo.add(o.clone());
         o
     };
 
     let trade = {
-        use ledger::proto::common::Trade;
-        use chrono::Utc;
         Trade {
-            id:            uuid::Uuid::new_v4().to_string(),
+            id:            Uuid::new_v4().to_string(),
             tenant_id:     ctx.tenant_id.to_string(),
             instrument_id: instr_id.clone(),
             buy_order_id:  buy_order.id.to_string(),
@@ -825,9 +749,6 @@ async fn test_settlement_fractional_shares() {
     let usd_id  = ctx.create_asset_api("USD_FRAC", "fiat", 2).await;
 
     let instr_id = {
-        use tonic::Request;
-        use ledger::proto::ledger::CreateInstrumentRequest;
-        use ledger::proto::ledger::asset_service_server::AssetService as AssetServiceTrait;
         let req = Request::new(CreateInstrumentRequest {
             symbol:         "AAPL2-USD".to_string(),
             r#type:         "equity".to_string(),
@@ -848,62 +769,48 @@ async fn test_settlement_fractional_shares() {
     let seller_acc = ctx.create_account_api(&ctx.user_id, "cash").await;
 
     ctx.create_wallet(
-        uuid::Uuid::parse_str(&buyer_acc).unwrap(), &usd_id,
+        Uuid::parse_str(&buyer_acc).unwrap(), &usd_id,
         0.0, usd_atomic as f64, usd_atomic as f64,
     );
-    ctx.create_wallet(uuid::Uuid::parse_str(&buyer_acc).unwrap(), &aapl_id, 0.0, 0.0, 0.0);
+    ctx.create_wallet(Uuid::parse_str(&buyer_acc).unwrap(), &aapl_id, 0.0, 0.0, 0.0);
 
     ctx.create_wallet(
-        uuid::Uuid::parse_str(&seller_acc).unwrap(), &aapl_id,
+        Uuid::parse_str(&seller_acc).unwrap(), &aapl_id,
         0.0, aapl_atomic as f64, aapl_atomic as f64,
     );
-    ctx.create_wallet(uuid::Uuid::parse_str(&seller_acc).unwrap(), &usd_id, 0.0, 0.0, 0.0);
+    ctx.create_wallet(Uuid::parse_str(&seller_acc).unwrap(), &usd_id, 0.0, 0.0, 0.0);
 
     let buy_order = {
-        use ledger::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
-        use rust_decimal::Decimal;
-        use std::str::FromStr;
-        use chrono::Utc;
-        let o = Order {
-            id: uuid::Uuid::new_v4(), tenant_id: ctx.tenant_id,
-            account_id: uuid::Uuid::parse_str(&buyer_acc).unwrap(),
-            instrument_id: uuid::Uuid::parse_str(&instr_id).unwrap(),
-            side: OrderSide::Buy, r#type: OrderType::Limit,
-            quantity: Decimal::from_str("0.5").unwrap(),
-            price: Decimal::from_str("180.0").unwrap(),
-            status: OrderStatus::Open,
-            filled_quantity: Decimal::ZERO, average_fill_price: Decimal::ZERO,
-            meta: serde_json::json!({}), created_at: Utc::now(), updated_at: Utc::now(),
-        };
+        let o = Order::new(
+            ctx.tenant_id,
+            Uuid::parse_str(&buyer_acc).unwrap(),
+            Uuid::parse_str(&instr_id).unwrap(),
+            OrderSide::Buy,
+            OrderType::Limit,
+            Decimal::from_str("0.5").unwrap(),
+            Decimal::from_str("180.0").unwrap(),
+        );
         ctx.order_repo.add(o.clone());
         o
     };
 
     let sell_order = {
-        use ledger::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
-        use rust_decimal::Decimal;
-        use std::str::FromStr;
-        use chrono::Utc;
-        let o = Order {
-            id: uuid::Uuid::new_v4(), tenant_id: ctx.tenant_id,
-            account_id: uuid::Uuid::parse_str(&seller_acc).unwrap(),
-            instrument_id: uuid::Uuid::parse_str(&instr_id).unwrap(),
-            side: OrderSide::Sell, r#type: OrderType::Limit,
-            quantity: Decimal::from_str("0.5").unwrap(),
-            price: Decimal::from_str("180.0").unwrap(),
-            status: OrderStatus::Open,
-            filled_quantity: Decimal::ZERO, average_fill_price: Decimal::ZERO,
-            meta: serde_json::json!({}), created_at: Utc::now(), updated_at: Utc::now(),
-        };
+        let o = Order::new(
+            ctx.tenant_id,
+            Uuid::parse_str(&seller_acc).unwrap(),
+            Uuid::parse_str(&instr_id).unwrap(),
+            OrderSide::Sell,
+            OrderType::Limit,
+            Decimal::from_str("0.5").unwrap(),
+            Decimal::from_str("180.0").unwrap(),
+        );
         ctx.order_repo.add(o.clone());
         o
     };
 
     let trade = {
-        use ledger::proto::common::Trade;
-        use chrono::Utc;
         Trade {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: Uuid::new_v4().to_string(),
             tenant_id: ctx.tenant_id.to_string(),
             instrument_id: instr_id.clone(),
             buy_order_id: buy_order.id.to_string(),
@@ -944,9 +851,6 @@ async fn test_settlement_high_precision_altcoin() {
     let usd_id = ctx.create_asset_api("USD_HP", "fiat", 2).await;
 
     let instr_id = {
-        use tonic::Request;
-        use ledger::proto::ledger::CreateInstrumentRequest;
-        use ledger::proto::ledger::asset_service_server::AssetService as AssetServiceTrait;
         let req = Request::new(CreateInstrumentRequest {
             symbol: "ETH18-USD".to_string(), r#type: "spot".to_string(),
             base_asset_id: eth_id.clone(), quote_asset_id: usd_id.clone(),
@@ -960,64 +864,50 @@ async fn test_settlement_high_precision_altcoin() {
 
     // Buyer has $3,000 = 300,000 cents
     ctx.create_wallet(
-        uuid::Uuid::parse_str(&buyer_acc).unwrap(), &usd_id,
+        Uuid::parse_str(&buyer_acc).unwrap(), &usd_id,
         0.0, 300_000.0, 300_000.0,
     );
-    ctx.create_wallet(uuid::Uuid::parse_str(&buyer_acc).unwrap(), &eth_id, 0.0, 0.0, 0.0);
+    ctx.create_wallet(Uuid::parse_str(&buyer_acc).unwrap(), &eth_id, 0.0, 0.0, 0.0);
 
     // Seller has 1.0 ETH = 1_000_000_000_000_000_000 wei (10^18)
     let one_eth_wei = 1_000_000_000_000_000_000_u128;
     ctx.create_wallet(
-        uuid::Uuid::parse_str(&seller_acc).unwrap(), &eth_id,
+        Uuid::parse_str(&seller_acc).unwrap(), &eth_id,
         0.0, one_eth_wei as f64, one_eth_wei as f64,
     );
-    ctx.create_wallet(uuid::Uuid::parse_str(&seller_acc).unwrap(), &usd_id, 0.0, 0.0, 0.0);
+    ctx.create_wallet(Uuid::parse_str(&seller_acc).unwrap(), &usd_id, 0.0, 0.0, 0.0);
 
     let buy_order = {
-        use ledger::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
-        use rust_decimal::Decimal;
-        use std::str::FromStr;
-        use chrono::Utc;
-        let o = Order {
-            id: uuid::Uuid::new_v4(), tenant_id: ctx.tenant_id,
-            account_id: uuid::Uuid::parse_str(&buyer_acc).unwrap(),
-            instrument_id: uuid::Uuid::parse_str(&instr_id).unwrap(),
-            side: OrderSide::Buy, r#type: OrderType::Limit,
-            quantity: Decimal::ONE,
-            price: Decimal::from_str("3000.0").unwrap(),
-            status: OrderStatus::Open, filled_quantity: Decimal::ZERO,
-            average_fill_price: Decimal::ZERO, meta: serde_json::json!({}),
-            created_at: Utc::now(), updated_at: Utc::now(),
-        };
+        let o = Order::new(
+            ctx.tenant_id,
+            Uuid::parse_str(&buyer_acc).unwrap(),
+            Uuid::parse_str(&instr_id).unwrap(),
+            OrderSide::Buy,
+            OrderType::Limit,
+            Decimal::ONE,
+            Decimal::from_str("3000.0").unwrap(),
+        );
         ctx.order_repo.add(o.clone());
         o
     };
 
     let sell_order = {
-        use ledger::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
-        use rust_decimal::Decimal;
-        use std::str::FromStr;
-        use chrono::Utc;
-        let o = Order {
-            id: uuid::Uuid::new_v4(), tenant_id: ctx.tenant_id,
-            account_id: uuid::Uuid::parse_str(&seller_acc).unwrap(),
-            instrument_id: uuid::Uuid::parse_str(&instr_id).unwrap(),
-            side: OrderSide::Sell, r#type: OrderType::Limit,
-            quantity: Decimal::ONE,
-            price: Decimal::from_str("3000.0").unwrap(),
-            status: OrderStatus::Open, filled_quantity: Decimal::ZERO,
-            average_fill_price: Decimal::ZERO, meta: serde_json::json!({}),
-            created_at: Utc::now(), updated_at: Utc::now(),
-        };
+        let o = Order::new(
+            ctx.tenant_id,
+            Uuid::parse_str(&seller_acc).unwrap(),
+            Uuid::parse_str(&instr_id).unwrap(),
+            OrderSide::Sell,
+            OrderType::Limit,
+            Decimal::ONE,
+            Decimal::from_str("3000.0").unwrap(),
+        );
         ctx.order_repo.add(o.clone());
         o
     };
 
     let trade = {
-        use ledger::proto::common::Trade;
-        use chrono::Utc;
         Trade {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: Uuid::new_v4().to_string(),
             tenant_id: ctx.tenant_id.to_string(),
             instrument_id: instr_id.clone(),
             buy_order_id: buy_order.id.to_string(),
@@ -1043,3 +933,4 @@ async fn test_settlement_high_precision_altcoin() {
     assert!(eth_received > rust_decimal::Decimal::ZERO,
         "Buyer should have received ETH; got {}", eth_received);
 }
+

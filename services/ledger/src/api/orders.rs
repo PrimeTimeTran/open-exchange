@@ -1,5 +1,6 @@
 use crate::proto::ledger::*;
 use crate::domain::fills::service::FillService;
+use crate::domain::accounts::AccountService;
 use crate::proto::ledger::order_service_server::OrderService;
 use crate::domain::orders::{OrderService as OrderDomainService, Order};
 use crate::infra::mappers::order_mapper::OrderMapper;
@@ -11,14 +12,16 @@ use tonic::{Request, Response, Status};
 pub struct OrderServiceImpl {
     fill_service: Arc<FillService>,
     order_service: Arc<OrderDomainService>,
+    account_service: Arc<AccountService>,
 }
 
 impl OrderServiceImpl {
     pub fn new(
         order_service: Arc<OrderDomainService>,
         fill_service: Arc<FillService>,
+        account_service: Arc<AccountService>,
     ) -> Self {
-        Self { order_service, fill_service }
+        Self { order_service, fill_service, account_service }
     }
 
     // Helper for tests to access internal state
@@ -37,6 +40,17 @@ impl OrderService for OrderServiceImpl {
         
         if let Some(proto_order) = req.order {
             let order = OrderMapper::to_domain(&proto_order)?;
+
+            // Reject orders from frozen accounts
+            if let Ok(account_id) = Uuid::parse_str(&proto_order.account_id) {
+                if let Ok(Some(account)) = self.account_service.get_account(account_id).await {
+                    if account.status == "frozen" {
+                        return Err(Status::failed_precondition(
+                            "Account is frozen and cannot place new orders"
+                        ));
+                    }
+                }
+            }
 
             // OrderService handles validation, reservation, AND matching engine push
             match self.order_service.create_order(order).await {

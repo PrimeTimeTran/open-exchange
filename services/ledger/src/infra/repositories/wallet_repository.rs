@@ -263,14 +263,34 @@ impl WalletRepository for PostgresWalletRepository {
 
         let recs: Vec<WalletRow> = sqlx::query_as(
             r#"
-            SELECT id, "tenantId", "accountId", "assetId", 
-                   available, locked, total, 
+            SELECT id, "tenantId", "accountId", "assetId",
+                   available, locked, total,
                    version, meta, "createdAt", "updatedAt"
             FROM "Wallet"
             WHERE "accountId" = $1
             "#
         )
         .bind(acc_uuid)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(AppError::DatabaseError)?;
+
+        Ok(recs.into_iter().map(|r| r.into()).collect())
+    }
+
+    async fn list_by_asset(&self, asset_id: &str) -> Result<Vec<Wallet>> {
+        let asset_uuid = Uuid::parse_str(asset_id).map_err(|_| AppError::ValidationError("Invalid asset_id".into()))?;
+
+        let recs: Vec<WalletRow> = sqlx::query_as(
+            r#"
+            SELECT id, "tenantId", "accountId", "assetId",
+                   available, locked, total,
+                   version, meta, "createdAt", "updatedAt"
+            FROM "Wallet"
+            WHERE "assetId" = $1
+            "#
+        )
+        .bind(asset_uuid)
         .fetch_all(&self.pool)
         .await
         .map_err(AppError::DatabaseError)?;

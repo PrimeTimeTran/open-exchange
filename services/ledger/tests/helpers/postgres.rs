@@ -107,24 +107,20 @@ impl PostgresTestContext {
             pool: pool.clone(),
             db_name: db_name.clone(),
             tenant_id: "".to_string(),
-            order_service: Arc::new(OrderService::new(
+            order_service: Arc::new(OrderService::builder(
                 Arc::new(PostgresOrderRepository::new(pool.clone())), 
                 Arc::new(WalletService::new(Arc::new(PostgresWalletRepository::new(pool.clone())))), 
                 Arc::new(AssetService::new(Arc::new(PostgresAssetRepository::new(pool.clone())), Arc::new(PostgresInstrumentRepository::new(pool.clone())))), 
-                None,
-                None,
-            )), // Dummy service initialization just to call apply_migrations
+            ).build()), // Dummy service initialization just to call apply_migrations
             wallet_service: Arc::new(WalletService::new(Arc::new(PostgresWalletRepository::new(pool.clone())))),
             asset_service: Arc::new(AssetService::new(Arc::new(PostgresAssetRepository::new(pool.clone())), Arc::new(PostgresInstrumentRepository::new(pool.clone())))),
             settlement_service: Arc::new(SettlementService::new(
                 None, 
-                Arc::new(OrderService::new(
+                Arc::new(OrderService::builder(
                     Arc::new(PostgresOrderRepository::new(pool.clone())), 
                     Arc::new(WalletService::new(Arc::new(PostgresWalletRepository::new(pool.clone())))), 
                     Arc::new(AssetService::new(Arc::new(PostgresAssetRepository::new(pool.clone())), Arc::new(PostgresInstrumentRepository::new(pool.clone())))), 
-                    None,
-                    None,
-                )), 
+                ).build()), 
                 Arc::new(PostgresInstrumentRepository::new(pool.clone())), 
                 Arc::new(LedgerService::new(Arc::new(PostgresOrderRepository::new(pool.clone())), Arc::new(PostgresInstrumentRepository::new(pool.clone())), Arc::new(PostgresAssetRepository::new(pool.clone())), Arc::new(PostgresAccountRepository::new(pool.clone())))), 
                 Arc::new(WalletService::new(Arc::new(PostgresWalletRepository::new(pool.clone())))), 
@@ -219,13 +215,13 @@ impl PostgresTestContext {
         let asset_service = Arc::new(AssetService::new(asset_repo.clone(), instrument_repo.clone()));
         
         let tx_manager = Arc::new(ledger::infra::transaction::PostgresTransactionManager::new(pool.clone()));
-        let order_service = Arc::new(OrderService::new(
+        let order_service = Arc::new(OrderService::builder(
             order_repo.clone(), 
             wallet_service.clone(), 
             asset_service.clone(), 
-            Some(tx_manager.clone()),
-            None,
-        ));
+        )
+        .with_transaction_manager(tx_manager.clone())
+        .build());
         
         let ledger_service = Arc::new(LedgerService::new(
             order_repo.clone(), 

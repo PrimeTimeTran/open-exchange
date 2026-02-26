@@ -26,17 +26,15 @@ async fn test_create_order_idempotency() {
         ..Default::default()
     }).await.unwrap();
 
-    let order_id = Uuid::new_v4();
-    let order = Order {
-        id: order_id,
-        tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
-        account_id: Uuid::parse_str(&account_id).unwrap(),
-        instrument_id: Uuid::parse_str(&instr_id).unwrap(),
-        side: OrderSide::Buy,
-        quantity: Decimal::from_str("1.0").unwrap(),
-        price: Decimal::from_str("100.0").unwrap(), // Cost: 100 USDT
-        ..Default::default()
-    };
+    let order = Order::new(
+        Uuid::parse_str(&ctx.tenant_id).unwrap(),
+        Uuid::parse_str(&account_id).unwrap(),
+        Uuid::parse_str(&instr_id).unwrap(),
+        OrderSide::Buy,
+        ledger::domain::orders::model::OrderType::Limit, // Default is Limit
+        Decimal::from_str("1.0").unwrap(),
+        Decimal::from_str("100.0").unwrap(), // Cost: 100 USDT
+    );
 
     // 1. First Request
     let res1 = ctx.order_service.create_order(order.clone()).await;

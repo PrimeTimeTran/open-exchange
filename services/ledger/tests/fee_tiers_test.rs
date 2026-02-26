@@ -1,30 +1,12 @@
 mod helpers;
 use helpers::memory::InMemoryTestContext;
+use helpers::{to_atomic_usd, to_atomic_btc};
 use ledger::domain::fees::constants::FeeConstants;
 use ledger::domain::fees::service::{FeeService, StandardFeeService};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
 use std::str::FromStr;
 
-fn to_atomic_usd(amount: f64) -> Decimal {
-    (Decimal::from_f64(amount).unwrap() * Decimal::new(100, 0)).floor()
-}
-
-fn to_atomic_btc(amount: f64) -> Decimal {
-    (Decimal::from_f64(amount).unwrap() * Decimal::new(100_000_000, 0)).floor()
-}
-
-macro_rules! assert_decimal_val_eq {
-    ($left:expr, $right:expr) => {
-        assert_eq!(
-            Decimal::from_str(&$left).unwrap(),
-            $right,
-            "Expected {} but got {}",
-            $right,
-            &$left
-        );
-    };
-}
 
 /// Test: Maker Fee Is Lower Than Taker Fee
 ///
@@ -145,7 +127,6 @@ async fn test_minimum_fee_floor_on_dust_trade() {
 /// Assert: vip_fee_account_balance < standard_fee_account_balance for same trade
 #[tokio::test]
 async fn test_vip_tier_uses_lower_fee_rate() {
-    use std::sync::Arc;
     use async_trait::async_trait;
 
     // Custom VIP fee service: 0.05% taker / 0.0% maker

@@ -1,6 +1,6 @@
 mod helpers;
 use helpers::postgres::{PostgresTestContext, atomic};
-use ledger::domain::orders::model::{Order, OrderStatus};
+use ledger::domain::orders::model::{Order, OrderSide, OrderStatus};
 use ledger::proto::common::{LedgerEntry, Trade};
 use ledger::domain::wallets::Wallet;
 use uuid::Uuid;
@@ -75,7 +75,7 @@ async fn test_withdrawal_insufficient_funds() {
         tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
         account_id: Uuid::parse_str(&account_id).unwrap(),
         instrument_id: Uuid::parse_str(&instr_id).unwrap(),
-        side: ledger::domain::orders::model::OrderSide::Buy,
+        side: OrderSide::Buy,
         quantity: Decimal::from_str("1.0").unwrap(),
         price: Decimal::from_str("100.0").unwrap(),
         ..Default::default()
@@ -111,7 +111,7 @@ async fn test_create_order_buy_limit_locks_quote() {
         tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
         account_id: Uuid::parse_str(&account_id).unwrap(),
         instrument_id: Uuid::parse_str(&instr_id).unwrap(),
-        side: ledger::domain::orders::model::OrderSide::Buy,
+        side: OrderSide::Buy,
         quantity: Decimal::from_str("2.0").unwrap(),
         price: Decimal::from_str("100.0").unwrap(),
         ..Default::default()
@@ -150,7 +150,7 @@ async fn test_create_order_sell_limit_locks_base() {
         tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
         account_id: Uuid::parse_str(&account_id).unwrap(),
         instrument_id: Uuid::parse_str(&instr_id).unwrap(),
-        side: ledger::domain::orders::model::OrderSide::Sell,
+        side: OrderSide::Sell,
         quantity: Decimal::from_str("2.0").unwrap(),
         price: Decimal::from_str("100.0").unwrap(),
         ..Default::default()
@@ -188,7 +188,7 @@ async fn test_create_order_insufficient_funds() {
         tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
         account_id: Uuid::parse_str(&account_id).unwrap(),
         instrument_id: Uuid::parse_str(&instr_id).unwrap(),
-        side: ledger::domain::orders::model::OrderSide::Buy,
+        side: OrderSide::Buy,
         quantity: Decimal::from_str("1.0").unwrap(),
         price: Decimal::from_str("100.0").unwrap(),
         ..Default::default()
@@ -228,7 +228,7 @@ async fn test_cancel_order_unlocks_funds() {
         tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
         account_id: Uuid::parse_str(&account_id).unwrap(),
         instrument_id: Uuid::parse_str(&instr_id).unwrap(),
-        side: ledger::domain::orders::model::OrderSide::Buy,
+        side: OrderSide::Buy,
         quantity: Decimal::from_str("1.0").unwrap(),
         price: Decimal::from_str("100.0").unwrap(),
         status: OrderStatus::Open,
@@ -281,7 +281,7 @@ async fn test_trade_settlement_full_fill() {
         tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
         account_id: Uuid::parse_str(&buyer_id).unwrap(),
         instrument_id: Uuid::parse_str(&instr_id).unwrap(),
-        side: ledger::domain::orders::model::OrderSide::Buy,
+        side: OrderSide::Buy,
         quantity: Decimal::from_str("1.0").unwrap(),
         price: Decimal::from_str("100.0").unwrap(),
         ..Default::default()
@@ -293,7 +293,7 @@ async fn test_trade_settlement_full_fill() {
         tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
         account_id: Uuid::parse_str(&seller_id).unwrap(),
         instrument_id: Uuid::parse_str(&instr_id).unwrap(),
-        side: ledger::domain::orders::model::OrderSide::Sell,
+        side: OrderSide::Sell,
         quantity: Decimal::from_str("1.0").unwrap(),
         price: Decimal::from_str("100.0").unwrap(),
         ..Default::default()
@@ -355,7 +355,7 @@ async fn test_trade_settlement_partial_fill() {
         tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
         account_id: Uuid::parse_str(&account_id).unwrap(),
         instrument_id: Uuid::parse_str(&instr_id).unwrap(),
-        side: ledger::domain::orders::model::OrderSide::Buy,
+        side: OrderSide::Buy,
         quantity: Decimal::from_str("2.0").unwrap(),
         price: Decimal::from_str("100.0").unwrap(),
         ..Default::default()
@@ -368,7 +368,7 @@ async fn test_trade_settlement_partial_fill() {
     let sell_order_id = Uuid::new_v4();
     ctx.wallet_service.create_wallet(Wallet { id: Uuid::new_v4().to_string(), tenant_id: ctx.tenant_id.clone(), account_id: seller_id.clone(), asset_id: btc_id.clone(), available: atomic("10.0", 8), ..Default::default() }).await.unwrap();
     
-    let sell_order = Order { id: sell_order_id, tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(), account_id: Uuid::parse_str(&seller_id).unwrap(), instrument_id: Uuid::parse_str(&instr_id).unwrap(), side: ledger::domain::orders::model::OrderSide::Sell, quantity: Decimal::from_str("1.0").unwrap(), price: Decimal::from_str("100.0").unwrap(), ..Default::default() };
+    let sell_order = Order { id: sell_order_id, tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(), account_id: Uuid::parse_str(&seller_id).unwrap(), instrument_id: Uuid::parse_str(&instr_id).unwrap(), side: OrderSide::Sell, quantity: Decimal::from_str("1.0").unwrap(), price: Decimal::from_str("100.0").unwrap(), ..Default::default() };
     ctx.order_service.create_order(sell_order.clone()).await.unwrap();
 
     let trade = Trade {
@@ -451,9 +451,9 @@ async fn test_system_fee_collection() {
     ctx.wallet_service.create_wallet(Wallet { id: Uuid::new_v4().to_string(), tenant_id: ctx.tenant_id.clone(), account_id: buyer_id.clone(), asset_id: usd_id.clone(), available: atomic("1000.0", 2), ..Default::default() }).await.unwrap();
     ctx.wallet_service.create_wallet(Wallet { id: Uuid::new_v4().to_string(), tenant_id: ctx.tenant_id.clone(), account_id: seller_id.clone(), asset_id: btc_id.clone(), available: atomic("10.0", 8), ..Default::default() }).await.unwrap();
 
-    let buy_order = Order { id: Uuid::new_v4(), tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(), account_id: Uuid::parse_str(&buyer_id).unwrap(), instrument_id: Uuid::parse_str(&instr_id).unwrap(), side: ledger::domain::orders::model::OrderSide::Buy, quantity: Decimal::from_str("1.0").unwrap(), price: Decimal::from_str("100.0").unwrap(), ..Default::default() };
+    let buy_order = Order { id: Uuid::new_v4(), tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(), account_id: Uuid::parse_str(&buyer_id).unwrap(), instrument_id: Uuid::parse_str(&instr_id).unwrap(), side: OrderSide::Buy, quantity: Decimal::from_str("1.0").unwrap(), price: Decimal::from_str("100.0").unwrap(), ..Default::default() };
     ctx.order_service.create_order(buy_order.clone()).await.unwrap();
-    let sell_order = Order { id: Uuid::new_v4(), tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(), account_id: Uuid::parse_str(&seller_id).unwrap(), instrument_id: Uuid::parse_str(&instr_id).unwrap(), side: ledger::domain::orders::model::OrderSide::Sell, quantity: Decimal::from_str("1.0").unwrap(), price: Decimal::from_str("100.0").unwrap(), ..Default::default() };
+    let sell_order = Order { id: Uuid::new_v4(), tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(), account_id: Uuid::parse_str(&seller_id).unwrap(), instrument_id: Uuid::parse_str(&instr_id).unwrap(), side: OrderSide::Sell, quantity: Decimal::from_str("1.0").unwrap(), price: Decimal::from_str("100.0").unwrap(), ..Default::default() };
     ctx.order_service.create_order(sell_order.clone()).await.unwrap();
 
     let trade = Trade {

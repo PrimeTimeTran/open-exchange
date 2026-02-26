@@ -1,37 +1,12 @@
+#[macro_use]
 mod helpers;
 use helpers::memory::InMemoryTestContext;
+use helpers::{to_atomic_usd, to_atomic_btc, calc_taker_fee};
 use ledger::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
-use ledger::domain::fees::constants::FeeConstants;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
 use ledger::domain::orders::OrderRepository;
 use std::str::FromStr;
-use uuid::Uuid;
-use chrono::Utc;
-
-fn to_atomic_usd(amount: f64) -> Decimal {
-    (Decimal::from_f64(amount).unwrap() * Decimal::new(100, 0)).floor()
-}
-
-fn to_atomic_btc(amount: f64) -> Decimal {
-    (Decimal::from_f64(amount).unwrap() * Decimal::new(100_000_000, 0)).floor()
-}
-
-fn calc_taker_fee(amount_atomic: Decimal) -> Decimal {
-    (amount_atomic * FeeConstants::get_taker_fee()).floor()
-}
-
-macro_rules! assert_decimal_val_eq {
-    ($left:expr, $right:expr) => {
-        assert_eq!(
-            Decimal::from_str(&$left).unwrap(),
-            $right,
-            "Expected {} but got {}",
-            $right,
-            &$left
-        );
-    };
-}
 
 /// Test: IOC — Partial Fill Cancels Remainder
 ///
@@ -55,7 +30,7 @@ async fn test_ioc_partial_fill_cancels_remainder() {
     let partial_qty    = 0.5_f64;
     let full_budget    = to_atomic_usd(price * full_qty);
     let partial_cost   = to_atomic_usd(price * partial_qty);
-    let taker_fee      = calc_taker_fee(partial_cost);
+    let _taker_fee     = calc_taker_fee(partial_cost);
 
     // Buyer: USD budget for 1.0 BTC, 0 BTC
     ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(),
@@ -69,22 +44,17 @@ async fn test_ioc_partial_fill_cancels_remainder() {
     ctx.create_wallet(ctx.account_b, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
 
     // IOC buy order stored in repo (funds already locked)
-    let ioc_buy_order = Order {
-        id:            Uuid::new_v4(),
-        tenant_id:     ctx.tenant_id,
-        account_id:    ctx.account_a,
-        instrument_id: ctx.instrument_id,
-        side:          OrderSide::Buy,
-        r#type:        OrderType::Limit,
-        quantity:      Decimal::from_f64(full_qty).unwrap(),
-        price:         Decimal::from_f64(price).unwrap(),
-        status:        OrderStatus::Open,
-        filled_quantity: Decimal::ZERO,
-        average_fill_price: Decimal::ZERO,
-        meta:          serde_json::json!({"time_in_force": "IOC"}),
-        created_at:    Utc::now(),
-        updated_at:    Utc::now(),
-    };
+    let mut ioc_buy_order = Order::new(
+        ctx.tenant_id,
+        ctx.account_a,
+        ctx.instrument_id,
+        OrderSide::Buy,
+        OrderType::Limit,
+        Decimal::from_f64(full_qty).unwrap(),
+        Decimal::from_f64(price).unwrap(),
+    );
+    ioc_buy_order.meta = serde_json::json!({"time_in_force": "IOC"});
+    ioc_buy_order.status = OrderStatus::Open;
     ctx.order_repo.add(ioc_buy_order.clone());
 
     let sell_order = ctx.create_order(ctx.account_b, "sell", price, partial_qty);
@@ -137,22 +107,17 @@ async fn test_ioc_zero_fill_cancels_entirely() {
     ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(),
         0.0, budget.to_f64().unwrap(), budget.to_f64().unwrap());
 
-    let ioc_order = Order {
-        id:            Uuid::new_v4(),
-        tenant_id:     ctx.tenant_id,
-        account_id:    ctx.account_a,
-        instrument_id: ctx.instrument_id,
-        side:          OrderSide::Buy,
-        r#type:        OrderType::Limit,
-        quantity:      Decimal::from_f64(qty).unwrap(),
-        price:         Decimal::from_f64(price).unwrap(),
-        status:        OrderStatus::Open,
-        filled_quantity: Decimal::ZERO,
-        average_fill_price: Decimal::ZERO,
-        meta:          serde_json::json!({"time_in_force": "IOC"}),
-        created_at:    Utc::now(),
-        updated_at:    Utc::now(),
-    };
+    let mut ioc_order = Order::new(
+        ctx.tenant_id,
+        ctx.account_a,
+        ctx.instrument_id,
+        OrderSide::Buy,
+        OrderType::Limit,
+        Decimal::from_f64(qty).unwrap(),
+        Decimal::from_f64(price).unwrap(),
+    );
+    ioc_order.meta = serde_json::json!({"time_in_force": "IOC"});
+    ioc_order.status = OrderStatus::Open;
     ctx.order_repo.add(ioc_order.clone());
 
     // No trade occurs. Matching engine cancels the IOC order immediately.
@@ -189,22 +154,17 @@ async fn test_fok_cancels_if_not_fully_fillable() {
         0.0, budget.to_f64().unwrap(), budget.to_f64().unwrap());
     ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
 
-    let fok_order = Order {
-        id:            Uuid::new_v4(),
-        tenant_id:     ctx.tenant_id,
-        account_id:    ctx.account_a,
-        instrument_id: ctx.instrument_id,
-        side:          OrderSide::Buy,
-        r#type:        OrderType::Limit,
-        quantity:      Decimal::from_f64(qty).unwrap(),
-        price:         Decimal::from_f64(price).unwrap(),
-        status:        OrderStatus::Open,
-        filled_quantity: Decimal::ZERO,
-        average_fill_price: Decimal::ZERO,
-        meta:          serde_json::json!({"time_in_force": "FOK"}),
-        created_at:    Utc::now(),
-        updated_at:    Utc::now(),
-    };
+    let mut fok_order = Order::new(
+        ctx.tenant_id,
+        ctx.account_a,
+        ctx.instrument_id,
+        OrderSide::Buy,
+        OrderType::Limit,
+        Decimal::from_f64(qty).unwrap(),
+        Decimal::from_f64(price).unwrap(),
+    );
+    fok_order.meta = serde_json::json!({"time_in_force": "FOK"});
+    fok_order.status = OrderStatus::Open;
     ctx.order_repo.add(fok_order.clone());
 
     // Only 1.0 BTC available — FOK condition fails; no trade, just cancel

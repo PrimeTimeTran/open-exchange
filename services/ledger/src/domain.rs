@@ -14,5 +14,11 @@ pub mod trade;
 pub mod settlement;
 pub mod fees;
 pub mod transaction;
-
-
+pub mod funding;
+pub mod exercise;
+pub mod corporate_actions;
+pub mod borrow;
+pub mod margin;
+pub mod liquidation;
+pub mod position_limits;
+pub mod instruments;

@@ -1,6 +1,12 @@
 mod helpers;
 use helpers::memory::InMemoryTestContext;
 use ledger::domain::ledger::service::LedgerService;
+use ledger::domain::wallets::WalletService;
+use ledger::domain::assets::AssetService;
+use ledger::domain::orders::service::OrderService;
+use ledger::domain::fills::service::FillService;
+use ledger::domain::fees::service::StandardFeeService;
+use ledger::domain::settlement::service::SettlementService;
 use std::sync::Arc;
 use std::str::FromStr;
 use rust_decimal::Decimal;
@@ -175,23 +181,21 @@ async fn test_trade_processor_flow() {
     
     // 2. Services
     let ledger_service = Arc::new(LedgerService::new(ctx.order_repo.clone(), ctx.instrument_repo.clone(), ctx.asset_repo.clone(), ctx.account_repo.clone()));
-    let wallet_service = Arc::new(ledger::domain::wallets::WalletService::new(ctx.wallet_repo.clone()));
-    let asset_service = Arc::new(ledger::domain::assets::AssetService::new(ctx.asset_repo.clone(), ctx.instrument_repo.clone()));
+    let wallet_service = Arc::new(WalletService::new(ctx.wallet_repo.clone()));
+    let asset_service = Arc::new(AssetService::new(ctx.asset_repo.clone(), ctx.instrument_repo.clone()));
     
     // Explicitly coerce generic repo to trait object if needed, but implicit should work.
     // However, OrderService expects Arc<dyn OrderRepository>.
-    let order_service = Arc::new(ledger::domain::orders::service::OrderService::new(
+    let order_service = Arc::new(OrderService::builder(
         ctx.order_repo.clone(), 
         wallet_service.clone(),
         asset_service,
-        None,
-        None,
-    ));
+    ).build());
     
-    let fill_service = Arc::new(ledger::domain::fills::service::FillService::new(ctx.fill_repo.clone()));
-    let fee_service = Arc::new(ledger::domain::fees::service::StandardFeeService::new());
+    let fill_service = Arc::new(FillService::new(ctx.fill_repo.clone()));
+    let fee_service = Arc::new(StandardFeeService::new());
 
-    let settlement_service = ledger::domain::settlement::service::SettlementService::new(
+    let settlement_service = SettlementService::new(
         None,
         order_service,
         ctx.instrument_repo.clone(),

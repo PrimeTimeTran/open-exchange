@@ -25,6 +25,9 @@ pub trait WalletRepository: Send + Sync + Debug {
     async fn update_with_tx(&self, tx: &mut dyn RepositoryTransaction, wallet: Wallet) -> Result<Wallet>;
     async fn delete(&self, id: Uuid) -> Result<()>;
     async fn list_by_account(&self, account_id: &str) -> Result<Vec<Wallet>>;
+    /// List all wallets that hold a given asset (across all accounts). Used by
+    /// CorporateActionService for dividends and splits.
+    async fn list_by_asset(&self, asset_id: &str) -> Result<Vec<Wallet>>;
 }
 
 #[derive(Debug, Clone)]
@@ -93,6 +96,10 @@ impl WalletService {
 
     pub async fn list_wallets(&self, account_id: &str) -> Result<Vec<Wallet>> {
         self.repo.list_by_account(account_id).await
+    }
+
+    pub async fn list_wallets_by_asset(&self, asset_id: &str) -> Result<Vec<Wallet>> {
+        self.repo.list_by_asset(asset_id).await
     }
 
     pub async fn process_ledger_entry(&self, entry: LedgerEntry) -> Result<()> {
