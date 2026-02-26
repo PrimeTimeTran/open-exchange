@@ -1043,4 +1043,3 @@ async fn test_settlement_high_precision_altcoin() {
     assert!(eth_received > rust_decimal::Decimal::ZERO,
         "Buyer should have received ETH; got {}", eth_received);
 }
-}

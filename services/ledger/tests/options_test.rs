@@ -15,6 +15,7 @@
 mod helpers;
 use helpers::memory::InMemoryTestContext;
 use rust_decimal::Decimal;
+use rust_decimal::prelude::ToPrimitive;
 use std::str::FromStr;
 
 fn to_atomic_usd(amount: f64) -> Decimal {
