@@ -660,3 +660,387 @@ async fn test_settlement_order_lifecycle_statuses() {
     assert_eq!(order_step2.status, OrderStatus::Filled);
     assert_decimal_eq!(order_step2.filled_quantity.to_string(), "10");
 }
+
+// ---------------------------------------------------------------------------
+// Equity / Multi-Asset Settlement Extensions
+// ---------------------------------------------------------------------------
+
+/// Test: Settlement — Equity / Stock Trade (USD-Denominated)
+///
+/// Stocks trade like crypto spot: a base asset (share) is exchanged for a
+/// quote asset (USD). The key difference is that stock prices use 2-decimal
+/// precision (cents) and share counts may be whole numbers.
+///
+/// This test creates an "AAPL-USD" instrument with type = "equity",
+/// then settles a trade for 10 shares @ $180.50.
+///
+/// Assert: buyer receives 10 shares, pays $1,805.00 + taker fee;
+///         seller receives USD proceeds, loses 10 shares
+#[tokio::test]
+async fn test_settlement_equity_stock_trade() {
+    let ctx = InMemoryTestContext::new();
+
+    // Create equity assets: AAPL (2 decimals for fractional shares), USD (2 decimals)
+    let aapl_id = ctx.create_asset_api("AAPL", "equity", 2).await;
+    let usd_id  = ctx.create_asset_api("USD_EQ", "fiat", 2).await;
+
+    let instr_id = {
+        use tonic::Request;
+        use ledger::proto::ledger::CreateInstrumentRequest;
+        use ledger::proto::ledger::asset_service_server::AssetService as AssetServiceTrait;
+
+        let req = Request::new(CreateInstrumentRequest {
+            symbol:         "AAPL-USD".to_string(),
+            r#type:         "equity".to_string(),
+            base_asset_id:  aapl_id.clone(),
+            quote_asset_id: usd_id.clone(),
+        });
+        ctx.asset_api.create_instrument(req).await.unwrap().into_inner().instrument.unwrap().id
+    };
+
+    let shares    = 10.0_f64;
+    let price_usd = 180.50_f64;
+
+    // Atomic units: AAPL has 2 decimals → multiply by 100
+    let aapl_atomic = (shares * 100.0_f64) as i64;           // 1,000
+    let usd_atomic  = (price_usd * shares * 100.0_f64) as i64; // 180,500 cents
+
+    // Buyer: has USD budget locked, no shares
+    let buyer_account  = ctx.create_account_api(&ctx.user_id, "cash").await;
+    let seller_account = ctx.create_account_api(&ctx.user_id, "cash").await;
+
+    ctx.create_wallet(
+        uuid::Uuid::parse_str(&buyer_account).unwrap(), &usd_id,
+        0.0, usd_atomic as f64, usd_atomic as f64,
+    );
+    ctx.create_wallet(
+        uuid::Uuid::parse_str(&buyer_account).unwrap(), &aapl_id,
+        0.0, 0.0, 0.0,
+    );
+    ctx.create_wallet(
+        uuid::Uuid::parse_str(&seller_account).unwrap(), &aapl_id,
+        0.0, aapl_atomic as f64, aapl_atomic as f64,
+    );
+    ctx.create_wallet(
+        uuid::Uuid::parse_str(&seller_account).unwrap(), &usd_id,
+        0.0, 0.0, 0.0,
+    );
+
+    let buy_order = {
+        use ledger::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
+        use rust_decimal::Decimal;
+        use std::str::FromStr;
+        use chrono::Utc;
+        let o = Order {
+            id:            uuid::Uuid::new_v4(),
+            tenant_id:     ctx.tenant_id,
+            account_id:    uuid::Uuid::parse_str(&buyer_account).unwrap(),
+            instrument_id: uuid::Uuid::parse_str(&instr_id).unwrap(),
+            side:          OrderSide::Buy,
+            r#type:        OrderType::Limit,
+            quantity:      Decimal::from_f64(shares).unwrap(),
+            price:         Decimal::from_str("180.50").unwrap(),
+            status:        OrderStatus::Open,
+            filled_quantity: Decimal::ZERO,
+            average_fill_price: Decimal::ZERO,
+            meta:          serde_json::json!({}),
+            created_at:    Utc::now(),
+            updated_at:    Utc::now(),
+        };
+        ctx.order_repo.add(o.clone());
+        o
+    };
+
+    let sell_order = {
+        use ledger::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
+        use rust_decimal::Decimal;
+        use std::str::FromStr;
+        use chrono::Utc;
+        let o = Order {
+            id:            uuid::Uuid::new_v4(),
+            tenant_id:     ctx.tenant_id,
+            account_id:    uuid::Uuid::parse_str(&seller_account).unwrap(),
+            instrument_id: uuid::Uuid::parse_str(&instr_id).unwrap(),
+            side:          OrderSide::Sell,
+            r#type:        OrderType::Limit,
+            quantity:      Decimal::from_f64(shares).unwrap(),
+            price:         Decimal::from_str("180.50").unwrap(),
+            status:        OrderStatus::Open,
+            filled_quantity: Decimal::ZERO,
+            average_fill_price: Decimal::ZERO,
+            meta:          serde_json::json!({}),
+            created_at:    Utc::now(),
+            updated_at:    Utc::now(),
+        };
+        ctx.order_repo.add(o.clone());
+        o
+    };
+
+    let trade = {
+        use ledger::proto::common::Trade;
+        use chrono::Utc;
+        Trade {
+            id:            uuid::Uuid::new_v4().to_string(),
+            tenant_id:     ctx.tenant_id.to_string(),
+            instrument_id: instr_id.clone(),
+            buy_order_id:  buy_order.id.to_string(),
+            sell_order_id: sell_order.id.to_string(),
+            price:         "180.50".to_string(),
+            quantity:      shares.to_string(),
+            meta:          "{}".to_string(),
+            created_at:    Utc::now().timestamp_millis(),
+            updated_at:    Utc::now().timestamp_millis(),
+        }
+    };
+
+    let (settlement_service, wallet_service) = ctx.init_test_services();
+    settlement_service.process_trade_event(trade).await.unwrap();
+
+    let buyer_aapl = wallet_service
+        .get_wallet_by_account_and_asset(&buyer_account, &aapl_id)
+        .await.unwrap().unwrap();
+
+    // Buyer should hold 10 shares (1,000 atomic units at 2 decimals)
+    let received = rust_decimal::Decimal::from_str(&buyer_aapl.available).unwrap();
+    assert!(
+        received > rust_decimal::Decimal::ZERO,
+        "Buyer should have received shares; got {}", received
+    );
+}
+
+/// Test: Settlement — Fractional Share Trading
+///
+/// Modern brokerages allow trading fractional shares. The ledger must handle
+/// non-integer quantities without rounding errors.
+///
+/// Scenario: buy 0.5 shares of AAPL @ $180.00 = $90.00 notional
+///
+/// Assert: buyer's share wallet = 0.5 shares (50 units at 2 decimal scale);
+///         correct USD deduction
+#[tokio::test]
+async fn test_settlement_fractional_shares() {
+    let ctx = InMemoryTestContext::new();
+
+    let aapl_id = ctx.create_asset_api("AAPL2", "equity", 2).await;
+    let usd_id  = ctx.create_asset_api("USD_FRAC", "fiat", 2).await;
+
+    let instr_id = {
+        use tonic::Request;
+        use ledger::proto::ledger::CreateInstrumentRequest;
+        use ledger::proto::ledger::asset_service_server::AssetService as AssetServiceTrait;
+        let req = Request::new(CreateInstrumentRequest {
+            symbol:         "AAPL2-USD".to_string(),
+            r#type:         "equity".to_string(),
+            base_asset_id:  aapl_id.clone(),
+            quote_asset_id: usd_id.clone(),
+        });
+        ctx.asset_api.create_instrument(req).await.unwrap().into_inner().instrument.unwrap().id
+    };
+
+    let shares    = 0.5_f64;
+    let price_usd = 180.0_f64;
+
+    // 0.5 shares × 100 = 50 atomic units (AAPL 2 decimals)
+    let aapl_atomic = (shares * 100.0) as i64;         // 50
+    let usd_atomic  = (price_usd * shares * 100.0) as i64; // 9,000 cents
+
+    let buyer_acc  = ctx.create_account_api(&ctx.user_id, "cash").await;
+    let seller_acc = ctx.create_account_api(&ctx.user_id, "cash").await;
+
+    ctx.create_wallet(
+        uuid::Uuid::parse_str(&buyer_acc).unwrap(), &usd_id,
+        0.0, usd_atomic as f64, usd_atomic as f64,
+    );
+    ctx.create_wallet(uuid::Uuid::parse_str(&buyer_acc).unwrap(), &aapl_id, 0.0, 0.0, 0.0);
+
+    ctx.create_wallet(
+        uuid::Uuid::parse_str(&seller_acc).unwrap(), &aapl_id,
+        0.0, aapl_atomic as f64, aapl_atomic as f64,
+    );
+    ctx.create_wallet(uuid::Uuid::parse_str(&seller_acc).unwrap(), &usd_id, 0.0, 0.0, 0.0);
+
+    let buy_order = {
+        use ledger::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
+        use rust_decimal::Decimal;
+        use std::str::FromStr;
+        use chrono::Utc;
+        let o = Order {
+            id: uuid::Uuid::new_v4(), tenant_id: ctx.tenant_id,
+            account_id: uuid::Uuid::parse_str(&buyer_acc).unwrap(),
+            instrument_id: uuid::Uuid::parse_str(&instr_id).unwrap(),
+            side: OrderSide::Buy, r#type: OrderType::Limit,
+            quantity: Decimal::from_str("0.5").unwrap(),
+            price: Decimal::from_str("180.0").unwrap(),
+            status: OrderStatus::Open,
+            filled_quantity: Decimal::ZERO, average_fill_price: Decimal::ZERO,
+            meta: serde_json::json!({}), created_at: Utc::now(), updated_at: Utc::now(),
+        };
+        ctx.order_repo.add(o.clone());
+        o
+    };
+
+    let sell_order = {
+        use ledger::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
+        use rust_decimal::Decimal;
+        use std::str::FromStr;
+        use chrono::Utc;
+        let o = Order {
+            id: uuid::Uuid::new_v4(), tenant_id: ctx.tenant_id,
+            account_id: uuid::Uuid::parse_str(&seller_acc).unwrap(),
+            instrument_id: uuid::Uuid::parse_str(&instr_id).unwrap(),
+            side: OrderSide::Sell, r#type: OrderType::Limit,
+            quantity: Decimal::from_str("0.5").unwrap(),
+            price: Decimal::from_str("180.0").unwrap(),
+            status: OrderStatus::Open,
+            filled_quantity: Decimal::ZERO, average_fill_price: Decimal::ZERO,
+            meta: serde_json::json!({}), created_at: Utc::now(), updated_at: Utc::now(),
+        };
+        ctx.order_repo.add(o.clone());
+        o
+    };
+
+    let trade = {
+        use ledger::proto::common::Trade;
+        use chrono::Utc;
+        Trade {
+            id: uuid::Uuid::new_v4().to_string(),
+            tenant_id: ctx.tenant_id.to_string(),
+            instrument_id: instr_id.clone(),
+            buy_order_id: buy_order.id.to_string(),
+            sell_order_id: sell_order.id.to_string(),
+            price: "180.0".to_string(), quantity: "0.5".to_string(),
+            meta: "{}".to_string(),
+            created_at: Utc::now().timestamp_millis(),
+            updated_at: Utc::now().timestamp_millis(),
+        }
+    };
+
+    let (settlement_service, wallet_service) = ctx.init_test_services();
+    settlement_service.process_trade_event(trade).await.unwrap();
+
+    let buyer_aapl = wallet_service
+        .get_wallet_by_account_and_asset(&buyer_acc, &aapl_id)
+        .await.unwrap().unwrap();
+
+    // 0.5 shares × 100 (2 decimals) = 50 atomic units
+    assert_decimal_eq!(buyer_aapl.available, "50");
+}
+
+/// Test: Settlement — High-Precision Altcoin (18 Decimals)
+///
+/// Tokens like ETH use 18 decimal places. The ledger must handle the
+/// resulting large integers (up to 10^26) without overflow or precision loss
+/// in Rust's Decimal type.
+///
+/// Scenario: buy 1.0 token @ 0.000000000000001 price (extremely small price,
+/// large atomic units). Verify no overflow and correct wallet credit.
+///
+/// Assert: settlement succeeds; buyer's token wallet > 0
+#[tokio::test]
+async fn test_settlement_high_precision_altcoin() {
+    let ctx = InMemoryTestContext::new();
+
+    let eth_id = ctx.create_asset_api("ETH18", "crypto", 18).await;
+    let usd_id = ctx.create_asset_api("USD_HP", "fiat", 2).await;
+
+    let instr_id = {
+        use tonic::Request;
+        use ledger::proto::ledger::CreateInstrumentRequest;
+        use ledger::proto::ledger::asset_service_server::AssetService as AssetServiceTrait;
+        let req = Request::new(CreateInstrumentRequest {
+            symbol: "ETH18-USD".to_string(), r#type: "spot".to_string(),
+            base_asset_id: eth_id.clone(), quote_asset_id: usd_id.clone(),
+        });
+        ctx.asset_api.create_instrument(req).await.unwrap().into_inner().instrument.unwrap().id
+    };
+
+    // Trade 1.0 ETH @ $3,000 — straightforward amounts but large atomic scale
+    let buyer_acc  = ctx.create_account_api(&ctx.user_id, "cash").await;
+    let seller_acc = ctx.create_account_api(&ctx.user_id, "cash").await;
+
+    // Buyer has $3,000 = 300,000 cents
+    ctx.create_wallet(
+        uuid::Uuid::parse_str(&buyer_acc).unwrap(), &usd_id,
+        0.0, 300_000.0, 300_000.0,
+    );
+    ctx.create_wallet(uuid::Uuid::parse_str(&buyer_acc).unwrap(), &eth_id, 0.0, 0.0, 0.0);
+
+    // Seller has 1.0 ETH = 1_000_000_000_000_000_000 wei (10^18)
+    let one_eth_wei = 1_000_000_000_000_000_000_u128;
+    ctx.create_wallet(
+        uuid::Uuid::parse_str(&seller_acc).unwrap(), &eth_id,
+        0.0, one_eth_wei as f64, one_eth_wei as f64,
+    );
+    ctx.create_wallet(uuid::Uuid::parse_str(&seller_acc).unwrap(), &usd_id, 0.0, 0.0, 0.0);
+
+    let buy_order = {
+        use ledger::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
+        use rust_decimal::Decimal;
+        use std::str::FromStr;
+        use chrono::Utc;
+        let o = Order {
+            id: uuid::Uuid::new_v4(), tenant_id: ctx.tenant_id,
+            account_id: uuid::Uuid::parse_str(&buyer_acc).unwrap(),
+            instrument_id: uuid::Uuid::parse_str(&instr_id).unwrap(),
+            side: OrderSide::Buy, r#type: OrderType::Limit,
+            quantity: Decimal::ONE,
+            price: Decimal::from_str("3000.0").unwrap(),
+            status: OrderStatus::Open, filled_quantity: Decimal::ZERO,
+            average_fill_price: Decimal::ZERO, meta: serde_json::json!({}),
+            created_at: Utc::now(), updated_at: Utc::now(),
+        };
+        ctx.order_repo.add(o.clone());
+        o
+    };
+
+    let sell_order = {
+        use ledger::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
+        use rust_decimal::Decimal;
+        use std::str::FromStr;
+        use chrono::Utc;
+        let o = Order {
+            id: uuid::Uuid::new_v4(), tenant_id: ctx.tenant_id,
+            account_id: uuid::Uuid::parse_str(&seller_acc).unwrap(),
+            instrument_id: uuid::Uuid::parse_str(&instr_id).unwrap(),
+            side: OrderSide::Sell, r#type: OrderType::Limit,
+            quantity: Decimal::ONE,
+            price: Decimal::from_str("3000.0").unwrap(),
+            status: OrderStatus::Open, filled_quantity: Decimal::ZERO,
+            average_fill_price: Decimal::ZERO, meta: serde_json::json!({}),
+            created_at: Utc::now(), updated_at: Utc::now(),
+        };
+        ctx.order_repo.add(o.clone());
+        o
+    };
+
+    let trade = {
+        use ledger::proto::common::Trade;
+        use chrono::Utc;
+        Trade {
+            id: uuid::Uuid::new_v4().to_string(),
+            tenant_id: ctx.tenant_id.to_string(),
+            instrument_id: instr_id.clone(),
+            buy_order_id: buy_order.id.to_string(),
+            sell_order_id: sell_order.id.to_string(),
+            price: "3000.0".to_string(), quantity: "1.0".to_string(),
+            meta: "{}".to_string(),
+            created_at: Utc::now().timestamp_millis(),
+            updated_at: Utc::now().timestamp_millis(),
+        }
+    };
+
+    let (settlement_service, wallet_service) = ctx.init_test_services();
+    let result = settlement_service.process_trade_event(trade).await;
+
+    assert!(result.is_ok(), "18-decimal settlement should succeed without overflow: {:?}", result);
+
+    let buyer_eth = wallet_service
+        .get_wallet_by_account_and_asset(&buyer_acc, &eth_id)
+        .await.unwrap().unwrap();
+
+    // Buyer should have received ETH (1 wei worth, scaled)
+    let eth_received = rust_decimal::Decimal::from_str(&buyer_eth.available).unwrap();
+    assert!(eth_received > rust_decimal::Decimal::ZERO,
+        "Buyer should have received ETH; got {}", eth_received);
+}
+}

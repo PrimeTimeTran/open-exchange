@@ -157,3 +157,141 @@ async fn test_delete_account_with_nonzero_balance() {
         println!("Account deletion prevented as expected.");
     }
 }
+
+/// Test: Frozen Account Cannot Place Orders
+///
+/// When an account is frozen (e.g. pending KYC, compliance hold), no new
+/// orders should be accepted. The order service must check account status
+/// before locking any funds.
+///
+/// Note: The current OrderService does not check account status. This test
+/// documents the EXPECTED behavior and will fail until that check is added.
+///
+/// Assert: order creation returns an error; wallet balance unchanged
+#[tokio::test]
+async fn test_frozen_account_cannot_place_orders() {
+    let ctx = InMemoryTestContext::new();
+
+    let usd_asset_id  = ctx.create_asset_api("USD_FRZ", "fiat", 2).await;
+    let btc_asset_id  = ctx.create_asset_api("BTC_FRZ", "crypto", 8).await;
+    let instrument_id = ctx.create_instrument_api("BTC_FRZ_USD", &btc_asset_id, &usd_asset_id).await;
+
+    let account_id = ctx.create_account_api(&ctx.user_id, "trading").await;
+    let wallet_id  = ctx.create_wallet_api(&account_id, &usd_asset_id).await;
+    ctx.deposit_funds_api(&wallet_id, "5000000").await; // $50,000
+
+    // Freeze the account
+    let freeze_req = Request::new(UpdateAccountRequest {
+        account_id: account_id.clone(),
+        status:     "frozen".to_string(),
+        r#type:     "".to_string(),
+    });
+    ctx.account_api.update_account(freeze_req).await.unwrap();
+
+    // Attempt to place an order on the frozen account
+    let order = ctx.create_order_object(&account_id, &instrument_id, OrderSide::Buy, "1", "50000");
+    let req = Request::new(RecordOrderRequest { order: Some(order) });
+    let result = ctx.order_api.record_order(req).await;
+
+    assert!(
+        result.is_err(),
+        "Order on frozen account should be rejected; current impl may not check status (gap)"
+    );
+
+    // Wallet must be untouched — no funds locked
+    let get_req = Request::new(GetWalletRequest { wallet_id: wallet_id.clone() });
+    let wallet = ctx.wallet_api.get_wallet(get_req).await.unwrap().into_inner().wallet.unwrap();
+    crate::helpers::memory::assert_decimal(&wallet.locked,    "0");
+    crate::helpers::memory::assert_decimal(&wallet.available, "5000000");
+}
+
+/// Test: Frozen Account Can Still Cancel Existing Orders
+///
+/// Freezing an account must not prevent the user from reducing exposure by
+/// cancelling open orders already in the book. This is a required safety
+/// mechanism — users must always be able to exit positions.
+///
+/// Assert: cancel succeeds; locked funds are returned to available
+#[tokio::test]
+async fn test_frozen_account_can_cancel_existing_orders() {
+    let ctx = InMemoryTestContext::new();
+
+    let usd_asset_id  = ctx.create_asset_api("USD_FRZC", "fiat", 2).await;
+    let btc_asset_id  = ctx.create_asset_api("BTC_FRZC", "crypto", 8).await;
+    let instrument_id = ctx.create_instrument_api("BTC_FRZC_USD", &btc_asset_id, &usd_asset_id).await;
+
+    let account_id = ctx.create_account_api(&ctx.user_id, "trading").await;
+    let wallet_id  = ctx.create_wallet_api(&account_id, &usd_asset_id).await;
+    ctx.deposit_funds_api(&wallet_id, "5000000").await;
+
+    // Place an order BEFORE freezing
+    let order = ctx.create_order_object(&account_id, &instrument_id, OrderSide::Buy, "1", "50000");
+    let req = Request::new(RecordOrderRequest { order: Some(order.clone()) });
+    ctx.order_api.record_order(req).await.expect("Order should succeed before freeze");
+
+    // Freeze the account
+    let freeze_req = Request::new(UpdateAccountRequest {
+        account_id: account_id.clone(),
+        status:     "frozen".to_string(),
+        r#type:     "".to_string(),
+    });
+    ctx.account_api.update_account(freeze_req).await.unwrap();
+
+    // Cancel the order — should always succeed regardless of account status
+    let order_id = uuid::Uuid::parse_str(&order.id).unwrap();
+    ctx.order_service.cancel_order(order_id).await
+        .expect("Cancel should succeed even on a frozen account");
+
+    // Locked funds must be fully returned
+    let get_req = Request::new(GetWalletRequest { wallet_id: wallet_id.clone() });
+    let wallet = ctx.wallet_api.get_wallet(get_req).await.unwrap().into_inner().wallet.unwrap();
+    crate::helpers::memory::assert_decimal(&wallet.locked,    "0");
+    crate::helpers::memory::assert_decimal(&wallet.available, "5000000");
+}
+
+/// Test: Closed Account Rejects Deposits
+///
+/// A closed account has permanently ended its relationship with the exchange.
+/// No new funds should be accepted. Depositing to a wallet on a closed
+/// account must be rejected before any wallet mutation.
+///
+/// Note: Current DepositService does not check account status. This test
+/// documents the EXPECTED rejection. It will fail until that check is added.
+///
+/// Assert: deposit returns an error; wallet balance remains 0
+#[tokio::test]
+async fn test_closed_account_rejects_deposits() {
+    let ctx = InMemoryTestContext::new();
+
+    let asset_id   = ctx.create_asset_api("USD_CLO", "fiat", 2).await;
+    let account_id = ctx.create_account_api(&ctx.user_id, "trading").await;
+    let wallet_id  = ctx.create_wallet_api(&account_id, &asset_id).await;
+
+    // Close the account
+    let close_req = Request::new(UpdateAccountRequest {
+        account_id: account_id.clone(),
+        status:     "closed".to_string(),
+        r#type:     "".to_string(),
+    });
+    ctx.account_api.update_account(close_req).await.unwrap();
+
+    // Attempt to deposit into the closed account's wallet
+    use ledger::proto::ledger::deposit_service_server::DepositService as DepositServiceTrait;
+    use ledger::proto::ledger::CreateDepositRequest;
+    let dep_req = Request::new(CreateDepositRequest {
+        wallet_id:       wallet_id.clone(),
+        amount:          "10000".to_string(),
+        transaction_ref: format!("txn-{}", uuid::Uuid::new_v4()),
+    });
+    let result = ctx.deposit_api.create_deposit(dep_req).await;
+
+    assert!(
+        result.is_err(),
+        "Deposit to closed account should be rejected; current impl may not check status (gap)"
+    );
+
+    // Wallet must remain at zero
+    let wallet = ctx.wallet_service.get_wallet(&wallet_id).await.unwrap().unwrap();
+    crate::helpers::memory::assert_decimal(&wallet.available, "0");
+    crate::helpers::memory::assert_decimal(&wallet.total,     "0");
+}
