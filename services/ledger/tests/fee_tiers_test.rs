@@ -1,12 +1,11 @@
 mod helpers;
 use helpers::memory::InMemoryTestContext;
-use helpers::{to_atomic_usd, to_atomic_btc};
+use helpers::{to_atomic_btc, to_atomic_usd};
 use ledger::domain::fees::constants::FeeConstants;
 use ledger::domain::fees::service::{FeeService, StandardFeeService};
-use rust_decimal::Decimal;
 use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
+use rust_decimal::Decimal;
 use std::str::FromStr;
-
 
 /// Test: Maker Fee Is Lower Than Taker Fee
 ///
@@ -25,7 +24,8 @@ async fn test_maker_fee_lower_than_taker_fee() {
     assert!(
         maker < taker,
         "Maker fee ({}) must be lower than taker fee ({})",
-        maker, taker
+        maker,
+        taker
     );
 }
 
@@ -45,25 +45,36 @@ async fn test_maker_fee_lower_than_taker_fee() {
 async fn test_taker_fee_deducted_exactly_from_buyer_proceeds() {
     let ctx = InMemoryTestContext::new();
 
-    let price    = 50_000.0_f64;
-    let qty      = 1.0_f64;
+    let price = 50_000.0_f64;
+    let qty = 1.0_f64;
     let notional = to_atomic_usd(price * qty);
-    let fee_svc  = StandardFeeService::new();
+    let fee_svc = StandardFeeService::new();
     let taker_fee = (fee_svc.calculate_fee(
         Decimal::from_f64(qty).unwrap(),
         Decimal::from_f64(price).unwrap(),
         "taker",
-    ) * Decimal::new(100, 0)).floor(); // scale to atomic USD
+    ) * Decimal::new(100, 0))
+    .floor(); // scale to atomic USD
 
-    ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(),
-        0.0, notional.to_f64().unwrap(), notional.to_f64().unwrap());
+    ctx.create_wallet(
+        ctx.account_a,
+        &ctx.usd_id.to_string(),
+        0.0,
+        notional.to_f64().unwrap(),
+        notional.to_f64().unwrap(),
+    );
     ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
 
-    ctx.create_wallet(ctx.account_b, &ctx.btc_id.to_string(),
-        0.0, to_atomic_btc(qty).to_f64().unwrap(), to_atomic_btc(qty).to_f64().unwrap());
+    ctx.create_wallet(
+        ctx.account_b,
+        &ctx.btc_id.to_string(),
+        0.0,
+        to_atomic_btc(qty).to_f64().unwrap(),
+        to_atomic_btc(qty).to_f64().unwrap(),
+    );
     ctx.create_wallet(ctx.account_b, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
 
-    let buy_order  = ctx.create_order(ctx.account_a, "buy",  price, qty);
+    let buy_order = ctx.create_order(ctx.account_a, "buy", price, qty);
     let sell_order = ctx.create_order(ctx.account_b, "sell", price, qty);
     let trade = ctx.create_trade(buy_order.id, sell_order.id, price, qty);
 
@@ -72,7 +83,9 @@ async fn test_taker_fee_deducted_exactly_from_buyer_proceeds() {
 
     let buyer_usd = wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await.unwrap().unwrap();
+        .await
+        .unwrap()
+        .unwrap();
 
     // Buyer started with exactly the notional amount locked.
     // After settlement: total should be -(fee), meaning the fee came out of that balance.
@@ -102,16 +115,22 @@ async fn test_minimum_fee_floor_on_dust_trade() {
     let fee_svc = StandardFeeService::new();
 
     // Trade: 1 unit of base @ 1 unit price (the absolute minimum)
-    let qty   = Decimal::ONE;
+    let qty = Decimal::ONE;
     let price = Decimal::ONE;
 
     let taker_fee = fee_svc.calculate_fee(qty, price, "taker");
     let maker_fee = fee_svc.calculate_fee(qty, price, "maker");
 
-    assert!(taker_fee >= Decimal::ZERO,
-        "Taker fee must not be negative for dust trade; got {}", taker_fee);
-    assert!(maker_fee >= Decimal::ZERO,
-        "Maker fee must not be negative for dust trade; got {}", maker_fee);
+    assert!(
+        taker_fee >= Decimal::ZERO,
+        "Taker fee must not be negative for dust trade; got {}",
+        taker_fee
+    );
+    assert!(
+        maker_fee >= Decimal::ZERO,
+        "Maker fee must not be negative for dust trade; got {}",
+        maker_fee
+    );
 }
 
 /// Test: VIP Tier Settlement Uses Lower Fee Rate
@@ -144,9 +163,9 @@ async fn test_vip_tier_uses_lower_fee_rate() {
     }
 
     let standard_fee = StandardFeeService::new();
-    let vip_fee      = VipFeeService;
+    let vip_fee = VipFeeService;
 
-    let qty   = Decimal::from_f64(1.0).unwrap();
+    let qty = Decimal::from_f64(1.0).unwrap();
     let price = Decimal::from_f64(50_000.0).unwrap();
 
     let std_fee = standard_fee.calculate_fee(qty, price, "taker");
@@ -155,11 +174,15 @@ async fn test_vip_tier_uses_lower_fee_rate() {
     assert!(
         vip_fee_amt < std_fee,
         "VIP fee ({}) should be less than standard fee ({}) for same trade",
-        vip_fee_amt, std_fee
+        vip_fee_amt,
+        std_fee
     );
 
     // Also assert VIP fee is > 0 (not free)
-    assert!(vip_fee_amt > Decimal::ZERO, "VIP fee should still be positive");
+    assert!(
+        vip_fee_amt > Decimal::ZERO,
+        "VIP fee should still be positive"
+    );
 }
 
 /// Test: Fee Revenue Is Always Positive After Any Settlement
@@ -177,33 +200,47 @@ async fn test_fee_revenue_always_positive() {
     let ctx = InMemoryTestContext::new();
 
     let price = 50_000.0_f64;
-    let qty   = 1.0_f64;
+    let qty = 1.0_f64;
 
-    ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(),
-        0.0, to_atomic_usd(price * qty).to_f64().unwrap(),
-        to_atomic_usd(price * qty).to_f64().unwrap());
+    ctx.create_wallet(
+        ctx.account_a,
+        &ctx.usd_id.to_string(),
+        0.0,
+        to_atomic_usd(price * qty).to_f64().unwrap(),
+        to_atomic_usd(price * qty).to_f64().unwrap(),
+    );
     ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
 
-    ctx.create_wallet(ctx.account_b, &ctx.btc_id.to_string(),
-        0.0, to_atomic_btc(qty).to_f64().unwrap(), to_atomic_btc(qty).to_f64().unwrap());
+    ctx.create_wallet(
+        ctx.account_b,
+        &ctx.btc_id.to_string(),
+        0.0,
+        to_atomic_btc(qty).to_f64().unwrap(),
+        to_atomic_btc(qty).to_f64().unwrap(),
+    );
     ctx.create_wallet(ctx.account_b, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
 
     // Get fees account
-    let fees_account = ctx.account_repo
+    let fees_account = ctx
+        .account_repo
         .get_by_name("fees_account")
-        .await.unwrap()
+        .await
+        .unwrap()
         .expect("fees_account must exist");
 
     // Seed a fees wallet for USD
     ctx.create_wallet(fees_account.id, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
 
-    let pre_fees_wallet = ctx.wallet_service
+    let pre_fees_wallet = ctx
+        .wallet_service
         .get_wallet_by_account_and_asset(&fees_account.id.to_string(), &ctx.usd_id.to_string())
-        .await.unwrap().unwrap();
+        .await
+        .unwrap()
+        .unwrap();
     let pre_balance = Decimal::from_str(&pre_fees_wallet.total).unwrap();
 
     // Execute a trade
-    let buy_order  = ctx.create_order(ctx.account_a, "buy",  price, qty);
+    let buy_order = ctx.create_order(ctx.account_a, "buy", price, qty);
     let sell_order = ctx.create_order(ctx.account_b, "sell", price, qty);
     let trade = ctx.create_trade(buy_order.id, sell_order.id, price, qty);
 
@@ -212,17 +249,21 @@ async fn test_fee_revenue_always_positive() {
 
     let post_fees_wallet = wallet_service
         .get_wallet_by_account_and_asset(&fees_account.id.to_string(), &ctx.usd_id.to_string())
-        .await.unwrap().unwrap();
+        .await
+        .unwrap()
+        .unwrap();
     let post_balance = Decimal::from_str(&post_fees_wallet.total).unwrap();
 
     assert!(
         post_balance >= pre_balance,
         "Fee account balance must not decrease after settlement. Before: {}, After: {}",
-        pre_balance, post_balance
+        pre_balance,
+        post_balance
     );
     assert!(
         post_balance > pre_balance,
         "Fee account must have received revenue. Before: {}, After: {}",
-        pre_balance, post_balance
+        pre_balance,
+        post_balance
     );
 }

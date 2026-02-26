@@ -1,22 +1,22 @@
-use crate::domain::fills::Fill;
-use crate::proto::ledger::Match;
-use crate::error::{Result, AppError};
-use crate::domain::trade::TradeRepository;
-use crate::domain::wallets::WalletService;
-use crate::domain::transaction::Transaction;
 use crate::domain::fees::service::FeeService;
 use crate::domain::fills::service::FillService;
-use crate::domain::orders::service::OrderService;
-use crate::domain::ledger::service::LedgerService;
-use crate::domain::transaction::TransactionManager;
-use crate::infra::repositories::InstrumentRepository;
-use crate::infra::mappers::match_mapper::MatchMapper;
+use crate::domain::fills::Fill;
 use crate::domain::ledger::repository::LedgerRepository;
-use crate::proto::common::{Trade, LedgerEvent, LedgerEntry};
-use uuid::Uuid;
-use std::sync::Arc;
-use std::str::FromStr;
+use crate::domain::ledger::service::LedgerService;
+use crate::domain::orders::service::OrderService;
+use crate::domain::trade::TradeRepository;
+use crate::domain::transaction::Transaction;
+use crate::domain::transaction::TransactionManager;
+use crate::domain::wallets::WalletService;
+use crate::error::{AppError, Result};
+use crate::infra::mappers::match_mapper::MatchMapper;
+use crate::infra::repositories::InstrumentRepository;
+use crate::proto::common::{LedgerEntry, LedgerEvent, Trade};
+use crate::proto::ledger::Match;
 use rust_decimal::Decimal;
+use std::str::FromStr;
+use std::sync::Arc;
+use uuid::Uuid;
 
 pub struct SettlementService {
     tx_manager: Option<Arc<dyn TransactionManager>>,
@@ -55,7 +55,11 @@ impl SettlementService {
         }
     }
 
-    pub async fn process_matches(&self, matches: Vec<Match>, tenant_id: String) -> (Vec<String>, Vec<String>) {
+    pub async fn process_matches(
+        &self,
+        matches: Vec<Match>,
+        tenant_id: String,
+    ) -> (Vec<String>, Vec<String>) {
         let mut trade_ids = Vec::new();
         let mut errors = Vec::new();
 
@@ -78,7 +82,7 @@ impl SettlementService {
                 }
             }
         }
-        
+
         (trade_ids, errors)
     }
 
@@ -86,22 +90,30 @@ impl SettlementService {
         log::info!("Processing trade event: {}", trade.id);
 
         if let Some(_) = self.trade_repo.get(&trade.id).await? {
-            log::warn!("Trade {} already exists. Skipping processing (Idempotency).", trade.id);
+            log::warn!(
+                "Trade {} already exists. Skipping processing (Idempotency).",
+                trade.id
+            );
             return Ok(());
         }
-        
+
         // Validation and Preparation
         let instrument_id = Uuid::parse_str(&trade.instrument_id)
             .map_err(|_| AppError::MalformedRequest("Invalid instrument ID".into()))?;
-            
-        let instrument = self.instrument_repo.get(instrument_id).await?
-            .ok_or_else(|| AppError::NotFound(format!("Instrument {} not found", trade.instrument_id)))?;
+
+        let instrument = self
+            .instrument_repo
+            .get(instrument_id)
+            .await?
+            .ok_or_else(|| {
+                AppError::NotFound(format!("Instrument {} not found", trade.instrument_id))
+            })?;
 
         let trade_qty = Decimal::from_str(&trade.quantity)
             .map_err(|_| AppError::MalformedRequest("Invalid trade quantity".into()))?;
 
         // Wash-trade detection
-        let buy_order_id  = Uuid::parse_str(&trade.buy_order_id)
+        let buy_order_id = Uuid::parse_str(&trade.buy_order_id)
             .map_err(|_| AppError::MalformedRequest("Invalid buy_order_id".into()))?;
         let sell_order_id = Uuid::parse_str(&trade.sell_order_id)
             .map_err(|_| AppError::MalformedRequest("Invalid sell_order_id".into()))?;
@@ -113,17 +125,17 @@ impl SettlementService {
             // Same account on both sides
             if buy_order.account_id == sell_order.account_id {
                 return Err(AppError::ValidationError(
-                    "Self-trade detected: buy and sell orders belong to the same account".into()
+                    "Self-trade detected: buy and sell orders belong to the same account".into(),
                 ));
             }
 
             // Same user_id embedded in order meta (cross-account wash trade)
-            let buy_user  = buy_order.meta.get("user_id").and_then(|v| v.as_str());
+            let buy_user = buy_order.meta.get("user_id").and_then(|v| v.as_str());
             let sell_user = sell_order.meta.get("user_id").and_then(|v| v.as_str());
             if let (Some(b), Some(s)) = (buy_user, sell_user) {
                 if !b.is_empty() && b == s {
                     return Err(AppError::ValidationError(
-                        "Wash trade detected: buy and sell orders belong to the same user".into()
+                        "Wash trade detected: buy and sell orders belong to the same user".into(),
                     ));
                 }
             }
@@ -139,31 +151,56 @@ impl SettlementService {
 
         // Calculate Fees
         let price_decimal = Decimal::from_str(&trade.price).unwrap_or_default();
-        let buy_fee = self.fee_service.calculate_fee(trade_qty, price_decimal, "taker");
-        let sell_fee = self.fee_service.calculate_fee(trade_qty, price_decimal, "maker");
+        let buy_fee = self
+            .fee_service
+            .calculate_fee(trade_qty, price_decimal, "taker");
+        let sell_fee = self
+            .fee_service
+            .calculate_fee(trade_qty, price_decimal, "maker");
 
         // 2. Generate and persist ledger events/entries
-        let (event, entries) = self.ledger_service.process_trade(trade.clone(), buy_fee, sell_fee).await?;
+        let (event, entries) = self
+            .ledger_service
+            .process_trade(trade.clone(), buy_fee, sell_fee)
+            .await?;
         ctx.save_ledger_event(event).await?;
         ctx.save_ledger_entries(entries.clone()).await?;
-        
-        log::info!("Generated {} ledger entries for trade {}", entries.len(), trade.id);
-        
+
+        log::info!(
+            "Generated {} ledger entries for trade {}",
+            entries.len(),
+            trade.id
+        );
+
         // 3. Process wallet updates
         for entry in entries {
             ctx.process_wallet_entry(entry).await?;
         }
 
         // 4. Update order statuses
-        ctx.update_order_status(&trade.buy_order_id, trade_qty).await?;
-        ctx.update_order_status(&trade.sell_order_id, trade_qty).await?;
+        ctx.update_order_status(&trade.buy_order_id, trade_qty)
+            .await?;
+        ctx.update_order_status(&trade.sell_order_id, trade_qty)
+            .await?;
 
         // 5. Create and persist fills
         let buy_fill = self.fill_service.create_fill_from_trade(
-            &trade, &trade.buy_order_id, "buy", "taker", trade_qty, buy_fee, &instrument.quote_asset_id
+            &trade,
+            &trade.buy_order_id,
+            "buy",
+            "taker",
+            trade_qty,
+            buy_fee,
+            &instrument.quote_asset_id,
         )?;
         let sell_fill = self.fill_service.create_fill_from_trade(
-            &trade, &trade.sell_order_id, "sell", "maker", trade_qty, sell_fee, &instrument.quote_asset_id
+            &trade,
+            &trade.sell_order_id,
+            "sell",
+            "maker",
+            trade_qty,
+            sell_fee,
+            &instrument.quote_asset_id,
         )?;
 
         ctx.save_fill(buy_fill).await?;
@@ -207,42 +244,82 @@ impl<'a> SettlementContext<'a> {
 
     async fn save_ledger_event(&mut self, event: LedgerEvent) -> Result<LedgerEvent> {
         match &mut self.tx {
-            Some(tx) => self.service.ledger_repo.save_event_with_tx(tx.as_repository_transaction(), event).await,
+            Some(tx) => {
+                self.service
+                    .ledger_repo
+                    .save_event_with_tx(tx.as_repository_transaction(), event)
+                    .await
+            }
             None => self.service.ledger_repo.save_event(event).await,
         }
     }
 
     async fn save_ledger_entries(&mut self, entries: Vec<LedgerEntry>) -> Result<Vec<LedgerEntry>> {
         match &mut self.tx {
-            Some(tx) => self.service.ledger_repo.save_entries_with_tx(tx.as_repository_transaction(), entries).await,
+            Some(tx) => {
+                self.service
+                    .ledger_repo
+                    .save_entries_with_tx(tx.as_repository_transaction(), entries)
+                    .await
+            }
             None => self.service.ledger_repo.save_entries(entries).await,
         }
     }
 
     async fn process_wallet_entry(&mut self, entry: LedgerEntry) -> Result<()> {
         match &mut self.tx {
-            Some(tx) => self.service.wallet_service.process_ledger_entry_with_tx(tx.as_repository_transaction(), entry).await,
-            None => self.service.wallet_service.process_ledger_entry(entry).await,
+            Some(tx) => {
+                self.service
+                    .wallet_service
+                    .process_ledger_entry_with_tx(tx.as_repository_transaction(), entry)
+                    .await
+            }
+            None => {
+                self.service
+                    .wallet_service
+                    .process_ledger_entry(entry)
+                    .await
+            }
         }
     }
 
     async fn update_order_status(&mut self, order_id: &str, trade_qty: Decimal) -> Result<()> {
         match &mut self.tx {
-            Some(tx) => self.service.order_service.update_status_with_tx(tx.as_repository_transaction(), order_id, trade_qty).await,
-            None => self.service.order_service.update_status(order_id, trade_qty).await,
+            Some(tx) => {
+                self.service
+                    .order_service
+                    .update_status_with_tx(tx.as_repository_transaction(), order_id, trade_qty)
+                    .await
+            }
+            None => {
+                self.service
+                    .order_service
+                    .update_status(order_id, trade_qty)
+                    .await
+            }
         }
     }
 
     async fn save_fill(&mut self, fill: Fill) -> Result<Fill> {
         match &mut self.tx {
-            Some(tx) => self.service.fill_service.save_fill_with_tx(tx.as_repository_transaction(), fill).await,
+            Some(tx) => {
+                self.service
+                    .fill_service
+                    .save_fill_with_tx(tx.as_repository_transaction(), fill)
+                    .await
+            }
             None => self.service.fill_service.save_fill(fill).await,
         }
     }
 
     async fn save_trade(&mut self, trade: Trade) -> Result<Trade> {
         match &mut self.tx {
-            Some(tx) => self.service.trade_repo.create_with_tx(tx.as_repository_transaction(), trade).await,
+            Some(tx) => {
+                self.service
+                    .trade_repo
+                    .create_with_tx(tx.as_repository_transaction(), trade)
+                    .await
+            }
             None => self.service.trade_repo.create(trade).await,
         }
     }

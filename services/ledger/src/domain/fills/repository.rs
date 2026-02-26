@@ -1,8 +1,8 @@
 use super::model::Fill;
-use crate::error::Result;
 use crate::domain::transaction::RepositoryTransaction;
-use uuid::Uuid;
+use crate::error::Result;
 use async_trait::async_trait;
+use uuid::Uuid;
 
 #[async_trait]
 pub trait FillRepository: Send + Sync {

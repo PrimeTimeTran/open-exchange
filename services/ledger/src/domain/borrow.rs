@@ -1,15 +1,15 @@
+use crate::domain::wallets::WalletService;
 /// Short-selling borrow service.
 ///
 /// `BorrowService` opens and closes borrows. When a borrow is opened, quote-asset
 /// collateral is locked. When it is closed, the collateral is returned (minus any
 /// accrued borrow fee).
 use crate::error::{AppError, Result};
-use crate::domain::wallets::WalletService;
+use chrono::Utc;
 use rust_decimal::Decimal;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
-use chrono::Utc;
 
 fn parse(s: &str) -> Decimal {
     Decimal::from_str(s).unwrap_or_default()
@@ -58,12 +58,13 @@ impl BorrowService {
         collateral: Decimal,
     ) -> Result<Borrow> {
         // 1. Lock collateral in the quote wallet (e.g. USD)
-        if let Some(mut w) = self.wallet_service
+        if let Some(mut w) = self
+            .wallet_service
             .get_wallet_by_account_and_asset(&account_id.to_string(), collateral_asset_id)
             .await?
         {
             let available = parse(&w.available);
-            let locked    = parse(&w.locked);
+            let locked = parse(&w.locked);
             if available < collateral {
                 return Err(AppError::InsufficientFunds {
                     asset: collateral_asset_id.to_string(),
@@ -71,32 +72,36 @@ impl BorrowService {
                     available: available.to_string(),
                 });
             }
-            w.available  = (available - collateral).to_string();
-            w.locked     = (locked    + collateral).to_string();
+            w.available = (available - collateral).to_string();
+            w.locked = (locked + collateral).to_string();
             w.updated_at = Utc::now().timestamp_millis();
             self.wallet_service.update_wallet(w).await?;
         }
 
         // 2. Credit the borrowed asset to the base wallet (e.g. BTC) so it can be sold
-        // If wallet doesn't exist, we might fail or need to create it. 
+        // If wallet doesn't exist, we might fail or need to create it.
         // For now, assume it exists or use update_wallet which might not create.
-        // But WalletService::update_wallet updates an EXISTING wallet. 
-        // We need to ensure the wallet exists. 
-        // Since we don't have create_wallet capability here easily without checking, 
-        // we'll check get_wallet first. If null, we might be stuck. 
+        // But WalletService::update_wallet updates an EXISTING wallet.
+        // We need to ensure the wallet exists.
+        // Since we don't have create_wallet capability here easily without checking,
+        // we'll check get_wallet first. If null, we might be stuck.
         // But let's assume the test creates the wallet first (even if empty).
-        if let Some(mut w) = self.wallet_service
+        if let Some(mut w) = self
+            .wallet_service
             .get_wallet_by_account_and_asset(&account_id.to_string(), asset_id)
-            .await? 
+            .await?
         {
             w.available = (parse(&w.available) + qty).to_string();
-            w.total     = (parse(&w.total)     + qty).to_string();
+            w.total = (parse(&w.total) + qty).to_string();
             w.updated_at = Utc::now().timestamp_millis();
             self.wallet_service.update_wallet(w).await?;
         } else {
-             // Logic to create wallet if not exists would go here, or return error.
-             // For safety, let's return error if wallet doesn't exist to receive borrow.
-             return Err(AppError::NotFound(format!("Wallet for asset {} not found", asset_id)));
+            // Logic to create wallet if not exists would go here, or return error.
+            // For safety, let's return error if wallet doesn't exist to receive borrow.
+            return Err(AppError::NotFound(format!(
+                "Wallet for asset {} not found",
+                asset_id
+            )));
         }
 
         let borrow = Borrow {
@@ -121,15 +126,17 @@ impl BorrowService {
             borrows.iter().find(|b| b.id == borrow_id).cloned()
         };
 
-        let borrow = borrow.ok_or_else(|| AppError::NotFound(format!("Borrow {} not found", borrow_id)))?;
+        let borrow =
+            borrow.ok_or_else(|| AppError::NotFound(format!("Borrow {} not found", borrow_id)))?;
 
         // 1. Repay borrowed asset (debit from available)
-        if let Some(mut w) = self.wallet_service
+        if let Some(mut w) = self
+            .wallet_service
             .get_wallet_by_account_and_asset(&borrow.account_id.to_string(), &borrow.asset_id)
             .await?
         {
             let available = parse(&w.available);
-            let total     = parse(&w.total);
+            let total = parse(&w.total);
             if available < borrow.qty {
                 return Err(AppError::InsufficientFunds {
                     asset: borrow.asset_id.to_string(),
@@ -137,26 +144,30 @@ impl BorrowService {
                     available: available.to_string(),
                 });
             }
-            w.available  = (available - borrow.qty).to_string();
-            w.total      = (total     - borrow.qty).to_string();
+            w.available = (available - borrow.qty).to_string();
+            w.total = (total - borrow.qty).to_string();
             w.updated_at = Utc::now().timestamp_millis();
             self.wallet_service.update_wallet(w).await?;
         }
 
         // 2. Release collateral (minus fee) back to available
-        if let Some(mut w) = self.wallet_service
-            .get_wallet_by_account_and_asset(&borrow.account_id.to_string(), &borrow.collateral_asset_id)
+        if let Some(mut w) = self
+            .wallet_service
+            .get_wallet_by_account_and_asset(
+                &borrow.account_id.to_string(),
+                &borrow.collateral_asset_id,
+            )
             .await?
         {
-            let locked    = parse(&w.locked);
+            let locked = parse(&w.locked);
             let available = parse(&w.available);
-            let total     = parse(&w.total);
-            let release   = (borrow.collateral - borrow_fee).max(Decimal::ZERO);
+            let total = parse(&w.total);
+            let release = (borrow.collateral - borrow_fee).max(Decimal::ZERO);
             let net_deduct = borrow.collateral - release; // = borrow_fee capped at collateral
 
-            w.locked     = (locked - borrow.collateral).max(Decimal::ZERO).to_string();
-            w.available  = (available + release).to_string();
-            w.total      = (total - net_deduct).to_string();
+            w.locked = (locked - borrow.collateral).max(Decimal::ZERO).to_string();
+            w.available = (available + release).to_string();
+            w.total = (total - net_deduct).to_string();
             w.updated_at = Utc::now().timestamp_millis();
             self.wallet_service.update_wallet(w).await?;
         }
@@ -167,6 +178,11 @@ impl BorrowService {
     }
 
     pub fn get_borrow(&self, borrow_id: Uuid) -> Option<Borrow> {
-        self.borrows.lock().unwrap().iter().find(|b| b.id == borrow_id).cloned()
+        self.borrows
+            .lock()
+            .unwrap()
+            .iter()
+            .find(|b| b.id == borrow_id)
+            .cloned()
     }
 }

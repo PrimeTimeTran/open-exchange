@@ -7,7 +7,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Compile the protos
     // We need to point to the root proto directory
     let proto_root = "../../proto";
-    
+
     // List of protos to compile
     let protos = &[
         "../../proto/common/order.proto",

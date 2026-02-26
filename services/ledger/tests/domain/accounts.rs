@@ -1,16 +1,16 @@
 use crate::helpers::memory::InMemoryTestContext;
-use tonic::Request;
 use ledger::proto::common::OrderSide;
 use ledger::proto::ledger::account_service_server::AccountService;
-use ledger::proto::ledger::wallet_service_server::WalletService;
 use ledger::proto::ledger::order_service_server::OrderService;
+use ledger::proto::ledger::wallet_service_server::WalletService;
 use ledger::proto::ledger::{
-    ListAccountsRequest, RecordOrderRequest, GetWalletRequest,
-    UpdateAccountRequest, DeleteAccountRequest
+    DeleteAccountRequest, GetWalletRequest, ListAccountsRequest, RecordOrderRequest,
+    UpdateAccountRequest,
 };
+use tonic::Request;
 
 /// Test: User Account Setup
-/// 
+///
 /// Verifies the core account structure for a user:
 /// 1. Creates a 'cash' account (e.g. for USD).
 /// 2. Creates a 'custody' account (e.g. for Crypto).
@@ -25,12 +25,24 @@ async fn test_user_account_setup() {
     let btc_account_id = ctx.create_account_api(&ctx.user_id, "custody").await;
 
     // List Accounts
-    let list_req = Request::new(ListAccountsRequest { user_id: ctx.user_id.to_string() });
-    let accounts = ctx.account_api.list_accounts(list_req).await.unwrap().into_inner().accounts;
+    let list_req = Request::new(ListAccountsRequest {
+        user_id: ctx.user_id.to_string(),
+    });
+    let accounts = ctx
+        .account_api
+        .list_accounts(list_req)
+        .await
+        .unwrap()
+        .into_inner()
+        .accounts;
 
     assert_eq!(accounts.len(), 2, "User should have exactly 2 accounts");
-    assert!(accounts.iter().any(|a| a.id == usd_account_id && a.r#type == "cash"));
-    assert!(accounts.iter().any(|a| a.id == btc_account_id && a.r#type == "custody"));
+    assert!(accounts
+        .iter()
+        .any(|a| a.id == usd_account_id && a.r#type == "cash"));
+    assert!(accounts
+        .iter()
+        .any(|a| a.id == btc_account_id && a.r#type == "custody"));
 
     // Create Assets & Wallets
     let usd_asset_id = ctx.create_asset_api("USD", "fiat", 2).await;
@@ -44,10 +56,10 @@ async fn test_user_account_setup() {
 }
 
 /// Test: Order Validation - Insufficient Funds
-/// 
-/// Verifies that the Ledger Service rejects an order when the user does not have 
+///
+/// Verifies that the Ledger Service rejects an order when the user does not have
 /// sufficient available balance in their wallet.
-/// 
+///
 /// Scenario: User tries to BUY 1 BTC @ $50,000 with a wallet balance of $0.
 #[tokio::test]
 async fn test_order_validation_insufficient_funds() {
@@ -57,12 +69,20 @@ async fn test_order_validation_insufficient_funds() {
     let usd_account_id = ctx.create_account_api(&ctx.user_id, "cash").await;
     let usd_asset_id = ctx.create_asset_api("USD", "fiat", 2).await;
     let btc_asset_id = ctx.create_asset_api("BTC", "crypto", 8).await;
-    let instrument_id = ctx.create_instrument_api("BTC_USD", &btc_asset_id, &usd_asset_id).await;
-    
+    let instrument_id = ctx
+        .create_instrument_api("BTC_USD", &btc_asset_id, &usd_asset_id)
+        .await;
+
     let _usd_wallet_id = ctx.create_wallet_api(&usd_account_id, &usd_asset_id).await;
 
     // Attempt Order: Buy 1 BTC @ 50,000 (Requires 50,000 USD)
-    let order = ctx.create_order_object(&usd_account_id, &instrument_id, OrderSide::Buy, "1", "50000");
+    let order = ctx.create_order_object(
+        &usd_account_id,
+        &instrument_id,
+        OrderSide::Buy,
+        "1",
+        "50000",
+    );
     let req = Request::new(RecordOrderRequest { order: Some(order) });
 
     // Assert: Failure
@@ -72,11 +92,11 @@ async fn test_order_validation_insufficient_funds() {
 }
 
 /// Test: Order Validation - Sufficient Funds
-/// 
+///
 /// Verifies that the Ledger Service accepts an order when funds are sufficient,
 /// and correctly locks the required amount.
-/// 
-/// Scenario: 
+///
+/// Scenario:
 /// 1. Deposit $51,000 into user's wallet.
 /// 2. User places BUY order for 1 BTC @ $50,000.
 /// 3. Verify order succeeds.
@@ -89,15 +109,23 @@ async fn test_order_validation_sufficient_funds() {
     let usd_account_id = ctx.create_account_api(&ctx.user_id, "cash").await;
     let usd_asset_id = ctx.create_asset_api("USD", "fiat", 2).await;
     let btc_asset_id = ctx.create_asset_api("BTC", "crypto", 8).await;
-    let instrument_id = ctx.create_instrument_api("BTC_USD", &btc_asset_id, &usd_asset_id).await;
-    
+    let instrument_id = ctx
+        .create_instrument_api("BTC_USD", &btc_asset_id, &usd_asset_id)
+        .await;
+
     let usd_wallet_id = ctx.create_wallet_api(&usd_account_id, &usd_asset_id).await;
 
     // Deposit Funds: $51,000 (5,100,000 cents)
     ctx.deposit_funds_api(&usd_wallet_id, "5100000").await;
 
     // Attempt Order
-    let order = ctx.create_order_object(&usd_account_id, &instrument_id, OrderSide::Buy, "1", "50000");
+    let order = ctx.create_order_object(
+        &usd_account_id,
+        &instrument_id,
+        OrderSide::Buy,
+        "1",
+        "50000",
+    );
     let req = Request::new(RecordOrderRequest { order: Some(order) });
 
     // Assert: Success
@@ -105,8 +133,17 @@ async fn test_order_validation_sufficient_funds() {
     assert!(resp.is_ok(), "Order should succeed with sufficient funds");
 
     // Verify Locks
-    let get_wallet_req = Request::new(GetWalletRequest { wallet_id: usd_wallet_id });
-    let wallet = ctx.wallet_api.get_wallet(get_wallet_req).await.unwrap().into_inner().wallet.unwrap();
+    let get_wallet_req = Request::new(GetWalletRequest {
+        wallet_id: usd_wallet_id,
+    });
+    let wallet = ctx
+        .wallet_api
+        .get_wallet(get_wallet_req)
+        .await
+        .unwrap()
+        .into_inner()
+        .wallet
+        .unwrap();
 
     crate::helpers::memory::assert_decimal(&wallet.available, "100000"); // 5,100,000 - 5,000,000
     crate::helpers::memory::assert_decimal(&wallet.locked, "5000000");
@@ -123,7 +160,12 @@ async fn test_update_account_status() {
         status: "frozen".to_string(),
         r#type: "".to_string(),
     });
-    let update_resp = ctx.account_api.update_account(update_req).await.unwrap().into_inner();
+    let update_resp = ctx
+        .account_api
+        .update_account(update_req)
+        .await
+        .unwrap()
+        .into_inner();
     let account = update_resp.account.unwrap();
     assert_eq!(account.status, "frozen");
 }
@@ -132,22 +174,24 @@ async fn test_update_account_status() {
 async fn test_delete_account_with_nonzero_balance() {
     let ctx = InMemoryTestContext::new();
     let acc_id = ctx.create_account_api(&ctx.user_id, "trading").await;
-    
+
     // Create Wallet & Fund it
     let asset_id = ctx.create_asset_api("USD", "fiat", 2).await;
     let wallet_id = ctx.create_wallet_api(&acc_id, &asset_id).await;
     ctx.deposit_funds_api(&wallet_id, "100").await;
 
     // Attempt Delete - Should Fail because of funds
-    let del_req = Request::new(DeleteAccountRequest { account_id: acc_id.clone() });
-    
+    let del_req = Request::new(DeleteAccountRequest {
+        account_id: acc_id.clone(),
+    });
+
     // Note: If Ledger doesn't implement this check yet, this assertion will fail.
     // Assuming we want to verify this behavior:
     let del_resp = ctx.account_api.delete_account(del_req).await;
-    
+
     // Uncomment/Fix this expectation once logic is implemented
     // assert!(del_resp.is_err(), "Should not delete account with funds");
-    
+
     // For now, if implementation deletes cascadingly or doesn't check, we might see success.
     // If it succeeds, it's a gap in logic we identified.
     // Let's check what happens currently.
@@ -172,19 +216,21 @@ async fn test_delete_account_with_nonzero_balance() {
 async fn test_frozen_account_cannot_place_orders() {
     let ctx = InMemoryTestContext::new();
 
-    let usd_asset_id  = ctx.create_asset_api("USD_FRZ", "fiat", 2).await;
-    let btc_asset_id  = ctx.create_asset_api("BTC_FRZ", "crypto", 8).await;
-    let instrument_id = ctx.create_instrument_api("BTC_FRZ_USD", &btc_asset_id, &usd_asset_id).await;
+    let usd_asset_id = ctx.create_asset_api("USD_FRZ", "fiat", 2).await;
+    let btc_asset_id = ctx.create_asset_api("BTC_FRZ", "crypto", 8).await;
+    let instrument_id = ctx
+        .create_instrument_api("BTC_FRZ_USD", &btc_asset_id, &usd_asset_id)
+        .await;
 
     let account_id = ctx.create_account_api(&ctx.user_id, "trading").await;
-    let wallet_id  = ctx.create_wallet_api(&account_id, &usd_asset_id).await;
+    let wallet_id = ctx.create_wallet_api(&account_id, &usd_asset_id).await;
     ctx.deposit_funds_api(&wallet_id, "5000000").await; // $50,000
 
     // Freeze the account
     let freeze_req = Request::new(UpdateAccountRequest {
         account_id: account_id.clone(),
-        status:     "frozen".to_string(),
-        r#type:     "".to_string(),
+        status: "frozen".to_string(),
+        r#type: "".to_string(),
     });
     ctx.account_api.update_account(freeze_req).await.unwrap();
 
@@ -199,9 +245,18 @@ async fn test_frozen_account_cannot_place_orders() {
     );
 
     // Wallet must be untouched — no funds locked
-    let get_req = Request::new(GetWalletRequest { wallet_id: wallet_id.clone() });
-    let wallet = ctx.wallet_api.get_wallet(get_req).await.unwrap().into_inner().wallet.unwrap();
-    crate::helpers::memory::assert_decimal(&wallet.locked,    "0");
+    let get_req = Request::new(GetWalletRequest {
+        wallet_id: wallet_id.clone(),
+    });
+    let wallet = ctx
+        .wallet_api
+        .get_wallet(get_req)
+        .await
+        .unwrap()
+        .into_inner()
+        .wallet
+        .unwrap();
+    crate::helpers::memory::assert_decimal(&wallet.locked, "0");
     crate::helpers::memory::assert_decimal(&wallet.available, "5000000");
 }
 
@@ -216,36 +271,54 @@ async fn test_frozen_account_cannot_place_orders() {
 async fn test_frozen_account_can_cancel_existing_orders() {
     let ctx = InMemoryTestContext::new();
 
-    let usd_asset_id  = ctx.create_asset_api("USD_FRZC", "fiat", 2).await;
-    let btc_asset_id  = ctx.create_asset_api("BTC_FRZC", "crypto", 8).await;
-    let instrument_id = ctx.create_instrument_api("BTC_FRZC_USD", &btc_asset_id, &usd_asset_id).await;
+    let usd_asset_id = ctx.create_asset_api("USD_FRZC", "fiat", 2).await;
+    let btc_asset_id = ctx.create_asset_api("BTC_FRZC", "crypto", 8).await;
+    let instrument_id = ctx
+        .create_instrument_api("BTC_FRZC_USD", &btc_asset_id, &usd_asset_id)
+        .await;
 
     let account_id = ctx.create_account_api(&ctx.user_id, "trading").await;
-    let wallet_id  = ctx.create_wallet_api(&account_id, &usd_asset_id).await;
+    let wallet_id = ctx.create_wallet_api(&account_id, &usd_asset_id).await;
     ctx.deposit_funds_api(&wallet_id, "5000000").await;
 
     // Place an order BEFORE freezing
     let order = ctx.create_order_object(&account_id, &instrument_id, OrderSide::Buy, "1", "50000");
-    let req = Request::new(RecordOrderRequest { order: Some(order.clone()) });
-    ctx.order_api.record_order(req).await.expect("Order should succeed before freeze");
+    let req = Request::new(RecordOrderRequest {
+        order: Some(order.clone()),
+    });
+    ctx.order_api
+        .record_order(req)
+        .await
+        .expect("Order should succeed before freeze");
 
     // Freeze the account
     let freeze_req = Request::new(UpdateAccountRequest {
         account_id: account_id.clone(),
-        status:     "frozen".to_string(),
-        r#type:     "".to_string(),
+        status: "frozen".to_string(),
+        r#type: "".to_string(),
     });
     ctx.account_api.update_account(freeze_req).await.unwrap();
 
     // Cancel the order — should always succeed regardless of account status
     let order_id = uuid::Uuid::parse_str(&order.id).unwrap();
-    ctx.order_service.cancel_order(order_id).await
+    ctx.order_service
+        .cancel_order(order_id)
+        .await
         .expect("Cancel should succeed even on a frozen account");
 
     // Locked funds must be fully returned
-    let get_req = Request::new(GetWalletRequest { wallet_id: wallet_id.clone() });
-    let wallet = ctx.wallet_api.get_wallet(get_req).await.unwrap().into_inner().wallet.unwrap();
-    crate::helpers::memory::assert_decimal(&wallet.locked,    "0");
+    let get_req = Request::new(GetWalletRequest {
+        wallet_id: wallet_id.clone(),
+    });
+    let wallet = ctx
+        .wallet_api
+        .get_wallet(get_req)
+        .await
+        .unwrap()
+        .into_inner()
+        .wallet
+        .unwrap();
+    crate::helpers::memory::assert_decimal(&wallet.locked, "0");
     crate::helpers::memory::assert_decimal(&wallet.available, "5000000");
 }
 
@@ -263,15 +336,15 @@ async fn test_frozen_account_can_cancel_existing_orders() {
 async fn test_closed_account_rejects_deposits() {
     let ctx = InMemoryTestContext::new();
 
-    let asset_id   = ctx.create_asset_api("USD_CLO", "fiat", 2).await;
+    let asset_id = ctx.create_asset_api("USD_CLO", "fiat", 2).await;
     let account_id = ctx.create_account_api(&ctx.user_id, "trading").await;
-    let wallet_id  = ctx.create_wallet_api(&account_id, &asset_id).await;
+    let wallet_id = ctx.create_wallet_api(&account_id, &asset_id).await;
 
     // Close the account
     let close_req = Request::new(UpdateAccountRequest {
         account_id: account_id.clone(),
-        status:     "closed".to_string(),
-        r#type:     "".to_string(),
+        status: "closed".to_string(),
+        r#type: "".to_string(),
     });
     ctx.account_api.update_account(close_req).await.unwrap();
 
@@ -279,8 +352,8 @@ async fn test_closed_account_rejects_deposits() {
     use ledger::proto::ledger::deposit_service_server::DepositService as DepositServiceTrait;
     use ledger::proto::ledger::CreateDepositRequest;
     let dep_req = Request::new(CreateDepositRequest {
-        wallet_id:       wallet_id.clone(),
-        amount:          "10000".to_string(),
+        wallet_id: wallet_id.clone(),
+        amount: "10000".to_string(),
         transaction_ref: format!("txn-{}", uuid::Uuid::new_v4()),
     });
     let result = ctx.deposit_api.create_deposit(dep_req).await;
@@ -291,7 +364,12 @@ async fn test_closed_account_rejects_deposits() {
     );
 
     // Wallet must remain at zero
-    let wallet = ctx.wallet_service.get_wallet(&wallet_id).await.unwrap().unwrap();
+    let wallet = ctx
+        .wallet_service
+        .get_wallet(&wallet_id)
+        .await
+        .unwrap()
+        .unwrap();
     crate::helpers::memory::assert_decimal(&wallet.available, "0");
-    crate::helpers::memory::assert_decimal(&wallet.total,     "0");
+    crate::helpers::memory::assert_decimal(&wallet.total, "0");
 }

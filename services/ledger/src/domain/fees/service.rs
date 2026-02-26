@@ -1,6 +1,6 @@
 use super::constants::FeeConstants;
-use rust_decimal::Decimal;
 use async_trait::async_trait;
+use rust_decimal::Decimal;
 
 #[async_trait]
 pub trait FeeService: Send + Sync {
@@ -24,7 +24,7 @@ impl FeeService for StandardFeeService {
         } else {
             FeeConstants::get_taker_fee()
         };
-        
+
         // Fee in Quote Currency (Total * Rate)
         (qty * price) * rate
     }

@@ -3,18 +3,18 @@ use ledger::proto::common::LedgerEntry;
 use rust_decimal::Decimal;
 use std::str::FromStr;
 use std::sync::Arc;
-use uuid::Uuid;
 use tokio::task::JoinSet;
+use uuid::Uuid;
 
 mod helpers;
-use helpers::postgres::{PostgresTestContext, atomic};
+use helpers::postgres::{atomic, PostgresTestContext};
 
 #[tokio::test]
 async fn test_concurrency_lost_updates() {
     // 1. Setup Shared DB Context (must use shared DB to allow concurrent connections)
     // We force isolated=false to use the connection pool effectively
     let ctx = Arc::new(PostgresTestContext::new(true).await);
-    
+
     let asset_id = ctx.create_asset("USDT", 2).await;
     let user_id = ctx.create_user().await;
     let account_id = ctx.create_account(&user_id).await;
@@ -22,17 +22,22 @@ async fn test_concurrency_lost_updates() {
     // 2. Initial Balance: $100.00 (10,000 atomic units)
     let initial_balance_str = "100.00";
     let initial_atomic = atomic(initial_balance_str, 2);
-    
-    let wallet_id = ctx.wallet_service.create_wallet(Wallet {
-        id: Uuid::new_v4().to_string(),
-        tenant_id: ctx.tenant_id.clone(),
-        account_id: account_id.clone(),
-        asset_id: asset_id.clone(),
-        available: initial_atomic.clone(),
-        locked: "0".to_string(),
-        total: initial_atomic.clone(),
-        ..Default::default()
-    }).await.expect("Create Wallet").id;
+
+    let wallet_id = ctx
+        .wallet_service
+        .create_wallet(Wallet {
+            id: Uuid::new_v4().to_string(),
+            tenant_id: ctx.tenant_id.clone(),
+            account_id: account_id.clone(),
+            asset_id: asset_id.clone(),
+            available: initial_atomic.clone(),
+            locked: "0".to_string(),
+            total: initial_atomic.clone(),
+            ..Default::default()
+        })
+        .await
+        .expect("Create Wallet")
+        .id;
 
     // 3. Concurrent Load: 10 tasks, each deducting $10.00
     // Total deduction should be $100.00, leaving $0.00.
@@ -61,23 +66,27 @@ async fn test_concurrency_lost_updates() {
                 created_at: 0,
                 updated_at: 0,
             };
-            
+
             // Retry loop for handling OptimisticLockingError
-            // Even with FOR UPDATE, in high concurrency with Read Committed isolation, 
-            // timing issues or deadlocks can sometimes cause failures. 
+            // Even with FOR UPDATE, in high concurrency with Read Committed isolation,
+            // timing issues or deadlocks can sometimes cause failures.
             // A robust system must handle retries.
             let mut attempts = 0;
             loop {
                 attempts += 1;
                 // Start a transaction so we can lock the wallet row
                 let mut tx = tx_manager_clone.begin().await.expect("Failed to begin tx");
-                
+
                 // This calls process_ledger_entry_with_tx -> get_for_update -> update
-                match ctx_clone.wallet_service.process_ledger_entry_with_tx(&mut *tx, entry.clone()).await {
+                match ctx_clone
+                    .wallet_service
+                    .process_ledger_entry_with_tx(&mut *tx, entry.clone())
+                    .await
+                {
                     Ok(_) => {
                         tx.commit().await.expect("Commit failed");
                         break;
-                    },
+                    }
                     Err(ledger::error::AppError::OptimisticLockingError(_)) => {
                         if attempts >= 10 {
                             panic!("Max retries exceeded for OptimisticLockingError");
@@ -85,7 +94,7 @@ async fn test_concurrency_lost_updates() {
                         // Backoff slightly
                         tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
                         continue;
-                    },
+                    }
                     Err(e) => panic!("Process entry failed: {:?}", e),
                 }
             }
@@ -98,8 +107,13 @@ async fn test_concurrency_lost_updates() {
     }
 
     // 5. Verification
-    let wallet = ctx.wallet_service.get_wallet(&wallet_id).await.unwrap().unwrap();
-    
+    let wallet = ctx
+        .wallet_service
+        .get_wallet(&wallet_id)
+        .await
+        .unwrap()
+        .unwrap();
+
     // Logic check: "debit" type updates LOCKED and TOTAL, not AVAILABLE.
     // Initial: Avail 10000, Locked 0, Total 10000.
     // 10 Tasks * -1000 = -10000.
@@ -111,5 +125,8 @@ async fn test_concurrency_lost_updates() {
     let expected_balance = Decimal::ZERO;
 
     // If locking fails, some updates will be lost, and total > 0
-    assert_eq!(final_total, expected_balance, "Lost Update Detected! Total should be 0");
+    assert_eq!(
+        final_total, expected_balance,
+        "Lost Update Detected! Total should be 0"
+    );
 }

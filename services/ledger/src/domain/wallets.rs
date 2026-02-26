@@ -1,28 +1,45 @@
-pub use common::Wallet;
-use common::LedgerEntry;
-use crate::proto::common;
-use crate::error::{Result, AppError};
 use crate::domain::transaction::RepositoryTransaction;
-use uuid::Uuid;
-use chrono::Utc;
-use std::sync::Arc;
-use std::fmt::Debug;
-use serde_json::Value;
-use std::str::FromStr;
-use rust_decimal::Decimal;
+use crate::error::{AppError, Result};
+use crate::proto::common;
 use async_trait::async_trait;
+use chrono::Utc;
+use common::LedgerEntry;
+pub use common::Wallet;
+use rust_decimal::Decimal;
+use serde_json::Value;
+use std::fmt::Debug;
+use std::str::FromStr;
+use std::sync::Arc;
+use uuid::Uuid;
 // use sqlx::{Transaction, Postgres}; // Removed to decouple from sqlx
-
 
 #[async_trait]
 pub trait WalletRepository: Send + Sync + Debug {
     async fn create(&self, wallet: Wallet) -> Result<Wallet>;
     async fn get(&self, id: Uuid) -> Result<Option<Wallet>>;
-    async fn get_by_account_and_asset(&self, account_id: &str, asset_id: &str) -> Result<Option<Wallet>>;
-    async fn get_by_account_and_asset_with_tx(&self, tx: &mut dyn RepositoryTransaction, account_id: &str, asset_id: &str) -> Result<Option<Wallet>>;
-    async fn get_by_account_and_asset_for_update(&self, tx: &mut dyn RepositoryTransaction, account_id: &str, asset_id: &str) -> Result<Option<Wallet>>;
+    async fn get_by_account_and_asset(
+        &self,
+        account_id: &str,
+        asset_id: &str,
+    ) -> Result<Option<Wallet>>;
+    async fn get_by_account_and_asset_with_tx(
+        &self,
+        tx: &mut dyn RepositoryTransaction,
+        account_id: &str,
+        asset_id: &str,
+    ) -> Result<Option<Wallet>>;
+    async fn get_by_account_and_asset_for_update(
+        &self,
+        tx: &mut dyn RepositoryTransaction,
+        account_id: &str,
+        asset_id: &str,
+    ) -> Result<Option<Wallet>>;
     async fn update(&self, wallet: Wallet) -> Result<Wallet>;
-    async fn update_with_tx(&self, tx: &mut dyn RepositoryTransaction, wallet: Wallet) -> Result<Wallet>;
+    async fn update_with_tx(
+        &self,
+        tx: &mut dyn RepositoryTransaction,
+        wallet: Wallet,
+    ) -> Result<Wallet>;
     async fn delete(&self, id: Uuid) -> Result<()>;
     async fn list_by_account(&self, account_id: &str) -> Result<Vec<Wallet>>;
     /// List all wallets that hold a given asset (across all accounts). Used by
@@ -65,32 +82,58 @@ impl WalletService {
     }
 
     pub async fn get_wallet(&self, wallet_id: &str) -> Result<Option<Wallet>> {
-        let id = Uuid::parse_str(wallet_id).map_err(|_| AppError::ValidationError("Invalid wallet ID".into()))?;
+        let id = Uuid::parse_str(wallet_id)
+            .map_err(|_| AppError::ValidationError("Invalid wallet ID".into()))?;
         self.repo.get(id).await
     }
 
-    pub async fn get_wallet_by_account_and_asset(&self, account_id: &str, asset_id: &str) -> Result<Option<Wallet>> {
-        self.repo.get_by_account_and_asset(account_id, asset_id).await
+    pub async fn get_wallet_by_account_and_asset(
+        &self,
+        account_id: &str,
+        asset_id: &str,
+    ) -> Result<Option<Wallet>> {
+        self.repo
+            .get_by_account_and_asset(account_id, asset_id)
+            .await
     }
 
-    pub async fn get_wallet_by_account_and_asset_with_tx(&self, tx: &mut dyn RepositoryTransaction, account_id: &str, asset_id: &str) -> Result<Option<Wallet>> {
-        self.repo.get_by_account_and_asset_with_tx(tx, account_id, asset_id).await
+    pub async fn get_wallet_by_account_and_asset_with_tx(
+        &self,
+        tx: &mut dyn RepositoryTransaction,
+        account_id: &str,
+        asset_id: &str,
+    ) -> Result<Option<Wallet>> {
+        self.repo
+            .get_by_account_and_asset_with_tx(tx, account_id, asset_id)
+            .await
     }
 
-    pub async fn get_wallet_by_account_and_asset_for_update(&self, tx: &mut dyn RepositoryTransaction, account_id: &str, asset_id: &str) -> Result<Option<Wallet>> {
-        self.repo.get_by_account_and_asset_for_update(tx, account_id, asset_id).await
+    pub async fn get_wallet_by_account_and_asset_for_update(
+        &self,
+        tx: &mut dyn RepositoryTransaction,
+        account_id: &str,
+        asset_id: &str,
+    ) -> Result<Option<Wallet>> {
+        self.repo
+            .get_by_account_and_asset_for_update(tx, account_id, asset_id)
+            .await
     }
 
     pub async fn update_wallet(&self, wallet: Wallet) -> Result<Wallet> {
         self.repo.update(wallet).await
     }
 
-    pub async fn update_wallet_with_tx(&self, tx: &mut dyn RepositoryTransaction, wallet: Wallet) -> Result<Wallet> {
+    pub async fn update_wallet_with_tx(
+        &self,
+        tx: &mut dyn RepositoryTransaction,
+        wallet: Wallet,
+    ) -> Result<Wallet> {
         self.repo.update_with_tx(tx, wallet).await
     }
 
     pub async fn delete_wallet(&self, wallet_id: &str) -> Result<()> {
-        let id = Uuid::parse_str(wallet_id).map_err(|_| AppError::ValidationError("Invalid wallet ID".into()))?;
+        let id = Uuid::parse_str(wallet_id)
+            .map_err(|_| AppError::ValidationError("Invalid wallet ID".into()))?;
         self.repo.delete(id).await
     }
 
@@ -103,10 +146,16 @@ impl WalletService {
     }
 
     pub async fn process_ledger_entry(&self, entry: LedgerEntry) -> Result<()> {
-        let meta: Value = serde_json::from_str(&entry.meta).map_err(|e| AppError::Internal(format!("Failed to parse ledger entry meta: {}", e)))?;
-        let asset = meta["asset"].as_str().ok_or(AppError::ValidationError("Missing asset in ledger entry metadata".into()))?;
+        let meta: Value = serde_json::from_str(&entry.meta)
+            .map_err(|e| AppError::Internal(format!("Failed to parse ledger entry meta: {}", e)))?;
+        let asset = meta["asset"].as_str().ok_or(AppError::ValidationError(
+            "Missing asset in ledger entry metadata".into(),
+        ))?;
 
-        if let Some(mut wallet) = self.get_wallet_by_account_and_asset(&entry.account_id, asset).await? {
+        if let Some(mut wallet) = self
+            .get_wallet_by_account_and_asset(&entry.account_id, asset)
+            .await?
+        {
             Self::update_wallet_from_entry(&mut wallet, &entry)?;
             self.update_wallet(wallet).await?;
         } else {
@@ -115,13 +164,24 @@ impl WalletService {
         Ok(())
     }
 
-// ...
+    // ...
 
-    pub async fn process_ledger_entry_with_tx(&self, tx: &mut dyn RepositoryTransaction, entry: LedgerEntry) -> Result<()> {
-        let meta: Value = serde_json::from_str(&entry.meta).map_err(|e| AppError::Internal(format!("Failed to parse ledger entry meta: {}", e)))?;
-        let asset = meta["asset"].as_str().ok_or(AppError::ValidationError("Missing asset in ledger entry metadata".into()))?;
+    pub async fn process_ledger_entry_with_tx(
+        &self,
+        tx: &mut dyn RepositoryTransaction,
+        entry: LedgerEntry,
+    ) -> Result<()> {
+        let meta: Value = serde_json::from_str(&entry.meta)
+            .map_err(|e| AppError::Internal(format!("Failed to parse ledger entry meta: {}", e)))?;
+        let asset = meta["asset"].as_str().ok_or(AppError::ValidationError(
+            "Missing asset in ledger entry metadata".into(),
+        ))?;
 
-        if let Some(mut wallet) = self.repo.get_by_account_and_asset_for_update(tx, &entry.account_id, asset).await? {
+        if let Some(mut wallet) = self
+            .repo
+            .get_by_account_and_asset_for_update(tx, &entry.account_id, asset)
+            .await?
+        {
             Self::update_wallet_from_entry(&mut wallet, &entry)?;
             self.repo.update_with_tx(tx, wallet).await?;
         } else {
@@ -131,41 +191,48 @@ impl WalletService {
     }
 
     fn update_wallet_from_entry(wallet: &mut Wallet, entry: &LedgerEntry) -> Result<()> {
-        let meta: Value = serde_json::from_str(&entry.meta).map_err(|e| AppError::Internal(format!("Failed to parse ledger entry meta: {}", e)))?;
-        let entry_type = meta["type"].as_str().ok_or(AppError::ValidationError("Missing type in ledger entry metadata".into()))?;
-        let entry_amount = Decimal::from_str(&entry.amount).map_err(|_| AppError::ValidationError("Invalid ledger entry amount".into()))?;
+        let meta: Value = serde_json::from_str(&entry.meta)
+            .map_err(|e| AppError::Internal(format!("Failed to parse ledger entry meta: {}", e)))?;
+        let entry_type = meta["type"].as_str().ok_or(AppError::ValidationError(
+            "Missing type in ledger entry metadata".into(),
+        ))?;
+        let entry_amount = Decimal::from_str(&entry.amount)
+            .map_err(|_| AppError::ValidationError("Invalid ledger entry amount".into()))?;
 
-        let current_available = Decimal::from_str(&wallet.available).map_err(|_| AppError::Internal("Invalid available balance in wallet".into()))?;
-        let current_locked = Decimal::from_str(&wallet.locked).map_err(|_| AppError::Internal("Invalid locked balance in wallet".into()))?;
-        let current_total = Decimal::from_str(&wallet.total).map_err(|_| AppError::Internal("Invalid total balance in wallet".into()))?;
+        let current_available = Decimal::from_str(&wallet.available)
+            .map_err(|_| AppError::Internal("Invalid available balance in wallet".into()))?;
+        let current_locked = Decimal::from_str(&wallet.locked)
+            .map_err(|_| AppError::Internal("Invalid locked balance in wallet".into()))?;
+        let current_total = Decimal::from_str(&wallet.total)
+            .map_err(|_| AppError::Internal("Invalid total balance in wallet".into()))?;
 
         match entry_type {
             "available" => {
                 wallet.available = (current_available + entry_amount).to_string();
                 wallet.total = (current_total + entry_amount).to_string();
-            },
+            }
             "locked" => {
                 wallet.locked = (current_locked + entry_amount).to_string();
                 wallet.total = (current_total + entry_amount).to_string();
-            },
+            }
             "fee" | "credit" | "revenue" => {
                 wallet.available = (current_available + entry_amount).to_string();
                 wallet.total = (current_total + entry_amount).to_string();
-            },
+            }
             "debit" => {
                 wallet.locked = (current_locked + entry_amount).to_string();
                 wallet.total = (current_total + entry_amount).to_string();
-            },
+            }
             _ => {
-                 // Legacy/Default Fallback
+                // Legacy/Default Fallback
                 if entry_amount < Decimal::ZERO {
-                     // Default to debiting locked
-                     wallet.locked = (current_locked + entry_amount).to_string();
-                     wallet.total = (current_total + entry_amount).to_string();
+                    // Default to debiting locked
+                    wallet.locked = (current_locked + entry_amount).to_string();
+                    wallet.total = (current_total + entry_amount).to_string();
                 } else {
-                     // Default to crediting available
-                     wallet.available = (current_available + entry_amount).to_string();
-                     wallet.total = (current_total + entry_amount).to_string();
+                    // Default to crediting available
+                    wallet.available = (current_available + entry_amount).to_string();
+                    wallet.total = (current_total + entry_amount).to_string();
                 }
             }
         }
@@ -184,7 +251,10 @@ mod tests {
         let repo = Arc::new(InMemoryWalletRepository::new());
         let service = WalletService::new(repo);
 
-        let wallet = service.create_new_wallet("acc-123".to_string(), "BTC".to_string()).await.unwrap();
+        let wallet = service
+            .create_new_wallet("acc-123".to_string(), "BTC".to_string())
+            .await
+            .unwrap();
         assert_eq!(wallet.account_id, "acc-123");
         assert_eq!(wallet.asset_id, "BTC");
         assert_eq!(wallet.available, "0");
@@ -197,8 +267,11 @@ mod tests {
         let repo = Arc::new(InMemoryWalletRepository::new());
         let service = WalletService::new(repo);
 
-        let wallet = service.create_new_wallet("acc-123".to_string(), "BTC".to_string()).await.unwrap();
-        
+        let wallet = service
+            .create_new_wallet("acc-123".to_string(), "BTC".to_string())
+            .await
+            .unwrap();
+
         let entry = LedgerEntry {
             account_id: "acc-123".to_string(),
             amount: "1.5".to_string(),
@@ -219,7 +292,10 @@ mod tests {
         let repo = Arc::new(InMemoryWalletRepository::new());
         let service = WalletService::new(repo);
 
-        let mut wallet = service.create_new_wallet("acc-123".to_string(), "BTC".to_string()).await.unwrap();
+        let mut wallet = service
+            .create_new_wallet("acc-123".to_string(), "BTC".to_string())
+            .await
+            .unwrap();
         wallet.available = "10.0".to_string();
         wallet.locked = "5.0".to_string();
         wallet.total = "15.0".to_string();
@@ -239,14 +315,17 @@ mod tests {
         assert_eq!(updated.locked, "3.0"); // 5.0 - 2.0
         assert_eq!(updated.total, "13.0"); // 15.0 - 2.0
     }
-    
+
     #[tokio::test]
     async fn test_optimistic_locking() {
         let repo = Arc::new(InMemoryWalletRepository::new());
         let service = WalletService::new(repo);
 
-        let wallet = service.create_new_wallet("acc-concurrent".to_string(), "BTC".to_string()).await.unwrap();
-        
+        let wallet = service
+            .create_new_wallet("acc-concurrent".to_string(), "BTC".to_string())
+            .await
+            .unwrap();
+
         let mut w1 = service.get_wallet(&wallet.id).await.unwrap().unwrap();
         let mut w2 = service.get_wallet(&wallet.id).await.unwrap().unwrap();
 
@@ -255,7 +334,7 @@ mod tests {
 
         w2.available = "20.0".to_string();
         let result = service.update_wallet(w2).await;
-        
+
         match result {
             Err(AppError::OptimisticLockingError(_)) => assert!(true),
             _ => panic!("Expected OptimisticLockingError, got {:?}", result),

@@ -1,9 +1,9 @@
-use async_trait::async_trait;
-use sqlx::{PgPool, FromRow};
-use uuid::Uuid;
-use crate::proto::common;
 use crate::error::{AppError, Result};
+use crate::proto::common;
+use async_trait::async_trait;
 use chrono::{DateTime, Utc};
+use sqlx::{FromRow, PgPool};
+use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct PostgresInstrumentRepository {
@@ -44,8 +44,14 @@ impl From<InstrumentRow> for common::Instrument {
             symbol: row.symbol,
             r#type: row.r#type.unwrap_or_default(),
             status: row.status.unwrap_or_default(),
-            underlying_asset_id: row.underlying_asset_id.map(|u| u.to_string()).unwrap_or_default(),
-            quote_asset_id: row.quote_asset_id.map(|u| u.to_string()).unwrap_or_default(),
+            underlying_asset_id: row
+                .underlying_asset_id
+                .map(|u| u.to_string())
+                .unwrap_or_default(),
+            quote_asset_id: row
+                .quote_asset_id
+                .map(|u| u.to_string())
+                .unwrap_or_default(),
             meta: row.meta.unwrap_or(serde_json::json!({})).to_string(),
             created_at: row.created_at.timestamp_millis(),
             updated_at: row.updated_at.timestamp_millis(),
@@ -112,9 +118,9 @@ impl InstrumentRepository for PostgresInstrumentRepository {
     async fn create(&self, instrument: common::Instrument) -> Result<common::Instrument> {
         let id = Uuid::parse_str(&instrument.id).unwrap_or(Uuid::new_v4());
         let tenant_id = if instrument.tenant_id.is_empty() {
-             Uuid::new_v4() // This might be wrong if we need specific tenant
+            Uuid::new_v4() // This might be wrong if we need specific tenant
         } else {
-             Uuid::parse_str(&instrument.tenant_id).unwrap_or(Uuid::new_v4())
+            Uuid::parse_str(&instrument.tenant_id).unwrap_or(Uuid::new_v4())
         };
         let underlying_asset_id = if instrument.underlying_asset_id.is_empty() {
             None

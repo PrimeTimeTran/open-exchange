@@ -1,12 +1,12 @@
+use crate::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
+use crate::domain::orders::service::OrderService;
+use crate::domain::wallets::WalletService;
 /// Forced liquidation and insurance fund services.
 ///
 /// - `LiquidationService`    – forcibly closes under-collateralised positions.
 /// - `InsuranceFundService`  – covers shortfalls when liquidation proceeds are
 ///                            insufficient to repay the debt.
 use crate::error::Result;
-use crate::domain::wallets::WalletService;
-use crate::domain::orders::service::OrderService;
-use crate::domain::orders::model::{ Order, OrderSide, OrderType, OrderStatus };
 use rust_decimal::Decimal;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -46,9 +46,12 @@ pub struct LiquidationService {
 impl LiquidationService {
     pub fn new(
         wallet_service: Arc<WalletService>,
-        order_service: Option<Arc<OrderService>>
+        order_service: Option<Arc<OrderService>>,
     ) -> Self {
-        Self { wallet_service, order_service }
+        Self {
+            wallet_service,
+            order_service,
+        }
     }
 
     /// Liquidate all locked funds in the account's `asset_id` wallet.
@@ -56,18 +59,15 @@ impl LiquidationService {
         &self,
         account_id: Uuid,
         asset_id: &str,
-        instrument_id: Option<Uuid>
+        instrument_id: Option<Uuid>,
     ) -> Result<LiquidationReport> {
         // Idempotency Check
         if let Some(order_svc) = &self.order_service {
             let open_orders = order_svc.list_open_orders().await?;
-            let existing_liquidation = open_orders
-                .iter()
-                .any(
-                    |o|
-                        o.account_id == account_id &&
-                        o.meta.get("type").and_then(|v| v.as_str()) == Some("liquidation")
-                );
+            let existing_liquidation = open_orders.iter().any(|o| {
+                o.account_id == account_id
+                    && o.meta.get("type").and_then(|v| v.as_str()) == Some("liquidation")
+            });
 
             if existing_liquidation {
                 // Already liquidating. No-op.
@@ -82,11 +82,10 @@ impl LiquidationService {
 
         let mut liquidation_orders = Vec::new();
 
-        let recovered = if
-            let Some(mut w) = self.wallet_service.get_wallet_by_account_and_asset(
-                &account_id.to_string(),
-                asset_id
-            ).await?
+        let recovered = if let Some(mut w) = self
+            .wallet_service
+            .get_wallet_by_account_and_asset(&account_id.to_string(), asset_id)
+            .await?
         {
             let locked = parse(&w.locked);
             if locked > Decimal::ZERO {
@@ -98,8 +97,8 @@ impl LiquidationService {
                         instr_id,
                         OrderSide::Sell,
                         OrderType::Market,
-                        locked, // Sell all locked
-                        Decimal::ZERO // Market order
+                        locked,        // Sell all locked
+                        Decimal::ZERO, // Market order
                     );
 
                     let mut order = order;
@@ -153,17 +152,20 @@ impl LiquidationService {
         &self,
         account_id: Uuid,
         asset_id: &str,
-        maintenance: Decimal
+        maintenance: Decimal,
     ) -> Result<()> {
-        let equity = self.wallet_service
-            .get_wallet_by_account_and_asset(&account_id.to_string(), asset_id).await?
+        let equity = self
+            .wallet_service
+            .get_wallet_by_account_and_asset(&account_id.to_string(), asset_id)
+            .await?
             .map(|w| parse(&w.total))
             .unwrap_or_default();
 
         if equity >= maintenance {
             return Ok(());
         }
-        self.release_locked_as_recovered(&account_id.to_string(), asset_id).await?;
+        self.release_locked_as_recovered(&account_id.to_string(), asset_id)
+            .await?;
         Ok(())
     }
 
@@ -172,10 +174,12 @@ impl LiquidationService {
         &self,
         account_id: Uuid,
         asset_id: &str,
-        maintenance: Decimal
+        maintenance: Decimal,
     ) -> Result<()> {
-        let equity = self.wallet_service
-            .get_wallet_by_account_and_asset(&account_id.to_string(), asset_id).await?
+        let equity = self
+            .wallet_service
+            .get_wallet_by_account_and_asset(&account_id.to_string(), asset_id)
+            .await?
             .map(|w| parse(&w.total))
             .unwrap_or_default();
 
@@ -189,11 +193,10 @@ impl LiquidationService {
 
     /// Zero the locked balance (simulates selling at market).
     async fn zero_locked(&self, account: &str, asset: &str) -> Result<()> {
-        if
-            let Some(mut w) = self.wallet_service.get_wallet_by_account_and_asset(
-                account,
-                asset
-            ).await?
+        if let Some(mut w) = self
+            .wallet_service
+            .get_wallet_by_account_and_asset(account, asset)
+            .await?
         {
             let locked = parse(&w.locked);
             if locked > Decimal::ZERO {
@@ -209,11 +212,10 @@ impl LiquidationService {
     /// Release locked funds to available and return the released amount.
     async fn release_locked_as_recovered(&self, account: &str, asset: &str) -> Result<Decimal> {
         let mut recovered = Decimal::ZERO;
-        if
-            let Some(mut w) = self.wallet_service.get_wallet_by_account_and_asset(
-                account,
-                asset
-            ).await?
+        if let Some(mut w) = self
+            .wallet_service
+            .get_wallet_by_account_and_asset(account, asset)
+            .await?
         {
             let locked = parse(&w.locked);
             if locked > Decimal::ZERO {
@@ -246,13 +248,12 @@ impl InsuranceFundService {
         &self,
         shortfall: Decimal,
         insurance_account_id: Uuid,
-        asset_id: &str
+        asset_id: &str,
     ) -> Result<()> {
-        if
-            let Some(mut w) = self.wallet_service.get_wallet_by_account_and_asset(
-                &insurance_account_id.to_string(),
-                asset_id
-            ).await?
+        if let Some(mut w) = self
+            .wallet_service
+            .get_wallet_by_account_and_asset(&insurance_account_id.to_string(), asset_id)
+            .await?
         {
             let available = parse(&w.available);
             let total = parse(&w.total);

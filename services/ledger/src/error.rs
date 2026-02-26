@@ -1,5 +1,5 @@
-use std::fmt;
 use std::error::Error;
+use std::fmt;
 
 #[derive(Debug)]
 pub enum AppError {
@@ -9,7 +9,11 @@ pub enum AppError {
     Internal(String),
     OptimisticLockingError(String),
     // Specific Domain Errors
-    InsufficientFunds { asset: String, required: String, available: String },
+    InsufficientFunds {
+        asset: String,
+        required: String,
+        available: String,
+    },
     InvalidInstrument(String),
     MalformedRequest(String),
 }
@@ -22,8 +26,15 @@ impl fmt::Display for AppError {
             AppError::ValidationError(msg) => write!(f, "Validation Error: {}", msg),
             AppError::Internal(msg) => write!(f, "Internal Error: {}", msg),
             AppError::OptimisticLockingError(msg) => write!(f, "Optimistic Locking Error: {}", msg),
-            AppError::InsufficientFunds { asset, required, available } => 
-                write!(f, "Insufficient Funds for {}: Required {}, Available {}", asset, required, available),
+            AppError::InsufficientFunds {
+                asset,
+                required,
+                available,
+            } => write!(
+                f,
+                "Insufficient Funds for {}: Required {}, Available {}",
+                asset, required, available
+            ),
             AppError::InvalidInstrument(id) => write!(f, "Invalid Instrument: {}", id),
             AppError::MalformedRequest(msg) => write!(f, "Malformed Request: {}", msg),
         }

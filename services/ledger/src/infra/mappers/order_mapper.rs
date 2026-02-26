@@ -1,4 +1,4 @@
-use crate::domain::orders::model::{Order, OrderSide, OrderType, OrderStatus};
+use crate::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
 use crate::proto::common;
 use rust_decimal::Decimal;
 use std::str::FromStr;
@@ -50,16 +50,23 @@ impl OrderMapper {
         let order_id = if proto_order.id.is_empty() {
             Uuid::new_v4()
         } else {
-            Uuid::parse_str(&proto_order.id).map_err(|_| Status::invalid_argument("Invalid order ID"))?
+            Uuid::parse_str(&proto_order.id)
+                .map_err(|_| Status::invalid_argument("Invalid order ID"))?
         };
 
-        let tenant_id = Uuid::parse_str(&proto_order.tenant_id).map_err(|_| Status::invalid_argument("Invalid tenant ID"))?;
-        let account_id = Uuid::parse_str(&proto_order.account_id).map_err(|_| Status::invalid_argument("Invalid account ID"))?;
-        let instrument_id = Uuid::parse_str(&proto_order.instrument_id).map_err(|_| Status::invalid_argument("Invalid instrument ID"))?;
+        let tenant_id = Uuid::parse_str(&proto_order.tenant_id)
+            .map_err(|_| Status::invalid_argument("Invalid tenant ID"))?;
+        let account_id = Uuid::parse_str(&proto_order.account_id)
+            .map_err(|_| Status::invalid_argument("Invalid account ID"))?;
+        let instrument_id = Uuid::parse_str(&proto_order.instrument_id)
+            .map_err(|_| Status::invalid_argument("Invalid instrument ID"))?;
 
-        let quantity = Decimal::from_str(&proto_order.quantity).map_err(|_| Status::invalid_argument("Invalid quantity format"))?;
-        let price = Decimal::from_str(&proto_order.price).map_err(|_| Status::invalid_argument("Invalid price format"))?;
-        let filled_quantity = Decimal::from_str(&proto_order.quantity_filled).unwrap_or(Decimal::ZERO);
+        let quantity = Decimal::from_str(&proto_order.quantity)
+            .map_err(|_| Status::invalid_argument("Invalid quantity format"))?;
+        let price = Decimal::from_str(&proto_order.price)
+            .map_err(|_| Status::invalid_argument("Invalid price format"))?;
+        let filled_quantity =
+            Decimal::from_str(&proto_order.quantity_filled).unwrap_or(Decimal::ZERO);
 
         let side_enum = common::OrderSide::try_from(proto_order.side)
             .map_err(|_| Status::invalid_argument("Invalid side"))?;

@@ -1,9 +1,9 @@
-use crate::error::Result;
 use super::model::Account;
 use super::repository::AccountRepository;
+use crate::error::Result;
 use std::fmt;
-use uuid::Uuid;
 use std::sync::Arc;
+use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct AccountService {
@@ -21,7 +21,12 @@ impl AccountService {
         Self { repo }
     }
 
-    pub async fn create_new_account(&self, user_id: String, name: String, account_type: String) -> Result<Account> {
+    pub async fn create_new_account(
+        &self,
+        user_id: String,
+        name: String,
+        account_type: String,
+    ) -> Result<Account> {
         let account = Account::new("default".to_string(), user_id, name, account_type);
         self.repo.create(account).await
     }

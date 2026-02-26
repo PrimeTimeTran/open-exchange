@@ -1,5 +1,5 @@
-use std::str::FromStr;
 use rust_decimal::Decimal;
+use std::str::FromStr;
 
 pub struct FeeConstants;
 

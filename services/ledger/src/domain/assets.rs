@@ -1,9 +1,9 @@
-use crate::proto::common;
 use crate::error::Result;
 use crate::infra::repositories::{AssetRepository, InstrumentRepository};
-use uuid::Uuid;
+use crate::proto::common;
 use chrono::Utc;
 use std::sync::Arc;
+use uuid::Uuid;
 
 #[derive(Clone, Debug)]
 pub struct AssetService {
@@ -12,7 +12,10 @@ pub struct AssetService {
 }
 
 impl AssetService {
-    pub fn new(repo: Arc<dyn AssetRepository>, instrument_repo: Arc<dyn InstrumentRepository>) -> Self {
+    pub fn new(
+        repo: Arc<dyn AssetRepository>,
+        instrument_repo: Arc<dyn InstrumentRepository>,
+    ) -> Self {
         Self {
             repo,
             instrument_repo,
@@ -20,7 +23,8 @@ impl AssetService {
     }
 
     pub async fn get_asset(&self, id: &str) -> Result<Option<common::Asset>> {
-        let uuid = Uuid::parse_str(id).map_err(|_| crate::error::AppError::ValidationError("Invalid asset ID".into()))?;
+        let uuid = Uuid::parse_str(id)
+            .map_err(|_| crate::error::AppError::ValidationError("Invalid asset ID".into()))?;
         self.repo.get(uuid).await
     }
 
@@ -32,7 +36,12 @@ impl AssetService {
         self.repo.list().await
     }
 
-    pub async fn create_new_asset(&self, symbol: String, asset_type: String, precision: i32) -> common::Asset {
+    pub async fn create_new_asset(
+        &self,
+        symbol: String,
+        asset_type: String,
+        precision: i32,
+    ) -> common::Asset {
         // Warning: This is now broken/stubbed until we implement AssetRepository::create
         let asset = common::Asset {
             id: Uuid::new_v4().to_string(),
@@ -50,7 +59,13 @@ impl AssetService {
         self.repo.create(asset.clone()).await.unwrap_or(asset)
     }
 
-    pub async fn create_new_instrument(&self, symbol: String, instrument_type: String, base_id: String, quote_id: String) -> common::Instrument {
+    pub async fn create_new_instrument(
+        &self,
+        symbol: String,
+        instrument_type: String,
+        base_id: String,
+        quote_id: String,
+    ) -> common::Instrument {
         let instrument = common::Instrument {
             id: Uuid::new_v4().to_string(),
             tenant_id: "default".to_string(),
@@ -66,12 +81,15 @@ impl AssetService {
 
         // We unwrap here to match the previous signature that didn't return Result
         // In a real app we should propagate the error
-        self.instrument_repo.create(instrument.clone()).await.unwrap_or(instrument)
+        self.instrument_repo
+            .create(instrument.clone())
+            .await
+            .unwrap_or(instrument)
     }
 
     pub async fn get_instrument(&self, id: &str) -> Result<Option<common::Instrument>> {
-        let uuid = Uuid::parse_str(id).map_err(|_| crate::error::AppError::ValidationError("Invalid instrument ID".into()))?;
+        let uuid = Uuid::parse_str(id)
+            .map_err(|_| crate::error::AppError::ValidationError("Invalid instrument ID".into()))?;
         self.instrument_repo.get(uuid).await
     }
 }
-

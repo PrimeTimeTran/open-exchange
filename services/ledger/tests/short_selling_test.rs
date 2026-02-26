@@ -14,10 +14,10 @@
 ///   - `Account.type = "margin"` required for borrowing; cash accounts blocked
 mod helpers;
 use helpers::memory::InMemoryTestContext;
-use helpers::{to_atomic_usd, to_atomic_btc};
+use helpers::{to_atomic_btc, to_atomic_usd};
 use ledger::domain::orders::{Order, OrderSide, OrderType};
-use std::str::FromStr;
 use rust_decimal::Decimal;
+use std::str::FromStr;
 
 /// Test: Short Sell Locks Quote Collateral, Not Base Asset
 ///
@@ -37,29 +37,44 @@ async fn test_short_sell_locks_collateral_not_base_asset() {
     let ctx = InMemoryTestContext::new();
 
     let usd_collateral = to_atomic_usd(50_000.0); // full notional as collateral
-    // Fix: create wallet with AVAILABLE funds, not locked. open_borrow will lock them.
-    ctx.create_wallet_decimal(ctx.account_a, &ctx.usd_id.to_string(), usd_collateral, Decimal::ZERO, usd_collateral);
+                                                  // Fix: create wallet with AVAILABLE funds, not locked. open_borrow will lock them.
+    ctx.create_wallet_decimal(
+        ctx.account_a,
+        &ctx.usd_id.to_string(),
+        usd_collateral,
+        Decimal::ZERO,
+        usd_collateral,
+    );
     // No BTC wallet needed — the account doesn't hold BTC initially.
     // However, BorrowService requires a wallet to credit the borrowed asset.
     // So we create it with 0 balance.
-    ctx.create_wallet_decimal(ctx.account_a, &ctx.btc_id.to_string(), Decimal::ZERO, Decimal::ZERO, Decimal::ZERO);
+    ctx.create_wallet_decimal(
+        ctx.account_a,
+        &ctx.btc_id.to_string(),
+        Decimal::ZERO,
+        Decimal::ZERO,
+        Decimal::ZERO,
+    );
 
-    ctx.borrow_service.open_borrow(
-        ctx.account_a, 
-        &ctx.btc_id.to_string(), 
-        &ctx.usd_id.to_string(), 
-        to_atomic_btc(1.0), 
-        usd_collateral
-    ).await.unwrap();
+    ctx.borrow_service
+        .open_borrow(
+            ctx.account_a,
+            &ctx.btc_id.to_string(),
+            &ctx.usd_id.to_string(),
+            to_atomic_btc(1.0),
+            usd_collateral,
+        )
+        .await
+        .unwrap();
 
     // Now place the short sell order.
     // This will LOCK the borrowed BTC.
     ctx.create_order_object(
-        ctx.account_a, 
-        ctx.instrument_id, 
-        ledger::proto::common::OrderSide::Sell, 
-        "1.0", 
-        "50000"
+        ctx.account_a,
+        ctx.instrument_id,
+        ledger::proto::common::OrderSide::Sell,
+        "1.0",
+        "50000",
     );
     // Note: create_order_object doesn't call service, just creates struct.
     // We need to call order_service.create_order
@@ -74,29 +89,41 @@ async fn test_short_sell_locks_collateral_not_base_asset() {
     );
     ctx.order_service.create_order(order).await.unwrap();
 
-    let usd_wallet = ctx.wallet_service
+    let usd_wallet = ctx
+        .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await.unwrap().unwrap();
+        .await
+        .unwrap()
+        .unwrap();
 
     // USD must be locked as collateral
-    assert!(Decimal::from_str(&usd_wallet.locked).unwrap() >= usd_collateral,
-        "USD collateral must be locked for short position");
+    assert!(
+        Decimal::from_str(&usd_wallet.locked).unwrap() >= usd_collateral,
+        "USD collateral must be locked for short position"
+    );
 
     // BTC wallet should exist and have the borrowed amount LOCKED (because of the sell order)
-    let btc_wallet = ctx.wallet_service
+    let btc_wallet = ctx
+        .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string())
-        .await.unwrap();
-    
+        .await
+        .unwrap();
+
     if let Some(w) = btc_wallet {
         // Available is 0 because we placed a sell order for the full amount
-        assert_eq!(Decimal::from_str(&w.available).unwrap(), Decimal::ZERO,
-            "Short seller should have locked the borrowed BTC in the sell order");
-        assert_eq!(Decimal::from_str(&w.locked).unwrap(), to_atomic_btc(1.0),
-            "Borrowed BTC should be locked");
+        assert_eq!(
+            Decimal::from_str(&w.available).unwrap(),
+            Decimal::ZERO,
+            "Short seller should have locked the borrowed BTC in the sell order"
+        );
+        assert_eq!(
+            Decimal::from_str(&w.locked).unwrap(),
+            to_atomic_btc(1.0),
+            "Borrowed BTC should be locked"
+        );
     } else {
         panic!("BTC wallet should exist after borrowing");
     }
-
 }
 
 /// Test: Short Sell Settlement Credits Quote Asset to Seller
@@ -114,54 +141,105 @@ async fn test_short_sell_locks_collateral_not_base_asset() {
 async fn test_short_sell_settlement_credits_quote_to_seller() {
     let ctx = InMemoryTestContext::new();
 
-    let price    = 50_000.0_f64;
-    let qty      = 1.0_f64;
+    let price = 50_000.0_f64;
+    let qty = 1.0_f64;
     let proceeds = to_atomic_usd(price * qty);
 
     // Buyer has USD
-    ctx.create_wallet_decimal(ctx.account_b, &ctx.usd_id.to_string(), proceeds, Decimal::ZERO, proceeds);
-    ctx.create_wallet_decimal(ctx.account_b, &ctx.btc_id.to_string(), Decimal::ZERO, Decimal::ZERO, Decimal::ZERO);
+    ctx.create_wallet_decimal(
+        ctx.account_b,
+        &ctx.usd_id.to_string(),
+        proceeds,
+        Decimal::ZERO,
+        proceeds,
+    );
+    ctx.create_wallet_decimal(
+        ctx.account_b,
+        &ctx.btc_id.to_string(),
+        Decimal::ZERO,
+        Decimal::ZERO,
+        Decimal::ZERO,
+    );
 
     // Seller has collateral locked, no BTC
     // Fix: Setup collateral in available balance for open_borrow to consume
-    ctx.create_wallet_decimal(ctx.account_a, &ctx.usd_id.to_string(), proceeds, Decimal::ZERO, proceeds);
-    ctx.create_wallet_decimal(ctx.account_a, &ctx.btc_id.to_string(), Decimal::ZERO, Decimal::ZERO, Decimal::ZERO);
+    ctx.create_wallet_decimal(
+        ctx.account_a,
+        &ctx.usd_id.to_string(),
+        proceeds,
+        Decimal::ZERO,
+        proceeds,
+    );
+    ctx.create_wallet_decimal(
+        ctx.account_a,
+        &ctx.btc_id.to_string(),
+        Decimal::ZERO,
+        Decimal::ZERO,
+        Decimal::ZERO,
+    );
 
     // 1. Open Borrow (BTC)
-    ctx.borrow_service.open_borrow(
-        ctx.account_a, 
-        &ctx.btc_id.to_string(), 
-        &ctx.usd_id.to_string(), 
-        to_atomic_btc(1.0), 
-        proceeds // using proceeds as collateral for simplicity
-    ).await.unwrap();
+    ctx.borrow_service
+        .open_borrow(
+            ctx.account_a,
+            &ctx.btc_id.to_string(),
+            &ctx.usd_id.to_string(),
+            to_atomic_btc(1.0),
+            proceeds, // using proceeds as collateral for simplicity
+        )
+        .await
+        .unwrap();
 
     // 2. Simulate Sell (Match & Fill)
-    // We can't easily simulate "match" without matching engine, 
+    // We can't easily simulate "match" without matching engine,
     // so we'll just manually move funds as if settlement happened.
     // The "Sell" means: BTC (borrowed) goes to Buyer. Buyer's USD goes to Seller.
-    
+
     // Debit Seller's BTC (1.0)
-    let seller_btc = ctx.wallet_service.get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string()).await.unwrap().unwrap();
+    let seller_btc = ctx
+        .wallet_service
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string())
+        .await
+        .unwrap()
+        .unwrap();
     let mut seller_btc_mut = seller_btc.clone();
-    seller_btc_mut.available = (Decimal::from_str(&seller_btc.available).unwrap() - to_atomic_btc(1.0)).to_string();
-    seller_btc_mut.total = (Decimal::from_str(&seller_btc.total).unwrap() - to_atomic_btc(1.0)).to_string();
-    ctx.wallet_service.update_wallet(seller_btc_mut).await.unwrap();
+    seller_btc_mut.available =
+        (Decimal::from_str(&seller_btc.available).unwrap() - to_atomic_btc(1.0)).to_string();
+    seller_btc_mut.total =
+        (Decimal::from_str(&seller_btc.total).unwrap() - to_atomic_btc(1.0)).to_string();
+    ctx.wallet_service
+        .update_wallet(seller_btc_mut)
+        .await
+        .unwrap();
 
     // Credit Seller's USD (proceeds)
-    let seller_usd = ctx.wallet_service.get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await.unwrap().unwrap();
-    let mut seller_usd_mut = seller_usd.clone();
-    seller_usd_mut.available = (Decimal::from_str(&seller_usd.available).unwrap() + proceeds).to_string();
-    seller_usd_mut.total = (Decimal::from_str(&seller_usd.total).unwrap() + proceeds).to_string();
-    ctx.wallet_service.update_wallet(seller_usd_mut).await.unwrap();
-
-    let seller_usd = ctx.wallet_service
+    let seller_usd = ctx
+        .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await.unwrap().unwrap();
+        .await
+        .unwrap()
+        .unwrap();
+    let mut seller_usd_mut = seller_usd.clone();
+    seller_usd_mut.available =
+        (Decimal::from_str(&seller_usd.available).unwrap() + proceeds).to_string();
+    seller_usd_mut.total = (Decimal::from_str(&seller_usd.total).unwrap() + proceeds).to_string();
+    ctx.wallet_service
+        .update_wallet(seller_usd_mut)
+        .await
+        .unwrap();
+
+    let seller_usd = ctx
+        .wallet_service
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
+        .await
+        .unwrap()
+        .unwrap();
 
     // Seller received proceeds from selling the borrowed BTC
-    assert!(Decimal::from_str(&seller_usd.available).unwrap() > Decimal::ZERO,
-        "Short seller should have received USD proceeds");
+    assert!(
+        Decimal::from_str(&seller_usd.available).unwrap() > Decimal::ZERO,
+        "Short seller should have received USD proceeds"
+    );
 }
 
 /// Test: Covering a Short Position Releases Collateral
@@ -178,44 +256,80 @@ async fn test_short_position_cover_buy_reduces_collateral_lock() {
 
     let collateral = to_atomic_usd(50_000.0);
     // User must have the collateral available to lock
-    ctx.create_wallet_decimal(ctx.account_a, &ctx.usd_id.to_string(), collateral, Decimal::ZERO, collateral);
-    
+    ctx.create_wallet_decimal(
+        ctx.account_a,
+        &ctx.usd_id.to_string(),
+        collateral,
+        Decimal::ZERO,
+        collateral,
+    );
+
     // Create BTC wallet
-    ctx.create_wallet_decimal(ctx.account_a, &ctx.btc_id.to_string(), Decimal::ZERO, Decimal::ZERO, Decimal::ZERO);
+    ctx.create_wallet_decimal(
+        ctx.account_a,
+        &ctx.btc_id.to_string(),
+        Decimal::ZERO,
+        Decimal::ZERO,
+        Decimal::ZERO,
+    );
 
     // 1. Open Borrow
-    let borrow = ctx.borrow_service.open_borrow(
-        ctx.account_a, 
-        &ctx.btc_id.to_string(), 
-        &ctx.usd_id.to_string(), 
-        to_atomic_btc(1.0), 
-        collateral
-    ).await.unwrap();
+    let borrow = ctx
+        .borrow_service
+        .open_borrow(
+            ctx.account_a,
+            &ctx.btc_id.to_string(),
+            &ctx.usd_id.to_string(),
+            to_atomic_btc(1.0),
+            collateral,
+        )
+        .await
+        .unwrap();
 
     // 2. Buy back (Cover) - User gets 1.0 BTC from market.
     // For test simplicity, we just credit the wallet as if they bought it.
-    let btc_wallet = ctx.wallet_service.get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string()).await.unwrap().unwrap();
+    let btc_wallet = ctx
+        .wallet_service
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string())
+        .await
+        .unwrap()
+        .unwrap();
     let mut btc_wallet_mut = btc_wallet.clone();
-    btc_wallet_mut.available = (Decimal::from_str(&btc_wallet.available).unwrap() + to_atomic_btc(1.0)).to_string();
-    btc_wallet_mut.total = (Decimal::from_str(&btc_wallet.total).unwrap() + to_atomic_btc(1.0)).to_string();
-    ctx.wallet_service.update_wallet(btc_wallet_mut).await.unwrap();
+    btc_wallet_mut.available =
+        (Decimal::from_str(&btc_wallet.available).unwrap() + to_atomic_btc(1.0)).to_string();
+    btc_wallet_mut.total =
+        (Decimal::from_str(&btc_wallet.total).unwrap() + to_atomic_btc(1.0)).to_string();
+    ctx.wallet_service
+        .update_wallet(btc_wallet_mut)
+        .await
+        .unwrap();
 
     // 3. Close Borrow
     let fee = to_atomic_usd(50.0);
-    ctx.borrow_service.close_borrow(borrow.id, fee).await.unwrap();
+    ctx.borrow_service
+        .close_borrow(borrow.id, fee)
+        .await
+        .unwrap();
 
-    let usd_wallet = ctx.wallet_service
+    let usd_wallet = ctx
+        .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await.unwrap().unwrap();
+        .await
+        .unwrap()
+        .unwrap();
 
-    assert_eq!(Decimal::from_str(&usd_wallet.locked).unwrap(), Decimal::ZERO,
-        "Collateral must be released after covering the short");
+    assert_eq!(
+        Decimal::from_str(&usd_wallet.locked).unwrap(),
+        Decimal::ZERO,
+        "Collateral must be released after covering the short"
+    );
 
     // Available should be close to original (minus any borrow fees)
     let available = Decimal::from_str(&usd_wallet.available).unwrap();
-    assert!(available <= collateral,
-        "Available should be at most collateral after fees");
-
+    assert!(
+        available <= collateral,
+        "Available should be at most collateral after fees"
+    );
 }
 
 /// Test: Short Selling Is Rejected on a Cash Account
@@ -234,8 +348,20 @@ async fn test_short_sell_rejected_in_cash_account() {
     let ctx = InMemoryTestContext::new();
 
     // Cash account holds 0 BTC — cannot short sell
-    ctx.create_wallet_decimal(ctx.account_a, &ctx.btc_id.to_string(), Decimal::ZERO, Decimal::ZERO, Decimal::ZERO);
-    ctx.create_wallet_decimal(ctx.account_a, &ctx.usd_id.to_string(), Decimal::ZERO, Decimal::ZERO, Decimal::ZERO);
+    ctx.create_wallet_decimal(
+        ctx.account_a,
+        &ctx.btc_id.to_string(),
+        Decimal::ZERO,
+        Decimal::ZERO,
+        Decimal::ZERO,
+    );
+    ctx.create_wallet_decimal(
+        ctx.account_a,
+        &ctx.usd_id.to_string(),
+        Decimal::ZERO,
+        Decimal::ZERO,
+        Decimal::ZERO,
+    );
 
     // Attempt to sell 1.0 BTC without holding any
     let order = Order::new(
@@ -257,9 +383,12 @@ async fn test_short_sell_rejected_in_cash_account() {
     let result = ctx.order_service.create_order(order).await;
 
     // Cash account must reject the order as InsufficientFunds (no borrowing)
-    // Note: With current OrderService, if user has 0 BTC, it just fails. 
+    // Note: With current OrderService, if user has 0 BTC, it just fails.
     // This correctly simulates "Cash account cannot short sell".
-    assert!(result.is_err(), "Cash account should not allow short selling");
+    assert!(
+        result.is_err(),
+        "Cash account should not allow short selling"
+    );
     match result.unwrap_err() {
         ledger::error::AppError::InsufficientFunds { .. } => {}
         other => panic!("Expected InsufficientFunds, got: {:?}", other),

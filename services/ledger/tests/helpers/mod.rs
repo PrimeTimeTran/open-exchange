@@ -1,9 +1,9 @@
 pub mod memory;
 pub mod postgres;
 
-use rust_decimal::Decimal;
-use rust_decimal::prelude::FromPrimitive;
 use ledger::domain::fees::constants::FeeConstants;
+use rust_decimal::prelude::FromPrimitive;
+use rust_decimal::Decimal;
 
 #[allow(dead_code)]
 pub fn to_atomic_usd(amount: f64) -> Decimal {

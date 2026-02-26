@@ -1,13 +1,13 @@
-use crate::proto::ledger::*;
-use crate::domain::fills::service::FillService;
 use crate::domain::accounts::AccountService;
-use crate::proto::ledger::order_service_server::OrderService;
-use crate::domain::orders::{OrderService as OrderDomainService, Order};
+use crate::domain::fills::service::FillService;
+use crate::domain::orders::{Order, OrderService as OrderDomainService};
 use crate::infra::mappers::order_mapper::OrderMapper;
 use crate::infra::mappers::trade_mapper::TradeMapper;
-use uuid::Uuid;
+use crate::proto::ledger::order_service_server::OrderService;
+use crate::proto::ledger::*;
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
+use uuid::Uuid;
 
 pub struct OrderServiceImpl {
     fill_service: Arc<FillService>,
@@ -21,12 +21,19 @@ impl OrderServiceImpl {
         fill_service: Arc<FillService>,
         account_service: Arc<AccountService>,
     ) -> Self {
-        Self { order_service, fill_service, account_service }
+        Self {
+            order_service,
+            fill_service,
+            account_service,
+        }
     }
 
     // Helper for tests to access internal state
     pub async fn get_order_internal(&self, id: Uuid) -> Result<Option<Order>, Status> {
-        self.order_service.get_order(id).await.map_err(|e| Status::internal(e.to_string()))
+        self.order_service
+            .get_order(id)
+            .await
+            .map_err(|e| Status::internal(e.to_string()))
     }
 }
 
@@ -37,7 +44,7 @@ impl OrderService for OrderServiceImpl {
         request: Request<RecordOrderRequest>,
     ) -> Result<Response<RecordOrderResponse>, Status> {
         let req = request.into_inner();
-        
+
         if let Some(proto_order) = req.order {
             let order = OrderMapper::to_domain(&proto_order)?;
 
@@ -46,7 +53,7 @@ impl OrderService for OrderServiceImpl {
                 if let Ok(Some(account)) = self.account_service.get_account(account_id).await {
                     if account.status == "frozen" {
                         return Err(Status::failed_precondition(
-                            "Account is frozen and cannot place new orders"
+                            "Account is frozen and cannot place new orders",
                         ));
                     }
                 }
@@ -54,15 +61,21 @@ impl OrderService for OrderServiceImpl {
 
             // OrderService handles validation, reservation, AND matching engine push
             match self.order_service.create_order(order).await {
-                Ok(_) => {},
-                Err(crate::error::AppError::ValidationError(msg)) => return Err(Status::failed_precondition(msg)),
+                Ok(_) => {}
+                Err(crate::error::AppError::ValidationError(msg)) => {
+                    return Err(Status::failed_precondition(msg))
+                }
                 Err(crate::error::AppError::NotFound(msg)) => return Err(Status::not_found(msg)),
-                Err(crate::error::AppError::InsufficientFunds { asset, required, available }) => {
+                Err(crate::error::AppError::InsufficientFunds {
+                    asset,
+                    required,
+                    available,
+                }) => {
                     return Err(Status::failed_precondition(format!(
-                        "Insufficient funds for asset {}: required {}, available {}", 
+                        "Insufficient funds for asset {}: required {}, available {}",
                         asset, required, available
                     )));
-                },
+                }
                 Err(e) => return Err(Status::internal(e.to_string())),
             }
         }
@@ -78,20 +91,21 @@ impl OrderService for OrderServiceImpl {
         &self,
         request: Request<CancelOrderRequest>,
     ) -> Result<Response<CancelOrderResponse>, Status> {
-            let req = request.into_inner();
-            let order_id = Uuid::parse_str(&req.order_id).map_err(|_| Status::invalid_argument("Invalid order ID"))?;
-            
-            match self.order_service.cancel_order(order_id).await {
-                Ok(_) => Ok(Response::new(CancelOrderResponse {
-                    success: true,
-                    message: "Order cancelled".to_string(),
-                })),
-                Err(crate::error::AppError::NotFound(_)) => Ok(Response::new(CancelOrderResponse {
-                    success: false,
-                    message: "Order not found".to_string(),
-                })),
-                Err(e) => Err(Status::internal(e.to_string())),
-            }
+        let req = request.into_inner();
+        let order_id = Uuid::parse_str(&req.order_id)
+            .map_err(|_| Status::invalid_argument("Invalid order ID"))?;
+
+        match self.order_service.cancel_order(order_id).await {
+            Ok(_) => Ok(Response::new(CancelOrderResponse {
+                success: true,
+                message: "Order cancelled".to_string(),
+            })),
+            Err(crate::error::AppError::NotFound(_)) => Ok(Response::new(CancelOrderResponse {
+                success: false,
+                message: "Order not found".to_string(),
+            })),
+            Err(e) => Err(Status::internal(e.to_string())),
+        }
     }
 
     async fn delete_order(
@@ -105,9 +119,12 @@ impl OrderService for OrderServiceImpl {
         &self,
         _request: Request<GetOpenOrdersRequest>,
     ) -> Result<Response<GetOpenOrdersResponse>, Status> {
-        let orders = self.order_service.list_open_orders().await
+        let orders = self
+            .order_service
+            .list_open_orders()
+            .await
             .map_err(|e| Status::internal(e.to_string()))?;
-            
+
         let mut proto_orders = Vec::new();
 
         for o in orders {
@@ -118,14 +135,16 @@ impl OrderService for OrderServiceImpl {
             orders: proto_orders,
         }))
     }
-    
+
     async fn process_trade(
         &self,
         _request: Request<ProcessTradeRequest>,
     ) -> Result<Response<ProcessTradeResponse>, Status> {
         // Deprecated: Settlement via `Commit` batch is now the source of truth.
         // This endpoint is no longer used by the Matching Engine.
-        Err(Status::unimplemented("ProcessTrade is deprecated. Use Settlement Service."))
+        Err(Status::unimplemented(
+            "ProcessTrade is deprecated. Use Settlement Service.",
+        ))
     }
 
     async fn get_trades(
@@ -133,22 +152,25 @@ impl OrderService for OrderServiceImpl {
         request: Request<GetTradesRequest>,
     ) -> Result<Response<GetTradesResponse>, Status> {
         let req = request.into_inner();
-        
+
         let instrument_id = Uuid::parse_str(&req.instrument_id)
             .map_err(|_| Status::invalid_argument("Invalid instrument ID"))?;
-            
+
         let start_time = chrono::DateTime::from_timestamp_millis(req.start_time)
             .ok_or_else(|| Status::invalid_argument("Invalid start time"))?;
-            
+
         let end_time = chrono::DateTime::from_timestamp_millis(req.end_time)
             .ok_or_else(|| Status::invalid_argument("Invalid end time"))?;
 
-        let trades_as_fills = self.fill_service.get_trades_by_instrument(instrument_id, start_time, end_time)
+        let trades_as_fills = self
+            .fill_service
+            .get_trades_by_instrument(instrument_id, start_time, end_time)
             .await
             .map_err(|e| Status::internal(e.to_string()))?;
 
         // Map Fills to Trades
-        let trades = trades_as_fills.into_iter()
+        let trades = trades_as_fills
+            .into_iter()
             .map(TradeMapper::to_proto)
             .collect();
 

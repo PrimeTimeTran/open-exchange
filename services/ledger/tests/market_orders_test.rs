@@ -1,11 +1,11 @@
 #[macro_use]
 mod helpers;
 use helpers::memory::InMemoryTestContext;
-use helpers::{to_atomic_usd, to_atomic_btc, calc_taker_fee};
+use helpers::{calc_taker_fee, to_atomic_btc, to_atomic_usd};
 use ledger::domain::orders::model::{Order, OrderSide, OrderType};
 use ledger::error::AppError;
-use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
+use rust_decimal::Decimal;
 use std::str::FromStr;
 
 /// Test: Market Buy Locks Full Budget
@@ -22,9 +22,15 @@ async fn test_market_buy_locks_max_budget() {
     let ctx = InMemoryTestContext::new();
 
     let initial_usd = to_atomic_usd(1000.0); // 100,000 cents
-    let budget      = to_atomic_usd(500.0);  //  50,000 cents
+    let budget = to_atomic_usd(500.0); //  50,000 cents
 
-    ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(), 100_000.0, 0.0, 100_000.0);
+    ctx.create_wallet(
+        ctx.account_a,
+        &ctx.usd_id.to_string(),
+        100_000.0,
+        0.0,
+        100_000.0,
+    );
 
     let order = Order::new(
         ctx.tenant_id,
@@ -36,15 +42,20 @@ async fn test_market_buy_locks_max_budget() {
         Decimal::from_str("500.0").unwrap(),
     );
 
-    ctx.order_service.create_order(order).await
+    ctx.order_service
+        .create_order(order)
+        .await
         .expect("Market buy order should be accepted");
 
-    let wallet = ctx.wallet_service
+    let wallet = ctx
+        .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await.unwrap().unwrap();
+        .await
+        .unwrap()
+        .unwrap();
 
     let total = Decimal::from_str(&wallet.total).unwrap();
-    assert_decimal_val_eq!(wallet.locked,    budget);
+    assert_decimal_val_eq!(wallet.locked, budget);
     assert_decimal_val_eq!(wallet.available, initial_usd - budget);
     assert_eq!(total, initial_usd, "Total must not change when locking");
 }
@@ -65,8 +76,13 @@ async fn test_market_sell_locks_full_base_quantity() {
     let initial_btc = to_atomic_btc(2.0);
     let lock_amount = to_atomic_btc(1.0);
 
-    ctx.create_wallet(ctx.account_b, &ctx.btc_id.to_string(),
-        200_000_000.0, 0.0, 200_000_000.0);
+    ctx.create_wallet(
+        ctx.account_b,
+        &ctx.btc_id.to_string(),
+        200_000_000.0,
+        0.0,
+        200_000_000.0,
+    );
 
     let order = Order::new(
         ctx.tenant_id,
@@ -78,14 +94,19 @@ async fn test_market_sell_locks_full_base_quantity() {
         Decimal::ZERO,
     );
 
-    ctx.order_service.create_order(order).await
+    ctx.order_service
+        .create_order(order)
+        .await
         .expect("Market sell order should be accepted");
 
-    let wallet = ctx.wallet_service
+    let wallet = ctx
+        .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &ctx.btc_id.to_string())
-        .await.unwrap().unwrap();
+        .await
+        .unwrap()
+        .unwrap();
 
-    assert_decimal_val_eq!(wallet.locked,    lock_amount);
+    assert_decimal_val_eq!(wallet.locked, lock_amount);
     assert_decimal_val_eq!(wallet.available, initial_btc - lock_amount);
 }
 
@@ -105,21 +126,31 @@ async fn test_market_order_fills_at_counterparty_limit_price() {
 
     // Buyer locked $500 worth of USD budget (50,000 cents)
     let buyer_locked_usd = to_atomic_usd(500.0);
-    ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(),
-        0.0, buyer_locked_usd.to_f64().unwrap(), buyer_locked_usd.to_f64().unwrap());
+    ctx.create_wallet(
+        ctx.account_a,
+        &ctx.usd_id.to_string(),
+        0.0,
+        buyer_locked_usd.to_f64().unwrap(),
+        buyer_locked_usd.to_f64().unwrap(),
+    );
     ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
 
     // Seller locked 1.0 BTC
     let seller_locked_btc = to_atomic_btc(1.0);
-    ctx.create_wallet(ctx.account_b, &ctx.btc_id.to_string(),
-        0.0, seller_locked_btc.to_f64().unwrap(), seller_locked_btc.to_f64().unwrap());
+    ctx.create_wallet(
+        ctx.account_b,
+        &ctx.btc_id.to_string(),
+        0.0,
+        seller_locked_btc.to_f64().unwrap(),
+        seller_locked_btc.to_f64().unwrap(),
+    );
     ctx.create_wallet(ctx.account_b, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
 
     // The limit price is $480, not the market order's $500 budget
     let fill_price = 480.0_f64;
-    let fill_qty   = 1.0_f64;
+    let fill_qty = 1.0_f64;
 
-    let buy_order  = ctx.create_order(ctx.account_a, "buy",  fill_price, fill_qty);
+    let buy_order = ctx.create_order(ctx.account_a, "buy", fill_price, fill_qty);
     let sell_order = ctx.create_order(ctx.account_b, "sell", fill_price, fill_qty);
     let trade = ctx.create_trade(buy_order.id, sell_order.id, fill_price, fill_qty);
 
@@ -128,10 +159,12 @@ async fn test_market_order_fills_at_counterparty_limit_price() {
 
     let buyer_usd = wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await.unwrap().unwrap();
+        .await
+        .unwrap()
+        .unwrap();
 
-    let notional   = to_atomic_usd(fill_price * fill_qty);
-    let taker_fee  = calc_taker_fee(notional);
+    let notional = to_atomic_usd(fill_price * fill_qty);
+    let taker_fee = calc_taker_fee(notional);
     let expected_total_usd = buyer_locked_usd - notional - taker_fee;
 
     // Buyer's total USD must reflect settlement at $480, not $500
@@ -154,14 +187,22 @@ async fn test_market_buy_partial_fill_refunds_unused_budget() {
     let ctx = InMemoryTestContext::new();
 
     let budget = to_atomic_usd(500.0); // 1.0 BTC @ $500
-    ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(),
-        0.0, budget.to_f64().unwrap(), budget.to_f64().unwrap());
+    ctx.create_wallet(
+        ctx.account_a,
+        &ctx.usd_id.to_string(),
+        0.0,
+        budget.to_f64().unwrap(),
+        budget.to_f64().unwrap(),
+    );
     ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
 
-    ctx.create_wallet(ctx.account_b, &ctx.btc_id.to_string(),
+    ctx.create_wallet(
+        ctx.account_b,
+        &ctx.btc_id.to_string(),
         to_atomic_btc(0.5).to_f64().unwrap(),
         to_atomic_btc(0.5).to_f64().unwrap(),
-        to_atomic_btc(1.0).to_f64().unwrap());
+        to_atomic_btc(1.0).to_f64().unwrap(),
+    );
     ctx.create_wallet(ctx.account_b, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
 
     // Create market buy order
@@ -188,7 +229,9 @@ async fn test_market_buy_partial_fill_refunds_unused_budget() {
 
     let usd_wallet = wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await.unwrap().unwrap();
+        .await
+        .unwrap()
+        .unwrap();
 
     // After cancel, nothing should remain locked
     assert_decimal_val_eq!(usd_wallet.locked, Decimal::ZERO);
@@ -227,10 +270,13 @@ async fn test_market_order_zero_balance_rejected() {
     }
 
     // Wallet must be completely untouched
-    let wallet = ctx.wallet_service
+    let wallet = ctx
+        .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await.unwrap().unwrap();
+        .await
+        .unwrap()
+        .unwrap();
 
     assert_decimal_val_eq!(wallet.available, Decimal::ZERO);
-    assert_decimal_val_eq!(wallet.locked,    Decimal::ZERO);
+    assert_decimal_val_eq!(wallet.locked, Decimal::ZERO);
 }

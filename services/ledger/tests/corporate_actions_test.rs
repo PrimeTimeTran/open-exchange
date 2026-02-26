@@ -42,7 +42,9 @@ async fn test_cash_dividend_credited_to_all_equity_holders() {
     let aapl_id = ctx.create_asset_api("AAPL_DIV", "equity", 2).await;
     let usd_id = ctx.create_asset_api("USD_DIV", "fiat", 2).await;
 
-    let _ = ctx.create_instrument_api("AAPL_DIV-USD", &aapl_id, &usd_id).await;
+    let _ = ctx
+        .create_instrument_api("AAPL_DIV-USD", &aapl_id, &usd_id)
+        .await;
 
     // Holder A: 10 shares (1,000 atomic at 2 decimals)
     ctx.create_wallet(ctx.account_a, &aapl_id, 1000.0, 0.0, 1000.0);
@@ -60,15 +62,20 @@ async fn test_cash_dividend_credited_to_all_equity_holders() {
     let dividend_per_atomic = dividend_per_share_atomic / Decimal::from(100);
 
     ctx.corporate_action_service
-        .pay_dividend(&aapl_id, &usd_id, dividend_per_atomic).await
+        .pay_dividend(&aapl_id, &usd_id, dividend_per_atomic)
+        .await
         .unwrap();
 
-    let holder_a_usd = ctx.wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &usd_id).await
+    let holder_a_usd = ctx
+        .wallet_service
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &usd_id)
+        .await
         .unwrap()
         .unwrap();
-    let holder_b_usd = ctx.wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &usd_id).await
+    let holder_b_usd = ctx
+        .wallet_service
+        .get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &usd_id)
+        .await
         .unwrap()
         .unwrap();
 
@@ -111,7 +118,9 @@ async fn test_stock_split_doubles_quantity_halves_book_price() {
 
     let aapl_id = ctx.create_asset_api("AAPL_SPL", "equity", 2).await;
     let usd_id = ctx.create_asset_api("USD_SPL", "fiat", 2).await;
-    let _instr = ctx.create_instrument_api("AAPL_SPL-USD", &aapl_id, &usd_id).await;
+    let _instr = ctx
+        .create_instrument_api("AAPL_SPL-USD", &aapl_id, &usd_id)
+        .await;
 
     // Account A: 100 shares (10,000 atomic at 2 decimals)
     let initial_shares = 10_000.0_f64;
@@ -120,11 +129,14 @@ async fn test_stock_split_doubles_quantity_halves_book_price() {
 
     // Forward split: decimals not strictly required but we should pass it if we update API
     ctx.corporate_action_service
-        .apply_split(&aapl_id, 2, "forward", Decimal::ZERO, &usd_id, 2).await
+        .apply_split(&aapl_id, 2, "forward", Decimal::ZERO, &usd_id, 2)
+        .await
         .unwrap();
 
-    let wallet_after = ctx.wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &aapl_id).await
+    let wallet_after = ctx
+        .wallet_service
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &aapl_id)
+        .await
         .unwrap()
         .unwrap();
 
@@ -155,7 +167,9 @@ async fn test_reverse_split_halves_quantity_doubles_price() {
 
     let aapl_id = ctx.create_asset_api("AAPL_RSP", "equity", 2).await;
     let usd_id = ctx.create_asset_api("USD_RSP", "fiat", 2).await;
-    let _instr = ctx.create_instrument_api("AAPL_RSP-USD", &aapl_id, &usd_id).await;
+    let _instr = ctx
+        .create_instrument_api("AAPL_RSP-USD", &aapl_id, &usd_id)
+        .await;
 
     // 5 shares (500 atomic at 2 decimals) — odd number for the 1:2 reverse split
     ctx.create_wallet(ctx.account_a, &aapl_id, 500.0, 0.0, 500.0);
@@ -184,15 +198,20 @@ async fn test_reverse_split_halves_quantity_doubles_price() {
 
     // I need to update `apply_split` to take `base_decimals: u32`.
     ctx.corporate_action_service
-        .apply_split(&aapl_id, 2, "reverse", pre_split_price_atomic, &usd_id, 2).await
+        .apply_split(&aapl_id, 2, "reverse", pre_split_price_atomic, &usd_id, 2)
+        .await
         .unwrap();
 
-    let shares_after = ctx.wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &aapl_id).await
+    let shares_after = ctx
+        .wallet_service
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &aapl_id)
+        .await
         .unwrap()
         .unwrap();
-    let cash_after = ctx.wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &usd_id).await
+    let cash_after = ctx
+        .wallet_service
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &usd_id)
+        .await
         .unwrap()
         .unwrap();
 

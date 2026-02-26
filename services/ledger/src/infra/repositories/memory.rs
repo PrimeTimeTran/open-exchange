@@ -1,15 +1,15 @@
-use crate::error::{AppError, Result};
+use crate::domain::accounts::{Account, AccountRepository};
 use crate::domain::fills::{Fill, FillRepository};
-pub use instrument::InMemoryInstrumentRepository;
+use crate::domain::orders::{Order, OrderRepository, OrderStatus};
 use crate::domain::transaction::RepositoryTransaction;
 use crate::domain::wallets::{Wallet, WalletRepository};
-use crate::domain::accounts::{Account, AccountRepository};
-use crate::domain::orders::{Order, OrderRepository, OrderStatus};
+use crate::error::{AppError, Result};
+pub use instrument::InMemoryInstrumentRepository;
 use uuid::Uuid;
 pub mod instrument;
+use async_trait::async_trait;
 use rust_decimal::Decimal;
 use std::sync::{Arc, Mutex};
-use async_trait::async_trait;
 
 // --- InMemoryOrderRepository ---
 
@@ -53,7 +53,10 @@ impl AccountRepository for InMemoryAccountRepository {
             accounts[pos] = account.clone();
             Ok(account)
         } else {
-            Err(AppError::NotFound(format!("Account {} not found", account.id)))
+            Err(AppError::NotFound(format!(
+                "Account {} not found",
+                account.id
+            )))
         }
     }
 
@@ -69,7 +72,11 @@ impl AccountRepository for InMemoryAccountRepository {
 
     async fn list_by_user(&self, user_id: &str) -> Result<Vec<Account>> {
         let accounts = self.accounts.lock().unwrap();
-        Ok(accounts.iter().filter(|a| a.user_id == user_id).cloned().collect())
+        Ok(accounts
+            .iter()
+            .filter(|a| a.user_id == user_id)
+            .cloned()
+            .collect())
     }
 
     async fn get_by_name(&self, name: &str) -> Result<Option<Account>> {
@@ -114,7 +121,11 @@ impl OrderRepository for InMemoryOrderRepository {
         Ok(order)
     }
 
-    async fn create_with_tx(&self, _tx: &mut dyn RepositoryTransaction, order: Order) -> Result<Order> {
+    async fn create_with_tx(
+        &self,
+        _tx: &mut dyn RepositoryTransaction,
+        order: Order,
+    ) -> Result<Order> {
         self.create(order).await
     }
 
@@ -123,7 +134,11 @@ impl OrderRepository for InMemoryOrderRepository {
         Ok(orders.iter().find(|o| o.id == id).cloned())
     }
 
-    async fn get_for_update(&self, _tx: &mut dyn RepositoryTransaction, id: Uuid) -> Result<Option<Order>> {
+    async fn get_for_update(
+        &self,
+        _tx: &mut dyn RepositoryTransaction,
+        id: Uuid,
+    ) -> Result<Option<Order>> {
         self.get(id).await
     }
 
@@ -138,7 +153,12 @@ impl OrderRepository for InMemoryOrderRepository {
         }
     }
 
-    async fn update_status_with_tx(&self, _tx: &mut dyn RepositoryTransaction, id: Uuid, status: OrderStatus) -> Result<()> {
+    async fn update_status_with_tx(
+        &self,
+        _tx: &mut dyn RepositoryTransaction,
+        id: Uuid,
+        status: OrderStatus,
+    ) -> Result<()> {
         self.update_status(id, status).await
     }
 
@@ -153,7 +173,12 @@ impl OrderRepository for InMemoryOrderRepository {
         }
     }
 
-    async fn update_filled_amount_with_tx(&self, _tx: &mut dyn RepositoryTransaction, id: Uuid, filled: Decimal) -> Result<()> {
+    async fn update_filled_amount_with_tx(
+        &self,
+        _tx: &mut dyn RepositoryTransaction,
+        id: Uuid,
+        filled: Decimal,
+    ) -> Result<()> {
         self.update_filled_amount(id, filled).await
     }
 
@@ -168,15 +193,25 @@ impl OrderRepository for InMemoryOrderRepository {
         }
     }
 
-    async fn increment_filled_amount_with_tx(&self, _tx: &mut dyn RepositoryTransaction, id: Uuid, amount: Decimal) -> Result<Order> {
+    async fn increment_filled_amount_with_tx(
+        &self,
+        _tx: &mut dyn RepositoryTransaction,
+        id: Uuid,
+        amount: Decimal,
+    ) -> Result<Order> {
         self.increment_filled_amount(id, amount).await
     }
 
     async fn list_open(&self) -> Result<Vec<Order>> {
         let orders = self.orders.lock().unwrap();
         // Assuming "open", "partial_fill", "new" are considered open
-        Ok(orders.iter()
-            .filter(|o| o.status == OrderStatus::Open || o.status == OrderStatus::PartialFill || o.status == OrderStatus::New)
+        Ok(orders
+            .iter()
+            .filter(|o| {
+                o.status == OrderStatus::Open
+                    || o.status == OrderStatus::PartialFill
+                    || o.status == OrderStatus::New
+            })
             .cloned()
             .collect())
     }
@@ -214,16 +249,33 @@ impl WalletRepository for InMemoryWalletRepository {
         Ok(wallets.iter().find(|w| w.id == id.to_string()).cloned())
     }
 
-    async fn get_by_account_and_asset(&self, account_id: &str, asset_id: &str) -> Result<Option<Wallet>> {
+    async fn get_by_account_and_asset(
+        &self,
+        account_id: &str,
+        asset_id: &str,
+    ) -> Result<Option<Wallet>> {
         let wallets = self.wallets.lock().unwrap();
-        Ok(wallets.iter().find(|w| w.account_id == account_id && w.asset_id == asset_id).cloned())
+        Ok(wallets
+            .iter()
+            .find(|w| w.account_id == account_id && w.asset_id == asset_id)
+            .cloned())
     }
 
-    async fn get_by_account_and_asset_with_tx(&self, _tx: &mut dyn RepositoryTransaction, account_id: &str, asset_id: &str) -> Result<Option<Wallet>> {
+    async fn get_by_account_and_asset_with_tx(
+        &self,
+        _tx: &mut dyn RepositoryTransaction,
+        account_id: &str,
+        asset_id: &str,
+    ) -> Result<Option<Wallet>> {
         self.get_by_account_and_asset(account_id, asset_id).await
     }
 
-    async fn get_by_account_and_asset_for_update(&self, _tx: &mut dyn RepositoryTransaction, account_id: &str, asset_id: &str) -> Result<Option<Wallet>> {
+    async fn get_by_account_and_asset_for_update(
+        &self,
+        _tx: &mut dyn RepositoryTransaction,
+        account_id: &str,
+        asset_id: &str,
+    ) -> Result<Option<Wallet>> {
         self.get_by_account_and_asset(account_id, asset_id).await
     }
 
@@ -232,18 +284,28 @@ impl WalletRepository for InMemoryWalletRepository {
         if let Some(pos) = wallets.iter().position(|w| w.id == wallet.id) {
             let existing = &wallets[pos];
             if existing.version != wallet.version {
-                return Err(AppError::OptimisticLockingError(format!("Wallet {} version mismatch (expected {}, found {})", wallet.id, wallet.version, existing.version)));
+                return Err(AppError::OptimisticLockingError(format!(
+                    "Wallet {} version mismatch (expected {}, found {})",
+                    wallet.id, wallet.version, existing.version
+                )));
             }
             wallet.version += 1;
             wallet.updated_at = chrono::Utc::now().timestamp_millis();
             wallets[pos] = wallet.clone();
             Ok(wallet)
         } else {
-            Err(AppError::NotFound(format!("Wallet {} not found", wallet.id)))
+            Err(AppError::NotFound(format!(
+                "Wallet {} not found",
+                wallet.id
+            )))
         }
     }
 
-    async fn update_with_tx(&self, _tx: &mut dyn RepositoryTransaction, wallet: Wallet) -> Result<Wallet> {
+    async fn update_with_tx(
+        &self,
+        _tx: &mut dyn RepositoryTransaction,
+        wallet: Wallet,
+    ) -> Result<Wallet> {
         self.update(wallet).await
     }
 
@@ -259,12 +321,20 @@ impl WalletRepository for InMemoryWalletRepository {
 
     async fn list_by_account(&self, account_id: &str) -> Result<Vec<Wallet>> {
         let wallets = self.wallets.lock().unwrap();
-        Ok(wallets.iter().filter(|w| w.account_id == account_id).cloned().collect())
+        Ok(wallets
+            .iter()
+            .filter(|w| w.account_id == account_id)
+            .cloned()
+            .collect())
     }
 
     async fn list_by_asset(&self, asset_id: &str) -> Result<Vec<Wallet>> {
         let wallets = self.wallets.lock().unwrap();
-        Ok(wallets.iter().filter(|w| w.asset_id == asset_id).cloned().collect())
+        Ok(wallets
+            .iter()
+            .filter(|w| w.asset_id == asset_id)
+            .cloned()
+            .collect())
     }
 }
 
@@ -341,13 +411,21 @@ impl FillRepository for InMemoryFillRepository {
         Ok(fill)
     }
 
-    async fn create_with_tx(&self, _tx: &mut dyn RepositoryTransaction, fill: Fill) -> Result<Fill> {
+    async fn create_with_tx(
+        &self,
+        _tx: &mut dyn RepositoryTransaction,
+        fill: Fill,
+    ) -> Result<Fill> {
         self.create(fill).await
     }
 
     async fn list_by_order(&self, order_id: Uuid) -> Result<Vec<Fill>> {
         let fills = self.fills.lock().unwrap();
-        Ok(fills.iter().filter(|f| f.order_id == order_id).cloned().collect())
+        Ok(fills
+            .iter()
+            .filter(|f| f.order_id == order_id)
+            .cloned()
+            .collect())
     }
 
     async fn list_by_instrument_and_time(
@@ -357,8 +435,13 @@ impl FillRepository for InMemoryFillRepository {
         end_time: chrono::DateTime<chrono::Utc>,
     ) -> Result<Vec<Fill>> {
         let fills = self.fills.lock().unwrap();
-        Ok(fills.iter()
-            .filter(|f| f.instrument_id == instrument_id && f.created_at >= start_time && f.created_at <= end_time)
+        Ok(fills
+            .iter()
+            .filter(|f| {
+                f.instrument_id == instrument_id
+                    && f.created_at >= start_time
+                    && f.created_at <= end_time
+            })
             .cloned()
             .collect())
     }
@@ -367,7 +450,7 @@ impl FillRepository for InMemoryFillRepository {
 // --- InMemoryLedgerRepository ---
 
 use crate::domain::ledger::repository::LedgerRepository;
-use crate::proto::common::{LedgerEvent, LedgerEntry, Trade};
+use crate::proto::common::{LedgerEntry, LedgerEvent, Trade};
 
 #[derive(Clone, Default, Debug)]
 pub struct InMemoryLedgerRepository {
@@ -382,11 +465,11 @@ impl InMemoryLedgerRepository {
             entries: Arc::new(Mutex::new(Vec::new())),
         }
     }
-    
+
     pub fn get_events(&self) -> Vec<LedgerEvent> {
         self.events.lock().unwrap().clone()
     }
-    
+
     pub fn get_entries(&self) -> Vec<LedgerEntry> {
         self.entries.lock().unwrap().clone()
     }
@@ -399,7 +482,11 @@ impl LedgerRepository for InMemoryLedgerRepository {
         Ok(event)
     }
 
-    async fn save_event_with_tx(&self, _tx: &mut dyn RepositoryTransaction, event: LedgerEvent) -> Result<LedgerEvent> {
+    async fn save_event_with_tx(
+        &self,
+        _tx: &mut dyn RepositoryTransaction,
+        event: LedgerEvent,
+    ) -> Result<LedgerEvent> {
         self.save_event(event).await
     }
 
@@ -409,11 +496,19 @@ impl LedgerRepository for InMemoryLedgerRepository {
         Ok(entries)
     }
 
-    async fn save_entries_with_tx(&self, _tx: &mut dyn RepositoryTransaction, entries: Vec<LedgerEntry>) -> Result<Vec<LedgerEntry>> {
+    async fn save_entries_with_tx(
+        &self,
+        _tx: &mut dyn RepositoryTransaction,
+        entries: Vec<LedgerEntry>,
+    ) -> Result<Vec<LedgerEntry>> {
         self.save_entries(entries).await
     }
 
-    async fn save_trade_with_tx(&self, _tx: &mut dyn RepositoryTransaction, trade: Trade) -> Result<Trade> {
+    async fn save_trade_with_tx(
+        &self,
+        _tx: &mut dyn RepositoryTransaction,
+        trade: Trade,
+    ) -> Result<Trade> {
         Ok(trade)
     }
 
@@ -458,7 +553,11 @@ impl TradeRepository for InMemoryTradeRepository {
         Ok(trade)
     }
 
-    async fn create_with_tx(&self, _tx: &mut dyn RepositoryTransaction, trade: Trade) -> Result<Trade> {
+    async fn create_with_tx(
+        &self,
+        _tx: &mut dyn RepositoryTransaction,
+        trade: Trade,
+    ) -> Result<Trade> {
         self.create(trade).await
     }
 
@@ -467,7 +566,11 @@ impl TradeRepository for InMemoryTradeRepository {
         Ok(trades.iter().find(|t| t.id == id).cloned())
     }
 
-    async fn get_with_tx(&self, _tx: &mut dyn RepositoryTransaction, id: &str) -> Result<Option<Trade>> {
+    async fn get_with_tx(
+        &self,
+        _tx: &mut dyn RepositoryTransaction,
+        id: &str,
+    ) -> Result<Option<Trade>> {
         self.get(id).await
     }
 }

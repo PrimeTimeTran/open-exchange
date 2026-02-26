@@ -1,11 +1,11 @@
-use crate::error::{AppError, Result};
 use crate::domain::wallets::{Wallet, WalletRepository};
-use uuid::Uuid;
-use std::str::FromStr;
-use rust_decimal::Decimal;
-use sqlx::{PgPool, FromRow, Transaction, Postgres};
+use crate::error::{AppError, Result};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
+use sqlx::{FromRow, PgPool, Postgres, Transaction};
+use std::str::FromStr;
+use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct PostgresWalletRepository {
@@ -65,10 +65,12 @@ use crate::domain::transaction::RepositoryTransaction;
 #[async_trait]
 impl WalletRepository for PostgresWalletRepository {
     async fn create(&self, wallet: Wallet) -> Result<Wallet> {
-        let account_id = Uuid::parse_str(&wallet.account_id).map_err(|_| AppError::ValidationError("Invalid account_id".into()))?;
-        let asset_id = Uuid::parse_str(&wallet.asset_id).map_err(|_| AppError::ValidationError("Invalid asset_id".into()))?;
+        let account_id = Uuid::parse_str(&wallet.account_id)
+            .map_err(|_| AppError::ValidationError("Invalid account_id".into()))?;
+        let asset_id = Uuid::parse_str(&wallet.asset_id)
+            .map_err(|_| AppError::ValidationError("Invalid asset_id".into()))?;
         let tenant_id = Uuid::parse_str(&wallet.tenant_id).unwrap_or_default();
-        
+
         let rec: WalletRow = sqlx::query_as(
             r#"
             INSERT INTO "Wallet" (id, "tenantId", "accountId", "assetId", available, locked, total, version, meta, "createdAt", "updatedAt")
@@ -104,7 +106,7 @@ impl WalletRepository for PostgresWalletRepository {
                    version, meta, "createdAt", "updatedAt"
             FROM "Wallet"
             WHERE id = $1
-            "#
+            "#,
         )
         .bind(id)
         .fetch_optional(&self.pool)
@@ -114,9 +116,15 @@ impl WalletRepository for PostgresWalletRepository {
         Ok(rec.map(|r| r.into()))
     }
 
-    async fn get_by_account_and_asset(&self, account_id: &str, asset_id: &str) -> Result<Option<Wallet>> {
-        let acc_uuid = Uuid::parse_str(account_id).map_err(|_| AppError::ValidationError("Invalid account_id".into()))?;
-        let asset_uuid = Uuid::parse_str(asset_id).map_err(|_| AppError::ValidationError("Invalid asset_id".into()))?;
+    async fn get_by_account_and_asset(
+        &self,
+        account_id: &str,
+        asset_id: &str,
+    ) -> Result<Option<Wallet>> {
+        let acc_uuid = Uuid::parse_str(account_id)
+            .map_err(|_| AppError::ValidationError("Invalid account_id".into()))?;
+        let asset_uuid = Uuid::parse_str(asset_id)
+            .map_err(|_| AppError::ValidationError("Invalid asset_id".into()))?;
 
         let rec: Option<WalletRow> = sqlx::query_as(
             r#"
@@ -125,7 +133,7 @@ impl WalletRepository for PostgresWalletRepository {
                    version, meta, "createdAt", "updatedAt"
             FROM "Wallet"
             WHERE "accountId" = $1 AND "assetId" = $2
-            "#
+            "#,
         )
         .bind(acc_uuid)
         .bind(asset_uuid)
@@ -136,11 +144,18 @@ impl WalletRepository for PostgresWalletRepository {
         Ok(rec.map(|r| r.into()))
     }
 
-    async fn get_by_account_and_asset_with_tx(&self, tx: &mut dyn RepositoryTransaction, account_id: &str, asset_id: &str) -> Result<Option<Wallet>> {
+    async fn get_by_account_and_asset_with_tx(
+        &self,
+        tx: &mut dyn RepositoryTransaction,
+        account_id: &str,
+        asset_id: &str,
+    ) -> Result<Option<Wallet>> {
         let tx_ptr = unsafe { tx.get_inner_ptr() };
         let tx = unsafe { &mut *(tx_ptr as *mut Transaction<'_, Postgres>) };
-        let acc_uuid = Uuid::parse_str(account_id).map_err(|_| AppError::ValidationError("Invalid account_id".into()))?;
-        let asset_uuid = Uuid::parse_str(asset_id).map_err(|_| AppError::ValidationError("Invalid asset_id".into()))?;
+        let acc_uuid = Uuid::parse_str(account_id)
+            .map_err(|_| AppError::ValidationError("Invalid account_id".into()))?;
+        let asset_uuid = Uuid::parse_str(asset_id)
+            .map_err(|_| AppError::ValidationError("Invalid asset_id".into()))?;
 
         let rec: Option<WalletRow> = sqlx::query_as(
             r#"
@@ -149,7 +164,7 @@ impl WalletRepository for PostgresWalletRepository {
                    version, meta, "createdAt", "updatedAt"
             FROM "Wallet"
             WHERE "accountId" = $1 AND "assetId" = $2
-            "#
+            "#,
         )
         .bind(acc_uuid)
         .bind(asset_uuid)
@@ -160,11 +175,18 @@ impl WalletRepository for PostgresWalletRepository {
         Ok(rec.map(|r| r.into()))
     }
 
-    async fn get_by_account_and_asset_for_update(&self, tx: &mut dyn RepositoryTransaction, account_id: &str, asset_id: &str) -> Result<Option<Wallet>> {
+    async fn get_by_account_and_asset_for_update(
+        &self,
+        tx: &mut dyn RepositoryTransaction,
+        account_id: &str,
+        asset_id: &str,
+    ) -> Result<Option<Wallet>> {
         let tx_ptr = unsafe { tx.get_inner_ptr() };
         let tx = unsafe { &mut *(tx_ptr as *mut Transaction<'_, Postgres>) };
-        let acc_uuid = Uuid::parse_str(account_id).map_err(|_| AppError::ValidationError("Invalid account_id".into()))?;
-        let asset_uuid = Uuid::parse_str(asset_id).map_err(|_| AppError::ValidationError("Invalid asset_id".into()))?;
+        let acc_uuid = Uuid::parse_str(account_id)
+            .map_err(|_| AppError::ValidationError("Invalid account_id".into()))?;
+        let asset_uuid = Uuid::parse_str(asset_id)
+            .map_err(|_| AppError::ValidationError("Invalid asset_id".into()))?;
 
         let rec: Option<WalletRow> = sqlx::query_as(
             r#"
@@ -174,7 +196,7 @@ impl WalletRepository for PostgresWalletRepository {
             FROM "Wallet"
             WHERE "accountId" = $1 AND "assetId" = $2
             FOR UPDATE
-            "#
+            "#,
         )
         .bind(acc_uuid)
         .bind(asset_uuid)
@@ -186,8 +208,9 @@ impl WalletRepository for PostgresWalletRepository {
     }
 
     async fn update(&self, wallet: Wallet) -> Result<Wallet> {
-        let id = Uuid::parse_str(&wallet.id).map_err(|_| AppError::ValidationError("Invalid wallet id".into()))?;
-        
+        let id = Uuid::parse_str(&wallet.id)
+            .map_err(|_| AppError::ValidationError("Invalid wallet id".into()))?;
+
         let rec = sqlx::query_as::<_, WalletRow>(
             r#"
             UPDATE "Wallet"
@@ -196,7 +219,7 @@ impl WalletRepository for PostgresWalletRepository {
             RETURNING id, "tenantId", "accountId", "assetId", 
                       available, locked, total, 
                       version, meta, "createdAt", "updatedAt"
-            "#
+            "#,
         )
         .bind(id)
         .bind(Decimal::from_str(&wallet.available).unwrap_or_default())
@@ -209,16 +232,24 @@ impl WalletRepository for PostgresWalletRepository {
 
         match rec {
             Ok(row) => Ok(row.into()),
-            Err(sqlx::Error::RowNotFound) => Err(AppError::OptimisticLockingError(format!("Wallet {} version mismatch (expected {})", wallet.id, wallet.version))),
+            Err(sqlx::Error::RowNotFound) => Err(AppError::OptimisticLockingError(format!(
+                "Wallet {} version mismatch (expected {})",
+                wallet.id, wallet.version
+            ))),
             Err(e) => Err(AppError::DatabaseError(e)),
         }
     }
 
-    async fn update_with_tx(&self, tx: &mut dyn RepositoryTransaction, wallet: Wallet) -> Result<Wallet> {
+    async fn update_with_tx(
+        &self,
+        tx: &mut dyn RepositoryTransaction,
+        wallet: Wallet,
+    ) -> Result<Wallet> {
         let tx_ptr = unsafe { tx.get_inner_ptr() };
         let tx = unsafe { &mut *(tx_ptr as *mut Transaction<'_, Postgres>) };
-        let id = Uuid::parse_str(&wallet.id).map_err(|_| AppError::ValidationError("Invalid wallet id".into()))?;
-        
+        let id = Uuid::parse_str(&wallet.id)
+            .map_err(|_| AppError::ValidationError("Invalid wallet id".into()))?;
+
         let rec = sqlx::query_as::<_, WalletRow>(
             r#"
             UPDATE "Wallet"
@@ -227,7 +258,7 @@ impl WalletRepository for PostgresWalletRepository {
             RETURNING id, "tenantId", "accountId", "assetId", 
                       available, locked, total, 
                       version, meta, "createdAt", "updatedAt"
-            "#
+            "#,
         )
         .bind(id)
         .bind(Decimal::from_str(&wallet.available).unwrap_or_default())
@@ -240,7 +271,10 @@ impl WalletRepository for PostgresWalletRepository {
 
         match rec {
             Ok(row) => Ok(row.into()),
-            Err(sqlx::Error::RowNotFound) => Err(AppError::OptimisticLockingError(format!("Wallet {} version mismatch (expected {})", wallet.id, wallet.version))),
+            Err(sqlx::Error::RowNotFound) => Err(AppError::OptimisticLockingError(format!(
+                "Wallet {} version mismatch (expected {})",
+                wallet.id, wallet.version
+            ))),
             Err(e) => Err(AppError::DatabaseError(e)),
         }
     }
@@ -251,7 +285,7 @@ impl WalletRepository for PostgresWalletRepository {
             .execute(&self.pool)
             .await
             .map_err(AppError::DatabaseError)?;
-            
+
         if result.rows_affected() == 0 {
             return Err(AppError::NotFound(format!("Wallet {} not found", id)));
         }
@@ -259,7 +293,8 @@ impl WalletRepository for PostgresWalletRepository {
     }
 
     async fn list_by_account(&self, account_id: &str) -> Result<Vec<Wallet>> {
-        let acc_uuid = Uuid::parse_str(account_id).map_err(|_| AppError::ValidationError("Invalid account_id".into()))?;
+        let acc_uuid = Uuid::parse_str(account_id)
+            .map_err(|_| AppError::ValidationError("Invalid account_id".into()))?;
 
         let recs: Vec<WalletRow> = sqlx::query_as(
             r#"
@@ -268,7 +303,7 @@ impl WalletRepository for PostgresWalletRepository {
                    version, meta, "createdAt", "updatedAt"
             FROM "Wallet"
             WHERE "accountId" = $1
-            "#
+            "#,
         )
         .bind(acc_uuid)
         .fetch_all(&self.pool)
@@ -279,7 +314,8 @@ impl WalletRepository for PostgresWalletRepository {
     }
 
     async fn list_by_asset(&self, asset_id: &str) -> Result<Vec<Wallet>> {
-        let asset_uuid = Uuid::parse_str(asset_id).map_err(|_| AppError::ValidationError("Invalid asset_id".into()))?;
+        let asset_uuid = Uuid::parse_str(asset_id)
+            .map_err(|_| AppError::ValidationError("Invalid asset_id".into()))?;
 
         let recs: Vec<WalletRow> = sqlx::query_as(
             r#"
@@ -288,7 +324,7 @@ impl WalletRepository for PostgresWalletRepository {
                    version, meta, "createdAt", "updatedAt"
             FROM "Wallet"
             WHERE "assetId" = $1
-            "#
+            "#,
         )
         .bind(asset_uuid)
         .fetch_all(&self.pool)

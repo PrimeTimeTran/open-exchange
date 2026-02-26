@@ -1,49 +1,52 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
+use sqlx::{
+    postgres::{PgConnectOptions, PgPoolOptions},
+    ConnectOptions, Executor, PgPool,
+};
 use std::fs;
-use uuid::Uuid;
-use std::str::FromStr;
 use std::path::PathBuf;
+use std::str::FromStr;
 use std::sync::Arc;
-use sqlx::{postgres::{PgPoolOptions, PgConnectOptions}, ConnectOptions, Executor, PgPool};
+use uuid::Uuid;
 
+use ledger::domain::accounts::repository::AccountRepository;
 use ledger::domain::accounts::Account;
 use ledger::domain::assets::AssetService;
-use ledger::domain::wallets::WalletService;
-use ledger::domain::fills::service::FillService;
-use ledger::domain::orders::service::OrderService;
-use ledger::domain::ledger::service::LedgerService;
-use ledger::domain::transaction::TransactionManager;
 use ledger::domain::fees::service::StandardFeeService;
+use ledger::domain::fills::service::FillService;
+use ledger::domain::ledger::service::LedgerService;
+use ledger::domain::orders::service::OrderService;
 use ledger::domain::settlement::service::SettlementService;
-use ledger::domain::accounts::repository::AccountRepository;
+use ledger::domain::transaction::TransactionManager;
+use ledger::domain::wallets::WalletService;
 use ledger::infra::repositories::{
-    PostgresOrderRepository, PostgresWalletRepository, PostgresAssetRepository, PostgresInstrumentRepository,
-    PostgresLedgerRepository, PostgresTradeRepository, PostgresFillRepository, PostgresAccountRepository
+    PostgresAccountRepository, PostgresAssetRepository, PostgresFillRepository,
+    PostgresInstrumentRepository, PostgresLedgerRepository, PostgresOrderRepository,
+    PostgresTradeRepository, PostgresWalletRepository,
 };
-
 
 pub struct PostgresTestContext {
     pub pool: PgPool,
     pub db_name: String,
     pub tenant_id: String,
-    
+
     // Services
     pub order_service: Arc<OrderService>,
     pub wallet_service: Arc<WalletService>,
     pub asset_service: Arc<AssetService>,
     pub settlement_service: Arc<SettlementService>,
     pub tx_manager: Arc<dyn TransactionManager>,
-    
+
     // Repositories
     pub account_repo: Arc<PostgresAccountRepository>,
-    
+
     #[allow(dead_code)]
     pub admin_conn_options: PgConnectOptions,
 }
 
 impl PostgresTestContext {
-    /// Creates a new PostgresTestContext. 
+    /// Creates a new PostgresTestContext.
     /// If `isolated` is true, it creates a brand new database.
     /// If `isolated` is false, it uses the shared test database and truncates tables.
     pub async fn new(isolated: bool) -> Self {
@@ -52,11 +55,22 @@ impl PostgresTestContext {
         } else {
             let pool = Self::get_shared_pool().await;
             Self::clean_db(&pool).await;
-            (pool, "open-exchange-test".to_string(), PgConnectOptions::default()) // dummy options for shared
+            (
+                pool,
+                "open-exchange-test".to_string(),
+                PgConnectOptions::default(),
+            ) // dummy options for shared
         };
 
         let tenant_id = Self::create_tenant(&pool).await.to_string();
-        let (order_service, wallet_service, asset_service, settlement_service, account_repo, tx_manager) = Self::setup_services(&pool, &tenant_id).await;
+        let (
+            order_service,
+            wallet_service,
+            asset_service,
+            settlement_service,
+            account_repo,
+            tx_manager,
+        ) = Self::setup_services(&pool, &tenant_id).await;
 
         Self {
             pool,
@@ -76,29 +90,36 @@ impl PostgresTestContext {
         dotenv::dotenv().ok();
         let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set in .env");
         let options = PgConnectOptions::from_str(&database_url).expect("Invalid DATABASE_URL");
-        
+
         let mut admin_options = options.clone();
         admin_options = admin_options.database("postgres");
-        
-        let mut conn = admin_options.connect().await.expect("Failed to connect to postgres admin DB");
+
+        let mut conn = admin_options
+            .connect()
+            .await
+            .expect("Failed to connect to postgres admin DB");
         let db_name = format!("open_exchange_test_{}", Uuid::new_v4().simple());
-        conn.execute(format!(r#"CREATE DATABASE "{}";"#, db_name).as_str()).await.expect("Failed to create test database");
+        conn.execute(format!(r#"CREATE DATABASE "{}";"#, db_name).as_str())
+            .await
+            .expect("Failed to create test database");
 
         let mut postgres_options = options.clone();
         postgres_options = postgres_options.database(&db_name);
-        
+
         let pool = PgPoolOptions::new()
             .max_connections(5)
-            .after_connect(|conn, _meta| Box::pin(async move {
-                let sql = r#"
+            .after_connect(|conn, _meta| {
+                Box::pin(async move {
+                    let sql = r#"
                     SET check_function_bodies = false;
                     SET session "app.current_user_id" = '';
                     SET session "app.current_tenant_id" = '';
                     SET session "app.current_membership_id" = '';
                 "#;
-                conn.execute(sql).await?;
-                Ok(())
-            }))
+                    conn.execute(sql).await?;
+                    Ok(())
+                })
+            })
             .connect_with(postgres_options)
             .await
             .expect("Failed to connect to test database");
@@ -107,49 +128,88 @@ impl PostgresTestContext {
             pool: pool.clone(),
             db_name: db_name.clone(),
             tenant_id: "".to_string(),
-            order_service: Arc::new(OrderService::builder(
-                Arc::new(PostgresOrderRepository::new(pool.clone())), 
-                Arc::new(WalletService::new(Arc::new(PostgresWalletRepository::new(pool.clone())))), 
-                Arc::new(AssetService::new(Arc::new(PostgresAssetRepository::new(pool.clone())), Arc::new(PostgresInstrumentRepository::new(pool.clone())))), 
-            ).build()), // Dummy service initialization just to call apply_migrations
-            wallet_service: Arc::new(WalletService::new(Arc::new(PostgresWalletRepository::new(pool.clone())))),
-            asset_service: Arc::new(AssetService::new(Arc::new(PostgresAssetRepository::new(pool.clone())), Arc::new(PostgresInstrumentRepository::new(pool.clone())))),
+            order_service: Arc::new(
+                OrderService::builder(
+                    Arc::new(PostgresOrderRepository::new(pool.clone())),
+                    Arc::new(WalletService::new(Arc::new(PostgresWalletRepository::new(
+                        pool.clone(),
+                    )))),
+                    Arc::new(AssetService::new(
+                        Arc::new(PostgresAssetRepository::new(pool.clone())),
+                        Arc::new(PostgresInstrumentRepository::new(pool.clone())),
+                    )),
+                )
+                .build(),
+            ), // Dummy service initialization just to call apply_migrations
+            wallet_service: Arc::new(WalletService::new(Arc::new(PostgresWalletRepository::new(
+                pool.clone(),
+            )))),
+            asset_service: Arc::new(AssetService::new(
+                Arc::new(PostgresAssetRepository::new(pool.clone())),
+                Arc::new(PostgresInstrumentRepository::new(pool.clone())),
+            )),
             settlement_service: Arc::new(SettlementService::new(
-                None, 
-                Arc::new(OrderService::builder(
-                    Arc::new(PostgresOrderRepository::new(pool.clone())), 
-                    Arc::new(WalletService::new(Arc::new(PostgresWalletRepository::new(pool.clone())))), 
-                    Arc::new(AssetService::new(Arc::new(PostgresAssetRepository::new(pool.clone())), Arc::new(PostgresInstrumentRepository::new(pool.clone())))), 
-                ).build()), 
-                Arc::new(PostgresInstrumentRepository::new(pool.clone())), 
-                Arc::new(LedgerService::new(Arc::new(PostgresOrderRepository::new(pool.clone())), Arc::new(PostgresInstrumentRepository::new(pool.clone())), Arc::new(PostgresAssetRepository::new(pool.clone())), Arc::new(PostgresAccountRepository::new(pool.clone())))), 
-                Arc::new(WalletService::new(Arc::new(PostgresWalletRepository::new(pool.clone())))), 
-                Arc::new(FillService::new(Arc::new(PostgresFillRepository::new(pool.clone())))), 
-                Arc::new(StandardFeeService::new()), 
-                Arc::new(PostgresLedgerRepository::new(pool.clone())), 
-                Arc::new(PostgresTradeRepository::new(pool.clone()))
+                None,
+                Arc::new(
+                    OrderService::builder(
+                        Arc::new(PostgresOrderRepository::new(pool.clone())),
+                        Arc::new(WalletService::new(Arc::new(PostgresWalletRepository::new(
+                            pool.clone(),
+                        )))),
+                        Arc::new(AssetService::new(
+                            Arc::new(PostgresAssetRepository::new(pool.clone())),
+                            Arc::new(PostgresInstrumentRepository::new(pool.clone())),
+                        )),
+                    )
+                    .build(),
+                ),
+                Arc::new(PostgresInstrumentRepository::new(pool.clone())),
+                Arc::new(LedgerService::new(
+                    Arc::new(PostgresOrderRepository::new(pool.clone())),
+                    Arc::new(PostgresInstrumentRepository::new(pool.clone())),
+                    Arc::new(PostgresAssetRepository::new(pool.clone())),
+                    Arc::new(PostgresAccountRepository::new(pool.clone())),
+                )),
+                Arc::new(WalletService::new(Arc::new(PostgresWalletRepository::new(
+                    pool.clone(),
+                )))),
+                Arc::new(FillService::new(Arc::new(PostgresFillRepository::new(
+                    pool.clone(),
+                )))),
+                Arc::new(StandardFeeService::new()),
+                Arc::new(PostgresLedgerRepository::new(pool.clone())),
+                Arc::new(PostgresTradeRepository::new(pool.clone())),
             )),
             account_repo: Arc::new(PostgresAccountRepository::new(pool.clone())),
-            tx_manager: Arc::new(ledger::infra::transaction::PostgresTransactionManager::new(pool.clone())),
+            tx_manager: Arc::new(ledger::infra::transaction::PostgresTransactionManager::new(
+                pool.clone(),
+            )),
             admin_conn_options: admin_options.clone(),
         };
-        
+
         ctx.apply_migrations().await;
         (pool, db_name, admin_options)
     }
 
     async fn get_shared_pool() -> PgPool {
-        let url = std::env::var("DATABASE_URL_TEST")
-            .unwrap_or_else(|_| "postgres://postgres@localhost:5432/open-exchange-test".to_string());
-        
+        let url = std::env::var("DATABASE_URL_TEST").unwrap_or_else(|_| {
+            "postgres://postgres@localhost:5432/open-exchange-test".to_string()
+        });
+
         PgPoolOptions::new()
-            .after_connect(|conn, _meta| Box::pin(async move {
-                conn.execute("SELECT set_config('app.current_user_id', '', false)").await?;
-                conn.execute("SELECT set_config('app.current_tenant_id', '', false)").await?;
-                conn.execute("SELECT set_config('app.current_membership_id', '', false)").await?;
-                conn.execute("SELECT set_config('app.bypass_rls', 'on', false)").await?;
-                Ok(())
-            }))
+            .after_connect(|conn, _meta| {
+                Box::pin(async move {
+                    conn.execute("SELECT set_config('app.current_user_id', '', false)")
+                        .await?;
+                    conn.execute("SELECT set_config('app.current_tenant_id', '', false)")
+                        .await?;
+                    conn.execute("SELECT set_config('app.current_membership_id', '', false)")
+                        .await?;
+                    conn.execute("SELECT set_config('app.bypass_rls', 'on', false)")
+                        .await?;
+                    Ok(())
+                })
+            })
             .connect(&url)
             .await
             .expect("Failed to connect to shared test database")
@@ -157,11 +217,27 @@ impl PostgresTestContext {
 
     async fn clean_db(pool: &PgPool) {
         let tables = vec![
-            "\"Order\"", "\"Trade\"", "\"Fill\"", "\"LedgerEntry\"", "\"LedgerEvent\"", 
-            "\"Wallet\"", "\"Account\"", "\"Membership\"", "\"User\"", "\"Asset\"", "\"Instrument\"", "\"Tenant\""
+            "\"Order\"",
+            "\"Trade\"",
+            "\"Fill\"",
+            "\"LedgerEntry\"",
+            "\"LedgerEvent\"",
+            "\"Wallet\"",
+            "\"Account\"",
+            "\"Membership\"",
+            "\"User\"",
+            "\"Asset\"",
+            "\"Instrument\"",
+            "\"Tenant\"",
         ];
-        let query = format!("TRUNCATE TABLE {} RESTART IDENTITY CASCADE;", tables.join(", "));
-        sqlx::query(&query).execute(pool).await.expect("Failed to clean database");
+        let query = format!(
+            "TRUNCATE TABLE {} RESTART IDENTITY CASCADE;",
+            tables.join(", ")
+        );
+        sqlx::query(&query)
+            .execute(pool)
+            .await
+            .expect("Failed to clean database");
     }
 
     async fn create_tenant(pool: &PgPool) -> Uuid {
@@ -174,19 +250,20 @@ impl PostgresTestContext {
     async fn apply_migrations(&self) {
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         path.push("../../services/client/src/prisma/migrations");
-        
+
         let mut entries: Vec<_> = fs::read_dir(&path)
             .expect(&format!("Failed to read migrations dir: {:?}", path))
             .map(|res| res.unwrap().path())
             .filter(|p| p.is_dir())
             .collect();
-            
+
         entries.sort();
 
         for entry in entries {
             let migration_file = entry.join("migration.sql");
             if migration_file.exists() {
-                let sql = fs::read_to_string(&migration_file).expect("Failed to read migration file");
+                let sql =
+                    fs::read_to_string(&migration_file).expect("Failed to read migration file");
                 if let Err(e) = self.pool.execute(sql.as_str()).await {
                     panic!("Failed to apply migration {:?}: {:?}", migration_file, e);
                 }
@@ -194,13 +271,16 @@ impl PostgresTestContext {
         }
     }
 
-    async fn setup_services(pool: &sqlx::PgPool, tenant_id: &str) -> (
-        Arc<OrderService>, 
-        Arc<WalletService>, 
+    async fn setup_services(
+        pool: &sqlx::PgPool,
+        tenant_id: &str,
+    ) -> (
+        Arc<OrderService>,
+        Arc<WalletService>,
         Arc<AssetService>,
         Arc<SettlementService>,
         Arc<PostgresAccountRepository>,
-        Arc<dyn TransactionManager>
+        Arc<dyn TransactionManager>,
     ) {
         let order_repo = Arc::new(PostgresOrderRepository::new(pool.clone()));
         let wallet_repo = Arc::new(PostgresWalletRepository::new(pool.clone()));
@@ -212,22 +292,29 @@ impl PostgresTestContext {
         let account_repo = Arc::new(PostgresAccountRepository::new(pool.clone()));
 
         let wallet_service = Arc::new(WalletService::new(wallet_repo.clone()));
-        let asset_service = Arc::new(AssetService::new(asset_repo.clone(), instrument_repo.clone()));
-        
-        let tx_manager = Arc::new(ledger::infra::transaction::PostgresTransactionManager::new(pool.clone()));
-        let order_service = Arc::new(OrderService::builder(
-            order_repo.clone(), 
-            wallet_service.clone(), 
-            asset_service.clone(), 
-        )
-        .with_transaction_manager(tx_manager.clone())
-        .build());
-        
-        let ledger_service = Arc::new(LedgerService::new(
-            order_repo.clone(), 
-            instrument_repo.clone(), 
+        let asset_service = Arc::new(AssetService::new(
             asset_repo.clone(),
-            account_repo.clone()
+            instrument_repo.clone(),
+        ));
+
+        let tx_manager = Arc::new(ledger::infra::transaction::PostgresTransactionManager::new(
+            pool.clone(),
+        ));
+        let order_service = Arc::new(
+            OrderService::builder(
+                order_repo.clone(),
+                wallet_service.clone(),
+                asset_service.clone(),
+            )
+            .with_transaction_manager(tx_manager.clone())
+            .build(),
+        );
+
+        let ledger_service = Arc::new(LedgerService::new(
+            order_repo.clone(),
+            instrument_repo.clone(),
+            asset_repo.clone(),
+            account_repo.clone(),
         ));
 
         let fill_service = Arc::new(FillService::new(fill_repo.clone()));
@@ -245,20 +332,35 @@ impl PostgresTestContext {
             trade_repo.clone(),
         ));
 
-        if account_repo.get_by_name("fees_account").await.unwrap().is_none() {
+        if account_repo
+            .get_by_name("fees_account")
+            .await
+            .unwrap()
+            .is_none()
+        {
             let sys_user_id = Self::create_dummy_user(pool, tenant_id).await;
             let sys_mem_id = Self::create_dummy_membership(pool, tenant_id, &sys_user_id).await;
-            
-            account_repo.create(Account {
-                id: Uuid::new_v4(),
-                name: "fees_account".into(),
-                tenant_id: tenant_id.to_string(), 
-                user_id: sys_mem_id, 
-                ..Default::default()
-            }).await.ok();
+
+            account_repo
+                .create(Account {
+                    id: Uuid::new_v4(),
+                    name: "fees_account".into(),
+                    tenant_id: tenant_id.to_string(),
+                    user_id: sys_mem_id,
+                    ..Default::default()
+                })
+                .await
+                .ok();
         }
 
-        (order_service, wallet_service, asset_service, settlement_service, account_repo, tx_manager)
+        (
+            order_service,
+            wallet_service,
+            asset_service,
+            settlement_service,
+            account_repo,
+            tx_manager,
+        )
     }
 
     pub async fn create_user(&self) -> String {
@@ -266,24 +368,25 @@ impl PostgresTestContext {
     }
 
     pub async fn create_account(&self, user_id: &str) -> String {
-        let membership_id = Self::create_dummy_membership(&self.pool, &self.tenant_id, user_id).await;
+        let membership_id =
+            Self::create_dummy_membership(&self.pool, &self.tenant_id, user_id).await;
         Self::create_dummy_account(&self.pool, &self.tenant_id, &membership_id).await
     }
 
     pub async fn create_asset(&self, symbol: &str, decimals: i32) -> String {
         Self::create_dummy_asset(&self.pool, &self.tenant_id, symbol, decimals).await
     }
-    
+
     pub async fn create_instrument(&self, symbol: &str, base_id: &str, quote_id: &str) -> String {
-         let id = Uuid::new_v4();
-         sqlx::query(r#"INSERT INTO "Instrument" (id, "tenantId", symbol, type, status, "underlyingAssetId", "quoteAssetId", meta, "createdAt", "updatedAt") VALUES ($1, $2, $3, 'spot', 'active', $4, $5, '{}', NOW(), NOW())"#)
+        let id = Uuid::new_v4();
+        sqlx::query(r#"INSERT INTO "Instrument" (id, "tenantId", symbol, type, status, "underlyingAssetId", "quoteAssetId", meta, "createdAt", "updatedAt") VALUES ($1, $2, $3, 'spot', 'active', $4, $5, '{}', NOW(), NOW())"#)
             .bind(id)
             .bind(Uuid::parse_str(&self.tenant_id).unwrap())
             .bind(symbol)
             .bind(Uuid::parse_str(base_id).unwrap())
             .bind(Uuid::parse_str(quote_id).unwrap())
             .execute(&self.pool).await.expect("Create Instrument");
-         id.to_string()
+        id.to_string()
     }
 
     async fn create_dummy_user(pool: &PgPool, _tenant_id: &str) -> String {
@@ -307,7 +410,12 @@ impl PostgresTestContext {
         id.to_string()
     }
 
-    async fn create_dummy_asset(pool: &PgPool, tenant_id: &str, symbol: &str, decimals: i32) -> String {
+    async fn create_dummy_asset(
+        pool: &PgPool,
+        tenant_id: &str,
+        symbol: &str,
+        decimals: i32,
+    ) -> String {
         let id = Uuid::new_v4();
         sqlx::query(r#"INSERT INTO "Asset" (id, "tenantId", symbol, klass, precision, "isFractional", decimals, meta, "createdAt", "updatedAt") VALUES ($1, $2, $3, 'crypto', $4, true, $4, '{}', NOW(), NOW())"#)
             .bind(id).bind(Uuid::parse_str(tenant_id).unwrap()).bind(symbol).bind(decimals).execute(pool).await.expect("Create Asset");
@@ -319,7 +427,7 @@ impl PostgresTestContext {
 impl Drop for PostgresTestContext {
     fn drop(&mut self) {
         if self.db_name.starts_with("open_exchange_test_") && !self.db_name.contains("shared") {
-            // We cannot easily run async in Drop. 
+            // We cannot easily run async in Drop.
             // In a real scenario, we might spawn a thread or use a blocking connection if available.
             // For now, logging.
             println!("Teardown: Created isolated DB {}", self.db_name);

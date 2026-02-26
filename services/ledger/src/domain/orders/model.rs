@@ -1,10 +1,9 @@
-use std::fmt;
-use uuid::Uuid;
-use std::str::FromStr;
-use rust_decimal::Decimal;
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-
+use std::fmt;
+use std::str::FromStr;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

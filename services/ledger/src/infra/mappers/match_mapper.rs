@@ -1,5 +1,5 @@
+use crate::proto::common::{OrderSide, Trade};
 use crate::proto::ledger::Match;
-use crate::proto::common::{Trade, OrderSide};
 use uuid::Uuid;
 
 pub struct MatchMapper;
@@ -10,9 +10,20 @@ impl MatchMapper {
             .map_err(|_| format!("Invalid Taker Side value: {}", match_data.taker_side))?;
 
         let (buy_order_id, sell_order_id) = match taker_side_enum {
-            OrderSide::Buy => (match_data.taker_order_id.clone(), match_data.maker_order_id.clone()),
-            OrderSide::Sell => (match_data.maker_order_id.clone(), match_data.taker_order_id.clone()),
-            _ => return Err(format!("Invalid Taker Side for match {}: {:?}", match_data.match_id, taker_side_enum)),
+            OrderSide::Buy => (
+                match_data.taker_order_id.clone(),
+                match_data.maker_order_id.clone(),
+            ),
+            OrderSide::Sell => (
+                match_data.maker_order_id.clone(),
+                match_data.taker_order_id.clone(),
+            ),
+            _ => {
+                return Err(format!(
+                    "Invalid Taker Side for match {}: {:?}",
+                    match_data.match_id, taker_side_enum
+                ))
+            }
         };
 
         Ok(Trade {

@@ -6,4 +6,3 @@ pub mod error;
 pub mod infra;
 pub mod proto;
 pub mod system;
-

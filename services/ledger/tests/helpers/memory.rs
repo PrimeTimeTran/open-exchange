@@ -1,80 +1,67 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
-use uuid::Uuid;
 use chrono::Utc;
+use rust_decimal::prelude::FromPrimitive;
+use rust_decimal::Decimal;
+use std::str::FromStr;
 use std::sync::Arc;
 use tonic::Request;
-use std::str::FromStr;
-use rust_decimal::Decimal;
-use rust_decimal::prelude::FromPrimitive;
+use uuid::Uuid;
 
-use ledger::domain::orders::model::{ Order, OrderSide, OrderType, OrderStatus };
-use ledger::proto::common::{ Trade, Instrument };
+use ledger::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
 use ledger::domain::transaction::TransactionManager;
+use ledger::proto::common::{Instrument, Trade};
 
 // Services
 use ledger::domain::{
-    users::UserService,
-    orders::service::OrderService,
-    assets::AssetService,
-    wallets::WalletService,
     accounts::AccountService,
-    deposits::DepositService,
-    fills::service::FillService,
-    ledger::service::LedgerService,
-    withdrawals::WithdrawalService,
-    fees::service::StandardFeeService,
-    settlement::service::SettlementService,
-    margin::MarginService,
-    margin::{ CrossMarginService, IsolatedMarginService },
+    assets::AssetService,
     borrow::BorrowService,
     corporate_actions::CorporateActionService,
+    deposits::DepositService,
     exercise::ExerciseService,
-    funding::{ FundingRateService, MarkToMarketService, FuturesSettlementService },
-    liquidation::LiquidationService,
+    fees::service::StandardFeeService,
+    fills::service::FillService,
+    funding::{FundingRateService, FuturesSettlementService, MarkToMarketService},
+    ledger::service::LedgerService,
     liquidation::InsuranceFundService,
-    position_limits::{ PositionLimitService, PositionLimitConfig },
+    liquidation::LiquidationService,
+    margin::MarginService,
+    margin::{CrossMarginService, IsolatedMarginService},
+    orders::service::OrderService,
+    position_limits::{PositionLimitConfig, PositionLimitService},
+    settlement::service::SettlementService,
+    users::UserService,
+    wallets::WalletService,
+    withdrawals::WithdrawalService,
 };
 
 // API Implementations
 use ledger::api::{
-    users::UserServiceImpl,
-    assets::AssetServiceImpl,
-    orders::OrderServiceImpl,
-    wallets::WalletServiceImpl,
-    accounts::AccountServiceImpl,
-    deposits::DepositServiceImpl,
-    settlement::SettlementServiceImpl,
-    withdrawals::WithdrawalServiceImpl,
+    accounts::AccountServiceImpl, assets::AssetServiceImpl, deposits::DepositServiceImpl,
+    orders::OrderServiceImpl, settlement::SettlementServiceImpl, users::UserServiceImpl,
+    wallets::WalletServiceImpl, withdrawals::WithdrawalServiceImpl,
 };
 
 // Repositories
 use ledger::infra::repositories::{
-    InMemoryOrderRepository,
-    InMemoryFillRepository,
-    InMemoryAssetRepository,
-    InMemoryTradeRepository,
-    InMemoryWalletRepository,
-    InMemoryLedgerRepository,
-    InMemoryAccountRepository,
-    InMemoryInstrumentRepository,
+    InMemoryAccountRepository, InMemoryAssetRepository, InMemoryFillRepository,
+    InMemoryInstrumentRepository, InMemoryLedgerRepository, InMemoryOrderRepository,
+    InMemoryTradeRepository, InMemoryWalletRepository,
 };
 
 // Proto Requests
 
 use ledger::proto::ledger::{
-    CreateAssetRequest,
-    CreateAccountRequest,
+    CreateAccountRequest, CreateAssetRequest, CreateDepositRequest, CreateInstrumentRequest,
     CreateWalletRequest,
-    CreateDepositRequest,
-    CreateInstrumentRequest,
 };
 
 // Proto Traits (Aliased to avoid conflicts with Domain Services)
-use ledger::proto::ledger::asset_service_server::AssetService as AssetServiceTrait;
 use ledger::proto::ledger::account_service_server::AccountService as AccountServiceTrait;
-use ledger::proto::ledger::wallet_service_server::WalletService as WalletServiceTrait;
+use ledger::proto::ledger::asset_service_server::AssetService as AssetServiceTrait;
 use ledger::proto::ledger::deposit_service_server::DepositService as DepositServiceTrait;
+use ledger::proto::ledger::wallet_service_server::WalletService as WalletServiceTrait;
 
 // Transaction
 use ledger::infra::transaction::InMemoryTransactionManager;
@@ -154,9 +141,10 @@ impl InMemoryTestContext {
         let user_service = Arc::new(UserService::new());
         let account_service = Arc::new(AccountService::new(account_repo.clone()));
         let wallet_service = Arc::new(WalletService::new(wallet_repo.clone()));
-        let asset_service = Arc::new(
-            AssetService::new(asset_repo.clone(), instrument_repo.clone())
-        );
+        let asset_service = Arc::new(AssetService::new(
+            asset_repo.clone(),
+            instrument_repo.clone(),
+        ));
         let fee_service = Arc::new(StandardFeeService::new());
         let fill_service = Arc::new(FillService::new(fill_repo.clone()));
         let deposit_service = Arc::new(DepositService::new());
@@ -166,62 +154,60 @@ impl InMemoryTestContext {
         let cross_margin_service = Arc::new(CrossMarginService::new(wallet_service.clone()));
         let isolated_margin_service = Arc::new(IsolatedMarginService::new(wallet_service.clone()));
         let borrow_service = Arc::new(BorrowService::new(wallet_service.clone()));
-        let corporate_action_service = Arc::new(
-            CorporateActionService::new(wallet_service.clone())
-        );
+        let corporate_action_service =
+            Arc::new(CorporateActionService::new(wallet_service.clone()));
         let exercise_service = Arc::new(ExerciseService::new(wallet_service.clone()));
         let funding_rate_service = Arc::new(FundingRateService::new(wallet_service.clone()));
         let mark_to_market_service = Arc::new(MarkToMarketService::new(wallet_service.clone()));
-        let position_limit_service = Arc::new(
-            PositionLimitService::new(PositionLimitConfig::default())
-        );
+        let position_limit_service =
+            Arc::new(PositionLimitService::new(PositionLimitConfig::default()));
 
         let tx_manager = Arc::new(InMemoryTransactionManager);
 
         // 2a. Order Service (Needed for Liquidation)
         let order_service = Arc::new(
-            OrderService::builder(order_repo.clone(), wallet_service.clone(), asset_service.clone())
-                .with_transaction_manager(Arc::new(InMemoryTransactionManager))
-                .with_position_limit_service(position_limit_service.clone())
-                .build()
+            OrderService::builder(
+                order_repo.clone(),
+                wallet_service.clone(),
+                asset_service.clone(),
+            )
+            .with_transaction_manager(Arc::new(InMemoryTransactionManager))
+            .with_position_limit_service(position_limit_service.clone())
+            .build(),
         );
 
-        let futures_settlement_service = Arc::new(
-            FuturesSettlementService::new(wallet_service.clone())
-        );
-        let liquidation_service = Arc::new(
-            LiquidationService::new(wallet_service.clone(), Some(order_service.clone()))
-        );
+        let futures_settlement_service =
+            Arc::new(FuturesSettlementService::new(wallet_service.clone()));
+        let liquidation_service = Arc::new(LiquidationService::new(
+            wallet_service.clone(),
+            Some(order_service.clone()),
+        ));
         let insurance_fund_service = Arc::new(InsuranceFundService::new(wallet_service.clone()));
 
-        let ledger_service = Arc::new(
-            LedgerService::new(
-                order_repo.clone(),
-                instrument_repo.clone(),
-                asset_repo.clone(),
-                account_repo.clone()
-            )
-        );
+        let ledger_service = Arc::new(LedgerService::new(
+            order_repo.clone(),
+            instrument_repo.clone(),
+            asset_repo.clone(),
+            account_repo.clone(),
+        ));
 
-        let settlement_service = Arc::new(
-            SettlementService::new(
-                Some(tx_manager.clone()),
-                order_service.clone(),
-                instrument_repo.clone(),
-                ledger_service.clone(),
-                wallet_service.clone(),
-                fill_service.clone(),
-                fee_service.clone(),
-                ledger_repo.clone(),
-                trade_repo.clone()
-            )
-        );
+        let settlement_service = Arc::new(SettlementService::new(
+            Some(tx_manager.clone()),
+            order_service.clone(),
+            instrument_repo.clone(),
+            ledger_service.clone(),
+            wallet_service.clone(),
+            fill_service.clone(),
+            fee_service.clone(),
+            ledger_repo.clone(),
+            trade_repo.clone(),
+        ));
 
         // 3. Initialize API Services
         let order_api = OrderServiceImpl::new(
             order_service.clone(),
             fill_service.clone(),
-            account_service.clone()
+            account_service.clone(),
         );
         let account_api = AccountServiceImpl::new(account_service.clone());
         let wallet_api = WalletServiceImpl::new(wallet_service.clone());
@@ -229,12 +215,10 @@ impl InMemoryTestContext {
         let deposit_api = DepositServiceImpl::new(
             deposit_service.clone(),
             wallet_service.clone(),
-            account_service.clone()
+            account_service.clone(),
         );
-        let withdrawal_api = WithdrawalServiceImpl::new(
-            withdrawal_service.clone(),
-            wallet_service.clone()
-        );
+        let withdrawal_api =
+            WithdrawalServiceImpl::new(withdrawal_service.clone(), wallet_service.clone());
         let user_api = UserServiceImpl::new(user_service.clone());
         let settlement_api = SettlementServiceImpl::new(settlement_service.clone());
 
@@ -366,7 +350,7 @@ impl InMemoryTestContext {
         buy_order_id: Uuid,
         sell_order_id: Uuid,
         price: f64,
-        quantity: f64
+        quantity: f64,
     ) -> Trade {
         Trade {
             id: Uuid::new_v4().to_string(),
@@ -388,14 +372,14 @@ impl InMemoryTestContext {
         asset_id: &str,
         available: f64,
         locked: f64,
-        total: f64
+        total: f64,
     ) -> ledger::domain::wallets::Wallet {
         self.create_wallet_decimal(
             account_id,
             asset_id,
             Decimal::from_f64(available).unwrap_or(Decimal::ZERO),
             Decimal::from_f64(locked).unwrap_or(Decimal::ZERO),
-            Decimal::from_f64(total).unwrap_or(Decimal::ZERO)
+            Decimal::from_f64(total).unwrap_or(Decimal::ZERO),
         )
     }
 
@@ -405,7 +389,7 @@ impl InMemoryTestContext {
         asset_id: &str,
         available: Decimal,
         locked: Decimal,
-        total: Decimal
+        total: Decimal,
     ) -> ledger::domain::wallets::Wallet {
         let wallet = ledger::domain::wallets::Wallet {
             id: Uuid::new_v4().to_string(),
@@ -432,14 +416,21 @@ impl InMemoryTestContext {
             klass: klass.to_string(),
             precision,
         });
-        self.asset_api.create_asset(req).await.unwrap().into_inner().asset.unwrap().id
+        self.asset_api
+            .create_asset(req)
+            .await
+            .unwrap()
+            .into_inner()
+            .asset
+            .unwrap()
+            .id
     }
 
     pub async fn create_instrument_api(
         &self,
         symbol: &str,
         base_id: &str,
-        quote_id: &str
+        quote_id: &str,
     ) -> String {
         let req = Request::new(CreateInstrumentRequest {
             symbol: symbol.to_string(),
@@ -447,7 +438,14 @@ impl InMemoryTestContext {
             base_asset_id: base_id.to_string(),
             quote_asset_id: quote_id.to_string(),
         });
-        self.asset_api.create_instrument(req).await.unwrap().into_inner().instrument.unwrap().id
+        self.asset_api
+            .create_instrument(req)
+            .await
+            .unwrap()
+            .into_inner()
+            .instrument
+            .unwrap()
+            .id
     }
 
     pub async fn create_account_api(&self, user_id: impl ToString, type_: &str) -> String {
@@ -455,19 +453,33 @@ impl InMemoryTestContext {
             user_id: user_id.to_string(),
             r#type: type_.to_string(),
         });
-        self.account_api.create_account(req).await.unwrap().into_inner().account.unwrap().id
+        self.account_api
+            .create_account(req)
+            .await
+            .unwrap()
+            .into_inner()
+            .account
+            .unwrap()
+            .id
     }
 
     pub async fn create_wallet_api(
         &self,
         account_id: impl ToString,
-        asset_id: impl ToString
+        asset_id: impl ToString,
     ) -> String {
         let req = Request::new(CreateWalletRequest {
             account_id: account_id.to_string(),
             asset_id: asset_id.to_string(),
         });
-        self.wallet_api.create_wallet(req).await.unwrap().into_inner().wallet.unwrap().id
+        self.wallet_api
+            .create_wallet(req)
+            .await
+            .unwrap()
+            .into_inner()
+            .wallet
+            .unwrap()
+            .id
     }
 
     pub async fn deposit_funds_api(&self, wallet_id: impl ToString, amount: &str) {
@@ -485,9 +497,9 @@ impl InMemoryTestContext {
         instrument_id: impl ToString,
         side: ledger::proto::common::OrderSide,
         quantity: &str,
-        price: &str
+        price: &str,
     ) -> ledger::proto::common::Order {
-        use ledger::proto::common::{ Order, OrderStatus, OrderType, TimeInForce };
+        use ledger::proto::common::{Order, OrderStatus, OrderType, TimeInForce};
         Order {
             id: Uuid::new_v4().to_string(),
             tenant_id: self.tenant_id.to_string(),

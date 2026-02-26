@@ -1,6 +1,6 @@
+use crate::domain::settlement::service::SettlementService;
 use crate::proto::ledger::settlement_server::Settlement;
 use crate::proto::ledger::{CommitRequest, CommitResponse};
-use crate::domain::settlement::service::SettlementService;
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
 
@@ -28,9 +28,12 @@ impl Settlement for SettlementServiceImpl {
             return Err(Status::invalid_argument("No matches provided"));
         }
 
-        let (trade_ids, errors) = self.settlement_service.process_matches(matches, tenant_id).await;
+        let (trade_ids, errors) = self
+            .settlement_service
+            .process_matches(matches, tenant_id)
+            .await;
         // Todo:
-        // Create email, notification, 
+        // Create email, notification,
 
         if !errors.is_empty() {
             Ok(Response::new(CommitResponse {

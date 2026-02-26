@@ -1,9 +1,9 @@
-use crate::error::{AppError, Result};
 use crate::domain::accounts::{Account, AccountRepository};
-use uuid::Uuid;
-use sqlx::{PgPool, FromRow};
-use chrono::{DateTime, Utc};
+use crate::error::{AppError, Result};
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
+use sqlx::{FromRow, PgPool};
+use uuid::Uuid;
 
 pub struct PostgresAccountRepository {
     pool: PgPool,
@@ -52,7 +52,8 @@ impl From<AccountRow> for Account {
 impl AccountRepository for PostgresAccountRepository {
     async fn create(&self, account: Account) -> Result<Account> {
         let tenant_id = Uuid::parse_str(&account.tenant_id).unwrap_or_default();
-        let user_id = Uuid::parse_str(&account.user_id).map_err(|_| AppError::ValidationError("Invalid user_id".into()))?;
+        let user_id = Uuid::parse_str(&account.user_id)
+            .map_err(|_| AppError::ValidationError("Invalid user_id".into()))?;
 
         let rec: AccountRow = sqlx::query_as(
             r#"
@@ -83,7 +84,7 @@ impl AccountRepository for PostgresAccountRepository {
             SELECT id, "tenantId", "userId", name, type, status, meta, "createdAt", "updatedAt"
             FROM "Account"
             WHERE id = $1
-            "#
+            "#,
         )
         .bind(id)
         .fetch_optional(&self.pool)
@@ -95,7 +96,8 @@ impl AccountRepository for PostgresAccountRepository {
 
     async fn update(&self, account: Account) -> Result<Account> {
         let tenant_id = Uuid::parse_str(&account.tenant_id).unwrap_or_default();
-        let user_id = Uuid::parse_str(&account.user_id).map_err(|_| AppError::ValidationError("Invalid user_id".into()))?;
+        let user_id = Uuid::parse_str(&account.user_id)
+            .map_err(|_| AppError::ValidationError("Invalid user_id".into()))?;
 
         let rec: AccountRow = sqlx::query_as(
             r#"
@@ -124,13 +126,11 @@ impl AccountRepository for PostgresAccountRepository {
     }
 
     async fn delete(&self, id: Uuid) -> Result<()> {
-        let result = sqlx::query(
-            r#"DELETE FROM "Account" WHERE id = $1"#
-        )
-        .bind(id)
-        .execute(&self.pool)
-        .await
-        .map_err(AppError::DatabaseError)?;
+        let result = sqlx::query(r#"DELETE FROM "Account" WHERE id = $1"#)
+            .bind(id)
+            .execute(&self.pool)
+            .await
+            .map_err(AppError::DatabaseError)?;
 
         if result.rows_affected() == 0 {
             return Err(AppError::NotFound(format!("Account {} not found", id)));
@@ -141,14 +141,15 @@ impl AccountRepository for PostgresAccountRepository {
 
     async fn list_by_user(&self, user_id: &str) -> Result<Vec<Account>> {
         log::info!("Listing accounts for user_id: {}", user_id);
-        let user_uuid = Uuid::parse_str(user_id).map_err(|_| AppError::ValidationError("Invalid user_id".into()))?;
+        let user_uuid = Uuid::parse_str(user_id)
+            .map_err(|_| AppError::ValidationError("Invalid user_id".into()))?;
 
         let recs: Vec<AccountRow> = sqlx::query_as(
             r#"
             SELECT id, "tenantId", "userId", name, type, status, meta, "createdAt", "updatedAt"
             FROM "Account"
             WHERE "userId" = $1
-            "#
+            "#,
         )
         .bind(user_uuid)
         .fetch_all(&self.pool)
@@ -163,7 +164,7 @@ impl AccountRepository for PostgresAccountRepository {
             SELECT id, "tenantId", "userId", name, type, status, meta, "createdAt", "updatedAt"
             FROM "Account"
             WHERE name = $1
-            "#
+            "#,
         )
         .bind(name)
         .fetch_optional(&self.pool)
@@ -178,7 +179,7 @@ impl AccountRepository for PostgresAccountRepository {
             r#"
             SELECT id, "tenantId", "userId", name, type, status, meta, "createdAt", "updatedAt"
             FROM "Account"
-            "#
+            "#,
         )
         .fetch_all(&self.pool)
         .await

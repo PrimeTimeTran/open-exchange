@@ -1,9 +1,9 @@
-use async_trait::async_trait;
-use sqlx::{PgPool, FromRow};
-use uuid::Uuid;
-use crate::proto::common;
 use crate::error::{AppError, Result};
+use crate::proto::common;
+use async_trait::async_trait;
 use chrono::{DateTime, Utc};
+use sqlx::{FromRow, PgPool};
+use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct PostgresAssetRepository {
@@ -62,9 +62,12 @@ pub trait AssetRepository: Send + Sync + std::fmt::Debug {
 #[async_trait]
 impl AssetRepository for PostgresAssetRepository {
     async fn create(&self, asset: common::Asset) -> Result<common::Asset> {
-        let id = Uuid::parse_str(&asset.id).map_err(|_| AppError::ValidationError("Invalid asset ID".into()))?;
-        let tenant_id = Uuid::parse_str(&asset.tenant_id).map_err(|_| AppError::ValidationError("Invalid tenant ID".into()))?;
-        let meta: serde_json::Value = serde_json::from_str(&asset.meta).unwrap_or(serde_json::json!({}));
+        let id = Uuid::parse_str(&asset.id)
+            .map_err(|_| AppError::ValidationError("Invalid asset ID".into()))?;
+        let tenant_id = Uuid::parse_str(&asset.tenant_id)
+            .map_err(|_| AppError::ValidationError("Invalid tenant ID".into()))?;
+        let meta: serde_json::Value =
+            serde_json::from_str(&asset.meta).unwrap_or(serde_json::json!({}));
 
         let (created_at, updated_at): (DateTime<Utc>, DateTime<Utc>) = sqlx::query_as(
             r#"

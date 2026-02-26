@@ -1,7 +1,7 @@
 use crate::proto::common;
+use chrono::Utc;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
-use chrono::Utc;
 
 #[derive(Debug, Default, Clone)]
 pub struct UserService {
@@ -16,7 +16,13 @@ impl UserService {
     }
 
     /// Creates a new user with generated ID and timestamps
-    pub fn create_new_user(&self, email: String, _password: String, _first_name: String, _last_name: String) -> common::User {
+    pub fn create_new_user(
+        &self,
+        email: String,
+        _password: String,
+        _first_name: String,
+        _last_name: String,
+    ) -> common::User {
         let user = common::User {
             id: Uuid::new_v4().to_string(),
             email,
@@ -26,7 +32,7 @@ impl UserService {
             created_at: Utc::now().timestamp_millis(),
             updated_at: Utc::now().timestamp_millis(),
         };
-        
+
         let mut users = self.users.lock().unwrap();
         users.push(user.clone());
         user

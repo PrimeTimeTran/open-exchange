@@ -1,7 +1,7 @@
 use super::handler::InstrumentHandler;
 use crate::domain::orders::model::{Order, OrderSide};
-use crate::proto::common::Instrument;
 use crate::error::Result;
+use crate::proto::common::Instrument;
 use rust_decimal::Decimal;
 
 pub struct SpotHandler;
@@ -15,9 +15,13 @@ impl InstrumentHandler for SpotHandler {
         }
     }
 
-    fn calculate_raw_collateral_amount(&self, order: &Order, _instrument: &Instrument) -> Result<Decimal> {
+    fn calculate_raw_collateral_amount(
+        &self,
+        order: &Order,
+        _instrument: &Instrument,
+    ) -> Result<Decimal> {
         let remaining_qty = order.quantity - order.filled_quantity;
-        
+
         if order.side == OrderSide::Buy {
             // For Spot Buy, we lock Price * Quantity (Budget)
             Ok(remaining_qty * order.price)

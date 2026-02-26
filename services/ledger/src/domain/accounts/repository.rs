@@ -1,7 +1,7 @@
-use crate::error::Result;
 use super::model::Account;
-use uuid::Uuid;
+use crate::error::Result;
 use async_trait::async_trait;
+use uuid::Uuid;
 
 #[async_trait]
 pub trait AccountRepository: Send + Sync {

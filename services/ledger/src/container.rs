@@ -1,51 +1,41 @@
-use crate::infra::matching_gateway::GrpcMatchingGateway;
-use crate::infra::transaction::PostgresTransactionManager;
-use crate::infra::repositories::{
-    PostgresFillRepository,
-    PostgresOrderRepository,
-    PostgresTradeRepository,
-    PostgresAssetRepository,
-    PostgresWalletRepository,
-    PostgresLedgerRepository,
-    PostgresAccountRepository,
-    PostgresInstrumentRepository,
+use crate::api::{
+    accounts::AccountServiceImpl, assets::AssetServiceImpl, deposits::DepositServiceImpl,
+    orders::OrderServiceImpl, settlement::SettlementServiceImpl, users::UserServiceImpl,
+    wallets::WalletServiceImpl, withdrawals::WithdrawalServiceImpl,
 };
 use crate::domain::{
-    users::UserService,
-    margin::MarginService,
-    borrow::BorrowService,
-    assets::AssetService,
-    wallets::WalletService,
-    deposits::DepositService,
     accounts::AccountService,
-    exercise::ExerciseService,
-    fills::service::FillService,
-    orders::service::OrderService,
-    withdrawals::WithdrawalService,
-    ledger::service::LedgerService,
-    liquidation::LiquidationService,
-    liquidation::InsuranceFundService,
-    fees::service::StandardFeeService,
-    settlement::service::SettlementService,
+    assets::AssetService,
+    borrow::BorrowService,
     corporate_actions::CorporateActionService,
-    margin::{ CrossMarginService, IsolatedMarginService },
-    position_limits::{ PositionLimitService, PositionLimitConfig },
-    funding::{ FundingRateService, MarkToMarketService, FuturesSettlementService },
+    deposits::DepositService,
+    exercise::ExerciseService,
+    fees::service::StandardFeeService,
+    fills::service::FillService,
+    funding::{FundingRateService, FuturesSettlementService, MarkToMarketService},
+    ledger::service::LedgerService,
+    liquidation::InsuranceFundService,
+    liquidation::LiquidationService,
+    margin::MarginService,
+    margin::{CrossMarginService, IsolatedMarginService},
+    orders::service::OrderService,
+    position_limits::{PositionLimitConfig, PositionLimitService},
+    settlement::service::SettlementService,
+    users::UserService,
+    wallets::WalletService,
+    withdrawals::WithdrawalService,
 };
-use crate::api::{
-    users::UserServiceImpl,
-    orders::OrderServiceImpl,
-    assets::AssetServiceImpl,
-    wallets::WalletServiceImpl,
-    accounts::AccountServiceImpl,
-    deposits::DepositServiceImpl,
-    settlement::SettlementServiceImpl,
-    withdrawals::WithdrawalServiceImpl,
+use crate::infra::matching_gateway::GrpcMatchingGateway;
+use crate::infra::repositories::{
+    PostgresAccountRepository, PostgresAssetRepository, PostgresFillRepository,
+    PostgresInstrumentRepository, PostgresLedgerRepository, PostgresOrderRepository,
+    PostgresTradeRepository, PostgresWalletRepository,
 };
+use crate::infra::transaction::PostgresTransactionManager;
+use crate::proto::matching::matching_client::MatchingClient;
 use sqlx::PgPool;
 use std::sync::Arc;
 use tonic::transport::Channel;
-use crate::proto::matching::matching_client::MatchingClient;
 
 pub struct Services {
     pub user: UserServiceImpl,
@@ -90,13 +80,15 @@ impl Services {
         let withdrawal_svc = Arc::new(WithdrawalService::new());
         let wallet_svc = Arc::new(WalletService::new(wallet_repo));
         let account_svc = Arc::new(AccountService::new(account_repo.clone()));
-        let asset_svc = Arc::new(AssetService::new(asset_repo.clone(), instrument_repo.clone()));
+        let asset_svc = Arc::new(AssetService::new(
+            asset_repo.clone(),
+            instrument_repo.clone(),
+        ));
 
         let tx_manager = Arc::new(PostgresTransactionManager::new(db_pool.clone()));
         let gateway = Arc::new(GrpcMatchingGateway::new(matching_client));
-        let position_limit_svc = Arc::new(
-            PositionLimitService::new(PositionLimitConfig::default())
-        );
+        let position_limit_svc =
+            Arc::new(PositionLimitService::new(PositionLimitConfig::default()));
 
         // Create OrderService early so LiquidationService can depend on it
         let order_svc = Arc::new(
@@ -104,7 +96,7 @@ impl Services {
                 .with_transaction_manager(tx_manager.clone())
                 .with_matching_gateway(gateway)
                 .with_position_limit_service(position_limit_svc.clone())
-                .build()
+                .build(),
         );
 
         // 2b. New Domain Services (depend on wallet_svc and now order_svc)
@@ -119,33 +111,30 @@ impl Services {
         let futures_settlement_svc = Arc::new(FuturesSettlementService::new(wallet_svc.clone()));
 
         // Pass OrderService to LiquidationService
-        let liquidation_svc = Arc::new(
-            LiquidationService::new(wallet_svc.clone(), Some(order_svc.clone()))
-        );
+        let liquidation_svc = Arc::new(LiquidationService::new(
+            wallet_svc.clone(),
+            Some(order_svc.clone()),
+        ));
         let insurance_fund_svc = Arc::new(InsuranceFundService::new(wallet_svc.clone()));
 
-        let ledger_svc = Arc::new(
-            LedgerService::new(
-                order_repo.clone(),
-                instrument_repo.clone(),
-                asset_repo.clone(),
-                account_repo.clone()
-            )
-        );
+        let ledger_svc = Arc::new(LedgerService::new(
+            order_repo.clone(),
+            instrument_repo.clone(),
+            asset_repo.clone(),
+            account_repo.clone(),
+        ));
 
-        let settlement_svc = Arc::new(
-            SettlementService::new(
-                Some(tx_manager.clone()),
-                order_svc.clone(),
-                instrument_repo.clone(),
-                ledger_svc.clone(),
-                wallet_svc.clone(),
-                fill_svc.clone(),
-                fee_svc.clone(),
-                ledger_repo.clone(),
-                trade_repo.clone()
-            )
-        );
+        let settlement_svc = Arc::new(SettlementService::new(
+            Some(tx_manager.clone()),
+            order_svc.clone(),
+            instrument_repo.clone(),
+            ledger_svc.clone(),
+            wallet_svc.clone(),
+            fill_svc.clone(),
+            fee_svc.clone(),
+            ledger_repo.clone(),
+            trade_repo.clone(),
+        ));
 
         // 3. Presentation Layer (API)
         let user_api = UserServiceImpl::new(user_svc);
@@ -154,11 +143,8 @@ impl Services {
         let wallet_api = WalletServiceImpl::new(wallet_svc.clone());
         let withdrawal_api = WithdrawalServiceImpl::new(withdrawal_svc, wallet_svc.clone());
         let settlement_api = SettlementServiceImpl::new(settlement_svc);
-        let deposit_api = DepositServiceImpl::new(
-            deposit_svc,
-            wallet_svc.clone(),
-            account_svc.clone()
-        );
+        let deposit_api =
+            DepositServiceImpl::new(deposit_svc, wallet_svc.clone(), account_svc.clone());
         let order_api = OrderServiceImpl::new(order_svc, fill_svc.clone(), account_svc.clone());
 
         Self {

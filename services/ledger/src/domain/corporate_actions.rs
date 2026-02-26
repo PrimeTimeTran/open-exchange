@@ -1,9 +1,9 @@
+use crate::domain::wallets::WalletService;
 /// Corporate action services for equities: dividends and stock splits.
 ///
 /// `CorporateActionService` operates on *all* wallets that hold a given asset,
 /// which requires the `WalletRepository::list_by_asset` query.
 use crate::error::Result;
-use crate::domain::wallets::WalletService;
 use rust_decimal::Decimal;
 use rust_decimal::MathematicalOps;
 use std::str::FromStr;
@@ -36,9 +36,12 @@ impl CorporateActionService {
         &self,
         base_asset_id: &str,
         quote_asset_id: &str,
-        dividend_per_share_atomic: Decimal
+        dividend_per_share_atomic: Decimal,
     ) -> Result<()> {
-        let holders = self.wallet_service.list_wallets_by_asset(base_asset_id).await?;
+        let holders = self
+            .wallet_service
+            .list_wallets_by_asset(base_asset_id)
+            .await?;
 
         for holder in holders {
             let shares = parse(&holder.available);
@@ -51,11 +54,10 @@ impl CorporateActionService {
             }
             // Credit cash wallet (create implicitly if missing is out of scope;
             // the test pre-seeds cash wallets)
-            if
-                let Some(mut cash) = self.wallet_service.get_wallet_by_account_and_asset(
-                    &holder.account_id,
-                    quote_asset_id
-                ).await?
+            if let Some(mut cash) = self
+                .wallet_service
+                .get_wallet_by_account_and_asset(&holder.account_id, quote_asset_id)
+                .await?
             {
                 cash.available = (parse(&cash.available) + payout).to_string();
                 cash.total = (parse(&cash.total) + payout).to_string();
@@ -78,9 +80,12 @@ impl CorporateActionService {
         split_type: &str,
         pre_split_price_atomic: Decimal,
         quote_asset_id: &str,
-        base_decimals: u32
+        base_decimals: u32,
     ) -> Result<()> {
-        let holders = self.wallet_service.list_wallets_by_asset(base_asset_id).await?;
+        let holders = self
+            .wallet_service
+            .list_wallets_by_asset(base_asset_id)
+            .await?;
         let ratio_dec = Decimal::from(ratio);
         let scale = Decimal::from(10).powi(base_decimals as i64);
 
@@ -132,11 +137,10 @@ impl CorporateActionService {
 
                 // Pay odd-lot cash if there's a remainder
                 if cash_payout > Decimal::ZERO {
-                    if
-                        let Some(mut cash) = self.wallet_service.get_wallet_by_account_and_asset(
-                            &account_id,
-                            quote_asset_id
-                        ).await?
+                    if let Some(mut cash) = self
+                        .wallet_service
+                        .get_wallet_by_account_and_asset(&account_id, quote_asset_id)
+                        .await?
                     {
                         cash.available = (parse(&cash.available) + cash_payout).to_string();
                         cash.total = (parse(&cash.total) + cash_payout).to_string();

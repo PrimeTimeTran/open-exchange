@@ -1,10 +1,10 @@
+use crate::domain::wallets::WalletService;
 /// Margin trading services.
 ///
 /// - `MarginService`        – creates leveraged orders (locking only initial margin).
 /// - `CrossMarginService`   – calculates net equity across all positions in an account.
 /// - `IsolatedMarginService`– applies mark-to-market losses to an isolated margin position.
 use crate::error::{AppError, Result};
-use crate::domain::wallets::WalletService;
 use rust_decimal::Decimal;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -51,7 +51,8 @@ impl MarginService {
         leverage: u32,
     ) -> Result<()> {
         let initial_margin = (notional / Decimal::from(leverage)).floor();
-        self.lock_margin(&account_id.to_string(), asset_id, initial_margin).await
+        self.lock_margin(&account_id.to_string(), asset_id, initial_margin)
+            .await
     }
 
     /// Check whether an account's equity satisfies the maintenance threshold.
@@ -61,12 +62,13 @@ impl MarginService {
         asset_id: &str,
         maintenance_threshold: Decimal,
     ) -> Result<MarginStatus> {
-        let equity = match self.wallet_service
+        let equity = match self
+            .wallet_service
             .get_wallet_by_account_and_asset(&account_id.to_string(), asset_id)
             .await?
         {
             Some(w) => parse(&w.total),
-            None    => Decimal::ZERO,
+            None => Decimal::ZERO,
         };
 
         if equity < maintenance_threshold {
@@ -79,9 +81,13 @@ impl MarginService {
     }
 
     async fn lock_margin(&self, account: &str, asset: &str, amount: Decimal) -> Result<()> {
-        if let Some(mut w) = self.wallet_service.get_wallet_by_account_and_asset(account, asset).await? {
+        if let Some(mut w) = self
+            .wallet_service
+            .get_wallet_by_account_and_asset(account, asset)
+            .await?
+        {
             let available = parse(&w.available);
-            let locked    = parse(&w.locked);
+            let locked = parse(&w.locked);
             if available < amount {
                 return Err(AppError::InsufficientFunds {
                     asset: asset.to_string(),
@@ -89,8 +95,8 @@ impl MarginService {
                     available: available.to_string(),
                 });
             }
-            w.available  = (available - amount).to_string();
-            w.locked     = (locked    + amount).to_string();
+            w.available = (available - amount).to_string();
+            w.locked = (locked + amount).to_string();
             w.updated_at = chrono::Utc::now().timestamp_millis();
             self.wallet_service.update_wallet(w).await?;
         }
@@ -118,8 +124,12 @@ impl CrossMarginService {
     /// For the in-memory test context, the total wallet balances are used directly
     /// because PnL has already been applied to the wallets by `MarkToMarketService`.
     pub async fn calculate_equity(&self, account_id: Uuid, base_asset_id: &str) -> Result<Decimal> {
-        let wallets = self.wallet_service.list_wallets(&account_id.to_string()).await?;
-        let equity: Decimal = wallets.iter()
+        let wallets = self
+            .wallet_service
+            .list_wallets(&account_id.to_string())
+            .await?;
+        let equity: Decimal = wallets
+            .iter()
             .filter(|w| w.asset_id == base_asset_id)
             .map(|w| parse(&w.total))
             .sum();
@@ -144,22 +154,18 @@ impl IsolatedMarginService {
     }
 
     /// Apply `loss` to an isolated position wallet (available + total reduced).
-    pub async fn apply_loss(
-        &self,
-        account_id: Uuid,
-        asset_id: &str,
-        loss: Decimal,
-    ) -> Result<()> {
-        if let Some(mut w) = self.wallet_service
+    pub async fn apply_loss(&self, account_id: Uuid, asset_id: &str, loss: Decimal) -> Result<()> {
+        if let Some(mut w) = self
+            .wallet_service
             .get_wallet_by_account_and_asset(&account_id.to_string(), asset_id)
             .await?
         {
             let available = parse(&w.available);
-            let total     = parse(&w.total);
+            let total = parse(&w.total);
             // Cap loss at current total (position cannot go negative)
             let actual_loss = loss.min(total);
-            w.available  = (available - actual_loss).max(Decimal::ZERO).to_string();
-            w.total      = (total     - actual_loss).max(Decimal::ZERO).to_string();
+            w.available = (available - actual_loss).max(Decimal::ZERO).to_string();
+            w.total = (total - actual_loss).max(Decimal::ZERO).to_string();
             w.updated_at = chrono::Utc::now().timestamp_millis();
             self.wallet_service.update_wallet(w).await?;
         }

@@ -1,6 +1,6 @@
 use super::handler::InstrumentHandler;
-use super::spot::SpotHandler;
 use super::option::OptionHandler;
+use super::spot::SpotHandler;
 
 pub struct InstrumentHandlerFactory;
 

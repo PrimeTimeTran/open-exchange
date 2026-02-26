@@ -1,3 +1,4 @@
+use crate::domain::wallets::WalletService;
 /// Perpetual futures funding-rate and mark-to-market settlement services.
 ///
 /// - `FundingRateService`     – transfers periodic funding payments between long/short holders.
@@ -5,7 +6,6 @@
 /// - `FuturesSettlementService` – expires a dated futures contract at the settlement price and
 ///                               releases locked margin.
 use crate::error::{AppError, Result};
-use crate::domain::wallets::WalletService;
 use rust_decimal::Decimal;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -20,14 +20,19 @@ fn parse(s: &str) -> Decimal {
 async fn credit(ws: &WalletService, account: &str, asset: &str, amount: Decimal) -> Result<()> {
     if let Some(mut w) = ws.get_wallet_by_account_and_asset(account, asset).await? {
         w.available = (parse(&w.available) + amount).to_string();
-        w.total     = (parse(&w.total)     + amount).to_string();
+        w.total = (parse(&w.total) + amount).to_string();
         w.updated_at = chrono::Utc::now().timestamp_millis();
         ws.update_wallet(w).await?;
     }
     Ok(())
 }
 
-async fn debit_available(ws: &WalletService, account: &str, asset: &str, amount: Decimal) -> Result<()> {
+async fn debit_available(
+    ws: &WalletService,
+    account: &str,
+    asset: &str,
+    amount: Decimal,
+) -> Result<()> {
     if let Some(mut w) = ws.get_wallet_by_account_and_asset(account, asset).await? {
         let available = parse(&w.available);
         if available < amount {
@@ -37,8 +42,8 @@ async fn debit_available(ws: &WalletService, account: &str, asset: &str, amount:
                 available: available.to_string(),
             });
         }
-        w.available  = (available - amount).to_string();
-        w.total      = (parse(&w.total) - amount).to_string();
+        w.available = (available - amount).to_string();
+        w.total = (parse(&w.total) - amount).to_string();
         w.updated_at = chrono::Utc::now().timestamp_millis();
         ws.update_wallet(w).await?;
     }
@@ -49,8 +54,8 @@ async fn release_all_locked(ws: &WalletService, account: &str, asset: &str) -> R
     if let Some(mut w) = ws.get_wallet_by_account_and_asset(account, asset).await? {
         let locked = parse(&w.locked);
         if locked > Decimal::ZERO {
-            w.available  = (parse(&w.available) + locked).to_string();
-            w.locked     = Decimal::ZERO.to_string();
+            w.available = (parse(&w.available) + locked).to_string();
+            w.locked = Decimal::ZERO.to_string();
             w.updated_at = chrono::Utc::now().timestamp_millis();
             ws.update_wallet(w).await?;
         }
@@ -95,12 +100,18 @@ impl FundingRateService {
             return Ok(());
         }
         let (payer, receiver) = if rate >= Decimal::ZERO {
-            (long_account, short_account)  // positive: long pays
+            (long_account, short_account) // positive: long pays
         } else {
-            (short_account, long_account)  // negative: short pays
+            (short_account, long_account) // negative: short pays
         };
         debit_available(&self.wallet_service, &payer.to_string(), asset_id, payment).await?;
-        credit(&self.wallet_service, &receiver.to_string(), asset_id, payment).await
+        credit(
+            &self.wallet_service,
+            &receiver.to_string(),
+            asset_id,
+            payment,
+        )
+        .await
     }
 }
 
@@ -140,8 +151,8 @@ impl MarkToMarketService {
         } else {
             (long_account, short_account, pnl.abs())
         };
-        debit_available(&self.wallet_service, &loser.to_string(),  asset_id, amount).await?;
-        credit(&self.wallet_service,          &winner.to_string(), asset_id, amount).await
+        debit_available(&self.wallet_service, &loser.to_string(), asset_id, amount).await?;
+        credit(&self.wallet_service, &winner.to_string(), asset_id, amount).await
     }
 }
 
@@ -170,14 +181,38 @@ impl FuturesSettlementService {
         // Transfer final PnL
         let pnl = settlement_price - entry_price;
         if pnl > Decimal::ZERO {
-            debit_available(&self.wallet_service, &short_account.to_string(), asset_id, pnl).await?;
-            credit(&self.wallet_service,          &long_account.to_string(),  asset_id, pnl).await?;
+            debit_available(
+                &self.wallet_service,
+                &short_account.to_string(),
+                asset_id,
+                pnl,
+            )
+            .await?;
+            credit(
+                &self.wallet_service,
+                &long_account.to_string(),
+                asset_id,
+                pnl,
+            )
+            .await?;
         } else if pnl < Decimal::ZERO {
-            debit_available(&self.wallet_service, &long_account.to_string(),  asset_id, pnl.abs()).await?;
-            credit(&self.wallet_service,          &short_account.to_string(), asset_id, pnl.abs()).await?;
+            debit_available(
+                &self.wallet_service,
+                &long_account.to_string(),
+                asset_id,
+                pnl.abs(),
+            )
+            .await?;
+            credit(
+                &self.wallet_service,
+                &short_account.to_string(),
+                asset_id,
+                pnl.abs(),
+            )
+            .await?;
         }
         // Release all locked margin on both sides
-        release_all_locked(&self.wallet_service, &long_account.to_string(),  asset_id).await?;
+        release_all_locked(&self.wallet_service, &long_account.to_string(), asset_id).await?;
         release_all_locked(&self.wallet_service, &short_account.to_string(), asset_id).await
     }
 

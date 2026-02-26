@@ -1,9 +1,9 @@
-use crate::error::Result;
 use crate::domain::fills::{Fill, FillRepository};
 use crate::domain::transaction::RepositoryTransaction;
-use uuid::Uuid;
+use crate::error::Result;
 use async_trait::async_trait;
-use sqlx::{PgPool, Transaction, Postgres};
+use sqlx::{PgPool, Postgres, Transaction};
+use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct PostgresFillRepository {

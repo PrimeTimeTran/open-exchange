@@ -1,11 +1,11 @@
+use crate::domain::trade::TradeRepository;
 use crate::error::Result;
 use crate::proto::common::Trade;
-use crate::domain::trade::TradeRepository;
-use std::str::FromStr;
-use rust_decimal::Decimal;
-use chrono::{TimeZone, Utc};
 use async_trait::async_trait;
-use sqlx::{PgPool, Transaction, Postgres};
+use chrono::{TimeZone, Utc};
+use rust_decimal::Decimal;
+use sqlx::{PgPool, Postgres, Transaction};
+use std::str::FromStr;
 
 #[derive(Debug, Clone)]
 pub struct PostgresTradeRepository {
@@ -23,22 +23,28 @@ use crate::domain::transaction::RepositoryTransaction;
 #[async_trait]
 impl TradeRepository for PostgresTradeRepository {
     async fn create(&self, trade: Trade) -> Result<Trade> {
-        let created_at = Utc.timestamp_millis_opt(trade.created_at)
+        let created_at = Utc
+            .timestamp_millis_opt(trade.created_at)
             .single()
-            .ok_or_else(|| crate::error::AppError::ValidationError("Invalid created_at timestamp".to_string()))?;
-        
-        let updated_at = Utc.timestamp_millis_opt(trade.updated_at)
+            .ok_or_else(|| {
+                crate::error::AppError::ValidationError("Invalid created_at timestamp".to_string())
+            })?;
+
+        let updated_at = Utc
+            .timestamp_millis_opt(trade.updated_at)
             .single()
-            .ok_or_else(|| crate::error::AppError::ValidationError("Invalid updated_at timestamp".to_string()))?;
-        
+            .ok_or_else(|| {
+                crate::error::AppError::ValidationError("Invalid updated_at timestamp".to_string())
+            })?;
+
         let price = Decimal::from_str(&trade.price)
             .map_err(|_| crate::error::AppError::ValidationError("Invalid price".to_string()))?;
-        
+
         let quantity = Decimal::from_str(&trade.quantity)
             .map_err(|_| crate::error::AppError::ValidationError("Invalid quantity".to_string()))?;
 
         // Note: buyOrderId/sellOrderId are not columns in Trade table in current schema.
-        
+
         sqlx::query!(
             r#"
             INSERT INTO "Trade" (
@@ -46,9 +52,15 @@ impl TradeRepository for PostgresTradeRepository {
             )
             VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8)
             "#,
-            uuid::Uuid::parse_str(&trade.id).map_err(|_| crate::error::AppError::ValidationError("Invalid trade ID".to_string()))?,
-            uuid::Uuid::parse_str(&trade.tenant_id).map_err(|_| crate::error::AppError::ValidationError("Invalid tenant ID".to_string()))?,
-            uuid::Uuid::parse_str(&trade.instrument_id).map_err(|_| crate::error::AppError::ValidationError("Invalid instrument ID".to_string()))?,
+            uuid::Uuid::parse_str(&trade.id).map_err(|_| {
+                crate::error::AppError::ValidationError("Invalid trade ID".to_string())
+            })?,
+            uuid::Uuid::parse_str(&trade.tenant_id).map_err(|_| {
+                crate::error::AppError::ValidationError("Invalid tenant ID".to_string())
+            })?,
+            uuid::Uuid::parse_str(&trade.instrument_id).map_err(|_| {
+                crate::error::AppError::ValidationError("Invalid instrument ID".to_string())
+            })?,
             price,
             quantity,
             serde_json::from_str::<serde_json::Value>(&trade.meta).unwrap_or(serde_json::json!({})),
@@ -62,20 +74,30 @@ impl TradeRepository for PostgresTradeRepository {
         Ok(trade)
     }
 
-    async fn create_with_tx(&self, tx: &mut dyn RepositoryTransaction, trade: Trade) -> Result<Trade> {
+    async fn create_with_tx(
+        &self,
+        tx: &mut dyn RepositoryTransaction,
+        trade: Trade,
+    ) -> Result<Trade> {
         let tx = unsafe { &mut *(tx.get_inner_ptr() as *mut Transaction<'_, Postgres>) };
-        
-        let created_at = Utc.timestamp_millis_opt(trade.created_at)
+
+        let created_at = Utc
+            .timestamp_millis_opt(trade.created_at)
             .single()
-            .ok_or_else(|| crate::error::AppError::ValidationError("Invalid created_at timestamp".to_string()))?;
-        
-        let updated_at = Utc.timestamp_millis_opt(trade.updated_at)
+            .ok_or_else(|| {
+                crate::error::AppError::ValidationError("Invalid created_at timestamp".to_string())
+            })?;
+
+        let updated_at = Utc
+            .timestamp_millis_opt(trade.updated_at)
             .single()
-            .ok_or_else(|| crate::error::AppError::ValidationError("Invalid updated_at timestamp".to_string()))?;
-        
+            .ok_or_else(|| {
+                crate::error::AppError::ValidationError("Invalid updated_at timestamp".to_string())
+            })?;
+
         let price = Decimal::from_str(&trade.price)
             .map_err(|_| crate::error::AppError::ValidationError("Invalid price".to_string()))?;
-        
+
         let quantity = Decimal::from_str(&trade.quantity)
             .map_err(|_| crate::error::AppError::ValidationError("Invalid quantity".to_string()))?;
 
@@ -86,9 +108,15 @@ impl TradeRepository for PostgresTradeRepository {
             )
             VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8)
             "#,
-            uuid::Uuid::parse_str(&trade.id).map_err(|_| crate::error::AppError::ValidationError("Invalid trade ID".to_string()))?,
-            uuid::Uuid::parse_str(&trade.tenant_id).map_err(|_| crate::error::AppError::ValidationError("Invalid tenant ID".to_string()))?,
-            uuid::Uuid::parse_str(&trade.instrument_id).map_err(|_| crate::error::AppError::ValidationError("Invalid instrument ID".to_string()))?,
+            uuid::Uuid::parse_str(&trade.id).map_err(|_| {
+                crate::error::AppError::ValidationError("Invalid trade ID".to_string())
+            })?,
+            uuid::Uuid::parse_str(&trade.tenant_id).map_err(|_| {
+                crate::error::AppError::ValidationError("Invalid tenant ID".to_string())
+            })?,
+            uuid::Uuid::parse_str(&trade.instrument_id).map_err(|_| {
+                crate::error::AppError::ValidationError("Invalid instrument ID".to_string())
+            })?,
             price,
             quantity,
             serde_json::from_str::<serde_json::Value>(&trade.meta).unwrap_or(serde_json::json!({})),
@@ -103,15 +131,13 @@ impl TradeRepository for PostgresTradeRepository {
     }
 
     async fn get(&self, id: &str) -> Result<Option<Trade>> {
-        let uuid = uuid::Uuid::parse_str(id).map_err(|_| crate::error::AppError::ValidationError("Invalid trade ID".to_string()))?;
-        
-        let row = sqlx::query!(
-            r#"SELECT * FROM "Trade" WHERE id = $1"#,
-            uuid
-        )
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(crate::error::AppError::DatabaseError)?;
+        let uuid = uuid::Uuid::parse_str(id)
+            .map_err(|_| crate::error::AppError::ValidationError("Invalid trade ID".to_string()))?;
+
+        let row = sqlx::query!(r#"SELECT * FROM "Trade" WHERE id = $1"#, uuid)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(crate::error::AppError::DatabaseError)?;
 
         match row {
             Some(r) => Ok(Some(Trade {
@@ -130,17 +156,19 @@ impl TradeRepository for PostgresTradeRepository {
         }
     }
 
-    async fn get_with_tx(&self, tx: &mut dyn RepositoryTransaction, id: &str) -> Result<Option<Trade>> {
+    async fn get_with_tx(
+        &self,
+        tx: &mut dyn RepositoryTransaction,
+        id: &str,
+    ) -> Result<Option<Trade>> {
         let tx = unsafe { &mut *(tx.get_inner_ptr() as *mut Transaction<'_, Postgres>) };
-        let uuid = uuid::Uuid::parse_str(id).map_err(|_| crate::error::AppError::ValidationError("Invalid trade ID".to_string()))?;
-        
-        let row = sqlx::query!(
-            r#"SELECT * FROM "Trade" WHERE id = $1"#,
-            uuid
-        )
-        .fetch_optional(&mut **tx)
-        .await
-        .map_err(crate::error::AppError::DatabaseError)?;
+        let uuid = uuid::Uuid::parse_str(id)
+            .map_err(|_| crate::error::AppError::ValidationError("Invalid trade ID".to_string()))?;
+
+        let row = sqlx::query!(r#"SELECT * FROM "Trade" WHERE id = $1"#, uuid)
+            .fetch_optional(&mut **tx)
+            .await
+            .map_err(crate::error::AppError::DatabaseError)?;
 
         match row {
             Some(r) => Ok(Some(Trade {

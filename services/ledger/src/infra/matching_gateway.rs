@@ -1,6 +1,6 @@
+use crate::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
 use crate::domain::orders::service::MatchingGateway;
 use crate::proto::matching::matching_client::MatchingClient;
-use crate::domain::orders::model::{Order, OrderSide, OrderType, OrderStatus};
 use tonic::transport::Channel;
 
 pub struct GrpcMatchingGateway {
@@ -57,7 +57,7 @@ impl MatchingGateway for GrpcMatchingGateway {
         if let Some(client) = &self.client {
             let mut matching_client = client.clone();
             let proto_order = Self::map_domain_to_proto(order.clone());
-            
+
             let request = tonic::Request::new(crate::proto::matching::PlaceOrderRequest {
                 order: Some(proto_order),
             });
@@ -65,8 +65,12 @@ impl MatchingGateway for GrpcMatchingGateway {
             // Fire and forget (or rather, async spawn) to not block the ledger transaction/response
             tokio::spawn(async move {
                 match matching_client.place_order(request).await {
-                    Ok(response) => tracing::info!(?response, "Successfully forwarded order to matching engine"),
-                    Err(e) => tracing::error!(error = %e, "Failed to forward order to matching engine"),
+                    Ok(response) => {
+                        tracing::info!(?response, "Successfully forwarded order to matching engine")
+                    }
+                    Err(e) => {
+                        tracing::error!(error = %e, "Failed to forward order to matching engine")
+                    }
                 }
             });
         }

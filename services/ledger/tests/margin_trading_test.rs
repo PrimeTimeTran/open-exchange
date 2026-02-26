@@ -13,11 +13,11 @@
 ///   - `MarginService::force_liquidate(account_id) -> Result<()>`
 ///   - Cross-margin and isolated-margin modes
 mod helpers;
-use helpers::to_atomic_usd;
 use helpers::memory::InMemoryTestContext;
+use helpers::to_atomic_usd;
 use ledger::domain::margin::MarginStatus;
-use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
+use rust_decimal::Decimal;
 use std::str::FromStr;
 
 /// Test: Margin Buy Locks Only Partial Collateral (Initial Margin)
@@ -42,15 +42,18 @@ async fn test_margin_buy_locks_partial_collateral() {
         &ctx.usd_id.to_string(),
         starting_usd.to_f64().unwrap(),
         0.0,
-        starting_usd.to_f64().unwrap()
+        starting_usd.to_f64().unwrap(),
     );
 
     ctx.margin_service
-        .create_leveraged_buy(ctx.account_a, &ctx.usd_id.to_string(), notional, 2).await
+        .create_leveraged_buy(ctx.account_a, &ctx.usd_id.to_string(), notional, 2)
+        .await
         .unwrap();
 
-    let usd_wallet = ctx.wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await
+    let usd_wallet = ctx
+        .wallet_service
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
+        .await
         .unwrap()
         .unwrap();
 
@@ -59,7 +62,10 @@ async fn test_margin_buy_locks_partial_collateral() {
         initial_margin,
         "2× leverage should require 50% initial margin"
     );
-    assert_eq!(Decimal::from_str(&usd_wallet.available).unwrap(), starting_usd - initial_margin);
+    assert_eq!(
+        Decimal::from_str(&usd_wallet.available).unwrap(),
+        starting_usd - initial_margin
+    );
 }
 
 /// Test: Account Equity Below Maintenance Threshold Blocks New Orders
@@ -82,11 +88,13 @@ async fn test_margin_account_equity_falls_below_maintenance() {
         &ctx.usd_id.to_string(),
         maintenance_margin.to_f64().unwrap(),
         0.0,
-        maintenance_margin.to_f64().unwrap()
+        maintenance_margin.to_f64().unwrap(),
     );
 
-    let status = ctx.margin_service
-        .check_margin(ctx.account_a, &ctx.usd_id.to_string(), maintenance_margin).await
+    let status = ctx
+        .margin_service
+        .check_margin(ctx.account_a, &ctx.usd_id.to_string(), maintenance_margin)
+        .await
         .unwrap();
     assert_eq!(status, MarginStatus::MaintenanceBreached);
 
@@ -126,14 +134,16 @@ async fn test_forced_liquidation_triggered_below_maintenance() {
         &ctx.usd_id.to_string(),
         equity.to_f64().unwrap(),
         0.0,
-        equity.to_f64().unwrap()
+        equity.to_f64().unwrap(),
     );
     ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
 
     // Simulate open position: Lock funds (so liquidation has something to unlock)
     // We need locked > 0 to see any effect.
-    let mut w = ctx.wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await
+    let mut w = ctx
+        .wallet_service
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
+        .await
         .unwrap()
         .unwrap();
     w.locked = to_atomic_usd(50.0).to_string();
@@ -142,11 +152,14 @@ async fn test_forced_liquidation_triggered_below_maintenance() {
 
     let maintenance = to_atomic_usd(200.0); // Maintenance > Equity (100)
     ctx.liquidation_service
-        .liquidate_if_needed(ctx.account_a, &ctx.usd_id.to_string(), maintenance).await
+        .liquidate_if_needed(ctx.account_a, &ctx.usd_id.to_string(), maintenance)
+        .await
         .unwrap();
 
-    let usd_wallet = ctx.wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await
+    let usd_wallet = ctx
+        .wallet_service
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
+        .await
         .unwrap()
         .unwrap();
 
@@ -184,7 +197,7 @@ async fn test_cross_margin_multiple_positions_net_equity() {
         &ctx.usd_id.to_string(),
         cash_usd.to_f64().unwrap(),
         0.0,
-        cash_usd.to_f64().unwrap()
+        cash_usd.to_f64().unwrap(),
     );
 
     // Create other wallets to simulate positions (just balances for this service)
@@ -254,15 +267,19 @@ async fn test_cross_margin_multiple_positions_net_equity() {
     let expected_equity = cash_usd + btc_pnl + eth_pnl_neg;
 
     // Update wallet to reflect PnL application
-    let mut w = ctx.wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await
+    let mut w = ctx
+        .wallet_service
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
+        .await
         .unwrap()
         .unwrap();
     w.total = expected_equity.to_string();
     ctx.wallet_service.update_wallet(w).await.unwrap();
 
-    let equity = ctx.cross_margin_service
-        .calculate_equity(ctx.account_a, &ctx.usd_id.to_string()).await
+    let equity = ctx
+        .cross_margin_service
+        .calculate_equity(ctx.account_a, &ctx.usd_id.to_string())
+        .await
         .unwrap();
 
     // Expected: equity == cash + btc_pnl + eth_pnl_neg == $6,500
@@ -293,22 +310,29 @@ async fn test_isolated_margin_loss_capped_at_allocated_collateral() {
         &ctx.usd_id.to_string(),
         isolated_margin.to_f64().unwrap(),
         0.0,
-        isolated_margin.to_f64().unwrap()
+        isolated_margin.to_f64().unwrap(),
     );
     ctx.create_wallet(
         ctx.account_b,
         &ctx.usd_id.to_string(),
         other_balance.to_f64().unwrap(),
         0.0,
-        other_balance.to_f64().unwrap()
+        other_balance.to_f64().unwrap(),
     );
 
     ctx.isolated_margin_service
-        .apply_loss(ctx.account_a, &ctx.usd_id.to_string(), to_atomic_usd(1000.0)).await
+        .apply_loss(
+            ctx.account_a,
+            &ctx.usd_id.to_string(),
+            to_atomic_usd(1000.0),
+        )
+        .await
         .unwrap();
 
-    let other_wallet = ctx.wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &ctx.usd_id.to_string()).await
+    let other_wallet = ctx
+        .wallet_service
+        .get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &ctx.usd_id.to_string())
+        .await
         .unwrap()
         .unwrap();
 

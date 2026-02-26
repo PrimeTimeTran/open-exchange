@@ -1,9 +1,9 @@
+use crate::error::Result;
+use crate::infra::repositories::InstrumentRepository;
+use crate::proto::common;
 use async_trait::async_trait;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
-use crate::proto::common;
-use crate::error::Result;
-use crate::infra::repositories::InstrumentRepository;
 
 #[derive(Clone, Default, Debug)]
 pub struct InMemoryInstrumentRepository {

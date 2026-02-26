@@ -1,11 +1,11 @@
+use crate::domain::orders::{Order, OrderRepository, OrderSide, OrderStatus, OrderType};
 use crate::error::{AppError, Result};
-use crate::domain::orders::{Order, OrderRepository, OrderSide, OrderType, OrderStatus};
-use uuid::Uuid;
-use std::str::FromStr;
-use rust_decimal::Decimal;
-use chrono::{DateTime, Utc};
 use async_trait::async_trait;
-use sqlx::{PgPool, FromRow, Transaction, Postgres};
+use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
+use sqlx::{FromRow, PgPool, Postgres, Transaction};
+use std::str::FromStr;
+use uuid::Uuid;
 
 pub struct PostgresOrderRepository {
     pool: PgPool,
@@ -48,7 +48,8 @@ impl From<OrderRow> for Order {
             account_id: row.account_id,
             instrument_id: row.instrument_id,
             side: OrderSide::from_str(&row.side).unwrap_or(OrderSide::Buy), // TODO: Handle error better
-            r#type: OrderType::from_str(&row.r#type.unwrap_or_else(|| "limit".to_string())).unwrap_or(OrderType::Limit),
+            r#type: OrderType::from_str(&row.r#type.unwrap_or_else(|| "limit".to_string()))
+                .unwrap_or(OrderType::Limit),
             quantity: row.quantity,
             price: row.price,
             status: OrderStatus::from_str(&row.status).unwrap_or(OrderStatus::New),
@@ -97,7 +98,11 @@ impl OrderRepository for PostgresOrderRepository {
         Ok(created_order)
     }
 
-    async fn create_with_tx(&self, tx: &mut dyn RepositoryTransaction, order: Order) -> Result<Order> {
+    async fn create_with_tx(
+        &self,
+        tx: &mut dyn RepositoryTransaction,
+        order: Order,
+    ) -> Result<Order> {
         // SAFETY: We know that in the Postgres implementation, the RepositoryTransaction is always a PostgresTransaction.
         // We use get_inner_ptr() to bypass 'static lifetime requirement of Any.
         let tx_ptr = unsafe { tx.get_inner_ptr() };
@@ -149,10 +154,14 @@ impl OrderRepository for PostgresOrderRepository {
         Ok(rec.map(|r| r.into()))
     }
 
-    async fn get_for_update(&self, tx: &mut dyn RepositoryTransaction, id: Uuid) -> Result<Option<Order>> {
+    async fn get_for_update(
+        &self,
+        tx: &mut dyn RepositoryTransaction,
+        id: Uuid,
+    ) -> Result<Option<Order>> {
         let tx_ptr = unsafe { tx.get_inner_ptr() };
         let tx = unsafe { &mut *(tx_ptr as *mut Transaction<'_, Postgres>) };
-        
+
         let rec: Option<OrderRow> = sqlx::query_as(
             r#"
             SELECT id, "tenantId", "accountId", "instrumentId", side, type as "type", quantity, price, status, "quantityFilled", meta, "createdAt", "updatedAt"
@@ -170,15 +179,14 @@ impl OrderRepository for PostgresOrderRepository {
     }
 
     async fn update_status(&self, id: Uuid, status: OrderStatus) -> Result<()> {
-        let result = sqlx::query(
-            r#"UPDATE "Order" SET status = $2, "updatedAt" = $3 WHERE id = $1"#
-        )
-        .bind(id)
-        .bind(status.to_string())
-        .bind(chrono::Utc::now())
-        .execute(&self.pool)
-        .await
-        .map_err(AppError::DatabaseError)?;
+        let result =
+            sqlx::query(r#"UPDATE "Order" SET status = $2, "updatedAt" = $3 WHERE id = $1"#)
+                .bind(id)
+                .bind(status.to_string())
+                .bind(chrono::Utc::now())
+                .execute(&self.pool)
+                .await
+                .map_err(AppError::DatabaseError)?;
 
         if result.rows_affected() == 0 {
             return Err(AppError::NotFound(format!("Order {} not found", id)));
@@ -187,18 +195,22 @@ impl OrderRepository for PostgresOrderRepository {
         Ok(())
     }
 
-    async fn update_status_with_tx(&self, tx: &mut dyn RepositoryTransaction, id: Uuid, status: OrderStatus) -> Result<()> {
+    async fn update_status_with_tx(
+        &self,
+        tx: &mut dyn RepositoryTransaction,
+        id: Uuid,
+        status: OrderStatus,
+    ) -> Result<()> {
         let tx_ptr = unsafe { tx.get_inner_ptr() };
         let tx = unsafe { &mut *(tx_ptr as *mut Transaction<'_, Postgres>) };
-        let result = sqlx::query(
-            r#"UPDATE "Order" SET status = $2, "updatedAt" = $3 WHERE id = $1"#
-        )
-        .bind(id)
-        .bind(status.to_string())
-        .bind(chrono::Utc::now())
-        .execute(&mut **tx)
-        .await
-        .map_err(AppError::DatabaseError)?;
+        let result =
+            sqlx::query(r#"UPDATE "Order" SET status = $2, "updatedAt" = $3 WHERE id = $1"#)
+                .bind(id)
+                .bind(status.to_string())
+                .bind(chrono::Utc::now())
+                .execute(&mut **tx)
+                .await
+                .map_err(AppError::DatabaseError)?;
 
         if result.rows_affected() == 0 {
             return Err(AppError::NotFound(format!("Order {} not found", id)));
@@ -214,7 +226,7 @@ impl OrderRepository for PostgresOrderRepository {
             SET "quantityFilled" = $2,
                 "updatedAt" = $3
             WHERE id = $1
-            "#
+            "#,
         )
         .bind(id)
         .bind(filled)
@@ -224,12 +236,17 @@ impl OrderRepository for PostgresOrderRepository {
         .map_err(AppError::DatabaseError)?;
 
         if result.rows_affected() == 0 {
-             return Err(AppError::NotFound(format!("Order {} not found", id)));
+            return Err(AppError::NotFound(format!("Order {} not found", id)));
         }
         Ok(())
     }
 
-    async fn update_filled_amount_with_tx(&self, tx: &mut dyn RepositoryTransaction, id: Uuid, filled: Decimal) -> Result<()> {
+    async fn update_filled_amount_with_tx(
+        &self,
+        tx: &mut dyn RepositoryTransaction,
+        id: Uuid,
+        filled: Decimal,
+    ) -> Result<()> {
         let tx_ptr = unsafe { tx.get_inner_ptr() };
         let tx = unsafe { &mut *(tx_ptr as *mut Transaction<'_, Postgres>) };
         let result = sqlx::query(
@@ -238,7 +255,7 @@ impl OrderRepository for PostgresOrderRepository {
             SET "quantityFilled" = $2,
                 "updatedAt" = $3
             WHERE id = $1
-            "#
+            "#,
         )
         .bind(id)
         .bind(filled)
@@ -248,7 +265,7 @@ impl OrderRepository for PostgresOrderRepository {
         .map_err(AppError::DatabaseError)?;
 
         if result.rows_affected() == 0 {
-             return Err(AppError::NotFound(format!("Order {} not found", id)));
+            return Err(AppError::NotFound(format!("Order {} not found", id)));
         }
         Ok(())
     }
@@ -272,7 +289,12 @@ impl OrderRepository for PostgresOrderRepository {
         Ok(row.into())
     }
 
-    async fn increment_filled_amount_with_tx(&self, tx: &mut dyn RepositoryTransaction, id: Uuid, amount: Decimal) -> Result<Order> {
+    async fn increment_filled_amount_with_tx(
+        &self,
+        tx: &mut dyn RepositoryTransaction,
+        id: Uuid,
+        amount: Decimal,
+    ) -> Result<Order> {
         let tx_ptr = unsafe { tx.get_inner_ptr() };
         let tx = unsafe { &mut *(tx_ptr as *mut Transaction<'_, Postgres>) };
         let row: OrderRow = sqlx::query_as(
@@ -308,5 +330,3 @@ impl OrderRepository for PostgresOrderRepository {
         Ok(recs.into_iter().map(|r| r.into()).collect())
     }
 }
-
-

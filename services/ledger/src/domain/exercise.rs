@@ -1,9 +1,9 @@
+use crate::domain::wallets::WalletService;
 /// Options contract lifecycle service.
 ///
 /// Handles premium collection, collateral locking, exercise (call & put),
 /// expiry of OTM options, and assignment of a writer on exercise.
 use crate::error::{AppError, Result};
-use crate::domain::wallets::WalletService;
 use rust_decimal::{Decimal, MathematicalOps};
 use std::str::FromStr;
 use std::sync::Arc;
@@ -33,7 +33,8 @@ impl ExerciseService {
         quote_asset_id: &str,
         premium: Decimal,
     ) -> Result<()> {
-        self.debit_locked(&buyer.to_string(), quote_asset_id, premium).await
+        self.debit_locked(&buyer.to_string(), quote_asset_id, premium)
+            .await
     }
 
     /// Credit the option premium to the writer and lock the base asset as collateral.
@@ -45,8 +46,10 @@ impl ExerciseService {
         qty: Decimal,
         premium: Decimal,
     ) -> Result<()> {
-        self.lock_funds(&writer.to_string(), base_asset_id, qty).await?;
-        self.credit_available(&writer.to_string(), quote_asset_id, premium).await
+        self.lock_funds(&writer.to_string(), base_asset_id, qty)
+            .await?;
+        self.credit_available(&writer.to_string(), quote_asset_id, premium)
+            .await
     }
 
     // ── Exercise ─────────────────────────────────────────────────────────────
@@ -66,10 +69,14 @@ impl ExerciseService {
         base_asset_id: &str,
         quote_asset_id: &str,
     ) -> Result<()> {
-        self.debit_locked(&buyer.to_string(),  quote_asset_id, strike_quote).await?;
-        self.credit_available(&buyer.to_string(),  base_asset_id, qty_base).await?;
-        self.consume_locked(&writer.to_string(), base_asset_id, qty_base).await?;
-        self.credit_available(&writer.to_string(), quote_asset_id, strike_quote).await
+        self.debit_locked(&buyer.to_string(), quote_asset_id, strike_quote)
+            .await?;
+        self.credit_available(&buyer.to_string(), base_asset_id, qty_base)
+            .await?;
+        self.consume_locked(&writer.to_string(), base_asset_id, qty_base)
+            .await?;
+        self.credit_available(&writer.to_string(), quote_asset_id, strike_quote)
+            .await
     }
 
     /// Exercise a put option.
@@ -87,10 +94,14 @@ impl ExerciseService {
         base_asset_id: &str,
         quote_asset_id: &str,
     ) -> Result<()> {
-        self.consume_locked(&buyer.to_string(),  base_asset_id,  qty_base).await?;
-        self.credit_available(&buyer.to_string(),  quote_asset_id, strike_quote).await?;
-        self.consume_locked(&writer.to_string(), quote_asset_id, strike_quote).await?;
-        self.credit_available(&writer.to_string(), base_asset_id, qty_base).await
+        self.consume_locked(&buyer.to_string(), base_asset_id, qty_base)
+            .await?;
+        self.credit_available(&buyer.to_string(), quote_asset_id, strike_quote)
+            .await?;
+        self.consume_locked(&writer.to_string(), quote_asset_id, strike_quote)
+            .await?;
+        self.credit_available(&writer.to_string(), base_asset_id, qty_base)
+            .await
     }
 
     /// Cash settle a call option.
@@ -118,9 +129,11 @@ impl ExerciseService {
         // Transfer payout from Writer to Buyer.
         // We assume Writer has funds available (or locked as margin).
         // For this implementation, we try to debit available.
-        self.debit_available(&writer.to_string(), quote_asset_id, payout).await?;
-        self.credit_available(&buyer.to_string(), quote_asset_id, payout).await?;
-        
+        self.debit_available(&writer.to_string(), quote_asset_id, payout)
+            .await?;
+        self.credit_available(&buyer.to_string(), quote_asset_id, payout)
+            .await?;
+
         Ok(payout)
     }
 
@@ -147,9 +160,11 @@ impl ExerciseService {
         let payout = (profit_per_unit * quantity_units).floor();
 
         // Transfer payout from Writer to Buyer.
-        self.debit_available(&writer.to_string(), quote_asset_id, payout).await?;
-        self.credit_available(&buyer.to_string(), quote_asset_id, payout).await?;
-        
+        self.debit_available(&writer.to_string(), quote_asset_id, payout)
+            .await?;
+        self.credit_available(&buyer.to_string(), quote_asset_id, payout)
+            .await?;
+
         Ok(payout)
     }
 
@@ -162,7 +177,8 @@ impl ExerciseService {
         collateral_asset_id: &str,
         qty: Decimal,
     ) -> Result<()> {
-        self.release_locked(&writer.to_string(), collateral_asset_id, qty).await
+        self.release_locked(&writer.to_string(), collateral_asset_id, qty)
+            .await
     }
 
     // ── Assignment ───────────────────────────────────────────────────────────
@@ -178,19 +194,31 @@ impl ExerciseService {
         base_asset_id: &str,
         quote_asset_id: &str,
     ) -> Result<()> {
-        let assigned = writers
-            .first()
-            .ok_or_else(|| AppError::ValidationError("No writers available for assignment".into()))?;
+        let assigned = writers.first().ok_or_else(|| {
+            AppError::ValidationError("No writers available for assignment".into())
+        })?;
 
-        self.exercise_call(buyer, *assigned, qty_base, strike_quote, base_asset_id, quote_asset_id).await
+        self.exercise_call(
+            buyer,
+            *assigned,
+            qty_base,
+            strike_quote,
+            base_asset_id,
+            quote_asset_id,
+        )
+        .await
     }
 
     // ── Wallet helpers ───────────────────────────────────────────────────────
 
     async fn debit_locked(&self, account: &str, asset: &str, amount: Decimal) -> Result<()> {
-        if let Some(mut w) = self.wallet_service.get_wallet_by_account_and_asset(account, asset).await? {
+        if let Some(mut w) = self
+            .wallet_service
+            .get_wallet_by_account_and_asset(account, asset)
+            .await?
+        {
             let locked = parse(&w.locked);
-            let total  = parse(&w.total);
+            let total = parse(&w.total);
             if locked < amount {
                 return Err(AppError::InsufficientFunds {
                     asset: asset.to_string(),
@@ -198,8 +226,8 @@ impl ExerciseService {
                     available: locked.to_string(),
                 });
             }
-            w.locked     = (locked - amount).to_string();
-            w.total      = (total  - amount).to_string();
+            w.locked = (locked - amount).to_string();
+            w.total = (total - amount).to_string();
             w.updated_at = chrono::Utc::now().timestamp_millis();
             self.wallet_service.update_wallet(w).await?;
         }
@@ -207,9 +235,13 @@ impl ExerciseService {
     }
 
     async fn debit_available(&self, account: &str, asset: &str, amount: Decimal) -> Result<()> {
-        if let Some(mut w) = self.wallet_service.get_wallet_by_account_and_asset(account, asset).await? {
+        if let Some(mut w) = self
+            .wallet_service
+            .get_wallet_by_account_and_asset(account, asset)
+            .await?
+        {
             let available = parse(&w.available);
-            let total  = parse(&w.total);
+            let total = parse(&w.total);
             if available < amount {
                 return Err(AppError::InsufficientFunds {
                     asset: asset.to_string(),
@@ -217,8 +249,8 @@ impl ExerciseService {
                     available: available.to_string(),
                 });
             }
-            w.available  = (available - amount).to_string();
-            w.total      = (total  - amount).to_string();
+            w.available = (available - amount).to_string();
+            w.total = (total - amount).to_string();
             w.updated_at = chrono::Utc::now().timestamp_millis();
             self.wallet_service.update_wallet(w).await?;
         }
@@ -231,9 +263,13 @@ impl ExerciseService {
     }
 
     async fn credit_available(&self, account: &str, asset: &str, amount: Decimal) -> Result<()> {
-        if let Some(mut w) = self.wallet_service.get_wallet_by_account_and_asset(account, asset).await? {
-            w.available  = (parse(&w.available) + amount).to_string();
-            w.total      = (parse(&w.total)     + amount).to_string();
+        if let Some(mut w) = self
+            .wallet_service
+            .get_wallet_by_account_and_asset(account, asset)
+            .await?
+        {
+            w.available = (parse(&w.available) + amount).to_string();
+            w.total = (parse(&w.total) + amount).to_string();
             w.updated_at = chrono::Utc::now().timestamp_millis();
             self.wallet_service.update_wallet(w).await?;
         }
@@ -241,9 +277,13 @@ impl ExerciseService {
     }
 
     async fn lock_funds(&self, account: &str, asset: &str, amount: Decimal) -> Result<()> {
-        if let Some(mut w) = self.wallet_service.get_wallet_by_account_and_asset(account, asset).await? {
+        if let Some(mut w) = self
+            .wallet_service
+            .get_wallet_by_account_and_asset(account, asset)
+            .await?
+        {
             let available = parse(&w.available);
-            let locked    = parse(&w.locked);
+            let locked = parse(&w.locked);
             if available < amount {
                 return Err(AppError::InsufficientFunds {
                     asset: asset.to_string(),
@@ -251,8 +291,8 @@ impl ExerciseService {
                     available: available.to_string(),
                 });
             }
-            w.available  = (available - amount).to_string();
-            w.locked     = (locked    + amount).to_string();
+            w.available = (available - amount).to_string();
+            w.locked = (locked + amount).to_string();
             w.updated_at = chrono::Utc::now().timestamp_millis();
             self.wallet_service.update_wallet(w).await?;
         }
@@ -260,13 +300,17 @@ impl ExerciseService {
     }
 
     async fn release_locked(&self, account: &str, asset: &str, amount: Decimal) -> Result<()> {
-        if let Some(mut w) = self.wallet_service.get_wallet_by_account_and_asset(account, asset).await? {
-            let locked    = parse(&w.locked);
+        if let Some(mut w) = self
+            .wallet_service
+            .get_wallet_by_account_and_asset(account, asset)
+            .await?
+        {
+            let locked = parse(&w.locked);
             let available = parse(&w.available);
-            let release   = amount.min(locked);
+            let release = amount.min(locked);
             if release > Decimal::ZERO {
-                w.locked     = (locked    - release).to_string();
-                w.available  = (available + release).to_string();
+                w.locked = (locked - release).to_string();
+                w.available = (available + release).to_string();
                 w.updated_at = chrono::Utc::now().timestamp_millis();
                 self.wallet_service.update_wallet(w).await?;
             }

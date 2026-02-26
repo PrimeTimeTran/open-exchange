@@ -9,10 +9,10 @@ impl TradeMapper {
             id: fill.trade_id.to_string(),
             tenant_id: fill.tenant_id.to_string(),
             instrument_id: fill.instrument_id.to_string(),
-            // For public market data derived from fills, individual order IDs are often redacted or not relevant 
+            // For public market data derived from fills, individual order IDs are often redacted or not relevant
             // unless we are looking at a user's specific fill history.
             // Since this mapper handles "Trades" (public execution), we keep them empty as per current logic.
-            buy_order_id: "".to_string(), 
+            buy_order_id: "".to_string(),
             sell_order_id: "".to_string(),
             price: fill.price.to_string(),
             quantity: fill.quantity.to_string(),

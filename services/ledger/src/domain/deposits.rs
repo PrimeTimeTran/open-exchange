@@ -1,7 +1,7 @@
 use crate::proto::common;
+use chrono::Utc;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
-use chrono::Utc;
 
 #[derive(Debug, Default, Clone)]
 pub struct DepositService {
@@ -15,7 +15,12 @@ impl DepositService {
         }
     }
 
-    pub fn create_new_deposit(&self, wallet_id: String, amount: String, tx_ref: String) -> common::Deposit {
+    pub fn create_new_deposit(
+        &self,
+        wallet_id: String,
+        amount: String,
+        tx_ref: String,
+    ) -> common::Deposit {
         let deposit = common::Deposit {
             id: Uuid::new_v4().to_string(),
             tenant_id: "default".to_string(),
@@ -65,9 +70,9 @@ impl DepositService {
     pub fn cancel_deposit(&self, deposit_id: &str) -> bool {
         let mut deposits = self.deposits.lock().unwrap();
         if let Some(pos) = deposits.iter().position(|x| x.id == deposit_id) {
-             // In a real system, we might mark as cancelled instead of removing
-             // But for consistency with other services in MVP:
-            deposits.remove(pos); 
+            // In a real system, we might mark as cancelled instead of removing
+            // But for consistency with other services in MVP:
+            deposits.remove(pos);
             true
         } else {
             false
@@ -79,7 +84,11 @@ impl DepositService {
         if wallet_id.is_empty() {
             deposits.clone()
         } else {
-            deposits.iter().filter(|x| x.wallet_id == wallet_id).cloned().collect()
+            deposits
+                .iter()
+                .filter(|x| x.wallet_id == wallet_id)
+                .cloned()
+                .collect()
         }
     }
 }

@@ -1,6 +1,6 @@
 use crate::domain::orders::model::Order;
-use crate::proto::common::Instrument;
 use crate::error::Result;
+use crate::proto::common::Instrument;
 use rust_decimal::Decimal;
 
 /// Trait for handling instrument-specific logic, specifically around collateral requirements.
@@ -9,5 +9,9 @@ pub trait InstrumentHandler: Send + Sync {
     fn identify_collateral_asset(&self, order: &Order, instrument: &Instrument) -> Result<String>;
 
     /// Calculates the raw amount (non-atomic) of collateral required.
-    fn calculate_raw_collateral_amount(&self, order: &Order, instrument: &Instrument) -> Result<Decimal>;
+    fn calculate_raw_collateral_amount(
+        &self,
+        order: &Order,
+        instrument: &Instrument,
+    ) -> Result<Decimal>;
 }

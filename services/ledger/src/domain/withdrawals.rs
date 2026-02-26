@@ -1,7 +1,7 @@
 use crate::proto::common;
+use chrono::Utc;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
-use chrono::Utc;
 
 #[derive(Debug, Default, Clone)]
 pub struct WithdrawalService {
@@ -15,7 +15,12 @@ impl WithdrawalService {
         }
     }
 
-    pub fn create_new_withdrawal(&self, wallet_id: String, amount: String, address: String) -> common::Withdrawal {
+    pub fn create_new_withdrawal(
+        &self,
+        wallet_id: String,
+        amount: String,
+        address: String,
+    ) -> common::Withdrawal {
         let withdrawal = common::Withdrawal {
             id: Uuid::new_v4().to_string(),
             tenant_id: "default".to_string(),
@@ -82,7 +87,11 @@ impl WithdrawalService {
         if wallet_id.is_empty() {
             withdrawals.clone()
         } else {
-            withdrawals.iter().filter(|x| x.wallet_id == wallet_id).cloned().collect()
+            withdrawals
+                .iter()
+                .filter(|x| x.wallet_id == wallet_id)
+                .cloned()
+                .collect()
         }
     }
 }

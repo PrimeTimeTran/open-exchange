@@ -8,7 +8,7 @@
 ///
 /// All limits are set at construction time. The service is stateless otherwise;
 /// it does not persist anything to the database.
-use crate::error::{ AppError, Result };
+use crate::error::{AppError, Result};
 use rust_decimal::Decimal;
 use std::str::FromStr;
 
@@ -59,15 +59,10 @@ impl PositionLimitService {
     /// Reject an order whose quantity exceeds the per-order size cap.
     pub fn check_order_size(&self, qty: Decimal) -> Result<()> {
         if qty > self.config.max_order_size {
-            return Err(
-                AppError::ValidationError(
-                    format!(
-                        "Order size {} exceeds max allowed {} (position limit)",
-                        qty,
-                        self.config.max_order_size
-                    )
-                )
-            );
+            return Err(AppError::ValidationError(format!(
+                "Order size {} exceeds max allowed {} (position limit)",
+                qty, self.config.max_order_size
+            )));
         }
         Ok(())
     }
@@ -78,19 +73,15 @@ impl PositionLimitService {
     pub fn check_notional_exposure(
         &self,
         current_notional: Decimal,
-        new_notional: Decimal
+        new_notional: Decimal,
     ) -> Result<()> {
         if current_notional + new_notional > self.config.max_notional_per_account {
-            return Err(
-                AppError::ValidationError(
-                    format!(
-                        "Adding notional {} would push account to {} which exceeds cap {}",
-                        new_notional,
-                        current_notional + new_notional,
-                        self.config.max_notional_per_account
-                    )
-                )
-            );
+            return Err(AppError::ValidationError(format!(
+                "Adding notional {} would push account to {} which exceeds cap {}",
+                new_notional,
+                current_notional + new_notional,
+                self.config.max_notional_per_account
+            )));
         }
         Ok(())
     }
@@ -100,16 +91,12 @@ impl PositionLimitService {
     /// `current_open_interest` is the total open quantity across all accounts.
     pub fn check_open_interest(&self, current_open_interest: Decimal, qty: Decimal) -> Result<()> {
         if current_open_interest + qty > self.config.max_open_interest {
-            return Err(
-                AppError::ValidationError(
-                    format!(
-                        "Adding {} would push open interest to {} which exceeds cap {}",
-                        qty,
-                        current_open_interest + qty,
-                        self.config.max_open_interest
-                    )
-                )
-            );
+            return Err(AppError::ValidationError(format!(
+                "Adding {} would push open interest to {} which exceeds cap {}",
+                qty,
+                current_open_interest + qty,
+                self.config.max_open_interest
+            )));
         }
         Ok(())
     }
@@ -124,7 +111,7 @@ impl PositionLimitService {
         &self,
         current_asset_value: Decimal,
         new_asset_value: Decimal,
-        total_portfolio_value: Decimal
+        total_portfolio_value: Decimal,
     ) -> Result<()> {
         if total_portfolio_value <= Decimal::ZERO {
             return Ok(());

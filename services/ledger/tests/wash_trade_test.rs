@@ -1,10 +1,10 @@
 #[macro_use]
 mod helpers;
 use helpers::memory::InMemoryTestContext;
-use helpers::{to_atomic_usd, to_atomic_btc};
-use rust_decimal::Decimal;
-use rust_decimal::prelude::ToPrimitive;
+use helpers::{to_atomic_btc, to_atomic_usd};
 use ledger::domain::orders::OrderRepository;
+use rust_decimal::prelude::ToPrimitive;
+use rust_decimal::Decimal;
 use std::str::FromStr;
 
 // macro_rules! assert_decimal_val_eq {
@@ -37,28 +37,44 @@ use std::str::FromStr;
 async fn test_self_trade_same_account_both_sides_flagged() {
     let ctx = InMemoryTestContext::new();
 
-    let price    = 50_000.0_f64;
-    let qty      = 1.0_f64;
+    let price = 50_000.0_f64;
+    let qty = 1.0_f64;
     let notional = to_atomic_usd(price * qty);
-    let btc_qty  = to_atomic_btc(qty);
+    let btc_qty = to_atomic_btc(qty);
 
     // Account A has both USD and BTC — it is both buyer and seller
-    ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(),
-        0.0, notional.to_f64().unwrap(), notional.to_f64().unwrap());
-    ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(),
-        0.0, btc_qty.to_f64().unwrap(), btc_qty.to_f64().unwrap());
+    ctx.create_wallet(
+        ctx.account_a,
+        &ctx.usd_id.to_string(),
+        0.0,
+        notional.to_f64().unwrap(),
+        notional.to_f64().unwrap(),
+    );
+    ctx.create_wallet(
+        ctx.account_a,
+        &ctx.btc_id.to_string(),
+        0.0,
+        btc_qty.to_f64().unwrap(),
+        btc_qty.to_f64().unwrap(),
+    );
 
-    let buy_order  = ctx.create_order(ctx.account_a, "buy",  price, qty);
+    let buy_order = ctx.create_order(ctx.account_a, "buy", price, qty);
     let sell_order = ctx.create_order(ctx.account_a, "sell", price, qty); // SAME account
 
-    let usd_before = ctx.wallet_service
+    let usd_before = ctx
+        .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await.unwrap().unwrap();
-    let btc_before = ctx.wallet_service
+        .await
+        .unwrap()
+        .unwrap();
+    let btc_before = ctx
+        .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string())
-        .await.unwrap().unwrap();
+        .await
+        .unwrap()
+        .unwrap();
 
-    let trade  = ctx.create_trade(buy_order.id, sell_order.id, price, qty);
+    let trade = ctx.create_trade(buy_order.id, sell_order.id, price, qty);
     let result = ctx.settlement_service.process_trade_event(trade).await;
 
     // Expect an error — self-trades are prohibited
@@ -68,17 +84,27 @@ async fn test_self_trade_same_account_both_sides_flagged() {
     );
 
     // Wallet balances must be completely unchanged
-    let usd_after = ctx.wallet_service
+    let usd_after = ctx
+        .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await.unwrap().unwrap();
-    let btc_after = ctx.wallet_service
+        .await
+        .unwrap()
+        .unwrap();
+    let btc_after = ctx
+        .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string())
-        .await.unwrap().unwrap();
+        .await
+        .unwrap()
+        .unwrap();
 
-    assert_decimal_val_eq!(usd_after.total,
-        Decimal::from_str(&usd_before.total).unwrap());
-    assert_decimal_val_eq!(btc_after.total,
-        Decimal::from_str(&btc_before.total).unwrap());
+    assert_decimal_val_eq!(
+        usd_after.total,
+        Decimal::from_str(&usd_before.total).unwrap()
+    );
+    assert_decimal_val_eq!(
+        btc_after.total,
+        Decimal::from_str(&btc_before.total).unwrap()
+    );
 }
 
 /// Test: Cross-Account Same-User Wash Trade Is Detected
@@ -100,37 +126,50 @@ async fn test_self_trade_same_account_both_sides_flagged() {
 async fn test_cross_account_same_user_wash_trade_detected() {
     let ctx = InMemoryTestContext::new();
 
-    let price    = 50_000.0_f64;
-    let qty      = 1.0_f64;
+    let price = 50_000.0_f64;
+    let qty = 1.0_f64;
     let notional = to_atomic_usd(price * qty);
 
     // Both accounts belong to the SAME user (ctx.user_id)
     // account_a is the buyer, account_b is the seller, but user_id is identical
-    ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(),
-        0.0, notional.to_f64().unwrap(), notional.to_f64().unwrap());
+    ctx.create_wallet(
+        ctx.account_a,
+        &ctx.usd_id.to_string(),
+        0.0,
+        notional.to_f64().unwrap(),
+        notional.to_f64().unwrap(),
+    );
     ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
 
-    ctx.create_wallet(ctx.account_b, &ctx.btc_id.to_string(),
-        0.0, to_atomic_btc(qty).to_f64().unwrap(), to_atomic_btc(qty).to_f64().unwrap());
+    ctx.create_wallet(
+        ctx.account_b,
+        &ctx.btc_id.to_string(),
+        0.0,
+        to_atomic_btc(qty).to_f64().unwrap(),
+        to_atomic_btc(qty).to_f64().unwrap(),
+    );
     ctx.create_wallet(ctx.account_b, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
 
-    let buy_order  = ctx.create_order(ctx.account_a, "buy",  price, qty);
+    let buy_order = ctx.create_order(ctx.account_a, "buy", price, qty);
     let sell_order = ctx.create_order(ctx.account_b, "sell", price, qty);
 
     // Tag both orders with the same user_id in meta to simulate cross-account detection
     // In a real implementation the service would look up account → user mapping
-    let mut buy  = ctx.order_repo.get(buy_order.id).await.unwrap().unwrap();
+    let mut buy = ctx.order_repo.get(buy_order.id).await.unwrap().unwrap();
     let mut sell = ctx.order_repo.get(sell_order.id).await.unwrap().unwrap();
-    buy.meta  = serde_json::json!({"user_id": ctx.user_id.to_string()});
+    buy.meta = serde_json::json!({"user_id": ctx.user_id.to_string()});
     sell.meta = serde_json::json!({"user_id": ctx.user_id.to_string()});
     ctx.order_repo.add(buy);
     ctx.order_repo.add(sell);
 
-    let usd_a_before = ctx.wallet_service
+    let usd_a_before = ctx
+        .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await.unwrap().unwrap();
+        .await
+        .unwrap()
+        .unwrap();
 
-    let trade  = ctx.create_trade(buy_order.id, sell_order.id, price, qty);
+    let trade = ctx.create_trade(buy_order.id, sell_order.id, price, qty);
     let result = ctx.settlement_service.process_trade_event(trade).await;
 
     // Expect rejection — same user on both sides
@@ -140,10 +179,15 @@ async fn test_cross_account_same_user_wash_trade_detected() {
     );
 
     // Net wallet change for the user must be zero (no economic transfer occurred)
-    let usd_a_after = ctx.wallet_service
+    let usd_a_after = ctx
+        .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await.unwrap().unwrap();
+        .await
+        .unwrap()
+        .unwrap();
 
-    assert_decimal_val_eq!(usd_a_after.total,
-        Decimal::from_str(&usd_a_before.total).unwrap());
+    assert_decimal_val_eq!(
+        usd_a_after.total,
+        Decimal::from_str(&usd_a_before.total).unwrap()
+    );
 }

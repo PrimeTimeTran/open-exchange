@@ -1,5 +1,5 @@
-use std::time::Duration;
 use sqlx::postgres::{PgPool, PgPoolOptions};
+use std::time::Duration;
 
 pub async fn get_db_pool(database_url: &str, max_connections: u32) -> Result<PgPool, sqlx::Error> {
     PgPoolOptions::new()

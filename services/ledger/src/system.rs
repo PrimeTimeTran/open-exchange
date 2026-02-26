@@ -1,7 +1,7 @@
-use std::env;
-use warp::Filter;
-use tonic::transport::{Channel, Endpoint};
 use crate::proto::matching::matching_client::MatchingClient;
+use std::env;
+use tonic::transport::{Channel, Endpoint};
+use warp::Filter;
 
 pub async fn start_health_server(port: u16) {
     let health = warp::path("health").map(|| {
@@ -21,11 +21,11 @@ pub async fn connect_to_matching_engine(url: &str) -> Option<MatchingClient<Chan
     tracing::info!(url = %url, "Configuring lazy connection to Matching Engine");
     match Endpoint::from_shared(url.to_string()) {
         Ok(endpoint) => {
-             // connect_lazy returns a Channel immediately.
-             // The actual connection happens in the background when requests are made.
+            // connect_lazy returns a Channel immediately.
+            // The actual connection happens in the background when requests are made.
             let channel = endpoint.connect_lazy();
             Some(MatchingClient::new(channel))
-        },
+        }
         Err(e) => {
             tracing::error!(url = %url, error = %e, "Invalid Matching Engine URL");
             None

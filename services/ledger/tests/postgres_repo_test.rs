@@ -1,14 +1,14 @@
 mod helpers;
-use helpers::postgres::PostgresTestContext;
-use ledger::proto::common::LedgerEntry;
-use ledger::domain::wallets::{Wallet, WalletRepository};
-use ledger::domain::ledger::repository::LedgerRepository;
-use ledger::infra::transaction::PostgresTransaction;
-use ledger::infra::repositories::{PostgresWalletRepository, PostgresLedgerRepository};
-use uuid::Uuid;
 use chrono::Utc;
-use std::str::FromStr;
+use helpers::postgres::PostgresTestContext;
+use ledger::domain::ledger::repository::LedgerRepository;
+use ledger::domain::wallets::{Wallet, WalletRepository};
+use ledger::infra::repositories::{PostgresLedgerRepository, PostgresWalletRepository};
+use ledger::infra::transaction::PostgresTransaction;
+use ledger::proto::common::LedgerEntry;
 use rust_decimal::Decimal;
+use std::str::FromStr;
+use uuid::Uuid;
 
 #[tokio::test]
 async fn test_postgres_wallet_persistence() {
@@ -23,28 +23,45 @@ async fn test_postgres_wallet_persistence() {
     let wallet_id = Uuid::new_v4();
 
     // Insert Tenant
-    sqlx::query!(r#"
+    sqlx::query!(
+        r#"
         INSERT INTO "Tenant" (id, name, "createdAt", "updatedAt") 
         VALUES ($1, 'Test Tenant', now(), now())
-    "#, tenant_id)
-    .execute(&ctx.pool).await.expect("Failed to insert event");
+    "#,
+        tenant_id
+    )
+    .execute(&ctx.pool)
+    .await
+    .expect("Failed to insert event");
 
     // Insert Account (userId is null)
     // Note: 'type' is a reserved keyword in some SQL contexts, usually safe in string literals or quoted identifiers?
     // In Postgres, type is reserved? No, but generally good to quote identifiers.
     // Schema says: type String
-    sqlx::query!(r#"
+    sqlx::query!(
+        r#"
         INSERT INTO "Account" (id, "tenantId", type, name, "createdAt", "updatedAt") 
         VALUES ($1, $2, 'USER', 'Test Account', now(), now())
-    "#, account_id, tenant_id)
-    .execute(&ctx.pool).await.expect("Failed to insert account");
+    "#,
+        account_id,
+        tenant_id
+    )
+    .execute(&ctx.pool)
+    .await
+    .expect("Failed to insert account");
 
     // Insert Asset
-    sqlx::query!(r#"
+    sqlx::query!(
+        r#"
         INSERT INTO "Asset" (id, "tenantId", symbol, decimals, "createdAt", "updatedAt") 
         VALUES ($1, $2, 'USD', 2, now(), now())
-    "#, asset_id, tenant_id)
-    .execute(&ctx.pool).await.expect("Failed to insert asset");
+    "#,
+        asset_id,
+        tenant_id
+    )
+    .execute(&ctx.pool)
+    .await
+    .expect("Failed to insert asset");
 
     // 3. Test Create Wallet
     let wallet = Wallet {
@@ -63,32 +80,52 @@ async fn test_postgres_wallet_persistence() {
         updated_at: Utc::now().timestamp_millis(),
     };
 
-    let created = repo.create(wallet.clone()).await.expect("Failed to create wallet");
+    let created = repo
+        .create(wallet.clone())
+        .await
+        .expect("Failed to create wallet");
     assert_eq!(created.id, wallet.id);
 
     // 4. Test Get Wallet
-    let fetched = repo.get(wallet_id).await.expect("Failed to get wallet").expect("Wallet not found");
-    assert_eq!(Decimal::from_str(&fetched.available).unwrap(), Decimal::from_str("100").unwrap());
+    let fetched = repo
+        .get(wallet_id)
+        .await
+        .expect("Failed to get wallet")
+        .expect("Wallet not found");
+    assert_eq!(
+        Decimal::from_str(&fetched.available).unwrap(),
+        Decimal::from_str("100").unwrap()
+    );
 
     // 5. Test Update Wallet (Optimistic Locking)
     let mut updated = fetched.clone();
     updated.available = "50.00".to_string(); // Will be stored as 50
     updated.total = "50.00".to_string();
-    
+
     // Success case
-    let saved = repo.update(updated.clone()).await.expect("Failed to update wallet");
+    let saved = repo
+        .update(updated.clone())
+        .await
+        .expect("Failed to update wallet");
     assert_eq!(saved.version, 2);
-    assert_eq!(Decimal::from_str(&saved.available).unwrap(), Decimal::from_str("50").unwrap());
+    assert_eq!(
+        Decimal::from_str(&saved.available).unwrap(),
+        Decimal::from_str("50").unwrap()
+    );
 
     // Failure case (Old Version)
     let mut old_version = updated.clone();
     old_version.version = 1; // Should be 2 now
     let result = repo.update(old_version).await;
     assert!(result.is_err(), "Should fail with optimistic locking error");
-    
+
     // Verify error type if possible (string check)
     let err_msg = format!("{:?}", result.err().unwrap());
-    assert!(err_msg.contains("OptimisticLockingError"), "Expected OptimisticLockingError, got {}", err_msg);
+    assert!(
+        err_msg.contains("OptimisticLockingError"),
+        "Expected OptimisticLockingError, got {}",
+        err_msg
+    );
 }
 
 #[tokio::test]
@@ -101,17 +138,28 @@ async fn test_postgres_ledger_batch_insert() {
     let account_id = Uuid::new_v4();
     let event_id = Uuid::new_v4();
 
-    sqlx::query!(r#"
+    sqlx::query!(
+        r#"
         INSERT INTO "Tenant" (id, name, "createdAt", "updatedAt") 
         VALUES ($1, 'Test Tenant', now(), now())
-    "#, tenant_id)
-    .execute(&ctx.pool).await.expect("Failed to insert tenant");
+    "#,
+        tenant_id
+    )
+    .execute(&ctx.pool)
+    .await
+    .expect("Failed to insert tenant");
 
-    sqlx::query!(r#"
+    sqlx::query!(
+        r#"
         INSERT INTO "Account" (id, "tenantId", type, name, "createdAt", "updatedAt") 
         VALUES ($1, $2, 'USER', 'Test Account', now(), now())
-    "#, account_id, tenant_id)
-    .execute(&ctx.pool).await.expect("Failed to insert account");
+    "#,
+        account_id,
+        tenant_id
+    )
+    .execute(&ctx.pool)
+    .await
+    .expect("Failed to insert account");
 
     // Insert LedgerEvent manually
     sqlx::query!(r#"
@@ -137,18 +185,21 @@ async fn test_postgres_ledger_batch_insert() {
 
     let tx = ctx.pool.begin().await.expect("Failed to begin tx");
     let mut pg_tx = PostgresTransaction { tx };
-    
+
     let result = repo.save_entries_with_tx(&mut pg_tx, entries.clone()).await;
     assert!(result.is_ok(), "Save entries failed: {:?}", result.err());
-    
+
     pg_tx.tx.commit().await.expect("Failed to commit tx");
 
     // Verify
-    let count: i64 = sqlx::query_scalar!(r#"SELECT count(*) as count FROM "LedgerEntry" WHERE "eventId" = $1"#, event_id)
-        .fetch_one(&ctx.pool)
-        .await
-        .expect("Failed to fetch count")
-        .unwrap_or(0);
-        
+    let count: i64 = sqlx::query_scalar!(
+        r#"SELECT count(*) as count FROM "LedgerEntry" WHERE "eventId" = $1"#,
+        event_id
+    )
+    .fetch_one(&ctx.pool)
+    .await
+    .expect("Failed to fetch count")
+    .unwrap_or(0);
+
     assert_eq!(count, 10);
 }

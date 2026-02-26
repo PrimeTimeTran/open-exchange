@@ -1,6 +1,6 @@
-use crate::proto::ledger::*;
-use crate::proto::ledger::user_service_server::UserService;
 use crate::domain::users::UserService as UserDomainService;
+use crate::proto::ledger::user_service_server::UserService;
+use crate::proto::ledger::*;
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
 
@@ -21,7 +21,7 @@ impl UserService for UserServiceImpl {
         request: Request<CreateUserRequest>,
     ) -> Result<Response<CreateUserResponse>, Status> {
         let req = request.into_inner();
-        
+
         let user = self.user_service.create_new_user(
             req.email,
             req.password,
@@ -29,9 +29,7 @@ impl UserService for UserServiceImpl {
             req.last_name,
         );
 
-        Ok(Response::new(CreateUserResponse {
-            user: Some(user),
-        }))
+        Ok(Response::new(CreateUserResponse { user: Some(user) }))
     }
 
     async fn get_user(
@@ -40,11 +38,9 @@ impl UserService for UserServiceImpl {
     ) -> Result<Response<GetUserResponse>, Status> {
         let req = request.into_inner();
         if let Some(user) = self.user_service.get_user(&req.user_id) {
-                Ok(Response::new(GetUserResponse {
-                    user: Some(user),
-                }))
+            Ok(Response::new(GetUserResponse { user: Some(user) }))
         } else {
-                Err(Status::not_found("User not found"))
+            Err(Status::not_found("User not found"))
         }
     }
 
@@ -54,15 +50,13 @@ impl UserService for UserServiceImpl {
     ) -> Result<Response<UpdateUserResponse>, Status> {
         let req = request.into_inner();
         if let Some(user) = req.user {
-                if self.user_service.update_user(user.clone()) {
-                    Ok(Response::new(UpdateUserResponse {
-                        user: Some(user),
-                    }))
-                } else {
-                    Err(Status::not_found("User not found"))
-                }
+            if self.user_service.update_user(user.clone()) {
+                Ok(Response::new(UpdateUserResponse { user: Some(user) }))
+            } else {
+                Err(Status::not_found("User not found"))
+            }
         } else {
-                Err(Status::invalid_argument("User is required"))
+            Err(Status::invalid_argument("User is required"))
         }
     }
 
@@ -72,12 +66,12 @@ impl UserService for UserServiceImpl {
     ) -> Result<Response<DeleteUserResponse>, Status> {
         let req = request.into_inner();
         if self.user_service.delete_user(&req.user_id) {
-                Ok(Response::new(DeleteUserResponse {
-                    success: true,
-                    message: "User deleted".to_string(),
-                }))
+            Ok(Response::new(DeleteUserResponse {
+                success: true,
+                message: "User deleted".to_string(),
+            }))
         } else {
-                Err(Status::not_found("User not found"))
+            Err(Status::not_found("User not found"))
         }
     }
 }

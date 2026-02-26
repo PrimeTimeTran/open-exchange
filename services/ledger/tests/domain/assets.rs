@@ -1,9 +1,7 @@
 use crate::helpers::memory::InMemoryTestContext;
-use tonic::Request;
 use ledger::proto::ledger::asset_service_server::AssetService;
-use ledger::proto::ledger::{
-    CreateAssetRequest, CreateInstrumentRequest
-};
+use ledger::proto::ledger::{CreateAssetRequest, CreateInstrumentRequest};
+use tonic::Request;
 
 #[tokio::test]
 async fn test_create_asset_success() {
@@ -31,7 +29,12 @@ async fn test_create_instrument_success() {
         base_asset_id: base_id.clone(),
         quote_asset_id: quote_id.clone(),
     });
-    let resp = ctx.asset_api.create_instrument(req).await.unwrap().into_inner();
+    let resp = ctx
+        .asset_api
+        .create_instrument(req)
+        .await
+        .unwrap()
+        .into_inner();
     let instr = resp.instrument.unwrap();
     assert_eq!(instr.symbol, "ETH_USD");
     assert_eq!(instr.underlying_asset_id, base_id);
@@ -48,7 +51,7 @@ async fn test_create_instrument_invalid_assets() {
     });
     // LedgerService might not validate existence in mock yet, but should.
     let resp = ctx.asset_api.create_instrument(req).await;
-    
+
     // Check if it failed or succeeded (documenting current behavior)
     // Ideally assert!(resp.is_err());
     if resp.is_ok() {

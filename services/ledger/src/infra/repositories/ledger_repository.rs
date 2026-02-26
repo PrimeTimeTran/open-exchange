@@ -1,14 +1,14 @@
-use crate::error::Result;
-use crate::domain::transaction::RepositoryTransaction;
 use crate::domain::ledger::repository::LedgerRepository;
-use crate::proto::common::{LedgerEvent, LedgerEntry, Trade};
-use uuid::Uuid;
-use chrono::Utc;
-use chrono::TimeZone;
-use std::str::FromStr;
-use rust_decimal::Decimal;
+use crate::domain::transaction::RepositoryTransaction;
+use crate::error::Result;
+use crate::proto::common::{LedgerEntry, LedgerEvent, Trade};
 use async_trait::async_trait;
-use sqlx::{PgPool, Transaction, Postgres, QueryBuilder};
+use chrono::TimeZone;
+use chrono::Utc;
+use rust_decimal::Decimal;
+use sqlx::{PgPool, Postgres, QueryBuilder, Transaction};
+use std::str::FromStr;
+use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct PostgresLedgerRepository {
@@ -22,8 +22,6 @@ impl PostgresLedgerRepository {
     }
 }
 
-
-
 #[async_trait]
 impl LedgerRepository for PostgresLedgerRepository {
     async fn save_event(&self, event: LedgerEvent) -> Result<LedgerEvent> {
@@ -32,16 +30,26 @@ impl LedgerRepository for PostgresLedgerRepository {
         Ok(event)
     }
 
-    async fn save_event_with_tx(&self, tx: &mut dyn RepositoryTransaction, event: LedgerEvent) -> Result<LedgerEvent> {
+    async fn save_event_with_tx(
+        &self,
+        tx: &mut dyn RepositoryTransaction,
+        event: LedgerEvent,
+    ) -> Result<LedgerEvent> {
         let tx = unsafe { &mut *(tx.get_inner_ptr() as *mut Transaction<'_, Postgres>) };
-        
-        let created_at = Utc.timestamp_millis_opt(event.created_at)
+
+        let created_at = Utc
+            .timestamp_millis_opt(event.created_at)
             .single()
-            .ok_or_else(|| crate::error::AppError::ValidationError("Invalid created_at timestamp".to_string()))?;
-            
-        let updated_at = Utc.timestamp_millis_opt(event.updated_at)
+            .ok_or_else(|| {
+                crate::error::AppError::ValidationError("Invalid created_at timestamp".to_string())
+            })?;
+
+        let updated_at = Utc
+            .timestamp_millis_opt(event.updated_at)
             .single()
-            .ok_or_else(|| crate::error::AppError::ValidationError("Invalid updated_at timestamp".to_string()))?;
+            .ok_or_else(|| {
+                crate::error::AppError::ValidationError("Invalid updated_at timestamp".to_string())
+            })?;
 
         sqlx::query!(
             r#"
@@ -74,7 +82,11 @@ impl LedgerRepository for PostgresLedgerRepository {
         Ok(entries)
     }
 
-    async fn save_entries_with_tx(&self, tx: &mut dyn RepositoryTransaction, entries: Vec<LedgerEntry>) -> Result<Vec<LedgerEntry>> {
+    async fn save_entries_with_tx(
+        &self,
+        tx: &mut dyn RepositoryTransaction,
+        entries: Vec<LedgerEntry>,
+    ) -> Result<Vec<LedgerEntry>> {
         let tx = unsafe { &mut *(tx.get_inner_ptr() as *mut Transaction<'_, Postgres>) };
         if entries.is_empty() {
             return Ok(entries);
@@ -83,58 +95,105 @@ impl LedgerRepository for PostgresLedgerRepository {
         // Pre-validate and parse all entries to avoid unwrap() inside query builder
         let mut parsed_entries = Vec::with_capacity(entries.len());
         for entry in &entries {
-            let created_at = Utc.timestamp_millis_opt(entry.created_at)
+            let created_at = Utc
+                .timestamp_millis_opt(entry.created_at)
                 .single()
-                .ok_or_else(|| crate::error::AppError::ValidationError(format!("Invalid created_at for entry {}", entry.id)))?;
-            
-            let updated_at = Utc.timestamp_millis_opt(entry.updated_at)
+                .ok_or_else(|| {
+                    crate::error::AppError::ValidationError(format!(
+                        "Invalid created_at for entry {}",
+                        entry.id
+                    ))
+                })?;
+
+            let updated_at = Utc
+                .timestamp_millis_opt(entry.updated_at)
                 .single()
-                .ok_or_else(|| crate::error::AppError::ValidationError(format!("Invalid updated_at for entry {}", entry.id)))?;
-            
-            let amount = Decimal::from_str(&entry.amount)
-                .map_err(|_| crate::error::AppError::ValidationError(format!("Invalid amount for entry {}", entry.id)))?;
-            
-            let id = Uuid::parse_str(&entry.id)
-                .map_err(|_| crate::error::AppError::ValidationError(format!("Invalid ID for entry {}", entry.id)))?;
-            
-            let tenant_id = Uuid::parse_str(&entry.tenant_id)
-                .map_err(|_| crate::error::AppError::ValidationError(format!("Invalid tenant ID for entry {}", entry.id)))?;
-            
-            let event_id = Uuid::parse_str(&entry.event_id)
-                .map_err(|_| crate::error::AppError::ValidationError(format!("Invalid event ID for entry {}", entry.id)))?;
-            
-            let account_id = Uuid::parse_str(&entry.account_id)
-                .map_err(|_| crate::error::AppError::ValidationError(format!("Invalid account ID for entry {}", entry.id)))?;
-            
+                .ok_or_else(|| {
+                    crate::error::AppError::ValidationError(format!(
+                        "Invalid updated_at for entry {}",
+                        entry.id
+                    ))
+                })?;
+
+            let amount = Decimal::from_str(&entry.amount).map_err(|_| {
+                crate::error::AppError::ValidationError(format!(
+                    "Invalid amount for entry {}",
+                    entry.id
+                ))
+            })?;
+
+            let id = Uuid::parse_str(&entry.id).map_err(|_| {
+                crate::error::AppError::ValidationError(format!(
+                    "Invalid ID for entry {}",
+                    entry.id
+                ))
+            })?;
+
+            let tenant_id = Uuid::parse_str(&entry.tenant_id).map_err(|_| {
+                crate::error::AppError::ValidationError(format!(
+                    "Invalid tenant ID for entry {}",
+                    entry.id
+                ))
+            })?;
+
+            let event_id = Uuid::parse_str(&entry.event_id).map_err(|_| {
+                crate::error::AppError::ValidationError(format!(
+                    "Invalid event ID for entry {}",
+                    entry.id
+                ))
+            })?;
+
+            let account_id = Uuid::parse_str(&entry.account_id).map_err(|_| {
+                crate::error::AppError::ValidationError(format!(
+                    "Invalid account ID for entry {}",
+                    entry.id
+                ))
+            })?;
+
             let meta = serde_json::from_str::<serde_json::Value>(&entry.meta)
                 .unwrap_or(serde_json::json!({}));
 
-            parsed_entries.push((id, tenant_id, event_id, account_id, amount, meta, created_at, updated_at));
+            parsed_entries.push((
+                id, tenant_id, event_id, account_id, amount, meta, created_at, updated_at,
+            ));
         }
 
         let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(
             "INSERT INTO \"LedgerEntry\" (id, \"tenantId\", \"eventId\", \"accountId\", amount, meta, \"createdAt\", \"updatedAt\") "
         );
 
-        query_builder.push_values(parsed_entries, |mut b, (id, tenant_id, event_id, account_id, amount, meta, created_at, updated_at)| {
-            b.push_bind(id)
-             .push_bind(tenant_id)
-             .push_bind(event_id)
-             .push_bind(account_id)
-             .push_bind(amount)
-             .push_bind(meta)
-             .push_bind(created_at)
-             .push_bind(updated_at);
-        });
+        query_builder.push_values(
+            parsed_entries,
+            |mut b, (id, tenant_id, event_id, account_id, amount, meta, created_at, updated_at)| {
+                b.push_bind(id)
+                    .push_bind(tenant_id)
+                    .push_bind(event_id)
+                    .push_bind(account_id)
+                    .push_bind(amount)
+                    .push_bind(meta)
+                    .push_bind(created_at)
+                    .push_bind(updated_at);
+            },
+        );
 
         let query = query_builder.build();
-        query.execute(&mut **tx).await.map_err(crate::error::AppError::DatabaseError)?;
-        
-        tracing::info!(count = entries.len(), "PERSIST (TX): Ledger Entries created (Bulk)");
+        query
+            .execute(&mut **tx)
+            .await
+            .map_err(crate::error::AppError::DatabaseError)?;
+
+        tracing::info!(
+            count = entries.len(),
+            "PERSIST (TX): Ledger Entries created (Bulk)"
+        );
         Ok(entries)
     }
 
-    async fn save_trade_with_tx(&self, _tx: &mut dyn RepositoryTransaction, trade: Trade) -> Result<Trade> {
+    async fn save_trade_with_tx(
+        &self,
+        _tx: &mut dyn RepositoryTransaction,
+        trade: Trade,
+    ) -> Result<Trade> {
         // TODO: Implement actual DB persistence
         tracing::info!(?trade, "PERSIST (TX): Trade created");
         Ok(trade)

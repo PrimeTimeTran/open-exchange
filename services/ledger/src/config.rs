@@ -1,5 +1,5 @@
-use std::env;
 use serde::Deserialize;
+use std::env;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
@@ -14,8 +14,12 @@ impl Config {
         // Load .env file if it exists
         dotenv::dotenv().ok();
 
-        let database_url = env::var("DATABASE_URL").map_err(|e| config::ConfigError::Message(format!("DATABASE_URL missing: {}", e)))?;
-        let port = env::var("PORT").unwrap_or_else(|_| "50052".to_string()).parse().unwrap_or(50052);
+        let database_url = env::var("DATABASE_URL")
+            .map_err(|e| config::ConfigError::Message(format!("DATABASE_URL missing: {}", e)))?;
+        let port = env::var("PORT")
+            .unwrap_or_else(|_| "50052".to_string())
+            .parse()
+            .unwrap_or(50052);
         let log_level = env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
         let db_max_connections = env::var("DATABASE_MAX_CONNECTIONS")
             .unwrap_or_else(|_| "50".to_string())
@@ -47,6 +51,6 @@ pub mod config {
             }
         }
     }
-    
+
     impl std::error::Error for ConfigError {}
 }
