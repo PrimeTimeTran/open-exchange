@@ -1,3 +1,4 @@
+use crate::domain::utils::parse;
 use crate::domain::wallets::WalletService;
 /// Margin trading services.
 ///
@@ -6,13 +7,8 @@ use crate::domain::wallets::WalletService;
 /// - `IsolatedMarginService`– applies mark-to-market losses to an isolated margin position.
 use crate::error::{AppError, Result};
 use rust_decimal::Decimal;
-use std::str::FromStr;
 use std::sync::Arc;
 use uuid::Uuid;
-
-fn parse(s: &str) -> Decimal {
-    Decimal::from_str(s).unwrap_or_default()
-}
 
 // ─── MarginStatus ─────────────────────────────────────────────────────────────
 
@@ -67,7 +63,7 @@ impl MarginService {
             .get_wallet_by_account_and_asset(&account_id.to_string(), asset_id)
             .await?
         {
-            Some(w) => parse(&w.total),
+            Some(w) => parse(&w.total)?,
             None => Decimal::ZERO,
         };
 
@@ -86,8 +82,8 @@ impl MarginService {
             .get_wallet_by_account_and_asset(account, asset)
             .await?
         {
-            let available = parse(&w.available);
-            let locked = parse(&w.locked);
+            let available = parse(&w.available)?;
+            let locked = parse(&w.locked)?;
             if available < amount {
                 return Err(AppError::InsufficientFunds {
                     asset: asset.to_string(),
@@ -132,7 +128,7 @@ impl CrossMarginService {
             .iter()
             .filter(|w| w.asset_id == base_asset_id)
             .map(|w| parse(&w.total))
-            .sum();
+            .sum::<Result<Decimal>>()?;
         Ok(equity)
     }
 }
@@ -160,8 +156,8 @@ impl IsolatedMarginService {
             .get_wallet_by_account_and_asset(&account_id.to_string(), asset_id)
             .await?
         {
-            let available = parse(&w.available);
-            let total = parse(&w.total);
+            let available = parse(&w.available)?;
+            let total = parse(&w.total)?;
             // Cap loss at current total (position cannot go negative)
             let actual_loss = loss.min(total);
             w.available = (available - actual_loss).max(Decimal::ZERO).to_string();

@@ -76,14 +76,15 @@ impl OrderRepository for FailingOrderRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ledger::domain::assets::model::Asset;
     use ledger::domain::assets::AssetService;
+    use ledger::domain::instruments::model::Instrument;
     use ledger::domain::orders::service::OrderService;
     use ledger::domain::wallets::Wallet;
     use ledger::domain::wallets::WalletService;
     use ledger::infra::repositories::memory::{
         InMemoryAssetRepository, InMemoryInstrumentRepository, InMemoryWalletRepository,
     };
-    use ledger::proto::common::{Asset, Instrument};
     use rust_decimal::Decimal;
     use std::str::FromStr;
     use std::sync::Arc;
@@ -106,19 +107,29 @@ mod tests {
         let usd_id = Uuid::new_v4();
         let btc_id = Uuid::new_v4();
         let instr_id = Uuid::new_v4();
+        let tenant_id = Uuid::new_v4();
 
         asset_repo.add(Asset {
-            id: usd_id.to_string(),
+            id: usd_id,
+            tenant_id,
             symbol: "USD".into(),
             decimals: 2,
-            ..Default::default()
+            r#type: "FIAT".into(),
+            meta: serde_json::json!({}),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
         });
         instrument_repo.add(Instrument {
-            id: instr_id.to_string(),
+            id: Uuid::parse_str(&instr_id.to_string()).unwrap(),
+            tenant_id,
             symbol: "BTC-USD".into(),
-            underlying_asset_id: btc_id.to_string(),
-            quote_asset_id: usd_id.to_string(),
-            ..Default::default()
+            r#type: "spot".into(),
+            status: "active".into(),
+            underlying_asset_id: btc_id,
+            quote_asset_id: usd_id,
+            meta: serde_json::json!({}),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
         });
 
         // Add Wallet with Funds (Atomic Units: 1000.00 USD -> 100000 cents)

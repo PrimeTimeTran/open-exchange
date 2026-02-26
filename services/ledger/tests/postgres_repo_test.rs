@@ -1,11 +1,11 @@
 mod helpers;
 use chrono::Utc;
 use helpers::postgres::PostgresTestContext;
+use ledger::domain::ledger::model::LedgerEntry;
 use ledger::domain::ledger::repository::LedgerRepository;
 use ledger::domain::wallets::{Wallet, WalletRepository};
 use ledger::infra::repositories::{PostgresLedgerRepository, PostgresWalletRepository};
 use ledger::infra::transaction::PostgresTransaction;
-use ledger::proto::common::LedgerEntry;
 use rust_decimal::Decimal;
 use std::str::FromStr;
 use uuid::Uuid;
@@ -23,13 +23,13 @@ async fn test_postgres_wallet_persistence() {
     let wallet_id = Uuid::new_v4();
 
     // Insert Tenant
-    sqlx::query!(
+    sqlx::query(
         r#"
         INSERT INTO "Tenant" (id, name, "createdAt", "updatedAt") 
         VALUES ($1, 'Test Tenant', now(), now())
     "#,
-        tenant_id
     )
+    .bind(tenant_id)
     .execute(&ctx.pool)
     .await
     .expect("Failed to insert event");
@@ -38,27 +38,27 @@ async fn test_postgres_wallet_persistence() {
     // Note: 'type' is a reserved keyword in some SQL contexts, usually safe in string literals or quoted identifiers?
     // In Postgres, type is reserved? No, but generally good to quote identifiers.
     // Schema says: type String
-    sqlx::query!(
+    sqlx::query(
         r#"
         INSERT INTO "Account" (id, "tenantId", type, name, "createdAt", "updatedAt") 
         VALUES ($1, $2, 'USER', 'Test Account', now(), now())
     "#,
-        account_id,
-        tenant_id
     )
+    .bind(account_id)
+    .bind(tenant_id)
     .execute(&ctx.pool)
     .await
     .expect("Failed to insert account");
 
     // Insert Asset
-    sqlx::query!(
+    sqlx::query(
         r#"
         INSERT INTO "Asset" (id, "tenantId", symbol, decimals, "createdAt", "updatedAt") 
         VALUES ($1, $2, 'USD', 2, now(), now())
     "#,
-        asset_id,
-        tenant_id
     )
+    .bind(asset_id)
+    .bind(tenant_id)
     .execute(&ctx.pool)
     .await
     .expect("Failed to insert asset");
@@ -138,48 +138,53 @@ async fn test_postgres_ledger_batch_insert() {
     let account_id = Uuid::new_v4();
     let event_id = Uuid::new_v4();
 
-    sqlx::query!(
+    sqlx::query(
         r#"
         INSERT INTO "Tenant" (id, name, "createdAt", "updatedAt") 
         VALUES ($1, 'Test Tenant', now(), now())
     "#,
-        tenant_id
     )
+    .bind(tenant_id)
     .execute(&ctx.pool)
     .await
     .expect("Failed to insert tenant");
 
-    sqlx::query!(
+    sqlx::query(
         r#"
         INSERT INTO "Account" (id, "tenantId", type, name, "createdAt", "updatedAt") 
         VALUES ($1, $2, 'USER', 'Test Account', now(), now())
     "#,
-        account_id,
-        tenant_id
     )
+    .bind(account_id)
+    .bind(tenant_id)
     .execute(&ctx.pool)
     .await
     .expect("Failed to insert account");
 
     // Insert LedgerEvent manually
-    sqlx::query!(r#"
+    sqlx::query(
+        r#"
         INSERT INTO "LedgerEvent" (id, "tenantId", type, "referenceId", "referenceType", status, description, meta, "createdAt", "updatedAt")
         VALUES ($1, $2, 'trade', 'ref-123', 'trade', 'completed', 'desc', '{}', now(), now())
-    "#, event_id, tenant_id)
-    .execute(&ctx.pool).await.expect("Failed to insert asset");
+    "#
+    )
+        .bind(event_id)
+        .bind(tenant_id)
+        .execute(&ctx.pool).await
+        .expect("Failed to insert asset");
 
     // Create entries
     let mut entries = Vec::new();
     for i in 0..10 {
         entries.push(LedgerEntry {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: tenant_id.to_string(),
-            event_id: event_id.to_string(),
-            account_id: account_id.to_string(),
-            amount: format!("{}.00", i + 1),
-            meta: "{}".to_string(),
-            created_at: Utc::now().timestamp_millis(),
-            updated_at: Utc::now().timestamp_millis(),
+            id: Uuid::new_v4(),
+            tenant_id,
+            event_id,
+            account_id,
+            amount: Decimal::from(i + 1),
+            meta: serde_json::json!({}),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         });
     }
 
@@ -201,14 +206,13 @@ async fn test_postgres_ledger_batch_insert() {
         .expect("Failed to commit tx");
 
     // Verify
-    let count: i64 = sqlx::query_scalar!(
+    let count: i64 = sqlx::query_scalar::<_, i64>(
         r#"SELECT count(*) as count FROM "LedgerEntry" WHERE "eventId" = $1"#,
-        event_id
     )
+    .bind(event_id)
     .fetch_one(&ctx.pool)
     .await
-    .expect("Failed to fetch count")
-    .unwrap_or(0);
+    .expect("Failed to fetch count");
 
     assert_eq!(count, 10);
 }

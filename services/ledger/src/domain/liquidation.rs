@@ -1,5 +1,6 @@
 use crate::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
 use crate::domain::orders::service::OrderService;
+use crate::domain::utils::parse;
 use crate::domain::wallets::WalletService;
 /// Forced liquidation and insurance fund services.
 ///
@@ -8,13 +9,8 @@ use crate::domain::wallets::WalletService;
 ///                            insufficient to repay the debt.
 use crate::error::Result;
 use rust_decimal::Decimal;
-use std::str::FromStr;
 use std::sync::Arc;
 use uuid::Uuid;
-
-fn parse(s: &str) -> Decimal {
-    Decimal::from_str(s).unwrap_or_default()
-}
 
 // ─── LiquidationReport ───────────────────────────────────────────────────────
 
@@ -87,7 +83,7 @@ impl LiquidationService {
             .get_wallet_by_account_and_asset(&account_id.to_string(), asset_id)
             .await?
         {
-            let locked = parse(&w.locked);
+            let locked = parse(&w.locked)?;
             if locked > Decimal::ZERO {
                 // Place Market Sell Order if OrderService is available
                 if let (Some(order_svc), Some(instr_id)) = (&self.order_service, instrument_id) {
@@ -107,7 +103,7 @@ impl LiquidationService {
 
                     // Unlock funds first to allow OrderService to re-lock them
                     w.locked = Decimal::ZERO.to_string();
-                    w.available = (parse(&w.available) + locked).to_string();
+                    w.available = (parse(&w.available)? + locked).to_string();
                     w.updated_at = chrono::Utc::now().timestamp_millis();
                     self.wallet_service.update_wallet(w.clone()).await?;
 
@@ -122,7 +118,7 @@ impl LiquidationService {
                 } else {
                     // Legacy behavior: just unlock
                     w.locked = Decimal::ZERO.to_string();
-                    w.available = (parse(&w.available) + locked).to_string();
+                    w.available = (parse(&w.available)? + locked).to_string();
                     w.updated_at = chrono::Utc::now().timestamp_millis();
                     self.wallet_service.update_wallet(w).await?;
                 }
@@ -154,12 +150,14 @@ impl LiquidationService {
         asset_id: &str,
         maintenance: Decimal,
     ) -> Result<()> {
-        let equity = self
+        let equity = match self
             .wallet_service
             .get_wallet_by_account_and_asset(&account_id.to_string(), asset_id)
             .await?
-            .map(|w| parse(&w.total))
-            .unwrap_or_default();
+        {
+            Some(w) => parse(&w.total)?,
+            None => Decimal::ZERO,
+        };
 
         if equity >= maintenance {
             return Ok(());
@@ -176,12 +174,14 @@ impl LiquidationService {
         asset_id: &str,
         maintenance: Decimal,
     ) -> Result<()> {
-        let equity = self
+        let equity = match self
             .wallet_service
             .get_wallet_by_account_and_asset(&account_id.to_string(), asset_id)
             .await?
-            .map(|w| parse(&w.total))
-            .unwrap_or_default();
+        {
+            Some(w) => parse(&w.total)?,
+            None => Decimal::ZERO,
+        };
 
         if equity < maintenance {
             self.full_liquidate(account_id, asset_id).await?;
@@ -198,10 +198,10 @@ impl LiquidationService {
             .get_wallet_by_account_and_asset(account, asset)
             .await?
         {
-            let locked = parse(&w.locked);
+            let locked = parse(&w.locked)?;
             if locked > Decimal::ZERO {
                 w.locked = Decimal::ZERO.to_string();
-                w.total = (parse(&w.total) - locked).max(Decimal::ZERO).to_string();
+                w.total = (parse(&w.total)? - locked).max(Decimal::ZERO).to_string();
                 w.updated_at = chrono::Utc::now().timestamp_millis();
                 self.wallet_service.update_wallet(w).await?;
             }
@@ -217,10 +217,10 @@ impl LiquidationService {
             .get_wallet_by_account_and_asset(account, asset)
             .await?
         {
-            let locked = parse(&w.locked);
+            let locked = parse(&w.locked)?;
             if locked > Decimal::ZERO {
                 recovered = locked;
-                w.available = (parse(&w.available) + locked).to_string();
+                w.available = (parse(&w.available)? + locked).to_string();
                 w.locked = Decimal::ZERO.to_string();
                 w.updated_at = chrono::Utc::now().timestamp_millis();
                 self.wallet_service.update_wallet(w).await?;
@@ -255,8 +255,8 @@ impl InsuranceFundService {
             .get_wallet_by_account_and_asset(&insurance_account_id.to_string(), asset_id)
             .await?
         {
-            let available = parse(&w.available);
-            let total = parse(&w.total);
+            let available = parse(&w.available)?;
+            let total = parse(&w.total)?;
             let deduct = shortfall.min(available);
             w.available = (available - deduct).to_string();
             w.total = (total - deduct).to_string();

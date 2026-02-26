@@ -1,7 +1,7 @@
 use super::handler::InstrumentHandler;
+use crate::domain::instruments::model::Instrument;
 use crate::domain::orders::model::{Order, OrderSide};
 use crate::error::Result;
-use crate::proto::common::Instrument;
 use rust_decimal::Decimal;
 
 pub struct SpotHandler;
@@ -9,9 +9,9 @@ pub struct SpotHandler;
 impl InstrumentHandler for SpotHandler {
     fn identify_collateral_asset(&self, order: &Order, instrument: &Instrument) -> Result<String> {
         if order.side == OrderSide::Buy {
-            Ok(instrument.quote_asset_id.clone())
+            Ok(instrument.quote_asset_id.to_string())
         } else {
-            Ok(instrument.underlying_asset_id.clone())
+            Ok(instrument.underlying_asset_id.to_string())
         }
     }
 

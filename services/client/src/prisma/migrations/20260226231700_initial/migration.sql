@@ -223,9 +223,9 @@ CREATE TABLE "Wallet" (
     "archivedAt" TIMESTAMPTZ(3),
     "archivedByMembershipId" UUID,
     "importHash" TEXT,
-    "available" DECIMAL(72,0),
-    "locked" DECIMAL(72,0),
-    "total" DECIMAL(72,0),
+    "available" DECIMAL(72,20),
+    "locked" DECIMAL(72,20),
+    "total" DECIMAL(72,20),
     "version" INTEGER,
     "meta" JSONB,
     "userId" UUID,
@@ -250,9 +250,9 @@ CREATE TABLE "Order" (
     "importHash" TEXT,
     "side" TEXT,
     "type" TEXT,
-    "price" DECIMAL(72,30),
-    "quantity" DECIMAL(72,0),
-    "quantityFilled" DECIMAL(72,0),
+    "price" DECIMAL(72,20),
+    "quantity" DECIMAL(72,20),
+    "quantityFilled" DECIMAL(72,20),
     "status" TEXT,
     "timeInFore" TEXT,
     "meta" JSONB,
@@ -276,9 +276,13 @@ CREATE TABLE "Fill" (
     "archivedByMembershipId" UUID,
     "importHash" TEXT,
     "side" TEXT NOT NULL,
-    "price" DECIMAL(72,30) NOT NULL,
-    "quantity" DECIMAL(72,0) NOT NULL,
-    "fee" DECIMAL(72,0),
+    "price" DECIMAL(72,20) NOT NULL,
+    "quantity" DECIMAL(72,20) NOT NULL,
+    "fee" DECIMAL(72,20),
+    "role" TEXT NOT NULL,
+    "feeCurrency" TEXT NOT NULL,
+    "instrumentId" UUID NOT NULL,
+    "orderId" UUID NOT NULL,
     "meta" JSONB,
     "tradeId" UUID,
 
@@ -298,8 +302,8 @@ CREATE TABLE "Trade" (
     "archivedAt" TIMESTAMPTZ(3),
     "archivedByMembershipId" UUID,
     "importHash" TEXT,
-    "price" DECIMAL(72,30),
-    "quantity" DECIMAL(72,0),
+    "price" DECIMAL(72,20),
+    "quantity" DECIMAL(72,20),
     "meta" JSONB,
     "instrumentId" UUID,
 
@@ -392,9 +396,9 @@ CREATE TABLE "BalanceSnapshot" (
     "archivedAt" TIMESTAMPTZ(3),
     "archivedByMembershipId" UUID,
     "importHash" TEXT,
-    "available" DECIMAL(72,0),
-    "locked" DECIMAL(72,0),
-    "total" DECIMAL(72,0),
+    "available" DECIMAL(72,20),
+    "locked" DECIMAL(72,20),
+    "total" DECIMAL(72,20),
     "snapshotAt" TIMESTAMPTZ(3),
     "meta" JSONB,
     "accountId" UUID,
@@ -1211,6 +1215,12 @@ ALTER TABLE "Fill" ADD CONSTRAINT "Fill_updatedByMembershipId_fkey" FOREIGN KEY 
 
 -- AddForeignKey
 ALTER TABLE "Fill" ADD CONSTRAINT "Fill_archivedByMembershipId_fkey" FOREIGN KEY ("archivedByMembershipId") REFERENCES "Membership"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Fill" ADD CONSTRAINT "Fill_instrumentId_fkey" FOREIGN KEY ("instrumentId") REFERENCES "Instrument"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Fill" ADD CONSTRAINT "Fill_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Fill" ADD CONSTRAINT "Fill_tradeId_fkey" FOREIGN KEY ("tradeId") REFERENCES "Trade"("id") ON DELETE SET NULL ON UPDATE CASCADE;

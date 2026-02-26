@@ -1,12 +1,11 @@
+use crate::domain::ledger::model::LedgerEntry;
 use crate::domain::transaction::RepositoryTransaction;
 use crate::error::{AppError, Result};
 use crate::proto::common;
 use async_trait::async_trait;
 use chrono::Utc;
-use common::LedgerEntry;
 pub use common::Wallet;
 use rust_decimal::Decimal;
-use serde_json::Value;
 use std::fmt::Debug;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -146,14 +145,13 @@ impl WalletService {
     }
 
     pub async fn process_ledger_entry(&self, entry: LedgerEntry) -> Result<()> {
-        let meta: Value = serde_json::from_str(&entry.meta)
-            .map_err(|e| AppError::Internal(format!("Failed to parse ledger entry meta: {}", e)))?;
+        let meta = &entry.meta;
         let asset = meta["asset"].as_str().ok_or(AppError::ValidationError(
             "Missing asset in ledger entry metadata".into(),
         ))?;
 
         if let Some(mut wallet) = self
-            .get_wallet_by_account_and_asset(&entry.account_id, asset)
+            .get_wallet_by_account_and_asset(&entry.account_id.to_string(), asset)
             .await?
         {
             Self::update_wallet_from_entry(&mut wallet, &entry)?;
@@ -171,15 +169,14 @@ impl WalletService {
         tx: &mut dyn RepositoryTransaction,
         entry: LedgerEntry,
     ) -> Result<()> {
-        let meta: Value = serde_json::from_str(&entry.meta)
-            .map_err(|e| AppError::Internal(format!("Failed to parse ledger entry meta: {}", e)))?;
+        let meta = &entry.meta;
         let asset = meta["asset"].as_str().ok_or(AppError::ValidationError(
             "Missing asset in ledger entry metadata".into(),
         ))?;
 
         if let Some(mut wallet) = self
             .repo
-            .get_by_account_and_asset_for_update(tx, &entry.account_id, asset)
+            .get_by_account_and_asset_for_update(tx, &entry.account_id.to_string(), asset)
             .await?
         {
             Self::update_wallet_from_entry(&mut wallet, &entry)?;
@@ -191,13 +188,11 @@ impl WalletService {
     }
 
     fn update_wallet_from_entry(wallet: &mut Wallet, entry: &LedgerEntry) -> Result<()> {
-        let meta: Value = serde_json::from_str(&entry.meta)
-            .map_err(|e| AppError::Internal(format!("Failed to parse ledger entry meta: {}", e)))?;
+        let meta = &entry.meta;
         let entry_type = meta["type"].as_str().ok_or(AppError::ValidationError(
             "Missing type in ledger entry metadata".into(),
         ))?;
-        let entry_amount = Decimal::from_str(&entry.amount)
-            .map_err(|_| AppError::ValidationError("Invalid ledger entry amount".into()))?;
+        let entry_amount = entry.amount;
 
         let current_available = Decimal::from_str(&wallet.available)
             .map_err(|_| AppError::Internal("Invalid available balance in wallet".into()))?;
@@ -267,16 +262,21 @@ mod tests {
         let repo = Arc::new(InMemoryWalletRepository::new());
         let service = WalletService::new(repo);
 
+        let account_id = Uuid::new_v4();
         let wallet = service
-            .create_new_wallet("acc-123".to_string(), "BTC".to_string())
+            .create_new_wallet(account_id.to_string(), "BTC".to_string())
             .await
             .unwrap();
 
         let entry = LedgerEntry {
-            account_id: "acc-123".to_string(),
-            amount: "1.5".to_string(),
-            meta: serde_json::json!({"asset": "BTC", "type": "credit"}).to_string(),
-            ..Default::default()
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            event_id: Uuid::new_v4(),
+            account_id,
+            amount: Decimal::from_str("1.5").unwrap(),
+            meta: serde_json::json!({"asset": "BTC", "type": "credit"}),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         };
 
         service.process_ledger_entry(entry).await.unwrap();
@@ -292,8 +292,9 @@ mod tests {
         let repo = Arc::new(InMemoryWalletRepository::new());
         let service = WalletService::new(repo);
 
+        let account_id = Uuid::new_v4();
         let mut wallet = service
-            .create_new_wallet("acc-123".to_string(), "BTC".to_string())
+            .create_new_wallet(account_id.to_string(), "BTC".to_string())
             .await
             .unwrap();
         wallet.available = "10.0".to_string();
@@ -302,10 +303,14 @@ mod tests {
         service.update_wallet(wallet.clone()).await.unwrap();
 
         let entry = LedgerEntry {
-            account_id: "acc-123".to_string(),
-            amount: "-2.0".to_string(),
-            meta: serde_json::json!({"asset": "BTC", "type": "debit"}).to_string(),
-            ..Default::default()
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            event_id: Uuid::new_v4(),
+            account_id,
+            amount: Decimal::from_str("-2.0").unwrap(),
+            meta: serde_json::json!({"asset": "BTC", "type": "debit"}),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         };
 
         service.process_ledger_entry(entry).await.unwrap();

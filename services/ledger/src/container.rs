@@ -8,7 +8,7 @@ use crate::domain::{
     assets::AssetService,
     borrow::BorrowService,
     corporate_actions::CorporateActionService,
-    deposits::DepositService,
+    deposits::{DepositService, InMemoryDepositRepository},
     exercise::ExerciseService,
     fees::service::StandardFeeService,
     fills::service::FillService,
@@ -21,11 +21,12 @@ use crate::domain::{
     orders::service::OrderService,
     position_limits::{PositionLimitConfig, PositionLimitService},
     settlement::service::SettlementService,
-    users::UserService,
+    users::{InMemoryUserRepository, UserService},
     wallets::WalletService,
     withdrawals::WithdrawalService,
 };
 use crate::infra::matching_gateway::GrpcMatchingGateway;
+use crate::infra::repositories::memory::withdrawal::InMemoryWithdrawalRepository;
 use crate::infra::repositories::{
     PostgresAccountRepository, PostgresAssetRepository, PostgresFillRepository,
     PostgresInstrumentRepository, PostgresLedgerRepository, PostgresOrderRepository,
@@ -71,13 +72,16 @@ impl Services {
         let wallet_repo = Arc::new(PostgresWalletRepository::new(db_pool.clone()));
         let account_repo = Arc::new(PostgresAccountRepository::new(db_pool.clone()));
         let instrument_repo = Arc::new(PostgresInstrumentRepository::new(db_pool.clone()));
+        let user_repo = Arc::new(InMemoryUserRepository::new());
+        let deposit_repo = Arc::new(InMemoryDepositRepository::new());
+        let withdrawal_repo = Arc::new(InMemoryWithdrawalRepository::new());
 
         // 2. Domain Services (Business Logic Layer)
-        let user_svc = Arc::new(UserService::new());
-        let deposit_svc = Arc::new(DepositService::new());
+        let user_svc = Arc::new(UserService::new(user_repo));
+        let deposit_svc = Arc::new(DepositService::new(deposit_repo));
         let fee_svc = Arc::new(StandardFeeService::new());
         let fill_svc = Arc::new(FillService::new(fill_repo));
-        let withdrawal_svc = Arc::new(WithdrawalService::new());
+        let withdrawal_svc = Arc::new(WithdrawalService::new(withdrawal_repo));
         let wallet_svc = Arc::new(WalletService::new(wallet_repo));
         let account_svc = Arc::new(AccountService::new(account_repo.clone()));
         let asset_svc = Arc::new(AssetService::new(

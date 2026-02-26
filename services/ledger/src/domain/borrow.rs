@@ -1,3 +1,4 @@
+use crate::domain::utils::parse;
 use crate::domain::wallets::WalletService;
 /// Short-selling borrow service.
 ///
@@ -7,13 +8,8 @@ use crate::domain::wallets::WalletService;
 use crate::error::{AppError, Result};
 use chrono::Utc;
 use rust_decimal::Decimal;
-use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
-
-fn parse(s: &str) -> Decimal {
-    Decimal::from_str(s).unwrap_or_default()
-}
 
 /// Represents an open borrow position.
 #[derive(Clone, Debug)]
@@ -63,8 +59,8 @@ impl BorrowService {
             .get_wallet_by_account_and_asset(&account_id.to_string(), collateral_asset_id)
             .await?
         {
-            let available = parse(&w.available);
-            let locked = parse(&w.locked);
+            let available = parse(&w.available)?;
+            let locked = parse(&w.locked)?;
             if available < collateral {
                 return Err(AppError::InsufficientFunds {
                     asset: collateral_asset_id.to_string(),
@@ -91,8 +87,8 @@ impl BorrowService {
             .get_wallet_by_account_and_asset(&account_id.to_string(), asset_id)
             .await?
         {
-            w.available = (parse(&w.available) + qty).to_string();
-            w.total = (parse(&w.total) + qty).to_string();
+            w.available = (parse(&w.available)? + qty).to_string();
+            w.total = (parse(&w.total)? + qty).to_string();
             w.updated_at = Utc::now().timestamp_millis();
             self.wallet_service.update_wallet(w).await?;
         } else {
@@ -113,7 +109,10 @@ impl BorrowService {
             collateral,
             created_at: Utc::now().timestamp_millis(),
         };
-        self.borrows.lock().unwrap().push(borrow.clone());
+        self.borrows
+            .lock()
+            .map_err(|_| AppError::Internal("Failed to lock borrows".into()))?
+            .push(borrow.clone());
         Ok(borrow)
     }
 
@@ -122,7 +121,10 @@ impl BorrowService {
     /// The net amount returned = collateral - borrow_fee.
     pub async fn close_borrow(&self, borrow_id: Uuid, borrow_fee: Decimal) -> Result<()> {
         let borrow = {
-            let borrows = self.borrows.lock().unwrap();
+            let borrows = self
+                .borrows
+                .lock()
+                .map_err(|_| AppError::Internal("Failed to lock borrows".into()))?;
             borrows.iter().find(|b| b.id == borrow_id).cloned()
         };
 
@@ -135,8 +137,8 @@ impl BorrowService {
             .get_wallet_by_account_and_asset(&borrow.account_id.to_string(), &borrow.asset_id)
             .await?
         {
-            let available = parse(&w.available);
-            let total = parse(&w.total);
+            let available = parse(&w.available)?;
+            let total = parse(&w.total)?;
             if available < borrow.qty {
                 return Err(AppError::InsufficientFunds {
                     asset: borrow.asset_id.to_string(),
@@ -159,9 +161,9 @@ impl BorrowService {
             )
             .await?
         {
-            let locked = parse(&w.locked);
-            let available = parse(&w.available);
-            let total = parse(&w.total);
+            let locked = parse(&w.locked)?;
+            let available = parse(&w.available)?;
+            let total = parse(&w.total)?;
             let release = (borrow.collateral - borrow_fee).max(Decimal::ZERO);
             let net_deduct = borrow.collateral - release; // = borrow_fee capped at collateral
 
@@ -173,14 +175,17 @@ impl BorrowService {
         }
 
         // Remove the borrow record
-        self.borrows.lock().unwrap().retain(|b| b.id != borrow_id);
+        self.borrows
+            .lock()
+            .map_err(|_| AppError::Internal("Failed to lock borrows".into()))?
+            .retain(|b| b.id != borrow_id);
         Ok(())
     }
 
     pub fn get_borrow(&self, borrow_id: Uuid) -> Option<Borrow> {
         self.borrows
             .lock()
-            .unwrap()
+            .ok()?
             .iter()
             .find(|b| b.id == borrow_id)
             .cloned()

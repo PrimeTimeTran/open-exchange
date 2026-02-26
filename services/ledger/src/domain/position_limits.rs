@@ -1,3 +1,4 @@
+use crate::domain::utils::parse;
 /// Position limit enforcement service.
 ///
 /// Provides configurable checks for:
@@ -11,10 +12,6 @@
 use crate::error::{AppError, Result};
 use rust_decimal::Decimal;
 use std::str::FromStr;
-
-fn parse(s: &str) -> Decimal {
-    Decimal::from_str(s).unwrap_or_default()
-}
 
 /// Configuration for a `PositionLimitService` instance.
 #[derive(Clone, Debug)]
@@ -32,9 +29,9 @@ pub struct PositionLimitConfig {
 impl Default for PositionLimitConfig {
     fn default() -> Self {
         Self {
-            max_order_size: parse("10000000000"), // 100 BTC (8 decimals)
-            max_notional_per_account: parse("50000000"), // $500,000 (2 decimals)
-            max_open_interest: parse("100000000000"), // 1,000 BTC (8 decimals)
+            max_order_size: parse("10000000000").unwrap(), // 100 BTC (8 decimals)
+            max_notional_per_account: parse("50000000").unwrap(), // $500,000 (2 decimals)
+            max_open_interest: parse("100000000000").unwrap(), // 1,000 BTC (8 decimals)
             max_concentration: Decimal::from_str("1.00").unwrap(), // 100% (effectively disabled for standard)
         }
     }

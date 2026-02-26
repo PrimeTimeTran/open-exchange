@@ -54,12 +54,12 @@ async fn test_process_trade_creates_entries() {
     let find_entry = |account_id: String, amount: &str, partial_meta: &str| {
         entries.iter().find(|e| {
             // Normalize decimal strings by parsing
-            let e_amount: f64 = e.amount.parse().unwrap_or(0.0);
+            let e_amount = f64::from_str(&e.amount.to_string()).unwrap_or(0.0);
             let target_amount: f64 = amount.parse().unwrap_or(0.0);
 
-            e.account_id == account_id
+            e.account_id.to_string() == account_id
                 && (e_amount - target_amount).abs() < 0.000001
-                && e.meta.contains(partial_meta)
+                && e.meta.to_string().contains(partial_meta)
         })
     };
 
@@ -159,8 +159,7 @@ async fn test_ledger_entries_must_balance() {
 
     for entry in entries {
         // Parse metadata to get asset
-        let meta: serde_json::Value =
-            serde_json::from_str(&entry.meta).expect("Failed to parse meta");
+        let meta = &entry.meta;
         let asset = meta
             .get("asset")
             .expect("Meta missing asset field")
@@ -169,7 +168,7 @@ async fn test_ledger_entries_must_balance() {
             .to_string();
 
         // Parse amount
-        let amount: f64 = entry.amount.parse().expect("Failed to parse amount");
+        let amount = f64::from_str(&entry.amount.to_string()).expect("Failed to parse amount");
 
         *balances.entry(asset).or_insert(0.0) += amount;
     }
@@ -227,9 +226,10 @@ async fn test_order_placement_locks_funds() {
     );
 
     let find_entry = |partial_type: &str, amount: f64| {
-        entries
-            .iter()
-            .find(|e| e.meta.contains(partial_type) && e.amount.parse::<f64>().unwrap() == amount)
+        entries.iter().find(|e| {
+            e.meta.to_string().contains(partial_type)
+                && f64::from_str(&e.amount.to_string()).unwrap() == amount
+        })
     };
 
     // Check Debit Available
@@ -249,7 +249,7 @@ async fn test_order_placement_locks_funds() {
     // 6. Verify Balance (Total change should be 0)
     let total_change: f64 = entries
         .iter()
-        .map(|e| e.amount.parse::<f64>().unwrap())
+        .map(|e| f64::from_str(&e.amount.to_string()).unwrap())
         .sum();
     assert_eq!(total_change, 0.0, "Total balance change should be zero");
 }

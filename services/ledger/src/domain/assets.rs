@@ -1,6 +1,9 @@
+pub mod model;
+
+use crate::domain::assets::model::Asset;
+use crate::domain::instruments::model::Instrument;
 use crate::error::Result;
 use crate::infra::repositories::{AssetRepository, InstrumentRepository};
-use crate::proto::common;
 use chrono::Utc;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -22,17 +25,15 @@ impl AssetService {
         }
     }
 
-    pub async fn get_asset(&self, id: &str) -> Result<Option<common::Asset>> {
-        let uuid = Uuid::parse_str(id)
-            .map_err(|_| crate::error::AppError::ValidationError("Invalid asset ID".into()))?;
-        self.repo.get(uuid).await
+    pub async fn get_asset(&self, id: Uuid) -> Result<Option<Asset>> {
+        self.repo.get(id).await
     }
 
-    pub async fn get_asset_by_symbol(&self, symbol: &str) -> Result<Option<common::Asset>> {
+    pub async fn get_asset_by_symbol(&self, symbol: &str) -> Result<Option<Asset>> {
         self.repo.get_by_symbol(symbol).await
     }
 
-    pub async fn list_assets(&self) -> Result<Vec<common::Asset>> {
+    pub async fn list_assets(&self) -> Result<Vec<Asset>> {
         self.repo.list().await
     }
 
@@ -41,22 +42,20 @@ impl AssetService {
         symbol: String,
         asset_type: String,
         precision: i32,
-    ) -> common::Asset {
-        // Warning: This is now broken/stubbed until we implement AssetRepository::create
-        let asset = common::Asset {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: "default".to_string(),
+    ) -> Result<Asset> {
+        let asset = Asset {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::nil(),
             symbol,
-            klass: asset_type,
-            precision,
-            is_fractional: true,
+            r#type: asset_type,
             decimals: precision,
-            meta: "{}".to_string(),
-            created_at: Utc::now().timestamp_millis(),
-            updated_at: Utc::now().timestamp_millis(),
+            meta: serde_json::json!({}),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         };
 
-        self.repo.create(asset.clone()).await.unwrap_or(asset)
+        self.repo.create(asset.clone()).await?;
+        Ok(asset)
     }
 
     pub async fn create_new_instrument(
@@ -65,29 +64,28 @@ impl AssetService {
         instrument_type: String,
         base_id: String,
         quote_id: String,
-    ) -> common::Instrument {
-        let instrument = common::Instrument {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: "default".to_string(),
+    ) -> Result<Instrument> {
+        let instrument = Instrument {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::nil(),
             symbol,
             r#type: instrument_type,
             status: "active".to_string(),
-            underlying_asset_id: base_id,
-            quote_asset_id: quote_id,
-            meta: "{}".to_string(),
-            created_at: Utc::now().timestamp_millis(),
-            updated_at: Utc::now().timestamp_millis(),
+            underlying_asset_id: Uuid::parse_str(&base_id).map_err(|_| {
+                crate::error::AppError::ValidationError("Invalid instrument ID".into())
+            })?,
+            quote_asset_id: Uuid::parse_str(&quote_id).map_err(|_| {
+                crate::error::AppError::ValidationError("Invalid instrument ID".into())
+            })?,
+            meta: serde_json::json!({}),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         };
 
-        // We unwrap here to match the previous signature that didn't return Result
-        // In a real app we should propagate the error
-        self.instrument_repo
-            .create(instrument.clone())
-            .await
-            .unwrap_or(instrument)
+        self.instrument_repo.create(instrument).await
     }
 
-    pub async fn get_instrument(&self, id: &str) -> Result<Option<common::Instrument>> {
+    pub async fn get_instrument(&self, id: &str) -> Result<Option<Instrument>> {
         let uuid = Uuid::parse_str(id)
             .map_err(|_| crate::error::AppError::ValidationError("Invalid instrument ID".into()))?;
         self.instrument_repo.get(uuid).await

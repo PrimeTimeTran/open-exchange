@@ -1,7 +1,8 @@
+use crate::domain::trade::model::Trade;
 use crate::domain::transaction::RepositoryTransaction;
 use crate::error::Result;
-use crate::proto::common::Trade;
 use async_trait::async_trait;
+use uuid::Uuid;
 
 #[async_trait]
 pub trait TradeRepository: Send + Sync {
@@ -11,10 +12,10 @@ pub trait TradeRepository: Send + Sync {
         tx: &mut dyn RepositoryTransaction,
         trade: Trade,
     ) -> Result<Trade>;
-    async fn get(&self, id: &str) -> Result<Option<Trade>>;
+    async fn get(&self, id: Uuid) -> Result<Option<Trade>>;
     async fn get_with_tx(
         &self,
         tx: &mut dyn RepositoryTransaction,
-        id: &str,
+        id: Uuid,
     ) -> Result<Option<Trade>>;
 }

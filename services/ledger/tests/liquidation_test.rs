@@ -13,7 +13,7 @@
 ///   - Insurance fund account pre-seeded in the ledger
 mod helpers;
 use helpers::memory::InMemoryTestContext;
-use helpers::{to_atomic_btc, to_atomic_usd};
+use helpers::{ to_atomic_btc, to_atomic_usd };
 use ledger::domain::orders::OrderRepository;
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
@@ -31,7 +31,10 @@ use std::str::FromStr;
 /// Assert: after partial liquidation, account equity >= maintenance_margin;
 ///         not all positions are closed
 #[tokio::test]
-async fn test_partial_liquidation_restores_account_above_maintenance() {
+async fn test_partial_liquidation_restores_account_above_maintenance() -> Result<
+    (),
+    Box<dyn std::error::Error>
+> {
     let ctx = InMemoryTestContext::new();
 
     // Account has two positions; only one needs to be liquidated
@@ -42,39 +45,35 @@ async fn test_partial_liquidation_restores_account_above_maintenance() {
     ctx.create_wallet(
         ctx.account_a,
         &ctx.usd_id.to_string(),
-        (maintenance - to_atomic_usd(100.0)).to_f64().unwrap(),
+        (maintenance - to_atomic_usd(100.0)).to_f64().ok_or("Invalid decimal")?,
         0.0,
-        (maintenance - to_atomic_usd(100.0)).to_f64().unwrap(),
+        (maintenance - to_atomic_usd(100.0)).to_f64().ok_or("Invalid decimal")?
     );
 
     // Simulate open position: Lock 4,000 USD
-    let mut w = ctx
-        .wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await
-        .unwrap()
-        .unwrap();
+    let mut w = ctx.wallet_service
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await
+        .expect("Failed to fetch wallet")
+        .expect("Wallet not found");
     w.locked = to_atomic_usd(4000.0).to_string();
-    w.available = (Decimal::from_str(&w.total).unwrap() - to_atomic_usd(4000.0)).to_string();
-    ctx.wallet_service.update_wallet(w).await.unwrap();
+    w.available = (Decimal::from_str(&w.total)? - to_atomic_usd(4000.0)).to_string();
+    ctx.wallet_service.update_wallet(w).await.expect("Failed to update wallet");
 
     ctx.liquidation_service
-        .partial_liquidate(ctx.account_a, &ctx.usd_id.to_string(), maintenance)
-        .await
-        .unwrap();
+        .partial_liquidate(ctx.account_a, &ctx.usd_id.to_string(), maintenance).await
+        .expect("Failed to partial liquidate");
 
-    let usd_wallet = ctx
-        .wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await
-        .unwrap()
-        .unwrap();
+    let usd_wallet = ctx.wallet_service
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await
+        .expect("Failed to fetch wallet")
+        .expect("Wallet not found");
 
     // Check that some funds were released (liquidated)
     assert!(
-        Decimal::from_str(&usd_wallet.locked).unwrap() < to_atomic_usd(4000.0),
+        Decimal::from_str(&usd_wallet.locked)? < to_atomic_usd(4000.0),
         "Locked funds should decrease after partial liquidation"
     );
+    Ok(())
 }
 
 /// Test: Full Liquidation When Equity Is Near Zero
@@ -85,7 +84,7 @@ async fn test_partial_liquidation_restores_account_above_maintenance() {
 ///
 /// Assert: all positions closed; locked = 0; account at zero or minimal residual
 #[tokio::test]
-async fn test_full_liquidation_at_near_zero_equity() {
+async fn test_full_liquidation_at_near_zero_equity() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = InMemoryTestContext::new();
 
     // Account has near-zero equity — deeply underwater
@@ -94,28 +93,26 @@ async fn test_full_liquidation_at_near_zero_equity() {
         ctx.account_a,
         &ctx.usd_id.to_string(),
         0.0,
-        near_zero.to_f64().unwrap(),
-        near_zero.to_f64().unwrap(),
+        near_zero.to_f64().ok_or("Invalid decimal")?,
+        near_zero.to_f64().ok_or("Invalid decimal")?
     );
     ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
 
     ctx.liquidation_service
-        .full_liquidate(ctx.account_a, &ctx.usd_id.to_string())
-        .await
-        .unwrap();
+        .full_liquidate(ctx.account_a, &ctx.usd_id.to_string()).await
+        .expect("Failed to full liquidate");
 
-    let usd_wallet = ctx
-        .wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await
-        .unwrap()
-        .unwrap();
+    let usd_wallet = ctx.wallet_service
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await
+        .expect("Failed to fetch wallet")
+        .expect("Wallet not found");
 
     assert_eq!(
-        Decimal::from_str(&usd_wallet.locked).unwrap(),
+        Decimal::from_str(&usd_wallet.locked)?,
         Decimal::ZERO,
         "All locked funds must be released after full liquidation"
     );
+    Ok(())
 }
 
 /// Test: Liquidation Orders Are Market Type, Not Limit
@@ -127,7 +124,7 @@ async fn test_full_liquidation_at_near_zero_equity() {
 ///
 /// Assert: all auto-generated liquidation orders have type = Market
 #[tokio::test]
-async fn test_liquidation_order_is_market_not_limit() {
+async fn test_liquidation_order_is_market_not_limit() -> Result<(), Box<dyn std::error::Error>> {
     use ledger::domain::orders::model::OrderType;
     use ledger::proto::ledger::asset_service_server::AssetService as AssetServiceTrait;
     use ledger::proto::ledger::CreateInstrumentRequest;
@@ -147,38 +144,30 @@ async fn test_liquidation_order_is_market_not_limit() {
             quote_asset_id: usd_id.clone(),
         });
         ctx.asset_api
-            .create_instrument(req)
-            .await
-            .unwrap()
+            .create_instrument(req).await
+            .expect("Failed to create instrument")
             .into_inner()
-            .instrument
-            .unwrap()
-            .id
+            .instrument.expect("Instrument response missing instrument").id
     };
-    let instr_liq_uuid = uuid::Uuid::parse_str(&instr_liq_id).unwrap();
+    let instr_liq_uuid = uuid::Uuid::parse_str(&instr_liq_id)?;
 
     ctx.create_wallet(ctx.account_a, &usd_id, 0.0, 0.0, 0.0);
     // Lock 100 units to be liquidated (Decimals=0, so Atomic=Standard=100)
     ctx.create_wallet(ctx.account_a, &btc_liq_id, 0.0, 100.0, 100.0);
 
     // Call liquidate with instrument_id
-    let _report = ctx
-        .liquidation_service
-        .liquidate(ctx.account_a, &btc_liq_id, Some(instr_liq_uuid))
-        .await
-        .unwrap();
+    let _report = ctx.liquidation_service
+        .liquidate(ctx.account_a, &btc_liq_id, Some(instr_liq_uuid)).await
+        .expect("Failed to liquidate");
 
     // assert orders created
-    let all_orders = ctx.order_repo.list_open().await.unwrap();
+    let all_orders = ctx.order_repo.list_open().await?;
     let liq_orders: Vec<_> = all_orders
         .iter()
         .filter(|o| o.account_id == ctx.account_a)
         .collect();
 
-    assert!(
-        !liq_orders.is_empty(),
-        "Should have created a liquidation order"
-    );
+    assert!(!liq_orders.is_empty(), "Should have created a liquidation order");
 
     for order in liq_orders {
         assert_eq!(
@@ -187,6 +176,7 @@ async fn test_liquidation_order_is_market_not_limit() {
             "Liquidation orders must be Market type, not Limit"
         );
     }
+    Ok(())
 }
 
 /// Test: Insurance Fund Covers Liquidation Shortfall
@@ -211,8 +201,7 @@ async fn test_insurance_fund_covers_liquidation_shortfall() {
     let shortfall = debt - recovered;
 
     // Seed insurance fund with enough to cover
-    let insurance_account = ctx
-        .account_repo
+    let insurance_account = ctx.account_repo
         .get_by_name("fees_account")
         .await // reuse fees_account as insurance fund proxy
         .unwrap()
@@ -223,26 +212,27 @@ async fn test_insurance_fund_covers_liquidation_shortfall() {
         &ctx.usd_id.to_string(),
         to_atomic_usd(100_000.0).to_f64().unwrap(),
         0.0,
-        to_atomic_usd(100_000.0).to_f64().unwrap(),
+        to_atomic_usd(100_000.0).to_f64().unwrap()
     );
 
-    let pre_insurance = ctx
-        .wallet_service
-        .get_wallet_by_account_and_asset(&insurance_account.id.to_string(), &ctx.usd_id.to_string())
-        .await
+    let pre_insurance = ctx.wallet_service
+        .get_wallet_by_account_and_asset(
+            &insurance_account.id.to_string(),
+            &ctx.usd_id.to_string()
+        ).await
         .unwrap()
         .unwrap();
     let pre_balance = Decimal::from_str(&pre_insurance.total).unwrap();
 
     ctx.insurance_fund_service
-        .cover_shortfall(shortfall, insurance_account.id, &ctx.usd_id.to_string())
-        .await
+        .cover_shortfall(shortfall, insurance_account.id, &ctx.usd_id.to_string()).await
         .unwrap();
 
-    let post_insurance = ctx
-        .wallet_service
-        .get_wallet_by_account_and_asset(&insurance_account.id.to_string(), &ctx.usd_id.to_string())
-        .await
+    let post_insurance = ctx.wallet_service
+        .get_wallet_by_account_and_asset(
+            &insurance_account.id.to_string(),
+            &ctx.usd_id.to_string()
+        ).await
         .unwrap()
         .unwrap();
     let post_balance = Decimal::from_str(&post_insurance.total).unwrap();
@@ -280,7 +270,7 @@ async fn test_liquidation_does_not_double_close_same_position() {
         &usd_id,
         0.0,
         to_atomic_btc(1.0).to_f64().unwrap(),
-        to_atomic_btc(1.0).to_f64().unwrap(),
+        to_atomic_btc(1.0).to_f64().unwrap()
     );
 
     // Simulate two concurrent liquidation triggers
@@ -291,10 +281,8 @@ async fn test_liquidation_does_not_double_close_same_position() {
     let asset_str = asset.to_string();
 
     let (r1, r2) = tokio::join!(
-        ctx1.liquidation_service
-            .liquidate(acc, &asset_str, Some(instr_uuid)),
-        ctx2.liquidation_service
-            .liquidate(acc, &asset_str, Some(instr_uuid))
+        ctx1.liquidation_service.liquidate(acc, &asset_str, Some(instr_uuid)),
+        ctx2.liquidation_service.liquidate(acc, &asset_str, Some(instr_uuid))
     );
 
     assert!(r1.is_ok());

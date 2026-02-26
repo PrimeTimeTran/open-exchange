@@ -1,5 +1,4 @@
 #![allow(dead_code)]
-#![allow(unused_imports)]
 use sqlx::{
     postgres::{PgConnectOptions, PgPoolOptions},
     ConnectOptions, Executor, PgPool,
@@ -41,7 +40,6 @@ pub struct PostgresTestContext {
     // Repositories
     pub account_repo: Arc<PostgresAccountRepository>,
 
-    #[allow(dead_code)]
     pub admin_conn_options: PgConnectOptions,
 }
 
@@ -242,8 +240,12 @@ impl PostgresTestContext {
 
     async fn create_tenant(pool: &PgPool) -> Uuid {
         let id = Uuid::new_v4();
-        sqlx::query(r#"INSERT INTO "Tenant" (id, name, "createdAt", "updatedAt") VALUES ($1, 'Test Tenant', NOW(), NOW())"#)
-            .bind(id).execute(pool).await.expect("Create Tenant");
+        sqlx::query(
+            r#"INSERT INTO "Tenant" (id, name, "createdAt", "updatedAt") VALUES ($1, 'Test Tenant', NOW(), NOW())"#
+        )
+            .bind(id)
+            .execute(pool).await
+            .expect("Create Tenant");
         id
     }
 
@@ -379,34 +381,54 @@ impl PostgresTestContext {
 
     pub async fn create_instrument(&self, symbol: &str, base_id: &str, quote_id: &str) -> String {
         let id = Uuid::new_v4();
-        sqlx::query(r#"INSERT INTO "Instrument" (id, "tenantId", symbol, type, status, "underlyingAssetId", "quoteAssetId", meta, "createdAt", "updatedAt") VALUES ($1, $2, $3, 'spot', 'active', $4, $5, '{}', NOW(), NOW())"#)
+        sqlx::query(
+            r#"INSERT INTO "Instrument" (id, "tenantId", symbol, type, status, "underlyingAssetId", "quoteAssetId", meta, "createdAt", "updatedAt") VALUES ($1, $2, $3, 'spot', 'active', $4, $5, '{}', NOW(), NOW())"#
+        )
             .bind(id)
             .bind(Uuid::parse_str(&self.tenant_id).unwrap())
             .bind(symbol)
             .bind(Uuid::parse_str(base_id).unwrap())
             .bind(Uuid::parse_str(quote_id).unwrap())
-            .execute(&self.pool).await.expect("Create Instrument");
+            .execute(&self.pool).await
+            .expect("Create Instrument");
         id.to_string()
     }
 
     async fn create_dummy_user(pool: &PgPool, _tenant_id: &str) -> String {
         let id = Uuid::new_v4();
-        sqlx::query(r#"INSERT INTO "User" (id, email, "createdAt", "updatedAt") VALUES ($1, $2, NOW(), NOW())"#)
-            .bind(id).bind(format!("user-{}@test.com", id)).execute(pool).await.expect("Create User");
+        sqlx::query(
+            r#"INSERT INTO "User" (id, email, "createdAt", "updatedAt") VALUES ($1, $2, NOW(), NOW())"#
+        )
+            .bind(id)
+            .bind(format!("user-{}@test.com", id))
+            .execute(pool).await
+            .expect("Create User");
         id.to_string()
     }
 
     async fn create_dummy_membership(pool: &PgPool, tenant_id: &str, user_id: &str) -> String {
         let id = Uuid::new_v4();
-        sqlx::query(r#"INSERT INTO "Membership" (id, "tenantId", "userId", status, "createdAt", "updatedAt") VALUES ($1, $2, $3, 'active', NOW(), NOW())"#)
-            .bind(id).bind(Uuid::parse_str(tenant_id).unwrap()).bind(Uuid::parse_str(user_id).unwrap()).execute(pool).await.expect("Create Membership");
+        sqlx::query(
+            r#"INSERT INTO "Membership" (id, "tenantId", "userId", status, "createdAt", "updatedAt") VALUES ($1, $2, $3, 'active', NOW(), NOW())"#
+        )
+            .bind(id)
+            .bind(Uuid::parse_str(tenant_id).unwrap())
+            .bind(Uuid::parse_str(user_id).unwrap())
+            .execute(pool).await
+            .expect("Create Membership");
         id.to_string()
     }
 
     async fn create_dummy_account(pool: &PgPool, tenant_id: &str, membership_id: &str) -> String {
         let id = Uuid::new_v4();
-        sqlx::query(r#"INSERT INTO "Account" (id, "tenantId", "userId", name, type, status, meta, "createdAt", "updatedAt") VALUES ($1, $2, $3, 'Test Acc', 'cash', 'active', '{}', NOW(), NOW())"#)
-            .bind(id).bind(Uuid::parse_str(tenant_id).unwrap()).bind(Uuid::parse_str(membership_id).unwrap()).execute(pool).await.expect("Create Account");
+        sqlx::query(
+            r#"INSERT INTO "Account" (id, "tenantId", "userId", name, type, status, meta, "createdAt", "updatedAt") VALUES ($1, $2, $3, 'Test Acc', 'cash', 'active', '{}', NOW(), NOW())"#
+        )
+            .bind(id)
+            .bind(Uuid::parse_str(tenant_id).unwrap())
+            .bind(Uuid::parse_str(membership_id).unwrap())
+            .execute(pool).await
+            .expect("Create Account");
         id.to_string()
     }
 
@@ -417,8 +439,15 @@ impl PostgresTestContext {
         decimals: i32,
     ) -> String {
         let id = Uuid::new_v4();
-        sqlx::query(r#"INSERT INTO "Asset" (id, "tenantId", symbol, klass, precision, "isFractional", decimals, meta, "createdAt", "updatedAt") VALUES ($1, $2, $3, 'crypto', $4, true, $4, '{}', NOW(), NOW())"#)
-            .bind(id).bind(Uuid::parse_str(tenant_id).unwrap()).bind(symbol).bind(decimals).execute(pool).await.expect("Create Asset");
+        sqlx::query(
+            r#"INSERT INTO "Asset" (id, "tenantId", symbol, klass, precision, "isFractional", decimals, meta, "createdAt", "updatedAt") VALUES ($1, $2, $3, 'crypto', $4, true, $4, '{}', NOW(), NOW())"#
+        )
+            .bind(id)
+            .bind(Uuid::parse_str(tenant_id).unwrap())
+            .bind(symbol)
+            .bind(decimals)
+            .execute(pool).await
+            .expect("Create Asset");
         id.to_string()
     }
 }
@@ -435,9 +464,8 @@ impl Drop for PostgresTestContext {
     }
 }
 
-#[allow(dead_code)]
 pub fn atomic(amount: &str, decimals: u32) -> String {
     let d = rust_decimal::Decimal::from_str(amount).unwrap();
-    let m = rust_decimal::Decimal::from(10u64.pow(decimals));
+    let m = rust_decimal::Decimal::from((10u64).pow(decimals));
     (d * m).round().to_string()
 }

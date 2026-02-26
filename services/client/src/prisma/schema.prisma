@@ -400,9 +400,9 @@ model Wallet {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-  available Decimal? @db.Decimal(72, 0)
-  locked Decimal? @db.Decimal(72, 0)
-  total Decimal? @db.Decimal(72, 0)
+  available Decimal? @db.Decimal(72, 20)
+  locked Decimal? @db.Decimal(72, 20)
+  total Decimal? @db.Decimal(72, 20)
   version Int?
   meta Json?
   userId String? @db.Uuid
@@ -616,9 +616,9 @@ model BalanceSnapshot {
   archivedByMembershipId String?     @db.Uuid
   archivedByMembership   Membership? @relation("archivedByMembership", fields: [archivedByMembershipId], references: [id], onDelete: SetNull)
   importHash            String?     @unique
-  available Decimal? @db.Decimal(72, 0)
-  locked Decimal? @db.Decimal(72, 0)
-  total Decimal? @db.Decimal(72, 0)
+  available Decimal? @db.Decimal(72, 20)
+  locked Decimal? @db.Decimal(72, 20)
+  total Decimal? @db.Decimal(72, 20)
   snapshotAt DateTime? @db.Timestamptz(3)
   meta Json?
   accountId String? @db.Uuid

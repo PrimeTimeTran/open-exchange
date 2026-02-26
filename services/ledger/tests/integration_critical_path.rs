@@ -1,10 +1,12 @@
 mod helpers;
+use chrono::Utc;
 use helpers::postgres::{atomic, PostgresTestContext};
 use ledger::domain::accounts::repository::AccountRepository;
+use ledger::domain::ledger::model::LedgerEntry;
 use ledger::domain::orders::model::{Order, OrderSide, OrderStatus};
+use ledger::domain::trade::model::Trade;
 use ledger::domain::wallets::Wallet;
 use ledger::error::AppError;
-use ledger::proto::common::{LedgerEntry, Trade};
 use rust_decimal::Decimal;
 use std::str::FromStr;
 use uuid::Uuid;
@@ -34,16 +36,16 @@ async fn test_deposit_increases_balance() {
         .expect("Create Wallet")
         .id;
 
-    let deposit_amount = atomic("100.50", 2);
+    let deposit_amount = Decimal::from_str("100.50").unwrap();
     let entry = LedgerEntry {
-        id: Uuid::new_v4().to_string(),
-        tenant_id: ctx.tenant_id.clone(),
-        event_id: Uuid::new_v4().to_string(),
-        account_id: account_id.clone(),
-        amount: deposit_amount.clone(),
-        meta: serde_json::json!({"asset": asset_id, "type": "credit"}).to_string(),
-        created_at: 0,
-        updated_at: 0,
+        id: Uuid::new_v4(),
+        tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+        event_id: Uuid::new_v4(),
+        account_id: Uuid::parse_str(&account_id).unwrap(),
+        amount: deposit_amount,
+        meta: serde_json::json!({"asset": asset_id, "type": "credit"}),
+        created_at: chrono::Utc::now(),
+        updated_at: chrono::Utc::now(),
     };
 
     ctx.wallet_service
@@ -59,7 +61,7 @@ async fn test_deposit_increases_balance() {
         .unwrap();
     assert_eq!(
         Decimal::from_str(&updated.available).unwrap(),
-        Decimal::from_str(&deposit_amount).unwrap()
+        deposit_amount
     );
 }
 
@@ -368,16 +370,16 @@ async fn test_trade_settlement_full_fill() {
         .unwrap();
 
     let trade = Trade {
-        id: Uuid::new_v4().to_string(),
-        tenant_id: ctx.tenant_id.clone(),
-        instrument_id: instr_id.clone(),
-        buy_order_id: buy_order.id.to_string(),
-        sell_order_id: sell_order.id.to_string(),
-        price: "100.0".to_string(),
-        quantity: "1.0".to_string(),
-        meta: "{}".to_string(),
-        created_at: 0,
-        updated_at: 0,
+        id: Uuid::new_v4(),
+        tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+        instrument_id: Uuid::parse_str(&instr_id).unwrap(),
+        buy_order_id: buy_order.id,
+        sell_order_id: sell_order.id,
+        price: Decimal::new(100, 0),
+        quantity: Decimal::new(1, 0),
+        meta: serde_json::json!({}),
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
     };
 
     ctx.settlement_service
@@ -485,16 +487,16 @@ async fn test_trade_settlement_partial_fill() {
         .unwrap();
 
     let trade = Trade {
-        id: Uuid::new_v4().to_string(),
-        tenant_id: ctx.tenant_id.clone(),
-        instrument_id: instr_id.clone(),
-        buy_order_id: buy_order.id.to_string(),
-        sell_order_id: sell_order_id.to_string(),
-        price: "100.0".to_string(),
-        quantity: "1.0".to_string(),
-        meta: "{}".to_string(),
-        created_at: 0,
-        updated_at: 0,
+        id: Uuid::new_v4(),
+        tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+        instrument_id: Uuid::parse_str(&instr_id).unwrap(),
+        buy_order_id: buy_order.id,
+        sell_order_id: sell_order_id,
+        price: Decimal::new(100, 0),
+        quantity: Decimal::new(1, 0),
+        meta: serde_json::json!({}),
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
     };
 
     ctx.settlement_service
@@ -543,14 +545,14 @@ async fn test_ledger_entry_integrity_check() {
         total += Decimal::from_str(&atom).unwrap();
 
         let entry = LedgerEntry {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.clone(),
-            event_id: Uuid::new_v4().to_string(),
-            account_id: account_id.clone(),
-            amount: atom,
-            meta: serde_json::json!({"asset": asset_id, "type": "credit"}).to_string(),
-            created_at: 0,
-            updated_at: 0,
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+            event_id: Uuid::new_v4(),
+            account_id: Uuid::parse_str(&account_id).unwrap(),
+            amount: Decimal::from_str(&atom).unwrap(),
+            meta: serde_json::json!({"asset": asset_id, "type": "credit"}),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
         };
         ctx.wallet_service
             .process_ledger_entry(entry)
@@ -633,16 +635,16 @@ async fn test_system_fee_collection() {
         .unwrap();
 
     let trade = Trade {
-        id: Uuid::new_v4().to_string(),
-        tenant_id: ctx.tenant_id.clone(),
-        instrument_id: instr_id.clone(),
-        buy_order_id: buy_order.id.to_string(),
-        sell_order_id: sell_order.id.to_string(),
-        price: "100.0".to_string(),
-        quantity: "1.0".to_string(),
-        meta: "{}".to_string(),
-        created_at: 0,
-        updated_at: 0,
+        id: Uuid::new_v4(),
+        tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+        instrument_id: Uuid::parse_str(&instr_id).unwrap(),
+        buy_order_id: buy_order.id,
+        sell_order_id: sell_order.id,
+        price: Decimal::new(100, 0),
+        quantity: Decimal::new(1, 0),
+        meta: serde_json::json!({}),
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
     };
 
     ctx.settlement_service

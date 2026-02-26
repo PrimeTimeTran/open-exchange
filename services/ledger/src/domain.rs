@@ -20,5 +20,6 @@ pub mod settlement;
 pub mod trade;
 pub mod transaction;
 pub mod users;
+pub mod utils;
 pub mod wallets;
 pub mod withdrawals;

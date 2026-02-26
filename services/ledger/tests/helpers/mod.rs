@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 pub mod memory;
 pub mod postgres;
 
@@ -5,22 +6,18 @@ use ledger::domain::fees::constants::FeeConstants;
 use rust_decimal::prelude::FromPrimitive;
 use rust_decimal::Decimal;
 
-#[allow(dead_code)]
 pub fn to_atomic_usd(amount: f64) -> Decimal {
     (Decimal::from_f64(amount).unwrap() * Decimal::new(100, 0)).floor()
 }
 
-#[allow(dead_code)]
 pub fn to_atomic_btc(amount: f64) -> Decimal {
     (Decimal::from_f64(amount).unwrap() * Decimal::new(100_000_000, 0)).floor()
 }
 
-#[allow(dead_code)]
 pub fn calc_taker_fee(amount_atomic: Decimal) -> Decimal {
     (amount_atomic * FeeConstants::get_taker_fee()).floor()
 }
 
-#[allow(dead_code)]
 pub fn calc_maker_fee(amount_atomic: Decimal) -> Decimal {
     (amount_atomic * FeeConstants::get_maker_fee()).floor()
 }

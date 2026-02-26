@@ -1,7 +1,7 @@
 use super::handler::InstrumentHandler;
+use crate::domain::instruments::model::Instrument;
 use crate::domain::orders::model::{Order, OrderSide};
 use crate::error::{AppError, Result};
-use crate::proto::common::Instrument;
 use rust_decimal::Decimal;
 use std::str::FromStr;
 
@@ -11,7 +11,7 @@ impl InstrumentHandler for OptionHandler {
     fn identify_collateral_asset(&self, order: &Order, instrument: &Instrument) -> Result<String> {
         if order.side == OrderSide::Buy {
             // Buyer always pays Premium in Quote Asset
-            return Ok(instrument.quote_asset_id.clone());
+            return Ok(instrument.quote_asset_id.to_string());
         }
 
         // Seller logic depends on Put vs Call
@@ -19,10 +19,10 @@ impl InstrumentHandler for OptionHandler {
 
         if option_type == "put" {
             // Short Put: Lock Cash (Quote Asset) to buy the underlying later
-            Ok(instrument.quote_asset_id.clone())
+            Ok(instrument.quote_asset_id.to_string())
         } else {
             // Short Call: Lock Underlying (Base Asset) to deliver later
-            Ok(instrument.underlying_asset_id.clone())
+            Ok(instrument.underlying_asset_id.to_string())
         }
     }
 
@@ -54,20 +54,17 @@ impl InstrumentHandler for OptionHandler {
 
 impl OptionHandler {
     fn get_option_type(&self, instrument: &Instrument) -> Result<String> {
-        let meta: serde_json::Value = serde_json::from_str(&instrument.meta)
-            .map_err(|_| AppError::MalformedRequest("Invalid option metadata".into()))?;
-
-        meta.get("option_type")
+        instrument
+            .meta
+            .get("option_type")
             .and_then(|v| v.as_str())
             .map(|s| s.to_lowercase())
             .ok_or_else(|| AppError::MalformedRequest("Missing option_type in metadata".into()))
     }
 
     fn get_strike_price(&self, instrument: &Instrument) -> Result<Decimal> {
-        let meta: serde_json::Value = serde_json::from_str(&instrument.meta)
-            .map_err(|_| AppError::MalformedRequest("Invalid option metadata".into()))?;
-
-        let strike_str = meta
+        let strike_str = instrument
+            .meta
             .get("strike_price")
             .and_then(|v| v.as_str())
             .ok_or_else(|| AppError::MalformedRequest("Missing strike_price in metadata".into()))?;

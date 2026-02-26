@@ -1,5 +1,5 @@
+use crate::domain::instruments::model::Instrument;
 use crate::error::{AppError, Result};
-use crate::proto::common;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use sqlx::{FromRow, PgPool};
@@ -36,123 +36,111 @@ struct InstrumentRow {
     updated_at: DateTime<Utc>,
 }
 
-impl From<InstrumentRow> for common::Instrument {
+impl From<InstrumentRow> for Instrument {
     fn from(row: InstrumentRow) -> Self {
         Self {
-            id: row.id.to_string(),
-            tenant_id: row.tenant_id.to_string(),
+            id: row.id,
+            tenant_id: row.tenant_id,
             symbol: row.symbol,
             r#type: row.r#type.unwrap_or_default(),
             status: row.status.unwrap_or_default(),
-            underlying_asset_id: row
-                .underlying_asset_id
-                .map(|u| u.to_string())
-                .unwrap_or_default(),
-            quote_asset_id: row
-                .quote_asset_id
-                .map(|u| u.to_string())
-                .unwrap_or_default(),
-            meta: row.meta.unwrap_or(serde_json::json!({})).to_string(),
-            created_at: row.created_at.timestamp_millis(),
-            updated_at: row.updated_at.timestamp_millis(),
+            underlying_asset_id: row.underlying_asset_id.unwrap_or_default(),
+            quote_asset_id: row.quote_asset_id.unwrap_or_default(),
+            meta: row.meta.unwrap_or(serde_json::json!({})),
+            created_at: row.created_at,
+            updated_at: row.updated_at,
         }
     }
 }
 
 #[async_trait]
 pub trait InstrumentRepository: Send + Sync + std::fmt::Debug {
-    async fn get(&self, id: Uuid) -> Result<Option<common::Instrument>>;
-    async fn get_by_symbol(&self, symbol: &str) -> Result<Option<common::Instrument>>;
-    async fn list(&self) -> Result<Vec<common::Instrument>>;
-    async fn create(&self, instrument: common::Instrument) -> Result<common::Instrument>;
+    async fn get(&self, id: Uuid) -> Result<Option<Instrument>>;
+    async fn get_by_symbol(&self, symbol: &str) -> Result<Option<Instrument>>;
+    async fn list(&self) -> Result<Vec<Instrument>>;
+    async fn create(&self, instrument: Instrument) -> Result<Instrument>;
 }
 
 #[async_trait]
 impl InstrumentRepository for PostgresInstrumentRepository {
-    async fn get(&self, id: Uuid) -> Result<Option<common::Instrument>> {
-        let rec: Option<InstrumentRow> = sqlx::query_as(
-            r#"
+    async fn get(&self, id: Uuid) -> Result<Option<Instrument>> {
+        let rec: Option<InstrumentRow> = sqlx
+            ::query_as(
+                r#"
             SELECT id, "tenantId", symbol, type, status, "underlyingAssetId", "quoteAssetId", meta, "createdAt", "updatedAt"
             FROM "Instrument"
             WHERE id = $1
             "#
-        )
-        .bind(id)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(AppError::DatabaseError)?;
+            )
+            .bind(id)
+            .fetch_optional(&self.pool).await
+            .map_err(AppError::DatabaseError)?;
 
         Ok(rec.map(|r| r.into()))
     }
 
-    async fn get_by_symbol(&self, symbol: &str) -> Result<Option<common::Instrument>> {
-        let rec: Option<InstrumentRow> = sqlx::query_as(
-            r#"
+    async fn get_by_symbol(&self, symbol: &str) -> Result<Option<Instrument>> {
+        let rec: Option<InstrumentRow> = sqlx
+            ::query_as(
+                r#"
             SELECT id, "tenantId", symbol, type, status, "underlyingAssetId", "quoteAssetId", meta, "createdAt", "updatedAt"
             FROM "Instrument"
             WHERE symbol = $1
             "#
-        )
-        .bind(symbol)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(AppError::DatabaseError)?;
+            )
+            .bind(symbol)
+            .fetch_optional(&self.pool).await
+            .map_err(AppError::DatabaseError)?;
 
         Ok(rec.map(|r| r.into()))
     }
 
-    async fn list(&self) -> Result<Vec<common::Instrument>> {
-        let recs: Vec<InstrumentRow> = sqlx::query_as(
-            r#"
+    async fn list(&self) -> Result<Vec<Instrument>> {
+        let recs: Vec<InstrumentRow> = sqlx
+            ::query_as(
+                r#"
             SELECT id, "tenantId", symbol, type, status, "underlyingAssetId", "quoteAssetId", meta, "createdAt", "updatedAt"
             FROM "Instrument"
             "#
-        )
-        .fetch_all(&self.pool)
-        .await
-        .map_err(AppError::DatabaseError)?;
+            )
+            .fetch_all(&self.pool).await
+            .map_err(AppError::DatabaseError)?;
 
         Ok(recs.into_iter().map(|r| r.into()).collect())
     }
 
-    async fn create(&self, instrument: common::Instrument) -> Result<common::Instrument> {
-        let id = Uuid::parse_str(&instrument.id).unwrap_or(Uuid::new_v4());
-        let tenant_id = if instrument.tenant_id.is_empty() {
-            Uuid::new_v4() // This might be wrong if we need specific tenant
-        } else {
-            Uuid::parse_str(&instrument.tenant_id).unwrap_or(Uuid::new_v4())
-        };
-        let underlying_asset_id = if instrument.underlying_asset_id.is_empty() {
+    async fn create(&self, instrument: Instrument) -> Result<Instrument> {
+        let underlying_asset_id = if instrument.underlying_asset_id == Uuid::nil() {
             None
         } else {
-            Some(Uuid::parse_str(&instrument.underlying_asset_id).unwrap_or_default())
+            Some(instrument.underlying_asset_id)
         };
-        let quote_asset_id = if instrument.quote_asset_id.is_empty() {
+        let quote_asset_id = if instrument.quote_asset_id == Uuid::nil() {
             None
         } else {
-            Some(Uuid::parse_str(&instrument.quote_asset_id).unwrap_or_default())
+            Some(instrument.quote_asset_id)
         };
 
-        let rec: InstrumentRow = sqlx::query_as(
-            r#"
+        let rec: InstrumentRow = sqlx
+            ::query_as(
+                r#"
             INSERT INTO "Instrument" (id, "tenantId", symbol, type, status, "underlyingAssetId", "quoteAssetId", meta, "createdAt", "updatedAt")
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING id, "tenantId", symbol, type, status, "underlyingAssetId", "quoteAssetId", meta, "createdAt", "updatedAt"
             "#
-        )
-        .bind(id)
-        .bind(tenant_id)
-        .bind(instrument.symbol)
-        .bind(instrument.r#type)
-        .bind(instrument.status)
-        .bind(underlying_asset_id)
-        .bind(quote_asset_id)
-        .bind(serde_json::from_str::<serde_json::Value>(&instrument.meta).unwrap_or(serde_json::json!({})))
-        .bind(DateTime::from_timestamp_millis(instrument.created_at).unwrap_or(Utc::now()))
-        .bind(DateTime::from_timestamp_millis(instrument.updated_at).unwrap_or(Utc::now()))
-        .fetch_one(&self.pool)
-        .await
-        .map_err(AppError::DatabaseError)?;
+            )
+            .bind(instrument.id)
+            .bind(instrument.tenant_id)
+            .bind(instrument.symbol)
+            .bind(instrument.r#type)
+            .bind(instrument.status)
+            .bind(underlying_asset_id)
+            .bind(quote_asset_id)
+            .bind(instrument.meta)
+            .bind(instrument.created_at)
+            .bind(instrument.updated_at)
+            .fetch_one(&self.pool).await
+            .map_err(AppError::DatabaseError)?;
 
         Ok(rec.into())
     }

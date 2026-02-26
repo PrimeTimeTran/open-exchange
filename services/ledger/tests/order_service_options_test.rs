@@ -8,7 +8,8 @@ use std::str::FromStr;
 use uuid::Uuid;
 
 #[tokio::test]
-async fn test_sell_call_option_locks_underlying_collateral() {
+async fn test_sell_call_option_locks_underlying_collateral(
+) -> Result<(), Box<dyn std::error::Error>> {
     let ctx = InMemoryTestContext::new();
 
     // 1. Setup Option Instrument (Call)
@@ -16,27 +17,27 @@ async fn test_sell_call_option_locks_underlying_collateral() {
     let btc_id = ctx.create_asset_api("BTC", "crypto", 8).await;
 
     let instrument_id = Uuid::new_v4();
-    ctx.instrument_repo.add(ledger::proto::common::Instrument {
-        id: instrument_id.to_string(),
-        tenant_id: ctx.tenant_id.to_string(),
-        symbol: "BTC-CALL-50K".to_string(),
-        r#type: "option".to_string(),
-        status: "active".to_string(),
-        underlying_asset_id: btc_id.clone(),
-        quote_asset_id: usd_id.clone(),
-        meta: serde_json::json!({
-            "option_type": "call",
-            "strike_price": "50000",
-            "expiry": Utc::now().timestamp_millis() + 86400000
-        })
-        .to_string(),
-        created_at: Utc::now().timestamp_millis(),
-        updated_at: Utc::now().timestamp_millis(),
-    });
+    ctx.instrument_repo
+        .add(ledger::domain::instruments::model::Instrument {
+            id: instrument_id,
+            tenant_id: ctx.tenant_id,
+            symbol: "BTC-CALL-50K".to_string(),
+            r#type: "option".to_string(),
+            status: "active".to_string(),
+            underlying_asset_id: Uuid::parse_str(&btc_id)?,
+            quote_asset_id: Uuid::parse_str(&usd_id)?,
+            meta: serde_json::json!({
+                "option_type": "call",
+                "strike_price": "50000",
+                "expiry": Utc::now().timestamp_millis() + 86400000
+            }),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        });
 
     let qty_btc_atomic = to_atomic_btc(1.0);
-    let qty_btc_standard = Decimal::from_str("1.0").unwrap();
-    let premium_price = Decimal::from_str("500.0").unwrap(); // Price per unit
+    let qty_btc_standard = Decimal::from_str("1.0")?;
+    let premium_price = Decimal::from_str("500.0")?; // Price per unit
 
     // 2. Fund Account with BTC (Underlying)
     ctx.create_wallet_decimal(
@@ -77,21 +78,16 @@ async fn test_sell_call_option_locks_underlying_collateral() {
         .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &btc_id)
         .await
-        .unwrap()
-        .unwrap();
+        .expect("Failed to get wallet")
+        .expect("Wallet not found");
     // Wallet stores Atomic units. 1.0 BTC standard = 100,000,000 atomic
-    assert_eq!(
-        Decimal::from_str(&btc_wallet.locked).unwrap(),
-        qty_btc_atomic
-    );
-    assert_eq!(
-        Decimal::from_str(&btc_wallet.available).unwrap(),
-        Decimal::ZERO
-    );
+    assert_eq!(Decimal::from_str(&btc_wallet.locked)?, qty_btc_atomic);
+    assert_eq!(Decimal::from_str(&btc_wallet.available)?, Decimal::ZERO);
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_sell_put_option_locks_cash_collateral() {
+async fn test_sell_put_option_locks_cash_collateral() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = InMemoryTestContext::new();
 
     // 1. Setup Option Instrument (Put)
@@ -99,27 +95,27 @@ async fn test_sell_put_option_locks_cash_collateral() {
     let btc_id = ctx.create_asset_api("BTC", "crypto", 8).await;
 
     let instrument_id = Uuid::new_v4();
-    let _strike_price_standard = Decimal::from_str("50000.0").unwrap(); // 50k USD
+    let _strike_price_standard = Decimal::from_str("50000.0")?; // 50k USD
 
-    ctx.instrument_repo.add(ledger::proto::common::Instrument {
-        id: instrument_id.to_string(),
-        tenant_id: ctx.tenant_id.to_string(),
-        symbol: "BTC-PUT-50K".to_string(),
-        r#type: "option".to_string(),
-        status: "active".to_string(),
-        underlying_asset_id: btc_id.clone(),
-        quote_asset_id: usd_id.clone(),
-        meta: serde_json::json!({
-            "option_type": "put",
-            "strike_price": "50000", // Standard units in meta usually? Or atomic? Let's say standard for easier parsing or assume strings
-            "expiry": Utc::now().timestamp_millis() + 86400000
-        })
-        .to_string(),
-        created_at: Utc::now().timestamp_millis(),
-        updated_at: Utc::now().timestamp_millis(),
-    });
+    ctx.instrument_repo
+        .add(ledger::domain::instruments::model::Instrument {
+            id: instrument_id,
+            tenant_id: ctx.tenant_id,
+            symbol: "BTC-PUT-50K".to_string(),
+            r#type: "option".to_string(),
+            status: "active".to_string(),
+            underlying_asset_id: Uuid::parse_str(&btc_id)?,
+            quote_asset_id: Uuid::parse_str(&usd_id)?,
+            meta: serde_json::json!({
+                "option_type": "put",
+                "strike_price": "50000",
+                "expiry": Utc::now().timestamp_millis() + 86400000
+            }),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        });
 
-    let qty_btc_standard = Decimal::from_str("1.0").unwrap(); // 1 BTC contract
+    let qty_btc_standard = Decimal::from_str("1.0")?; // 1 BTC contract
 
     // Required Cash Collateral = Strike * Qty = 50,000 * 1.0 = 50,000 USD
     // Atomic USD = 50,000 * 100 = 5,000,000
@@ -150,7 +146,7 @@ async fn test_sell_put_option_locks_cash_collateral() {
         OrderSide::Sell,
         OrderType::Limit,
         qty_btc_standard,
-        Decimal::from_str("500.0").unwrap(),
+        Decimal::from_str("500.0")?,
     );
 
     let _created_order = ctx
@@ -164,10 +160,10 @@ async fn test_sell_put_option_locks_cash_collateral() {
         .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &usd_id)
         .await
-        .unwrap()
-        .unwrap();
+        .expect("Failed to get wallet")
+        .expect("Wallet not found");
     assert_eq!(
-        Decimal::from_str(&usd_wallet.locked).unwrap(),
+        Decimal::from_str(&usd_wallet.locked)?,
         required_collateral_atomic,
         "Should lock Strike * Qty in Cash"
     );
@@ -177,16 +173,15 @@ async fn test_sell_put_option_locks_cash_collateral() {
         .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &btc_id)
         .await
-        .unwrap()
-        .unwrap();
-    assert_eq!(
-        Decimal::from_str(&btc_wallet.locked).unwrap(),
-        Decimal::ZERO
-    );
+        .expect("Failed to get wallet")
+        .expect("Wallet not found");
+    assert_eq!(Decimal::from_str(&btc_wallet.locked)?, Decimal::ZERO);
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_sell_put_option_fails_insufficient_collateral() {
+async fn test_sell_put_option_fails_insufficient_collateral(
+) -> Result<(), Box<dyn std::error::Error>> {
     let ctx = InMemoryTestContext::new();
 
     // 1. Setup Option Instrument (Put)
@@ -194,23 +189,23 @@ async fn test_sell_put_option_fails_insufficient_collateral() {
     let btc_id = ctx.create_asset_api("BTC", "crypto", 8).await;
 
     let instrument_id = Uuid::new_v4();
-    ctx.instrument_repo.add(ledger::proto::common::Instrument {
-        id: instrument_id.to_string(),
-        tenant_id: ctx.tenant_id.to_string(),
-        symbol: "BTC-PUT-50K".to_string(),
-        r#type: "option".to_string(),
-        status: "active".to_string(),
-        underlying_asset_id: btc_id.clone(),
-        quote_asset_id: usd_id.clone(),
-        meta: serde_json::json!({
-            "option_type": "put",
-            "strike_price": "50000",
-            "expiry": Utc::now().timestamp_millis() + 86400000
-        })
-        .to_string(),
-        created_at: Utc::now().timestamp_millis(),
-        updated_at: Utc::now().timestamp_millis(),
-    });
+    ctx.instrument_repo
+        .add(ledger::domain::instruments::model::Instrument {
+            id: instrument_id,
+            tenant_id: ctx.tenant_id,
+            symbol: "BTC-PUT-50K".to_string(),
+            r#type: "option".to_string(),
+            status: "active".to_string(),
+            underlying_asset_id: Uuid::parse_str(&btc_id)?,
+            quote_asset_id: Uuid::parse_str(&usd_id)?,
+            meta: serde_json::json!({
+                "option_type": "put",
+                "strike_price": "50000",
+                "expiry": Utc::now().timestamp_millis() + 86400000
+            }),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        });
 
     let qty_btc = to_atomic_btc(1.0);
     // Need 50k USD (atomic 5,000,000), but give only 10k (atomic 1,000,000)
@@ -238,4 +233,5 @@ async fn test_sell_put_option_fails_insufficient_collateral() {
     let result = ctx.order_service.create_order(order).await;
 
     assert!(result.is_err(), "Should fail due to insufficient funds");
+    Ok(())
 }

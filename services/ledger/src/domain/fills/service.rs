@@ -1,10 +1,9 @@
 use super::model::Fill;
 use super::repository::FillRepository;
+use crate::domain::trade::model::Trade;
 use crate::domain::transaction::RepositoryTransaction;
-use crate::error::{AppError, Result};
-use crate::proto::common::Trade;
+use crate::error::Result;
 use rust_decimal::Decimal;
-use std::str::FromStr;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -25,7 +24,7 @@ impl FillService {
     pub fn create_fill_from_trade(
         &self,
         trade: &Trade,
-        order_id: &str,
+        order_id: Uuid,
         side: &str,
         role: &str,
         quantity: Decimal,
@@ -34,16 +33,11 @@ impl FillService {
     ) -> Result<Fill> {
         Ok(Fill {
             id: Uuid::new_v4(),
-            trade_id: Uuid::parse_str(&trade.id)
-                .map_err(|_| AppError::ValidationError("Invalid trade ID".into()))?,
-            order_id: Uuid::parse_str(order_id)
-                .map_err(|_| AppError::ValidationError("Invalid order ID".into()))?,
-            tenant_id: Uuid::parse_str(&trade.tenant_id)
-                .map_err(|_| AppError::ValidationError("Invalid tenant ID".into()))?,
-            instrument_id: Uuid::parse_str(&trade.instrument_id)
-                .map_err(|_| AppError::ValidationError("Invalid instrument ID".into()))?,
-            price: Decimal::from_str(&trade.price)
-                .map_err(|_| AppError::ValidationError("Invalid trade price".into()))?,
+            trade_id: trade.id,
+            order_id,
+            tenant_id: trade.tenant_id,
+            instrument_id: trade.instrument_id,
+            price: trade.price,
             quantity,
             fee,
             fee_currency: fee_currency.to_string(),
@@ -55,6 +49,10 @@ impl FillService {
         })
     }
 
+    pub async fn save_fill(&self, fill: Fill) -> Result<Fill> {
+        self.repo.create(fill).await
+    }
+
     pub async fn save_fill_with_tx(
         &self,
         tx: &mut dyn RepositoryTransaction,
@@ -63,22 +61,14 @@ impl FillService {
         self.repo.create_with_tx(tx, fill).await
     }
 
-    pub async fn save_fill(&self, fill: Fill) -> Result<Fill> {
-        self.repo.create(fill).await
-    }
-
     pub async fn get_trades_by_instrument(
         &self,
         instrument_id: Uuid,
         start_time: chrono::DateTime<chrono::Utc>,
         end_time: chrono::DateTime<chrono::Utc>,
     ) -> Result<Vec<Fill>> {
-        let fills = self
-            .repo
+        self.repo
             .list_by_instrument_and_time(instrument_id, start_time, end_time)
-            .await?;
-
-        // Filter for Taker fills only to represent unique trades
-        Ok(fills.into_iter().filter(|f| f.role == "taker").collect())
+            .await
     }
 }

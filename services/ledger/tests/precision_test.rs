@@ -1,7 +1,7 @@
 mod helpers;
 use helpers::postgres::{atomic, PostgresTestContext};
+use ledger::domain::ledger::model::LedgerEntry;
 use ledger::domain::wallets::Wallet;
-use ledger::proto::common::LedgerEntry;
 use rust_decimal::Decimal;
 use std::str::FromStr;
 use uuid::Uuid;
@@ -35,14 +35,14 @@ async fn test_precision_overflow_limits() {
 
     // Credit tiny amount
     let entry = LedgerEntry {
-        id: Uuid::new_v4().to_string(),
-        tenant_id: ctx.tenant_id.clone(),
-        event_id: Uuid::new_v4().to_string(),
-        account_id: account_id.clone(),
-        amount: tiny_atomic.clone(),
-        meta: serde_json::json!({"asset": eth_id, "type": "credit"}).to_string(),
-        created_at: 0,
-        updated_at: 0,
+        id: Uuid::new_v4(),
+        tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+        event_id: Uuid::new_v4(),
+        account_id: Uuid::parse_str(&account_id).unwrap(),
+        amount: Decimal::from_str(&tiny_atomic).unwrap(),
+        meta: serde_json::json!({"asset": eth_id, "type": "credit"}),
+        created_at: chrono::Utc::now(),
+        updated_at: chrono::Utc::now(),
     };
     ctx.wallet_service
         .process_ledger_entry(entry)
@@ -70,14 +70,14 @@ async fn test_precision_overflow_limits() {
     let large_atomic = atomic(large_amount, 18);
 
     let entry_large = LedgerEntry {
-        id: Uuid::new_v4().to_string(),
-        tenant_id: ctx.tenant_id.clone(),
-        event_id: Uuid::new_v4().to_string(),
-        account_id: account_id.clone(),
-        amount: large_atomic.clone(),
-        meta: serde_json::json!({"asset": eth_id, "type": "credit"}).to_string(),
-        created_at: 0,
-        updated_at: 0,
+        id: Uuid::new_v4(),
+        tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+        event_id: Uuid::new_v4(),
+        account_id: Uuid::parse_str(&account_id).unwrap(),
+        amount: Decimal::from_str(&large_atomic).unwrap(),
+        meta: serde_json::json!({"asset": eth_id, "type": "credit"}),
+        created_at: chrono::Utc::now(),
+        updated_at: chrono::Utc::now(),
     };
     ctx.wallet_service
         .process_ledger_entry(entry_large)

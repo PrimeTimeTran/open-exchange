@@ -30,42 +30,43 @@ use std::str::FromStr;
 /// Assert: locked = notional * 0.50; available = starting - locked
 #[tokio::test]
 // #[ignore = "Track B: Requires MarginService implementation"]
-async fn test_margin_buy_locks_partial_collateral() {
+async fn test_margin_buy_locks_partial_collateral() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = InMemoryTestContext::new();
 
     let starting_usd = to_atomic_usd(10_000.0);
     let notional = to_atomic_usd(10_000.0);
-    let initial_margin = (notional * Decimal::from_str("0.50").unwrap()).floor(); // 50%
+    let initial_margin = (notional * Decimal::from_str("0.50")?).floor(); // 50%
 
     ctx.create_wallet(
         ctx.account_a,
         &ctx.usd_id.to_string(),
-        starting_usd.to_f64().unwrap(),
+        starting_usd.to_f64().ok_or("Invalid decimal")?,
         0.0,
-        starting_usd.to_f64().unwrap(),
+        starting_usd.to_f64().ok_or("Invalid decimal")?,
     );
 
     ctx.margin_service
         .create_leveraged_buy(ctx.account_a, &ctx.usd_id.to_string(), notional, 2)
         .await
-        .unwrap();
+        .expect("Failed to create leveraged buy");
 
     let usd_wallet = ctx
         .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
         .await
-        .unwrap()
-        .unwrap();
+        .expect("Failed to fetch wallet")
+        .expect("Wallet not found");
 
     assert_eq!(
-        Decimal::from_str(&usd_wallet.locked).unwrap(),
+        Decimal::from_str(&usd_wallet.locked)?,
         initial_margin,
         "2× leverage should require 50% initial margin"
     );
     assert_eq!(
-        Decimal::from_str(&usd_wallet.available).unwrap(),
+        Decimal::from_str(&usd_wallet.available)?,
         starting_usd - initial_margin
     );
+    Ok(())
 }
 
 /// Test: Account Equity Below Maintenance Threshold Blocks New Orders
@@ -78,7 +79,8 @@ async fn test_margin_buy_locks_partial_collateral() {
 /// Assert: new order returns MarginInsufficient error when equity < maintenance
 #[tokio::test]
 // #[ignore = "Track B: Requires MarginService implementation"]
-async fn test_margin_account_equity_falls_below_maintenance() {
+async fn test_margin_account_equity_falls_below_maintenance(
+) -> Result<(), Box<dyn std::error::Error>> {
     let ctx = InMemoryTestContext::new();
 
     // Account equity is at exactly maintenance level (25% of $10,000 = $2,500)
@@ -86,16 +88,16 @@ async fn test_margin_account_equity_falls_below_maintenance() {
     ctx.create_wallet(
         ctx.account_a,
         &ctx.usd_id.to_string(),
-        maintenance_margin.to_f64().unwrap(),
+        maintenance_margin.to_f64().ok_or("Invalid decimal")?,
         0.0,
-        maintenance_margin.to_f64().unwrap(),
+        maintenance_margin.to_f64().ok_or("Invalid decimal")?,
     );
 
     let status = ctx
         .margin_service
         .check_margin(ctx.account_a, &ctx.usd_id.to_string(), maintenance_margin)
         .await
-        .unwrap();
+        .expect("Failed to check margin");
     assert_eq!(status, MarginStatus::MaintenanceBreached);
 
     // Attempt to place a new order — should be blocked
@@ -110,6 +112,7 @@ async fn test_margin_account_equity_falls_below_maintenance() {
 
     // TODO: result should be Err(AppError::MarginInsufficient)
     // let _ = order;
+    Ok(())
 }
 
 /// Test: Forced Liquidation When Equity Drops Below Maintenance
@@ -124,7 +127,8 @@ async fn test_margin_account_equity_falls_below_maintenance() {
 /// Assert: after liquidation, locked = 0; borrow repaid; account at zero or positive
 #[tokio::test]
 // #[ignore = "Track B: Requires LiquidationService and MarginService"]
-async fn test_forced_liquidation_triggered_below_maintenance() {
+async fn test_forced_liquidation_triggered_below_maintenance(
+) -> Result<(), Box<dyn std::error::Error>> {
     let ctx = InMemoryTestContext::new();
 
     // Account is below maintenance — simulate via very low equity
@@ -132,9 +136,9 @@ async fn test_forced_liquidation_triggered_below_maintenance() {
     ctx.create_wallet(
         ctx.account_a,
         &ctx.usd_id.to_string(),
-        equity.to_f64().unwrap(),
+        equity.to_f64().ok_or("Invalid decimal")?,
         0.0,
-        equity.to_f64().unwrap(),
+        equity.to_f64().ok_or("Invalid decimal")?,
     );
     ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
 
@@ -144,31 +148,35 @@ async fn test_forced_liquidation_triggered_below_maintenance() {
         .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
         .await
-        .unwrap()
-        .unwrap();
+        .expect("Failed to fetch wallet")
+        .expect("Wallet not found");
     w.locked = to_atomic_usd(50.0).to_string();
-    w.available = (Decimal::from_str(&w.total).unwrap() - to_atomic_usd(50.0)).to_string();
-    ctx.wallet_service.update_wallet(w).await.unwrap();
+    w.available = (Decimal::from_str(&w.total)? - to_atomic_usd(50.0)).to_string();
+    ctx.wallet_service
+        .update_wallet(w)
+        .await
+        .expect("Failed to update wallet");
 
     let maintenance = to_atomic_usd(200.0); // Maintenance > Equity (100)
     ctx.liquidation_service
         .liquidate_if_needed(ctx.account_a, &ctx.usd_id.to_string(), maintenance)
         .await
-        .unwrap();
+        .expect("Failed to liquidate");
 
     let usd_wallet = ctx
         .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
         .await
-        .unwrap()
-        .unwrap();
+        .expect("Failed to fetch wallet")
+        .expect("Wallet not found");
 
     // After liquidation: locked should be zero (all positions closed)
     assert_eq!(
-        Decimal::from_str(&usd_wallet.locked).unwrap(),
+        Decimal::from_str(&usd_wallet.locked)?,
         Decimal::ZERO,
         "All positions should be closed after liquidation"
     );
+    Ok(())
 }
 
 /// Test: Cross-Margin Account Net Equity Across Multiple Positions

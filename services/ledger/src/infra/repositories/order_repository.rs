@@ -41,25 +41,29 @@ struct OrderRow {
     updated_at: DateTime<Utc>,
 }
 
-impl From<OrderRow> for Order {
-    fn from(row: OrderRow) -> Self {
-        Self {
+impl TryFrom<OrderRow> for Order {
+    type Error = AppError;
+
+    fn try_from(row: OrderRow) -> Result<Self> {
+        Ok(Self {
             id: row.id,
             tenant_id: row.tenant_id,
             account_id: row.account_id,
             instrument_id: row.instrument_id,
-            side: OrderSide::from_str(&row.side).unwrap_or(OrderSide::Buy), // TODO: Handle error better
+            side: OrderSide::from_str(&row.side)
+                .map_err(|_| AppError::Internal(format!("Invalid order side: {}", row.side)))?,
             r#type: OrderType::from_str(&row.r#type.unwrap_or_else(|| "limit".to_string()))
-                .unwrap_or(OrderType::Limit),
+                .map_err(|_| AppError::Internal("Invalid order type".into()))?,
             quantity: row.quantity,
             price: row.price,
-            status: OrderStatus::from_str(&row.status).unwrap_or(OrderStatus::New),
+            status: OrderStatus::from_str(&row.status)
+                .map_err(|_| AppError::Internal(format!("Invalid order status: {}", row.status)))?,
             filled_quantity: row.filled_quantity,
             average_fill_price: Decimal::ZERO,
             meta: row.meta.unwrap_or(serde_json::json!({})),
             created_at: row.created_at,
             updated_at: row.updated_at,
-        }
+        })
     }
 }
 
@@ -153,7 +157,7 @@ impl OrderRepository for PostgresOrderRepository {
             .fetch_optional(&self.pool).await
             .map_err(AppError::DatabaseError)?;
 
-        Ok(rec.map(|r| r.into()))
+        rec.map(|r| r.try_into()).transpose()
     }
 
     async fn get_for_update(
@@ -180,7 +184,7 @@ impl OrderRepository for PostgresOrderRepository {
             .fetch_optional(&mut **tx).await
             .map_err(AppError::DatabaseError)?;
 
-        Ok(rec.map(|r| r.into()))
+        rec.map(|r| r.try_into()).transpose()
     }
 
     async fn update_status(&self, id: Uuid, status: OrderStatus) -> Result<()> {
@@ -297,7 +301,7 @@ impl OrderRepository for PostgresOrderRepository {
             .fetch_one(&self.pool).await
             .map_err(AppError::DatabaseError)?;
 
-        Ok(row.into())
+        row.try_into()
     }
 
     async fn increment_filled_amount_with_tx(
@@ -326,7 +330,7 @@ impl OrderRepository for PostgresOrderRepository {
             .fetch_one(&mut **tx).await
             .map_err(AppError::DatabaseError)?;
 
-        Ok(row.into())
+        row.try_into()
     }
 
     async fn list_open(&self) -> Result<Vec<Order>> {
@@ -341,6 +345,6 @@ impl OrderRepository for PostgresOrderRepository {
             .fetch_all(&self.pool).await
             .map_err(AppError::DatabaseError)?;
 
-        Ok(recs.into_iter().map(|r| r.into()).collect())
+        recs.into_iter().map(|r| r.try_into()).collect()
     }
 }

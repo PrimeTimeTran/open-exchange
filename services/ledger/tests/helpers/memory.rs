@@ -1,5 +1,4 @@
 #![allow(dead_code)]
-#![allow(unused_imports)]
 use chrono::Utc;
 use rust_decimal::prelude::FromPrimitive;
 use rust_decimal::Decimal;
@@ -8,9 +7,9 @@ use std::sync::Arc;
 use tonic::Request;
 use uuid::Uuid;
 
+use ledger::domain::instruments::model::Instrument;
 use ledger::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
-use ledger::domain::transaction::TransactionManager;
-use ledger::proto::common::{Instrument, Trade};
+use ledger::domain::trade::model::Trade;
 
 // Services
 use ledger::domain::{
@@ -18,7 +17,7 @@ use ledger::domain::{
     assets::AssetService,
     borrow::BorrowService,
     corporate_actions::CorporateActionService,
-    deposits::DepositService,
+    deposits::{DepositService, InMemoryDepositRepository},
     exercise::ExerciseService,
     fees::service::StandardFeeService,
     fills::service::FillService,
@@ -31,7 +30,7 @@ use ledger::domain::{
     orders::service::OrderService,
     position_limits::{PositionLimitConfig, PositionLimitService},
     settlement::service::SettlementService,
-    users::UserService,
+    users::{InMemoryUserRepository, UserService},
     wallets::WalletService,
     withdrawals::WithdrawalService,
 };
@@ -138,7 +137,7 @@ impl InMemoryTestContext {
         let trade_repo = Arc::new(InMemoryTradeRepository::new());
 
         // 2. Initialize Domain Services
-        let user_service = Arc::new(UserService::new());
+        let user_service = Arc::new(UserService::new(Arc::new(InMemoryUserRepository::new())));
         let account_service = Arc::new(AccountService::new(account_repo.clone()));
         let wallet_service = Arc::new(WalletService::new(wallet_repo.clone()));
         let asset_service = Arc::new(AssetService::new(
@@ -147,8 +146,13 @@ impl InMemoryTestContext {
         ));
         let fee_service = Arc::new(StandardFeeService::new());
         let fill_service = Arc::new(FillService::new(fill_repo.clone()));
-        let deposit_service = Arc::new(DepositService::new());
-        let withdrawal_service = Arc::new(WithdrawalService::new());
+        let deposit_service = Arc::new(DepositService::new(Arc::new(
+            InMemoryDepositRepository::new(),
+        )));
+        let withdrawal_repo = Arc::new(
+            ledger::infra::repositories::memory::withdrawal::InMemoryWithdrawalRepository::new(),
+        );
+        let withdrawal_service = Arc::new(WithdrawalService::new(withdrawal_repo));
 
         let margin_service = Arc::new(MarginService::new(wallet_service.clone()));
         let cross_margin_service = Arc::new(CrossMarginService::new(wallet_service.clone()));
@@ -230,19 +234,25 @@ impl InMemoryTestContext {
         let instrument_id = Uuid::new_v4();
 
         // Add Assets
-        asset_repo.add(ledger::proto::common::Asset {
-            id: btc_id.to_string(),
-            tenant_id: tenant_id.to_string(),
+        asset_repo.add(ledger::domain::assets::model::Asset {
+            id: btc_id,
+            tenant_id,
             symbol: "BTC".to_string(),
             decimals: 8,
-            ..Default::default()
+            r#type: "CRYPTO".to_string(),
+            meta: serde_json::json!({}),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
         });
-        asset_repo.add(ledger::proto::common::Asset {
-            id: usd_id.to_string(),
-            tenant_id: tenant_id.to_string(),
+        asset_repo.add(ledger::domain::assets::model::Asset {
+            id: usd_id,
+            tenant_id,
             symbol: "USD".to_string(),
             decimals: 2,
-            ..Default::default()
+            r#type: "FIAT".to_string(),
+            meta: serde_json::json!({}),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
         });
 
         // Add Fee Account
@@ -260,16 +270,16 @@ impl InMemoryTestContext {
 
         // Add default BTC-USD instrument
         instrument_repo.add(Instrument {
-            id: instrument_id.to_string(),
-            tenant_id: tenant_id.to_string(),
+            id: instrument_id,
+            tenant_id,
             symbol: "BTC-USD".to_string(),
             r#type: "spot".to_string(),
             status: "active".to_string(),
-            underlying_asset_id: btc_id.to_string(),
-            quote_asset_id: usd_id.to_string(),
-            meta: "{}".to_string(),
-            created_at: Utc::now().timestamp_millis(),
-            updated_at: Utc::now().timestamp_millis(),
+            underlying_asset_id: btc_id,
+            quote_asset_id: usd_id,
+            meta: serde_json::json!({}),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         });
 
         Self {
@@ -330,10 +340,10 @@ impl InMemoryTestContext {
             tenant_id: self.tenant_id,
             account_id,
             instrument_id: self.instrument_id,
-            side: OrderSide::from_str(side).unwrap_or(OrderSide::Buy),
+            side: OrderSide::from_str(side).expect("Invalid order side"),
             r#type: OrderType::Limit,
-            quantity: Decimal::from_f64(quantity).unwrap_or(Decimal::ZERO),
-            price: Decimal::from_f64(price).unwrap_or(Decimal::ZERO),
+            quantity: Decimal::from_f64(quantity).expect("Invalid quantity"),
+            price: Decimal::from_f64(price).expect("Invalid price"),
             status: OrderStatus::Open,
             filled_quantity: Decimal::ZERO,
             average_fill_price: Decimal::ZERO,
@@ -353,16 +363,16 @@ impl InMemoryTestContext {
         quantity: f64,
     ) -> Trade {
         Trade {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: self.tenant_id.to_string(),
-            instrument_id: self.instrument_id.to_string(),
-            buy_order_id: buy_order_id.to_string(),
-            sell_order_id: sell_order_id.to_string(),
-            price: price.to_string(),
-            quantity: quantity.to_string(),
-            meta: "{}".to_string(),
-            created_at: Utc::now().timestamp_millis(),
-            updated_at: Utc::now().timestamp_millis(),
+            id: Uuid::new_v4(),
+            tenant_id: self.tenant_id,
+            instrument_id: self.instrument_id,
+            buy_order_id,
+            sell_order_id,
+            price: Decimal::from_f64(price).expect("Invalid trade price"),
+            quantity: Decimal::from_f64(quantity).expect("Invalid trade quantity"),
+            meta: serde_json::json!({}),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         }
     }
 
@@ -377,9 +387,9 @@ impl InMemoryTestContext {
         self.create_wallet_decimal(
             account_id,
             asset_id,
-            Decimal::from_f64(available).unwrap_or(Decimal::ZERO),
-            Decimal::from_f64(locked).unwrap_or(Decimal::ZERO),
-            Decimal::from_f64(total).unwrap_or(Decimal::ZERO),
+            Decimal::from_f64(available).expect("Invalid available amount"),
+            Decimal::from_f64(locked).expect("Invalid locked amount"),
+            Decimal::from_f64(total).expect("Invalid total amount"),
         )
     }
 
@@ -419,10 +429,10 @@ impl InMemoryTestContext {
         self.asset_api
             .create_asset(req)
             .await
-            .unwrap()
+            .expect("Failed to create asset via API")
             .into_inner()
             .asset
-            .unwrap()
+            .expect("Asset response missing asset field")
             .id
     }
 
@@ -441,10 +451,10 @@ impl InMemoryTestContext {
         self.asset_api
             .create_instrument(req)
             .await
-            .unwrap()
+            .expect("Failed to create instrument via API")
             .into_inner()
             .instrument
-            .unwrap()
+            .expect("Instrument response missing instrument field")
             .id
     }
 
@@ -456,10 +466,10 @@ impl InMemoryTestContext {
         self.account_api
             .create_account(req)
             .await
-            .unwrap()
+            .expect("Failed to create account via API")
             .into_inner()
             .account
-            .unwrap()
+            .expect("Account response missing account field")
             .id
     }
 
@@ -475,10 +485,10 @@ impl InMemoryTestContext {
         self.wallet_api
             .create_wallet(req)
             .await
-            .unwrap()
+            .expect("Failed to create wallet via API")
             .into_inner()
             .wallet
-            .unwrap()
+            .expect("Wallet response missing wallet field")
             .id
     }
 
@@ -488,7 +498,10 @@ impl InMemoryTestContext {
             amount: amount.to_string(),
             transaction_ref: format!("dep-{}", Uuid::new_v4()),
         });
-        self.deposit_api.create_deposit(req).await.unwrap();
+        self.deposit_api
+            .create_deposit(req)
+            .await
+            .expect("Failed to deposit funds via API");
     }
 
     pub fn create_order_object(

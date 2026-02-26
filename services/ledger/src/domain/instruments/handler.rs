@@ -1,6 +1,6 @@
+use crate::domain::instruments::model::Instrument;
 use crate::domain::orders::model::Order;
 use crate::error::Result;
-use crate::proto::common::Instrument;
 use rust_decimal::Decimal;
 
 /// Trait for handling instrument-specific logic, specifically around collateral requirements.

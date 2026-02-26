@@ -14,6 +14,18 @@ impl UserServiceImpl {
     }
 }
 
+fn to_proto_user(user: crate::domain::users::model::User) -> crate::proto::common::User {
+    crate::proto::common::User {
+        id: user.id.to_string(),
+        email: user.email,
+        email_verified: false,
+        provider: "local".to_string(),
+        provider_id: "".to_string(),
+        created_at: user.created_at.timestamp_millis(),
+        updated_at: user.updated_at.timestamp_millis(),
+    }
+}
+
 #[tonic::async_trait]
 impl UserService for UserServiceImpl {
     async fn create_user(
@@ -22,14 +34,14 @@ impl UserService for UserServiceImpl {
     ) -> Result<Response<CreateUserResponse>, Status> {
         let req = request.into_inner();
 
-        let user = self.user_service.create_new_user(
-            req.email,
-            req.password,
-            req.first_name,
-            req.last_name,
-        );
+        let user = self
+            .user_service
+            .create_new_user(req.email, req.password, req.first_name, req.last_name)
+            .map_err(|e| Status::internal(e.to_string()))?;
 
-        Ok(Response::new(CreateUserResponse { user: Some(user) }))
+        Ok(Response::new(CreateUserResponse {
+            user: Some(to_proto_user(user)),
+        }))
     }
 
     async fn get_user(
@@ -37,10 +49,12 @@ impl UserService for UserServiceImpl {
         request: Request<GetUserRequest>,
     ) -> Result<Response<GetUserResponse>, Status> {
         let req = request.into_inner();
-        if let Some(user) = self.user_service.get_user(&req.user_id) {
-            Ok(Response::new(GetUserResponse { user: Some(user) }))
-        } else {
-            Err(Status::not_found("User not found"))
+        match self.user_service.get_user(&req.user_id) {
+            Ok(Some(user)) => Ok(Response::new(GetUserResponse {
+                user: Some(to_proto_user(user)),
+            })),
+            Ok(None) => Err(Status::not_found("User not found")),
+            Err(e) => Err(Status::internal(e.to_string())),
         }
     }
 
@@ -49,11 +63,32 @@ impl UserService for UserServiceImpl {
         request: Request<UpdateUserRequest>,
     ) -> Result<Response<UpdateUserResponse>, Status> {
         let req = request.into_inner();
-        if let Some(user) = req.user {
-            if self.user_service.update_user(user.clone()) {
-                Ok(Response::new(UpdateUserResponse { user: Some(user) }))
-            } else {
-                Err(Status::not_found("User not found"))
+        if let Some(proto_user) = req.user {
+            // Fetch existing domain user to update
+            let user_id = &proto_user.id;
+            let mut domain_user = match self.user_service.get_user(user_id) {
+                Ok(Some(u)) => u,
+                Ok(None) => {
+                    return Err(Status::not_found("User not found"));
+                }
+                Err(e) => {
+                    return Err(Status::internal(e.to_string()));
+                }
+            };
+
+            // Update fields from proto user if present/changed
+            if !proto_user.email.is_empty() {
+                domain_user.email = proto_user.email.clone();
+            }
+
+            domain_user.updated_at = chrono::Utc::now();
+
+            match self.user_service.update_user(domain_user.clone()) {
+                Ok(true) => Ok(Response::new(UpdateUserResponse {
+                    user: Some(to_proto_user(domain_user)),
+                })),
+                Ok(false) => Err(Status::not_found("User not found during update")),
+                Err(e) => Err(Status::internal(e.to_string())),
             }
         } else {
             Err(Status::invalid_argument("User is required"))
@@ -65,13 +100,13 @@ impl UserService for UserServiceImpl {
         request: Request<DeleteUserRequest>,
     ) -> Result<Response<DeleteUserResponse>, Status> {
         let req = request.into_inner();
-        if self.user_service.delete_user(&req.user_id) {
-            Ok(Response::new(DeleteUserResponse {
+        match self.user_service.delete_user(&req.user_id) {
+            Ok(true) => Ok(Response::new(DeleteUserResponse {
                 success: true,
                 message: "User deleted".to_string(),
-            }))
-        } else {
-            Err(Status::not_found("User not found"))
+            })),
+            Ok(false) => Err(Status::not_found("User not found")),
+            Err(e) => Err(Status::internal(e.to_string())),
         }
     }
 }

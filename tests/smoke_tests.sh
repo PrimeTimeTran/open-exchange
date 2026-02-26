@@ -18,7 +18,7 @@ GREEN='\033[0;32m'
 # Report Setup
 TIMESTAMP=$(date +"%Y-%m-%d-%H%M%S")
 # Use absolute path for report file to avoid issues with pushd/popd
-REPORT_FILE="$PROJECT_ROOT/tests/tmp/report-${TIMESTAMP}.csv"
+REPORT_FILE="$PROJECT_ROOT/tests/tmp/test-report-${TIMESTAMP}.csv"
 touch "$REPORT_FILE"
 
 echo -e "${BOLD}💓 Pulse Check: Starting System Verification...${NC}"
@@ -39,7 +39,7 @@ run_service_test() {
     
     # Header for the service in CSV
     echo "Service: $service_name" >> "$REPORT_FILE"
-    echo "Test Suite,Result,Count" >> "$REPORT_FILE"
+    echo "Test Suite, Result, Count" >> "$REPORT_FILE"
 
     pushd "$service_path" > /dev/null
     
@@ -70,17 +70,17 @@ run_service_test() {
         # Count '--- PASS:' lines for individual tests (requires -v)
         PASS_COUNT=$(echo "$OUTPUT" | grep -c "\-\-\- PASS:")
         FAIL_COUNT=$(echo "$OUTPUT" | grep -c "\-\-\- FAIL:")
-        echo "Go Tests,$RESULT,Passed: $PASS_COUNT / Failed: $FAIL_COUNT" >> "$REPORT_FILE"
+        echo "Go Tests, $RESULT, Passed: $PASS_COUNT / Failed: $FAIL_COUNT" >> "$REPORT_FILE"
     elif [ "$type" == "rust" ]; then
         SUMMARY_LINE=$(echo "$OUTPUT" | grep "test result:")
         PASS_COUNT=$(echo "$SUMMARY_LINE" | grep -oE '[0-9]+ passed' | awk '{sum+=$1} END {print sum}')
         FAIL_COUNT=$(echo "$SUMMARY_LINE" | grep -oE '[0-9]+ failed' | awk '{sum+=$1} END {print sum}')
-        echo "Rust Tests,$RESULT,Passed: ${PASS_COUNT:-0} / Failed: ${FAIL_COUNT:-0}" >> "$REPORT_FILE"
+        echo "Rust Tests, $RESULT, Passed: ${PASS_COUNT:-0} / Failed: ${FAIL_COUNT:-0}" >> "$REPORT_FILE"
     elif [ "$type" == "node" ]; then
         SUMMARY_LINE=$(echo "$OUTPUT" | grep "Tests:")
         PASS_COUNT=$(echo "$SUMMARY_LINE" | grep -oE '[0-9]+ passed' | awk '{print $1}')
         TOTAL_COUNT=$(echo "$SUMMARY_LINE" | grep -oE '[0-9]+ total' | awk '{print $1}')
-        echo "Jest Tests,$RESULT,Passed: ${PASS_COUNT:-0} / Total: ${TOTAL_COUNT:-0}" >> "$REPORT_FILE"
+        echo "Jest Tests, $RESULT, Passed: ${PASS_COUNT:-0} / Total: ${TOTAL_COUNT:-0}" >> "$REPORT_FILE"
     else
         echo "Unknown,$RESULT,N/A" >> "$REPORT_FILE"
     fi

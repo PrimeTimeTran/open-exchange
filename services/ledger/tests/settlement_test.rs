@@ -2,13 +2,13 @@
 mod helpers;
 use chrono::Utc;
 use helpers::memory::InMemoryTestContext;
-use helpers::{calc_maker_fee, calc_taker_fee, to_atomic_btc, to_atomic_usd};
+use helpers::{ calc_maker_fee, calc_taker_fee, to_atomic_btc, to_atomic_usd };
 use ledger::domain::accounts::repository::AccountRepository;
 use ledger::domain::fills::FillRepository;
-use ledger::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
+use ledger::domain::orders::model::{ Order, OrderSide, OrderStatus, OrderType };
 use ledger::domain::orders::repository::OrderRepository;
-use ledger::domain::wallets::{Wallet, WalletRepository};
-use ledger::proto::common::Trade;
+use ledger::domain::trade::model::Trade;
+use ledger::domain::wallets::{ Wallet, WalletRepository };
 use ledger::proto::ledger::asset_service_server::AssetService as AssetServiceTrait;
 use ledger::proto::ledger::CreateInstrumentRequest;
 use rust_decimal::prelude::FromPrimitive;
@@ -27,19 +27,13 @@ macro_rules! assert_decimal_eq {
 }
 
 #[tokio::test]
-async fn test_settlement_basic_buy_sell() {
+async fn test_settlement_basic_buy_sell() -> Result<(), Box<dyn std::error::Error>> {
     // 1. Setup Context
     let ctx = InMemoryTestContext::new();
 
     // 2. Setup Wallets (Atomic Units)
     // Buyer: 100k USD -> 10,000,000 cents. 50k Locked -> 5,000,000.
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        5000000.0,
-        5000000.0,
-        10000000.0,
-    );
+    ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(), 5000000.0, 5000000.0, 10000000.0);
     // Buyer: 0 BTC
     ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
     // Seller: 0 USD
@@ -50,7 +44,7 @@ async fn test_settlement_basic_buy_sell() {
         &ctx.btc_id.to_string(),
         100000000.0,
         100000000.0,
-        200000000.0,
+        200000000.0
     );
 
     // 3. Setup Orders (Human Readable)
@@ -64,10 +58,7 @@ async fn test_settlement_basic_buy_sell() {
     let trade = ctx.create_trade(buy_order.id, sell_order.id, 50000.0, 1.0);
 
     // 6. Process Trade
-    settlement_service
-        .process_trade_event(trade.clone())
-        .await
-        .unwrap();
+    settlement_service.process_trade_event(trade.clone()).await.expect("Failed to process trade");
 
     // Calculate Expected Values
     let trade_amount_atomic = to_atomic_usd(50000.0);
@@ -82,46 +73,42 @@ async fn test_settlement_basic_buy_sell() {
 
     // 7. Verify Wallets
     let b_usd = wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await
-        .unwrap()
-        .unwrap();
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await
+        .expect("Failed to fetch buyer usd wallet")
+        .expect("Buyer usd wallet not found");
     assert_decimal_val_eq!(b_usd.available, buyer_expected_avail);
     assert_decimal_val_eq!(b_usd.locked, Decimal::ZERO);
     assert_decimal_val_eq!(b_usd.total, buyer_expected_total);
 
     let b_btc = wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string())
-        .await
-        .unwrap()
-        .unwrap();
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string()).await
+        .expect("Failed to fetch buyer btc wallet")
+        .expect("Buyer btc wallet not found");
     assert_decimal_val_eq!(b_btc.available, to_atomic_btc(1.0));
     assert_decimal_val_eq!(b_btc.locked, Decimal::ZERO);
     assert_decimal_val_eq!(b_btc.total, to_atomic_btc(1.0));
 
     let s_usd = wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &ctx.usd_id.to_string())
-        .await
-        .unwrap()
-        .unwrap();
+        .get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &ctx.usd_id.to_string()).await
+        .expect("Failed to fetch seller usd wallet")
+        .expect("Seller usd wallet not found");
     assert_decimal_val_eq!(s_usd.available, seller_expected_total);
     assert_decimal_val_eq!(s_usd.locked, Decimal::ZERO);
     assert_decimal_val_eq!(s_usd.total, seller_expected_total);
 
     let s_btc = wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &ctx.btc_id.to_string())
-        .await
-        .unwrap()
-        .unwrap();
+        .get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &ctx.btc_id.to_string()).await
+        .expect("Failed to fetch seller btc wallet")
+        .expect("Seller btc wallet not found");
     assert_decimal_val_eq!(s_btc.available, to_atomic_btc(1.0)); // Started with 2.0
     assert_decimal_val_eq!(s_btc.locked, Decimal::ZERO);
     assert_decimal_val_eq!(s_btc.total, to_atomic_btc(1.0));
-    let buy_fills = ctx.fill_repo.list_by_order(buy_order.id).await.unwrap();
+    let buy_fills = ctx.fill_repo.list_by_order(buy_order.id).await?;
     assert_eq!(buy_fills.len(), 1);
     assert_eq!(buy_fills[0].side, "buy");
     assert_eq!(buy_fills[0].quantity, Decimal::from(1));
 
-    let sell_fills = ctx.fill_repo.list_by_order(sell_order.id).await.unwrap();
+    let sell_fills = ctx.fill_repo.list_by_order(sell_order.id).await?;
     assert_eq!(sell_fills.len(), 1);
     assert_eq!(sell_fills[0].side, "sell");
     assert_eq!(sell_fills[0].quantity, Decimal::from(1));
@@ -134,33 +121,22 @@ async fn test_settlement_basic_buy_sell() {
 
     let entries = ctx.ledger_repo.get_entries();
     assert_eq!(entries.len(), 6, "Expected 6 ledger entries");
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_settlement_partial_fill() {
+async fn test_settlement_partial_fill() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = InMemoryTestContext::new();
 
     // Buyer wants 2 BTC, has 100k USD locked (Price 50k)
     // 100k USD -> 10M atomic.
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        0.0,
-        10000000.0,
-        10000000.0,
-    );
+    ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(), 0.0, 10000000.0, 10000000.0);
     ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
 
     // Seller selling 1 BTC
     // 1 BTC -> 100M atomic.
     ctx.create_wallet(ctx.account_b, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
-    ctx.create_wallet(
-        ctx.account_b,
-        &ctx.btc_id.to_string(),
-        0.0,
-        100000000.0,
-        100000000.0,
-    );
+    ctx.create_wallet(ctx.account_b, &ctx.btc_id.to_string(), 0.0, 100000000.0, 100000000.0);
 
     let buy_order = ctx.create_order(ctx.account_a, "buy", 50000.0, 2.0);
     let sell_order = ctx.create_order(ctx.account_b, "sell", 50000.0, 1.0);
@@ -169,17 +145,13 @@ async fn test_settlement_partial_fill() {
 
     let trade = ctx.create_trade(buy_order.id, sell_order.id, 50000.0, 1.0);
 
-    settlement_service
-        .process_trade_event(trade.clone())
-        .await
-        .unwrap();
+    settlement_service.process_trade_event(trade.clone()).await.expect("Failed to process trade");
 
     // Verify Buyer Wallet (Partial Fill)
     let b_usd = wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await
-        .unwrap()
-        .unwrap();
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await
+        .expect("Failed to fetch buyer usd wallet")
+        .expect("Buyer usd wallet not found");
 
     // Dynamic Calculation
     let trade_amt = to_atomic_usd(50000.0);
@@ -194,19 +166,17 @@ async fn test_settlement_partial_fill() {
     assert_decimal_val_eq!(b_usd.total, expected_total);
 
     let b_btc = wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string())
-        .await
-        .unwrap()
-        .unwrap();
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string()).await
+        .expect("Failed to fetch buyer btc wallet")
+        .expect("Buyer btc wallet not found");
     assert_decimal_val_eq!(b_btc.available, to_atomic_btc(1.0));
     assert_decimal_val_eq!(b_btc.total, to_atomic_btc(1.0));
 
     // Verify Seller Wallet (Fully filled)
     let s_btc = wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &ctx.btc_id.to_string())
-        .await
-        .unwrap()
-        .unwrap();
+        .get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &ctx.btc_id.to_string()).await
+        .expect("Failed to fetch seller btc wallet")
+        .expect("Seller btc wallet not found");
     assert_decimal_val_eq!(s_btc.locked, Decimal::ZERO); // All sold
     assert_decimal_val_eq!(s_btc.total, Decimal::ZERO);
 
@@ -218,6 +188,7 @@ async fn test_settlement_partial_fill() {
 
     let entries = ctx.ledger_repo.get_entries();
     assert_eq!(entries.len(), 6, "Expected 6 ledger entries");
+    Ok(())
 }
 
 #[tokio::test]
@@ -230,13 +201,7 @@ async fn test_settlement_insufficient_funds() {
 
     // Seller has 1 BTC
     ctx.create_wallet(ctx.account_b, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
-    ctx.create_wallet(
-        ctx.account_b,
-        &ctx.btc_id.to_string(),
-        0.0,
-        100000000.0,
-        100000000.0,
-    );
+    ctx.create_wallet(ctx.account_b, &ctx.btc_id.to_string(), 0.0, 100000000.0, 100000000.0);
 
     let buy_order = ctx.create_order(ctx.account_a, "buy", 50000.0, 1.0);
     let sell_order = ctx.create_order(ctx.account_b, "sell", 50000.0, 1.0);
@@ -246,14 +211,10 @@ async fn test_settlement_insufficient_funds() {
     let trade = ctx.create_trade(buy_order.id, sell_order.id, 50000.0, 1.0);
 
     // This should succeed technically, but result in negative balance
-    settlement_service
-        .process_trade_event(trade.clone())
-        .await
-        .unwrap();
+    settlement_service.process_trade_event(trade.clone()).await.unwrap();
 
     let b_usd = wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await
         .unwrap()
         .unwrap();
 
@@ -281,26 +242,14 @@ async fn test_settlement_multiple_matches() {
     // 1. Setup Wallets
     // Buyer: Needs 100k USD locked for 2 trades (50k each). Plus 1000 available for fees.
     // 1000 USD -> 100,000 atomic. 100k Locked -> 10,000,000 atomic.
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        100000.0,
-        10000000.0,
-        10100000.0,
-    );
+    ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(), 100000.0, 10000000.0, 10100000.0);
     // Buyer: 0 BTC
     ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
 
     // Seller: 0 USD
     ctx.create_wallet(ctx.account_b, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
     // Seller: 2 BTC -> 200M atomic. 2 Locked -> 200M atomic.
-    ctx.create_wallet(
-        ctx.account_b,
-        &ctx.btc_id.to_string(),
-        0.0,
-        200000000.0,
-        200000000.0,
-    );
+    ctx.create_wallet(ctx.account_b, &ctx.btc_id.to_string(), 0.0, 200000000.0, 200000000.0);
 
     // 2. Setup Orders
     let buy_order = ctx.create_order(ctx.account_a, "buy", 50000.0, 2.0);
@@ -311,22 +260,15 @@ async fn test_settlement_multiple_matches() {
 
     // 4. Create and Process Trade 1
     let trade1 = ctx.create_trade(buy_order.id, sell_order.id, 50000.0, 1.0);
-    settlement_service
-        .process_trade_event(trade1.clone())
-        .await
-        .unwrap();
+    settlement_service.process_trade_event(trade1.clone()).await.unwrap();
 
     // 5. Create and Process Trade 2
     let trade2 = ctx.create_trade(buy_order.id, sell_order.id, 50000.0, 1.0);
-    settlement_service
-        .process_trade_event(trade2.clone())
-        .await
-        .unwrap();
+    settlement_service.process_trade_event(trade2.clone()).await.unwrap();
 
     // 6. Verify Wallets
     let b_usd = wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await
         .unwrap()
         .unwrap();
 
@@ -343,16 +285,14 @@ async fn test_settlement_multiple_matches() {
     assert_decimal_val_eq!(b_usd.total, expected_total);
 
     let b_btc = wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string())
-        .await
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string()).await
         .unwrap()
         .unwrap();
     assert_decimal_val_eq!(b_btc.available, to_atomic_btc(2.0));
     assert_decimal_val_eq!(b_btc.total, to_atomic_btc(2.0));
 
     let s_usd = wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &ctx.usd_id.to_string())
-        .await
+        .get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &ctx.usd_id.to_string()).await
         .unwrap()
         .unwrap();
 
@@ -363,8 +303,7 @@ async fn test_settlement_multiple_matches() {
     assert_decimal_val_eq!(s_usd.total, expected_s_total);
 
     let s_btc = wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &ctx.btc_id.to_string())
-        .await
+        .get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &ctx.btc_id.to_string()).await
         .unwrap()
         .unwrap();
     assert_decimal_val_eq!(s_btc.locked, Decimal::ZERO);
@@ -385,13 +324,7 @@ async fn test_settlement_idempotency_double_spend_prevention() {
     let ctx = InMemoryTestContext::new();
 
     // 1. Setup Wallets (Buyer has 100k USD, 50k Locked)
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        5000000.0,
-        5000000.0,
-        10000000.0,
-    );
+    ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(), 5000000.0, 5000000.0, 10000000.0);
     ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
     ctx.create_wallet(ctx.account_b, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
     ctx.create_wallet(
@@ -399,7 +332,7 @@ async fn test_settlement_idempotency_double_spend_prevention() {
         &ctx.btc_id.to_string(),
         100000000.0,
         100000000.0,
-        200000000.0,
+        200000000.0
     );
 
     let buy_order = ctx.create_order(ctx.account_a, "buy", 50000.0, 1.0);
@@ -412,18 +345,14 @@ async fn test_settlement_idempotency_double_spend_prevention() {
 
     // 3. Process it TWICE
     // First pass: Should succeed
-    settlement_service
-        .process_trade_event(trade.clone())
-        .await
-        .unwrap();
+    settlement_service.process_trade_event(trade.clone()).await.unwrap();
 
     // Second pass: Should be idempotent (either succeed silently or fail with specific "AlreadyExists" error, but NOT deduct funds)
     let _ = settlement_service.process_trade_event(trade.clone()).await;
 
     // 4. Verify Wallet - Should be deducted ONLY ONCE
     let b_usd = wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await
         .unwrap()
         .unwrap();
 
@@ -442,24 +371,12 @@ async fn test_settlement_concurrent_updates() {
 
     // 1. Setup Wallet with 20k USD
     // 20k USD -> 2M cents. Locked 0.
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        2000000.0,
-        0.0,
-        2000000.0,
-    );
+    ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(), 2000000.0, 0.0, 2000000.0);
     ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
 
     // Seller has infinite BTC
     ctx.create_wallet(ctx.account_b, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
-    ctx.create_wallet(
-        ctx.account_b,
-        &ctx.btc_id.to_string(),
-        1000000000.0,
-        0.0,
-        1000000000.0,
-    );
+    ctx.create_wallet(ctx.account_b, &ctx.btc_id.to_string(), 1000000000.0, 0.0, 1000000000.0);
 
     let (settlement_service, wallet_service) = ctx.init_test_services();
     let settlement_service = std::sync::Arc::new(settlement_service);
@@ -478,28 +395,32 @@ async fn test_settlement_concurrent_updates() {
         let ctx_clone = ctx.clone();
         let svc_clone = settlement_service.clone();
 
-        handles.push(tokio::spawn(async move {
-            let buy_order = ctx_clone.create_order(ctx_clone.account_a, "buy", 50000.0, 0.02);
-            let sell_order = ctx_clone.create_order(ctx_clone.account_b, "sell", 50000.0, 0.02);
-            let trade = ctx_clone.create_trade(buy_order.id, sell_order.id, 50000.0, 0.02);
+        handles.push(
+            tokio::spawn(async move {
+                let buy_order = ctx_clone.create_order(ctx_clone.account_a, "buy", 50000.0, 0.02);
+                let sell_order = ctx_clone.create_order(ctx_clone.account_b, "sell", 50000.0, 0.02);
+                let trade = ctx_clone.create_trade(buy_order.id, sell_order.id, 50000.0, 0.02);
 
-            // We retry on optimistic locking error
-            let mut retries = 5;
-            loop {
-                match svc_clone.process_trade_event(trade.clone()).await {
-                    Ok(_) => break,
-                    Err(e) => {
-                        let err_msg = format!("{:?}", e);
-                        if retries > 0 && err_msg.contains("OptimisticLockingError") {
-                            retries -= 1;
-                            tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
-                            continue;
+                // We retry on optimistic locking error
+                let mut retries = 5;
+                loop {
+                    match svc_clone.process_trade_event(trade.clone()).await {
+                        Ok(_) => {
+                            break;
                         }
-                        panic!("Trade failed after retries: {:?}", e);
+                        Err(e) => {
+                            let err_msg = format!("{:?}", e);
+                            if retries > 0 && err_msg.contains("OptimisticLockingError") {
+                                retries -= 1;
+                                tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
+                                continue;
+                            }
+                            panic!("Trade failed after retries: {:?}", e);
+                        }
                     }
                 }
-            }
-        }));
+            })
+        );
     }
 
     // 3. Await all
@@ -509,8 +430,7 @@ async fn test_settlement_concurrent_updates() {
 
     // 4. Verify Balance
     let b_usd = wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await
         .unwrap()
         .unwrap();
 
@@ -531,13 +451,7 @@ async fn test_settlement_cross_tenant_isolation() {
 
     // 1. Setup Wallet for Tenant 1 (Buyer)
     // 100k USD -> 10M atomic (2 decimals)
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        10000000.0,
-        0.0,
-        10000000.0,
-    );
+    ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(), 10000000.0, 0.0, 10000000.0);
 
     // 2. Setup Wallet for Tenant 2 (Seller)
     let account_t2 = Uuid::new_v4();
@@ -572,7 +486,7 @@ async fn test_settlement_cross_tenant_isolation() {
         OrderSide::Sell,
         OrderType::Limit,
         Decimal::from(1),
-        Decimal::from(50000),
+        Decimal::from(50000)
     );
     ctx.order_repo.add(sell_order.clone());
 
@@ -585,8 +499,7 @@ async fn test_settlement_cross_tenant_isolation() {
     assert!(result.is_ok());
 
     let b_usd = wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await
         .unwrap()
         .unwrap();
 
@@ -599,8 +512,7 @@ async fn test_settlement_cross_tenant_isolation() {
     assert_decimal_val_eq!(b_usd.total, expected_total);
 
     let s_btc = wallet_service
-        .get_wallet_by_account_and_asset(&account_t2.to_string(), &ctx.btc_id.to_string())
-        .await
+        .get_wallet_by_account_and_asset(&account_t2.to_string(), &ctx.btc_id.to_string()).await
         .unwrap()
         .unwrap();
     // 10 - 1 = 9 BTC -> 900,000,000 sats
@@ -619,55 +531,53 @@ async fn test_settlement_fee_account_contention() {
         let ctx_clone = ctx.clone();
         let svc_clone = settlement_service.clone();
 
-        handles.push(tokio::spawn(async move {
-            let buyer = Uuid::new_v4();
-            let seller = Uuid::new_v4();
+        handles.push(
+            tokio::spawn(async move {
+                let buyer = Uuid::new_v4();
+                let seller = Uuid::new_v4();
 
-            ctx_clone.create_wallet(
-                buyer,
-                &ctx_clone.usd_id.to_string(),
-                100000.0,
-                0.0,
-                100000.0,
-            );
-            ctx_clone.create_wallet(seller, &ctx_clone.btc_id.to_string(), 10.0, 0.0, 10.0);
+                ctx_clone.create_wallet(
+                    buyer,
+                    &ctx_clone.usd_id.to_string(),
+                    100000.0,
+                    0.0,
+                    100000.0
+                );
+                ctx_clone.create_wallet(seller, &ctx_clone.btc_id.to_string(), 10.0, 0.0, 10.0);
 
-            let buy_order = ctx_clone.create_order(buyer, "buy", 1000.0, 1.0);
-            let sell_order = ctx_clone.create_order(seller, "sell", 1000.0, 1.0);
-            let trade = ctx_clone.create_trade(buy_order.id, sell_order.id, 1000.0, 1.0);
+                let buy_order = ctx_clone.create_order(buyer, "buy", 1000.0, 1.0);
+                let sell_order = ctx_clone.create_order(seller, "sell", 1000.0, 1.0);
+                let trade = ctx_clone.create_trade(buy_order.id, sell_order.id, 1000.0, 1.0);
 
-            let mut retries = 10;
-            loop {
-                match svc_clone.process_trade_event(trade.clone()).await {
-                    Ok(_) => break,
-                    Err(_) => {
-                        if retries > 0 {
-                            retries -= 1;
-                            tokio::time::sleep(tokio::time::Duration::from_millis(5)).await;
-                            continue;
+                let mut retries = 10;
+                loop {
+                    match svc_clone.process_trade_event(trade.clone()).await {
+                        Ok(_) => {
+                            break;
                         }
-                        break;
+                        Err(_) => {
+                            if retries > 0 {
+                                retries -= 1;
+                                tokio::time::sleep(tokio::time::Duration::from_millis(5)).await;
+                                continue;
+                            }
+                            break;
+                        }
                     }
                 }
-            }
-        }));
+            })
+        );
     }
 
     for handle in handles {
         let _ = handle.await;
     }
 
-    let fee_account = ctx
-        .account_repo
-        .get_by_name("fees_account")
-        .await
-        .unwrap()
-        .unwrap();
-    if let Some(w) = ctx
-        .wallet_repo
-        .get_by_account_and_asset(&fee_account.id.to_string(), &ctx.usd_id.to_string())
-        .await
-        .unwrap()
+    let fee_account = ctx.account_repo.get_by_name("fees_account").await.unwrap().unwrap();
+    if
+        let Some(w) = ctx.wallet_repo
+            .get_by_account_and_asset(&fee_account.id.to_string(), &ctx.usd_id.to_string()).await
+            .unwrap()
     {
         let total = Decimal::from_str(&w.total).unwrap();
         assert!(total > Decimal::ZERO);
@@ -700,20 +610,15 @@ async fn test_settlement_dust_amounts() {
     let sell_order = ctx.create_order(ctx.account_b, "sell", 50000.0, 0.000001);
     let trade = ctx.create_trade(buy_order.id, sell_order.id, 50000.0, 0.000001);
 
-    settlement_service
-        .process_trade_event(trade.clone())
-        .await
-        .unwrap();
+    settlement_service.process_trade_event(trade.clone()).await.unwrap();
 
     // 3. Verify Balances
     let b_usd = wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await
         .unwrap()
         .unwrap();
     let b_btc = wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string())
-        .await
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string()).await
         .unwrap()
         .unwrap();
 
@@ -730,20 +635,8 @@ async fn test_settlement_self_trade() {
     let ctx = InMemoryTestContext::new();
 
     // Setup: account_a has both USD and BTC and places orders on both sides.
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        10000000.0,
-        0.0,
-        10000000.0,
-    );
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.btc_id.to_string(),
-        200000000.0,
-        0.0,
-        200000000.0,
-    );
+    ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(), 10000000.0, 0.0, 10000000.0);
+    ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 200000000.0, 0.0, 200000000.0);
 
     let (settlement_service, wallet_service) = ctx.init_test_services();
 
@@ -757,13 +650,11 @@ async fn test_settlement_self_trade() {
 
     // Wallet balances must be completely unchanged.
     let usd = wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string()).await
         .unwrap()
         .unwrap();
     let btc = wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string())
-        .await
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string()).await
         .unwrap()
         .unwrap();
     assert_decimal_eq!(usd.total, "10000000");
@@ -776,24 +667,12 @@ async fn test_settlement_order_lifecycle_statuses() {
 
     // 1. Setup Wallets
     // Buyer has 1M USD (enough for 10 BTC at 50k = 500k USD)
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        100000000.0,
-        0.0,
-        100000000.0,
-    );
+    ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(), 100000000.0, 0.0, 100000000.0);
     ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
 
     // Seller has 10 BTC
     ctx.create_wallet(ctx.account_b, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
-    ctx.create_wallet(
-        ctx.account_b,
-        &ctx.btc_id.to_string(),
-        1000000000.0,
-        0.0,
-        1000000000.0,
-    );
+    ctx.create_wallet(ctx.account_b, &ctx.btc_id.to_string(), 1000000000.0, 0.0, 1000000000.0);
 
     // 2. Create Order (10 BTC @ 50k)
     let buy_order = ctx.create_order(ctx.account_a, "buy", 50000.0, 10.0);
@@ -808,10 +687,7 @@ async fn test_settlement_order_lifecycle_statuses() {
 
     // 3. Process FIRST Match (5 BTC)
     let trade1 = ctx.create_trade(buy_order.id, sell_order.id, 50000.0, 5.0);
-    settlement_service
-        .process_trade_event(trade1.clone())
-        .await
-        .unwrap();
+    settlement_service.process_trade_event(trade1.clone()).await.unwrap();
 
     // Verify status -> "partial_fill"
     let order_step1 = ctx.order_repo.get(buy_order.id).await.unwrap().unwrap();
@@ -820,10 +696,7 @@ async fn test_settlement_order_lifecycle_statuses() {
 
     // 4. Process SECOND Match (Remaining 5 BTC)
     let trade2 = ctx.create_trade(buy_order.id, sell_order.id, 50000.0, 5.0);
-    settlement_service
-        .process_trade_event(trade2.clone())
-        .await
-        .unwrap();
+    settlement_service.process_trade_event(trade2.clone()).await.unwrap();
 
     // Verify status -> "filled"
     let order_step2 = ctx.order_repo.get(buy_order.id).await.unwrap().unwrap();
@@ -861,14 +734,7 @@ async fn test_settlement_equity_stock_trade() {
             base_asset_id: aapl_id.clone(),
             quote_asset_id: usd_id.clone(),
         });
-        ctx.asset_api
-            .create_instrument(req)
-            .await
-            .unwrap()
-            .into_inner()
-            .instrument
-            .unwrap()
-            .id
+        ctx.asset_api.create_instrument(req).await.unwrap().into_inner().instrument.unwrap().id
     };
 
     let shares = 10.0_f64;
@@ -887,29 +753,17 @@ async fn test_settlement_equity_stock_trade() {
         &usd_id,
         0.0,
         usd_atomic as f64,
-        usd_atomic as f64,
+        usd_atomic as f64
     );
-    ctx.create_wallet(
-        Uuid::parse_str(&buyer_account).unwrap(),
-        &aapl_id,
-        0.0,
-        0.0,
-        0.0,
-    );
+    ctx.create_wallet(Uuid::parse_str(&buyer_account).unwrap(), &aapl_id, 0.0, 0.0, 0.0);
     ctx.create_wallet(
         Uuid::parse_str(&seller_account).unwrap(),
         &aapl_id,
         0.0,
         aapl_atomic as f64,
-        aapl_atomic as f64,
+        aapl_atomic as f64
     );
-    ctx.create_wallet(
-        Uuid::parse_str(&seller_account).unwrap(),
-        &usd_id,
-        0.0,
-        0.0,
-        0.0,
-    );
+    ctx.create_wallet(Uuid::parse_str(&seller_account).unwrap(), &usd_id, 0.0, 0.0, 0.0);
 
     let buy_order = {
         let o = Order::new(
@@ -919,7 +773,7 @@ async fn test_settlement_equity_stock_trade() {
             OrderSide::Buy,
             OrderType::Limit,
             Decimal::from_f64(shares).unwrap(),
-            Decimal::from_str("180.50").unwrap(),
+            Decimal::from_str("180.50").unwrap()
         );
         ctx.order_repo.add(o.clone());
         o
@@ -933,7 +787,7 @@ async fn test_settlement_equity_stock_trade() {
             OrderSide::Sell,
             OrderType::Limit,
             Decimal::from_f64(shares).unwrap(),
-            Decimal::from_str("180.50").unwrap(),
+            Decimal::from_str("180.50").unwrap()
         );
         ctx.order_repo.add(o.clone());
         o
@@ -941,16 +795,16 @@ async fn test_settlement_equity_stock_trade() {
 
     let trade = {
         Trade {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.to_string(),
-            instrument_id: instr_id.clone(),
-            buy_order_id: buy_order.id.to_string(),
-            sell_order_id: sell_order.id.to_string(),
-            price: "180.50".to_string(),
-            quantity: shares.to_string(),
-            meta: "{}".to_string(),
-            created_at: Utc::now().timestamp_millis(),
-            updated_at: Utc::now().timestamp_millis(),
+            id: Uuid::new_v4(),
+            tenant_id: ctx.tenant_id,
+            instrument_id: Uuid::parse_str(&instr_id).unwrap(),
+            buy_order_id: buy_order.id,
+            sell_order_id: sell_order.id,
+            price: Decimal::from_str("180.50").unwrap(),
+            quantity: Decimal::from_f64(shares).unwrap(),
+            meta: serde_json::json!({}),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         }
     };
 
@@ -958,8 +812,7 @@ async fn test_settlement_equity_stock_trade() {
     settlement_service.process_trade_event(trade).await.unwrap();
 
     let buyer_aapl = wallet_service
-        .get_wallet_by_account_and_asset(&buyer_account, &aapl_id)
-        .await
+        .get_wallet_by_account_and_asset(&buyer_account, &aapl_id).await
         .unwrap()
         .unwrap();
 
@@ -995,14 +848,7 @@ async fn test_settlement_fractional_shares() {
             base_asset_id: aapl_id.clone(),
             quote_asset_id: usd_id.clone(),
         });
-        ctx.asset_api
-            .create_instrument(req)
-            .await
-            .unwrap()
-            .into_inner()
-            .instrument
-            .unwrap()
-            .id
+        ctx.asset_api.create_instrument(req).await.unwrap().into_inner().instrument.unwrap().id
     };
 
     let shares = 0.5_f64;
@@ -1020,30 +866,18 @@ async fn test_settlement_fractional_shares() {
         &usd_id,
         0.0,
         usd_atomic as f64,
-        usd_atomic as f64,
+        usd_atomic as f64
     );
-    ctx.create_wallet(
-        Uuid::parse_str(&buyer_acc).unwrap(),
-        &aapl_id,
-        0.0,
-        0.0,
-        0.0,
-    );
+    ctx.create_wallet(Uuid::parse_str(&buyer_acc).unwrap(), &aapl_id, 0.0, 0.0, 0.0);
 
     ctx.create_wallet(
         Uuid::parse_str(&seller_acc).unwrap(),
         &aapl_id,
         0.0,
         aapl_atomic as f64,
-        aapl_atomic as f64,
+        aapl_atomic as f64
     );
-    ctx.create_wallet(
-        Uuid::parse_str(&seller_acc).unwrap(),
-        &usd_id,
-        0.0,
-        0.0,
-        0.0,
-    );
+    ctx.create_wallet(Uuid::parse_str(&seller_acc).unwrap(), &usd_id, 0.0, 0.0, 0.0);
 
     let buy_order = {
         let o = Order::new(
@@ -1053,7 +887,7 @@ async fn test_settlement_fractional_shares() {
             OrderSide::Buy,
             OrderType::Limit,
             Decimal::from_str("0.5").unwrap(),
-            Decimal::from_str("180.0").unwrap(),
+            Decimal::from_str("180.0").unwrap()
         );
         ctx.order_repo.add(o.clone());
         o
@@ -1067,7 +901,7 @@ async fn test_settlement_fractional_shares() {
             OrderSide::Sell,
             OrderType::Limit,
             Decimal::from_str("0.5").unwrap(),
-            Decimal::from_str("180.0").unwrap(),
+            Decimal::from_str("180.0").unwrap()
         );
         ctx.order_repo.add(o.clone());
         o
@@ -1075,16 +909,16 @@ async fn test_settlement_fractional_shares() {
 
     let trade = {
         Trade {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.to_string(),
-            instrument_id: instr_id.clone(),
-            buy_order_id: buy_order.id.to_string(),
-            sell_order_id: sell_order.id.to_string(),
-            price: "180.0".to_string(),
-            quantity: "0.5".to_string(),
-            meta: "{}".to_string(),
-            created_at: Utc::now().timestamp_millis(),
-            updated_at: Utc::now().timestamp_millis(),
+            id: Uuid::new_v4(),
+            tenant_id: ctx.tenant_id,
+            instrument_id: Uuid::parse_str(&instr_id).unwrap(),
+            buy_order_id: buy_order.id,
+            sell_order_id: sell_order.id,
+            price: Decimal::new(180, 0),
+            quantity: Decimal::from_str("0.5").unwrap(),
+            meta: serde_json::json!({}),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         }
     };
 
@@ -1092,8 +926,7 @@ async fn test_settlement_fractional_shares() {
     settlement_service.process_trade_event(trade).await.unwrap();
 
     let buyer_aapl = wallet_service
-        .get_wallet_by_account_and_asset(&buyer_acc, &aapl_id)
-        .await
+        .get_wallet_by_account_and_asset(&buyer_acc, &aapl_id).await
         .unwrap()
         .unwrap();
 
@@ -1125,14 +958,7 @@ async fn test_settlement_high_precision_altcoin() {
             base_asset_id: eth_id.clone(),
             quote_asset_id: usd_id.clone(),
         });
-        ctx.asset_api
-            .create_instrument(req)
-            .await
-            .unwrap()
-            .into_inner()
-            .instrument
-            .unwrap()
-            .id
+        ctx.asset_api.create_instrument(req).await.unwrap().into_inner().instrument.unwrap().id
     };
 
     // Trade 1.0 ETH @ $3,000 — straightforward amounts but large atomic scale
@@ -1140,13 +966,7 @@ async fn test_settlement_high_precision_altcoin() {
     let seller_acc = ctx.create_account_api(&ctx.user_id, "cash").await;
 
     // Buyer has $3,000 = 300,000 cents
-    ctx.create_wallet(
-        Uuid::parse_str(&buyer_acc).unwrap(),
-        &usd_id,
-        0.0,
-        300_000.0,
-        300_000.0,
-    );
+    ctx.create_wallet(Uuid::parse_str(&buyer_acc).unwrap(), &usd_id, 0.0, 300_000.0, 300_000.0);
     ctx.create_wallet(Uuid::parse_str(&buyer_acc).unwrap(), &eth_id, 0.0, 0.0, 0.0);
 
     // Seller has 1.0 ETH = 1_000_000_000_000_000_000 wei (10^18)
@@ -1156,15 +976,9 @@ async fn test_settlement_high_precision_altcoin() {
         &eth_id,
         0.0,
         one_eth_wei as f64,
-        one_eth_wei as f64,
+        one_eth_wei as f64
     );
-    ctx.create_wallet(
-        Uuid::parse_str(&seller_acc).unwrap(),
-        &usd_id,
-        0.0,
-        0.0,
-        0.0,
-    );
+    ctx.create_wallet(Uuid::parse_str(&seller_acc).unwrap(), &usd_id, 0.0, 0.0, 0.0);
 
     let buy_order = {
         let o = Order::new(
@@ -1174,7 +988,7 @@ async fn test_settlement_high_precision_altcoin() {
             OrderSide::Buy,
             OrderType::Limit,
             Decimal::ONE,
-            Decimal::from_str("3000.0").unwrap(),
+            Decimal::from_str("3000.0").unwrap()
         );
         ctx.order_repo.add(o.clone());
         o
@@ -1188,7 +1002,7 @@ async fn test_settlement_high_precision_altcoin() {
             OrderSide::Sell,
             OrderType::Limit,
             Decimal::ONE,
-            Decimal::from_str("3000.0").unwrap(),
+            Decimal::from_str("3000.0").unwrap()
         );
         ctx.order_repo.add(o.clone());
         o
@@ -1196,31 +1010,26 @@ async fn test_settlement_high_precision_altcoin() {
 
     let trade = {
         Trade {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.to_string(),
-            instrument_id: instr_id.clone(),
-            buy_order_id: buy_order.id.to_string(),
-            sell_order_id: sell_order.id.to_string(),
-            price: "3000.0".to_string(),
-            quantity: "1.0".to_string(),
-            meta: "{}".to_string(),
-            created_at: Utc::now().timestamp_millis(),
-            updated_at: Utc::now().timestamp_millis(),
+            id: Uuid::new_v4(),
+            tenant_id: ctx.tenant_id,
+            instrument_id: Uuid::parse_str(&instr_id).unwrap(),
+            buy_order_id: buy_order.id,
+            sell_order_id: sell_order.id,
+            price: Decimal::new(3000, 0),
+            quantity: Decimal::new(1, 0),
+            meta: serde_json::json!({}),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         }
     };
 
     let (settlement_service, wallet_service) = ctx.init_test_services();
     let result = settlement_service.process_trade_event(trade).await;
 
-    assert!(
-        result.is_ok(),
-        "18-decimal settlement should succeed without overflow: {:?}",
-        result
-    );
+    assert!(result.is_ok(), "18-decimal settlement should succeed without overflow: {:?}", result);
 
     let buyer_eth = wallet_service
-        .get_wallet_by_account_and_asset(&buyer_acc, &eth_id)
-        .await
+        .get_wallet_by_account_and_asset(&buyer_acc, &eth_id).await
         .unwrap()
         .unwrap();
 

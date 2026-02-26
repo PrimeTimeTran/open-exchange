@@ -1,12 +1,15 @@
 use crate::domain::accounts::{Account, AccountRepository};
+use crate::domain::assets::model::Asset;
 use crate::domain::fills::{Fill, FillRepository};
 use crate::domain::orders::{Order, OrderRepository, OrderStatus};
+use crate::domain::trade::model::Trade;
 use crate::domain::transaction::RepositoryTransaction;
 use crate::domain::wallets::{Wallet, WalletRepository};
 use crate::error::{AppError, Result};
 pub use instrument::InMemoryInstrumentRepository;
 use uuid::Uuid;
 pub mod instrument;
+pub mod withdrawal;
 use async_trait::async_trait;
 use rust_decimal::Decimal;
 use std::sync::{Arc, Mutex};
@@ -26,29 +29,43 @@ impl InMemoryAccountRepository {
     }
 
     pub fn add(&self, account: Account) {
-        self.accounts.lock().unwrap().push(account);
+        if let Ok(mut accounts) = self.accounts.lock() {
+            accounts.push(account);
+        }
     }
 
     pub fn get_accounts(&self) -> Vec<Account> {
-        self.accounts.lock().unwrap().clone()
+        self.accounts
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone()
     }
 }
 
 #[async_trait]
 impl AccountRepository for InMemoryAccountRepository {
     async fn create(&self, account: Account) -> Result<Account> {
-        let mut accounts = self.accounts.lock().unwrap();
+        let mut accounts = self
+            .accounts
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to lock accounts: {}", e)))?;
         accounts.push(account.clone());
         Ok(account)
     }
 
     async fn get(&self, id: Uuid) -> Result<Option<Account>> {
-        let accounts = self.accounts.lock().unwrap();
+        let accounts = self
+            .accounts
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to lock accounts: {}", e)))?;
         Ok(accounts.iter().find(|a| a.id == id).cloned())
     }
 
     async fn update(&self, account: Account) -> Result<Account> {
-        let mut accounts = self.accounts.lock().unwrap();
+        let mut accounts = self
+            .accounts
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to lock accounts: {}", e)))?;
         if let Some(pos) = accounts.iter().position(|a| a.id == account.id) {
             accounts[pos] = account.clone();
             Ok(account)
@@ -61,7 +78,10 @@ impl AccountRepository for InMemoryAccountRepository {
     }
 
     async fn delete(&self, id: Uuid) -> Result<()> {
-        let mut accounts = self.accounts.lock().unwrap();
+        let mut accounts = self
+            .accounts
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to lock accounts: {}", e)))?;
         if let Some(pos) = accounts.iter().position(|a| a.id == id) {
             accounts.remove(pos);
             Ok(())
@@ -71,7 +91,10 @@ impl AccountRepository for InMemoryAccountRepository {
     }
 
     async fn list_by_user(&self, user_id: &str) -> Result<Vec<Account>> {
-        let accounts = self.accounts.lock().unwrap();
+        let accounts = self
+            .accounts
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to lock accounts: {}", e)))?;
         Ok(accounts
             .iter()
             .filter(|a| a.user_id == user_id)
@@ -80,12 +103,19 @@ impl AccountRepository for InMemoryAccountRepository {
     }
 
     async fn get_by_name(&self, name: &str) -> Result<Option<Account>> {
-        let accounts = self.accounts.lock().unwrap();
+        let accounts = self
+            .accounts
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to lock accounts: {}", e)))?;
         Ok(accounts.iter().find(|a| a.name == name).cloned())
     }
 
     async fn list_all(&self) -> Result<Vec<Account>> {
-        Ok(self.accounts.lock().unwrap().clone())
+        let accounts = self
+            .accounts
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to lock accounts: {}", e)))?;
+        Ok(accounts.clone())
     }
 }
 
@@ -104,11 +134,12 @@ impl InMemoryOrderRepository {
     }
 
     pub fn add(&self, order: Order) {
-        let mut orders = self.orders.lock().unwrap();
-        if let Some(pos) = orders.iter().position(|o| o.id == order.id) {
-            orders[pos] = order;
-        } else {
-            orders.push(order);
+        if let Ok(mut orders) = self.orders.lock() {
+            if let Some(pos) = orders.iter().position(|o| o.id == order.id) {
+                orders[pos] = order;
+            } else {
+                orders.push(order);
+            }
         }
     }
 }
@@ -116,7 +147,10 @@ impl InMemoryOrderRepository {
 #[async_trait]
 impl OrderRepository for InMemoryOrderRepository {
     async fn create(&self, order: Order) -> Result<Order> {
-        let mut orders = self.orders.lock().unwrap();
+        let mut orders = self
+            .orders
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
         orders.push(order.clone());
         Ok(order)
     }
@@ -130,7 +164,10 @@ impl OrderRepository for InMemoryOrderRepository {
     }
 
     async fn get(&self, id: Uuid) -> Result<Option<Order>> {
-        let orders = self.orders.lock().unwrap();
+        let orders = self
+            .orders
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
         Ok(orders.iter().find(|o| o.id == id).cloned())
     }
 
@@ -143,7 +180,10 @@ impl OrderRepository for InMemoryOrderRepository {
     }
 
     async fn update_status(&self, id: Uuid, status: OrderStatus) -> Result<()> {
-        let mut orders = self.orders.lock().unwrap();
+        let mut orders = self
+            .orders
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
         if let Some(order) = orders.iter_mut().find(|o| o.id == id) {
             order.status = status;
             order.updated_at = chrono::Utc::now();
@@ -163,7 +203,10 @@ impl OrderRepository for InMemoryOrderRepository {
     }
 
     async fn update_filled_amount(&self, id: Uuid, filled: Decimal) -> Result<()> {
-        let mut orders = self.orders.lock().unwrap();
+        let mut orders = self
+            .orders
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
         if let Some(order) = orders.iter_mut().find(|o| o.id == id) {
             order.filled_quantity = filled;
             order.updated_at = chrono::Utc::now();
@@ -183,7 +226,10 @@ impl OrderRepository for InMemoryOrderRepository {
     }
 
     async fn increment_filled_amount(&self, id: Uuid, amount: Decimal) -> Result<Order> {
-        let mut orders = self.orders.lock().unwrap();
+        let mut orders = self
+            .orders
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
         if let Some(order) = orders.iter_mut().find(|o| o.id == id) {
             order.filled_quantity += amount;
             order.updated_at = chrono::Utc::now();
@@ -203,7 +249,10 @@ impl OrderRepository for InMemoryOrderRepository {
     }
 
     async fn list_open(&self) -> Result<Vec<Order>> {
-        let orders = self.orders.lock().unwrap();
+        let orders = self
+            .orders
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
         // Assuming "open", "partial_fill", "new" are considered open
         Ok(orders
             .iter()
@@ -232,20 +281,28 @@ impl InMemoryWalletRepository {
     }
 
     pub fn add(&self, wallet: Wallet) {
-        self.wallets.lock().unwrap().push(wallet);
+        if let Ok(mut wallets) = self.wallets.lock() {
+            wallets.push(wallet);
+        }
     }
 }
 
 #[async_trait]
 impl WalletRepository for InMemoryWalletRepository {
     async fn create(&self, wallet: Wallet) -> Result<Wallet> {
-        let mut wallets = self.wallets.lock().unwrap();
+        let mut wallets = self
+            .wallets
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
         wallets.push(wallet.clone());
         Ok(wallet)
     }
 
     async fn get(&self, id: Uuid) -> Result<Option<Wallet>> {
-        let wallets = self.wallets.lock().unwrap();
+        let wallets = self
+            .wallets
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
         Ok(wallets.iter().find(|w| w.id == id.to_string()).cloned())
     }
 
@@ -254,7 +311,10 @@ impl WalletRepository for InMemoryWalletRepository {
         account_id: &str,
         asset_id: &str,
     ) -> Result<Option<Wallet>> {
-        let wallets = self.wallets.lock().unwrap();
+        let wallets = self
+            .wallets
+            .lock()
+            .map_err(|_| AppError::Internal("Failed to lock wallets".into()))?;
         Ok(wallets
             .iter()
             .find(|w| w.account_id == account_id && w.asset_id == asset_id)
@@ -280,7 +340,10 @@ impl WalletRepository for InMemoryWalletRepository {
     }
 
     async fn update(&self, mut wallet: Wallet) -> Result<Wallet> {
-        let mut wallets = self.wallets.lock().unwrap();
+        let mut wallets = self
+            .wallets
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
         if let Some(pos) = wallets.iter().position(|w| w.id == wallet.id) {
             let existing = &wallets[pos];
             if existing.version != wallet.version {
@@ -310,7 +373,10 @@ impl WalletRepository for InMemoryWalletRepository {
     }
 
     async fn delete(&self, id: Uuid) -> Result<()> {
-        let mut wallets = self.wallets.lock().unwrap();
+        let mut wallets = self
+            .wallets
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
         if let Some(pos) = wallets.iter().position(|w| w.id == id.to_string()) {
             wallets.remove(pos);
             Ok(())
@@ -320,7 +386,10 @@ impl WalletRepository for InMemoryWalletRepository {
     }
 
     async fn list_by_account(&self, account_id: &str) -> Result<Vec<Wallet>> {
-        let wallets = self.wallets.lock().unwrap();
+        let wallets = self
+            .wallets
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
         Ok(wallets
             .iter()
             .filter(|w| w.account_id == account_id)
@@ -329,7 +398,10 @@ impl WalletRepository for InMemoryWalletRepository {
     }
 
     async fn list_by_asset(&self, asset_id: &str) -> Result<Vec<Wallet>> {
-        let wallets = self.wallets.lock().unwrap();
+        let wallets = self
+            .wallets
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
         Ok(wallets
             .iter()
             .filter(|w| w.asset_id == asset_id)
@@ -341,11 +413,10 @@ impl WalletRepository for InMemoryWalletRepository {
 // --- InMemoryAssetRepository ---
 
 use crate::infra::repositories::AssetRepository;
-use crate::proto::common;
 
 #[derive(Clone, Default, Debug)]
 pub struct InMemoryAssetRepository {
-    assets: Arc<Mutex<Vec<common::Asset>>>,
+    assets: Arc<Mutex<Vec<Asset>>>,
 }
 
 impl InMemoryAssetRepository {
@@ -355,31 +426,45 @@ impl InMemoryAssetRepository {
         }
     }
 
-    pub fn add(&self, asset: common::Asset) {
-        self.assets.lock().unwrap().push(asset);
+    pub fn add(&self, asset: Asset) {
+        if let Ok(mut assets) = self.assets.lock() {
+            assets.push(asset);
+        }
     }
 }
 
 #[async_trait]
 impl AssetRepository for InMemoryAssetRepository {
-    async fn create(&self, asset: common::Asset) -> Result<common::Asset> {
-        let mut assets = self.assets.lock().unwrap();
+    async fn create(&self, asset: Asset) -> Result<Asset> {
+        let mut assets = self
+            .assets
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
         assets.push(asset.clone());
         Ok(asset)
     }
 
-    async fn get(&self, id: Uuid) -> Result<Option<common::Asset>> {
-        let assets = self.assets.lock().unwrap();
-        Ok(assets.iter().find(|a| a.id == id.to_string()).cloned())
+    async fn get(&self, id: Uuid) -> Result<Option<Asset>> {
+        let assets = self
+            .assets
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
+        Ok(assets.iter().find(|a| a.id == id).cloned())
     }
 
-    async fn get_by_symbol(&self, symbol: &str) -> Result<Option<common::Asset>> {
-        let assets = self.assets.lock().unwrap();
+    async fn get_by_symbol(&self, symbol: &str) -> Result<Option<Asset>> {
+        let assets = self
+            .assets
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
         Ok(assets.iter().find(|a| a.symbol == symbol).cloned())
     }
 
-    async fn list(&self) -> Result<Vec<common::Asset>> {
-        let assets = self.assets.lock().unwrap();
+    async fn list(&self) -> Result<Vec<Asset>> {
+        let assets = self
+            .assets
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
         Ok(assets.clone())
     }
 }
@@ -399,14 +484,19 @@ impl InMemoryFillRepository {
     }
 
     pub fn add(&self, fill: Fill) {
-        self.fills.lock().unwrap().push(fill);
+        if let Ok(mut fills) = self.fills.lock() {
+            fills.push(fill);
+        }
     }
 }
 
 #[async_trait]
 impl FillRepository for InMemoryFillRepository {
     async fn create(&self, fill: Fill) -> Result<Fill> {
-        let mut fills = self.fills.lock().unwrap();
+        let mut fills = self
+            .fills
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
         fills.push(fill.clone());
         Ok(fill)
     }
@@ -420,7 +510,10 @@ impl FillRepository for InMemoryFillRepository {
     }
 
     async fn list_by_order(&self, order_id: Uuid) -> Result<Vec<Fill>> {
-        let fills = self.fills.lock().unwrap();
+        let fills = self
+            .fills
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
         Ok(fills
             .iter()
             .filter(|f| f.order_id == order_id)
@@ -434,7 +527,10 @@ impl FillRepository for InMemoryFillRepository {
         start_time: chrono::DateTime<chrono::Utc>,
         end_time: chrono::DateTime<chrono::Utc>,
     ) -> Result<Vec<Fill>> {
-        let fills = self.fills.lock().unwrap();
+        let fills = self
+            .fills
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
         Ok(fills
             .iter()
             .filter(|f| {
@@ -449,8 +545,8 @@ impl FillRepository for InMemoryFillRepository {
 
 // --- InMemoryLedgerRepository ---
 
+use crate::domain::ledger::model::{LedgerEntry, LedgerEvent};
 use crate::domain::ledger::repository::LedgerRepository;
-use crate::proto::common::{LedgerEntry, LedgerEvent, Trade};
 
 #[derive(Clone, Default, Debug)]
 pub struct InMemoryLedgerRepository {
@@ -467,18 +563,27 @@ impl InMemoryLedgerRepository {
     }
 
     pub fn get_events(&self) -> Vec<LedgerEvent> {
-        self.events.lock().unwrap().clone()
+        self.events
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone()
     }
 
     pub fn get_entries(&self) -> Vec<LedgerEntry> {
-        self.entries.lock().unwrap().clone()
+        self.entries
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone()
     }
 }
 
 #[async_trait]
 impl LedgerRepository for InMemoryLedgerRepository {
     async fn save_event(&self, event: LedgerEvent) -> Result<LedgerEvent> {
-        self.events.lock().unwrap().push(event.clone());
+        self.events
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?
+            .push(event.clone());
         Ok(event)
     }
 
@@ -491,7 +596,10 @@ impl LedgerRepository for InMemoryLedgerRepository {
     }
 
     async fn save_entries(&self, entries: Vec<LedgerEntry>) -> Result<Vec<LedgerEntry>> {
-        let mut store = self.entries.lock().unwrap();
+        let mut store = self
+            .entries
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
         store.extend(entries.clone());
         Ok(entries)
     }
@@ -517,11 +625,19 @@ impl LedgerRepository for InMemoryLedgerRepository {
     }
 
     async fn list_events(&self) -> Result<Vec<LedgerEvent>> {
-        Ok(self.events.lock().unwrap().clone())
+        Ok(self
+            .events
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?
+            .clone())
     }
 
     async fn list_entries(&self) -> Result<Vec<LedgerEntry>> {
-        Ok(self.entries.lock().unwrap().clone())
+        Ok(self
+            .entries
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?
+            .clone())
     }
 }
 
@@ -542,14 +658,20 @@ impl InMemoryTradeRepository {
     }
 
     pub fn get_trades(&self) -> Vec<Trade> {
-        self.trades.lock().unwrap().clone()
+        self.trades
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone()
     }
 }
 
 #[async_trait]
 impl TradeRepository for InMemoryTradeRepository {
     async fn create(&self, trade: Trade) -> Result<Trade> {
-        self.trades.lock().unwrap().push(trade.clone());
+        self.trades
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?
+            .push(trade.clone());
         Ok(trade)
     }
 
@@ -561,15 +683,18 @@ impl TradeRepository for InMemoryTradeRepository {
         self.create(trade).await
     }
 
-    async fn get(&self, id: &str) -> Result<Option<Trade>> {
-        let trades = self.trades.lock().unwrap();
+    async fn get(&self, id: Uuid) -> Result<Option<Trade>> {
+        let trades = self
+            .trades
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
         Ok(trades.iter().find(|t| t.id == id).cloned())
     }
 
     async fn get_with_tx(
         &self,
         _tx: &mut dyn RepositoryTransaction,
-        id: &str,
+        id: Uuid,
     ) -> Result<Option<Trade>> {
         self.get(id).await
     }

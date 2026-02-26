@@ -1,13 +1,14 @@
 use crate::domain::accounts::repository::AccountRepository;
+use crate::domain::ledger::model::{LedgerEntry, LedgerEvent};
 use crate::domain::orders::model::{Order, OrderSide};
 use crate::domain::orders::repository::OrderRepository;
+use crate::domain::trade::model::Trade;
 use crate::error::{AppError, Result};
 use crate::infra::repositories::InstrumentRepository;
-use crate::proto::common::{LedgerEntry, LedgerEvent, Trade};
 use chrono::Utc;
 use rust_decimal::Decimal;
 use rust_decimal::MathematicalOps;
-use std::str::FromStr;
+
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -56,25 +57,24 @@ impl LedgerService {
     }
 
     fn create_entry(
-        tenant_id: &str,
-        event_id: &str,
-        account_id: &str,
-        amount: String,
+        tenant_id: Uuid,
+        event_id: Uuid,
+        account_id: Uuid,
+        amount: Decimal,
         asset: &str,
         entry_type: &str,
     ) -> LedgerEntry {
-        let timestamp = Utc::now().timestamp_millis();
+        let timestamp = Utc::now();
         let meta = serde_json::json!({
             "asset": asset,
             "type": entry_type
-        })
-        .to_string();
+        });
 
         LedgerEntry {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: tenant_id.to_string(),
-            event_id: event_id.to_string(),
-            account_id: account_id.to_string(),
+            id: Uuid::new_v4(),
+            tenant_id,
+            event_id,
+            account_id,
             amount,
             meta,
             created_at: timestamp,
@@ -83,23 +83,23 @@ impl LedgerService {
     }
 
     fn create_event(
-        tenant_id: &str,
-        event_id: &str,
+        tenant_id: Uuid,
+        event_id: Uuid,
         event_type: &str,
-        reference_id: &str,
+        reference_id: Uuid,
         reference_type: &str,
         description: &str,
     ) -> LedgerEvent {
-        let timestamp = Utc::now().timestamp_millis();
+        let timestamp = Utc::now();
         LedgerEvent {
-            id: event_id.to_string(),
-            tenant_id: tenant_id.to_string(),
+            id: event_id,
+            tenant_id,
             r#type: event_type.to_string(),
-            reference_id: reference_id.to_string(),
+            reference_id,
             reference_type: reference_type.to_string(),
             status: "completed".to_string(),
-            description: description.to_string(),
-            meta: "{}".to_string(),
+            description: Some(description.to_string()),
+            meta: serde_json::json!({}),
             created_at: timestamp,
             updated_at: timestamp,
         }
@@ -111,7 +111,9 @@ impl LedgerService {
         buyer_fee: Decimal,
         seller_fee: Decimal,
     ) -> Result<(LedgerEvent, Vec<LedgerEntry>)> {
-        let event_id = Uuid::new_v4().to_string();
+        let event_id = Uuid::new_v4();
+        let tenant_id = trade.tenant_id;
+        let trade_id = trade.id;
 
         // 1. Fetch context data
         let data = self.fetch_trade_data(&trade).await?;
@@ -127,16 +129,16 @@ impl LedgerService {
 
         // 3. Create Ledger Event
         let event = Self::create_event(
-            &trade.tenant_id,
-            &event_id,
+            tenant_id,
+            event_id,
             "trade",
-            &trade.id,
+            trade_id,
             "Trade",
             "Trade execution",
         );
 
         // 4. Generate Ledger Entries
-        let entries = self.generate_trade_entries(&trade.tenant_id, &event_id, &data, &amounts);
+        let entries = self.generate_trade_entries(tenant_id, event_id, &data, &amounts)?;
 
         Ok((event, entries))
     }
@@ -145,37 +147,31 @@ impl LedgerService {
         &self,
         order: Order,
     ) -> Result<(LedgerEvent, Vec<LedgerEntry>)> {
-        let event_id = Uuid::new_v4().to_string();
+        let event_id = Uuid::new_v4();
 
         // 1. Prepare Lock Data (Asset & Amount)
         let lock_data = self.prepare_order_lock(&order).await?;
 
         // 2. Create Ledger Event
         let event = Self::create_event(
-            &order.tenant_id.to_string(),
-            &event_id,
+            order.tenant_id,
+            event_id,
             "order_placed",
-            &order.id.to_string(),
+            order.id,
             "order",
             "Funds reservation for order",
         );
 
         // 3. Generate Entries
-        let entries = self.generate_lock_entries(
-            &order.tenant_id.to_string(),
-            &event_id,
-            &order.account_id.to_string(),
-            &lock_data,
-        )?;
+        let entries =
+            self.generate_lock_entries(order.tenant_id, event_id, order.account_id, &lock_data)?;
 
         Ok((event, entries))
     }
 
     async fn fetch_trade_data(&self, trade: &Trade) -> Result<TradeData> {
-        let buy_order_uuid = Uuid::parse_str(&trade.buy_order_id)
-            .map_err(|_| AppError::MalformedRequest("Invalid buy order ID".to_string()))?;
-        let sell_order_uuid = Uuid::parse_str(&trade.sell_order_id)
-            .map_err(|_| AppError::MalformedRequest("Invalid sell order ID".to_string()))?;
+        let buy_order_uuid = trade.buy_order_id;
+        let sell_order_uuid = trade.sell_order_id;
 
         let buy_order = self
             .order_repo
@@ -194,8 +190,7 @@ impl LedgerService {
                 sell_order_uuid
             )))?;
 
-        let instrument_id = Uuid::parse_str(&trade.instrument_id)
-            .map_err(|_| AppError::MalformedRequest("Invalid instrument ID".to_string()))?;
+        let instrument_id = trade.instrument_id;
         let instrument =
             self.instrument_repo
                 .get(instrument_id)
@@ -208,27 +203,22 @@ impl LedgerService {
         let base_asset_id = instrument.underlying_asset_id;
         let quote_asset_id = instrument.quote_asset_id;
 
-        let base_asset_uuid = Uuid::parse_str(&base_asset_id)
-            .map_err(|_| AppError::MalformedRequest("Invalid base asset ID".into()))?;
-        let quote_asset_uuid = Uuid::parse_str(&quote_asset_id)
-            .map_err(|_| AppError::MalformedRequest("Invalid quote asset ID".into()))?;
-
         let base_asset = self
             .asset_repo
-            .get(base_asset_uuid)
+            .get(base_asset_id)
             .await?
             .ok_or(AppError::NotFound(format!(
                 "Base asset {} not found",
                 base_asset_id
             )))?;
-        let quote_asset =
-            self.asset_repo
-                .get(quote_asset_uuid)
-                .await?
-                .ok_or(AppError::NotFound(format!(
-                    "Quote asset {} not found",
-                    quote_asset_id
-                )))?;
+        let quote_asset = self
+            .asset_repo
+            .get(quote_asset_id)
+            .await?
+            .ok_or(AppError::NotFound(format!(
+                "Quote asset {} not found",
+                quote_asset_id
+            )))?;
 
         let fees_account =
             self.account_repo
@@ -241,8 +231,8 @@ impl LedgerService {
         Ok(TradeData {
             buy_order,
             sell_order,
-            base_asset_id,
-            quote_asset_id,
+            base_asset_id: base_asset_id.to_string(),
+            quote_asset_id: quote_asset_id.to_string(),
             base_decimals: base_asset.decimals,
             quote_decimals: quote_asset.decimals,
             fees_account_id: fees_account.id.to_string(),
@@ -257,10 +247,8 @@ impl LedgerService {
         buyer_fee: Decimal,
         seller_fee: Decimal,
     ) -> Result<TradeAmounts> {
-        let trade_price = Decimal::from_str(&trade.price)
-            .map_err(|_| AppError::MalformedRequest("Invalid trade price".into()))?;
-        let trade_qty = Decimal::from_str(&trade.quantity)
-            .map_err(|_| AppError::MalformedRequest("Invalid trade quantity".into()))?;
+        let trade_price = trade.price;
+        let trade_qty = trade.quantity;
         let total_value = trade_price * trade_qty;
 
         // Scale Amounts (to Atomic Units)
@@ -277,19 +265,19 @@ impl LedgerService {
 
     fn generate_trade_entries(
         &self,
-        tenant_id: &str,
-        event_id: &str,
+        tenant_id: Uuid,
+        event_id: Uuid,
         data: &TradeData,
         amounts: &TradeAmounts,
-    ) -> Vec<LedgerEntry> {
+    ) -> Result<Vec<LedgerEntry>> {
         let mut entries = Vec::new();
 
         // Entry 1: Buyer receives Base Asset (+Qty)
         entries.push(Self::create_entry(
             tenant_id,
             event_id,
-            &data.buy_order.account_id.to_string(),
-            format!("{}", amounts.qty_atomic),
+            data.buy_order.account_id,
+            amounts.qty_atomic,
             &data.base_asset_id,
             "credit",
         ));
@@ -298,8 +286,8 @@ impl LedgerService {
         entries.push(Self::create_entry(
             tenant_id,
             event_id,
-            &data.buy_order.account_id.to_string(),
-            format!("-{}", amounts.total_atomic),
+            data.buy_order.account_id,
+            -amounts.total_atomic,
             &data.quote_asset_id,
             "debit",
         ));
@@ -309,8 +297,8 @@ impl LedgerService {
             entries.push(Self::create_entry(
                 tenant_id,
                 event_id,
-                &data.buy_order.account_id.to_string(),
-                format!("-{}", amounts.buyer_fee_atomic),
+                data.buy_order.account_id,
+                -amounts.buyer_fee_atomic,
                 &data.quote_asset_id,
                 "fee",
             ));
@@ -320,8 +308,8 @@ impl LedgerService {
         entries.push(Self::create_entry(
             tenant_id,
             event_id,
-            &data.sell_order.account_id.to_string(),
-            format!("-{}", amounts.qty_atomic),
+            data.sell_order.account_id,
+            -amounts.qty_atomic,
             &data.base_asset_id,
             "debit",
         ));
@@ -331,8 +319,8 @@ impl LedgerService {
         entries.push(Self::create_entry(
             tenant_id,
             event_id,
-            &data.sell_order.account_id.to_string(),
-            format!("{}", seller_proceeds),
+            data.sell_order.account_id,
+            seller_proceeds,
             &data.quote_asset_id,
             "credit",
         ));
@@ -340,17 +328,19 @@ impl LedgerService {
         // Entry 6: Exchange receives Fee (+TotalFee)
         let total_fee = amounts.buyer_fee_atomic + amounts.seller_fee_atomic;
         if !total_fee.is_zero() {
+            let fee_account_uuid = Uuid::parse_str(&data.fees_account_id)
+                .map_err(|_| AppError::Internal("Invalid fee account ID".into()))?;
             entries.push(Self::create_entry(
                 tenant_id,
                 event_id,
-                &data.fees_account_id,
-                format!("{}", total_fee),
+                fee_account_uuid,
+                total_fee,
                 &data.quote_asset_id,
                 "revenue",
             ));
         }
 
-        entries
+        Ok(entries)
     }
 
     async fn prepare_order_lock(&self, order: &Order) -> Result<OrderLockData> {
@@ -364,34 +354,35 @@ impl LedgerService {
                     order.instrument_id
                 )))?;
 
-        let (asset_id, raw_amount) = if order.side == OrderSide::Buy {
+        let (asset_uuid, raw_amount) = if order.side == OrderSide::Buy {
             (instrument.quote_asset_id, order.price * order.quantity)
         } else {
             (instrument.underlying_asset_id, order.quantity)
         };
 
-        let asset_uuid = Uuid::parse_str(&asset_id)
-            .map_err(|_| AppError::ValidationError("Invalid asset ID".into()))?;
         let asset = self
             .asset_repo
             .get(asset_uuid)
             .await?
-            .ok_or(AppError::NotFound(format!("Asset {} not found", asset_id)))?;
+            .ok_or(AppError::NotFound(format!(
+                "Asset {} not found",
+                asset_uuid
+            )))?;
 
         let scale = Decimal::from(10).powi(asset.decimals as i64);
         let amount_atomic = (raw_amount * scale).floor();
 
         Ok(OrderLockData {
-            asset_id,
+            asset_id: asset_uuid.to_string(),
             amount_atomic,
         })
     }
 
     fn generate_lock_entries(
         &self,
-        tenant_id: &str,
-        event_id: &str,
-        account_id: &str,
+        tenant_id: Uuid,
+        event_id: Uuid,
+        account_id: Uuid,
         lock_data: &OrderLockData,
     ) -> Result<Vec<LedgerEntry>> {
         let mut entries = Vec::new();
@@ -401,7 +392,7 @@ impl LedgerService {
             tenant_id,
             event_id,
             account_id,
-            format!("-{}", lock_data.amount_atomic),
+            -lock_data.amount_atomic,
             &lock_data.asset_id,
             "available",
         ));
@@ -411,20 +402,16 @@ impl LedgerService {
             tenant_id,
             event_id,
             account_id,
-            format!("{}", lock_data.amount_atomic),
+            lock_data.amount_atomic,
             &lock_data.asset_id,
             "locked",
         ));
 
         // Override meta to include action: lock
         for entry in &mut entries {
-            let mut meta_json: serde_json::Value = serde_json::from_str(&entry.meta)
-                .map_err(|e| AppError::Internal(format!("Failed to parse meta json: {}", e)))?;
-
-            if let Some(obj) = meta_json.as_object_mut() {
+            if let Some(obj) = entry.meta.as_object_mut() {
                 obj.insert("action".to_string(), serde_json::json!("lock"));
             }
-            entry.meta = meta_json.to_string();
         }
 
         Ok(entries)
@@ -436,13 +423,15 @@ mod tests {
     use super::*;
     use crate::domain::accounts::repository::AccountRepository;
     use crate::domain::accounts::Account;
+    use crate::domain::assets::model::Asset;
+    use crate::domain::instruments::model::Instrument;
     use crate::domain::orders::model::{Order, OrderStatus, OrderType};
     use crate::infra::repositories::{
         AssetRepository, InMemoryAccountRepository, InMemoryAssetRepository,
         InMemoryInstrumentRepository, InMemoryOrderRepository,
     };
-    use crate::proto::common::{Asset, Instrument};
     use rust_decimal::Decimal;
+    use std::str::FromStr;
 
     #[tokio::test]
     async fn test_process_trade_events() {
@@ -464,27 +453,35 @@ mod tests {
         let account_b = Uuid::new_v4(); // Seller
 
         // Setup Assets
-        let btc_id = Uuid::new_v4().to_string();
-        let usd_id = Uuid::new_v4().to_string();
+        let btc_uuid = Uuid::new_v4();
+        let btc_id = btc_uuid.to_string();
+        let usd_uuid = Uuid::new_v4();
+        let usd_id = usd_uuid.to_string();
 
         asset_repo
             .create(Asset {
-                id: btc_id.clone(),
-                tenant_id: tenant_id.to_string(),
+                id: btc_uuid,
+                tenant_id,
                 symbol: "BTC".to_string(),
                 decimals: 8,
-                ..Default::default()
+                r#type: "CRYPTO".to_string(),
+                meta: serde_json::json!({}),
+                created_at: Utc::now(),
+                updated_at: Utc::now(),
             })
             .await
             .unwrap();
 
         asset_repo
             .create(Asset {
-                id: usd_id.clone(),
-                tenant_id: tenant_id.to_string(),
+                id: usd_uuid,
+                tenant_id,
                 symbol: "USD".to_string(),
                 decimals: 2,
-                ..Default::default()
+                r#type: "FIAT".to_string(),
+                meta: serde_json::json!({}),
+                created_at: Utc::now(),
+                updated_at: Utc::now(),
             })
             .await
             .unwrap();
@@ -507,12 +504,16 @@ mod tests {
             .unwrap();
 
         let instrument = Instrument {
-            id: instrument_id.to_string(),
-            tenant_id: tenant_id.to_string(),
+            id: instrument_id,
+            tenant_id,
             symbol: "BTC-USD".to_string(),
-            underlying_asset_id: btc_id.clone(),
-            quote_asset_id: usd_id.clone(),
-            ..Default::default()
+            r#type: "spot".to_string(),
+            status: "active".to_string(),
+            underlying_asset_id: Uuid::parse_str(&btc_id).unwrap(),
+            quote_asset_id: Uuid::parse_str(&usd_id).unwrap(),
+            meta: serde_json::json!({}),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         };
         instrument_repo.create(instrument).await.unwrap();
 
@@ -554,13 +555,13 @@ mod tests {
         order_repo.create(sell_order.clone()).await.unwrap();
 
         let trade = Trade {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: tenant_id.to_string(),
-            instrument_id: instrument_id.to_string(),
-            buy_order_id: buy_order.id.to_string(),
-            sell_order_id: sell_order.id.to_string(),
-            price: "50000".to_string(),
-            quantity: "1.0".to_string(),
+            id: Uuid::new_v4(),
+            tenant_id,
+            instrument_id,
+            buy_order_id: buy_order.id,
+            sell_order_id: sell_order.id,
+            price: Decimal::new(50000, 0),
+            quantity: Decimal::new(10, 1),
             ..Default::default()
         };
 
@@ -576,19 +577,21 @@ mod tests {
         assert_eq!(entries.len(), 6);
 
         let buyer_btc = entries.iter().find(|e| {
-            e.account_id == account_a.to_string()
-                && e.meta.contains(&btc_id)
-                && e.meta.contains("credit")
+            e.account_id == account_a && e.meta["asset"] == btc_id && e.meta["type"] == "credit"
         });
         assert!(buyer_btc.is_some());
-        assert_eq!(buyer_btc.unwrap().amount, "100000000");
+        assert_eq!(
+            buyer_btc.unwrap().amount,
+            Decimal::from_str("100000000").unwrap()
+        );
 
         let buyer_usd = entries.iter().find(|e| {
-            e.account_id == account_a.to_string()
-                && e.meta.contains(&usd_id)
-                && e.meta.contains("debit")
+            e.account_id == account_a && e.meta["asset"] == usd_id && e.meta["type"] == "debit"
         });
         assert!(buyer_usd.is_some());
-        assert_eq!(buyer_usd.unwrap().amount, "-5000000");
+        assert_eq!(
+            buyer_usd.unwrap().amount,
+            Decimal::from_str("-5000000").unwrap()
+        );
     }
 }

@@ -1,5 +1,5 @@
+use ledger::domain::ledger::model::LedgerEntry;
 use ledger::domain::wallets::Wallet;
-use ledger::proto::common::LedgerEntry;
 use rust_decimal::Decimal;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -57,14 +57,14 @@ async fn test_concurrency_lost_updates() {
 
         set.spawn(async move {
             let entry = LedgerEntry {
-                id: Uuid::new_v4().to_string(),
-                tenant_id: tenant_id_clone,
-                event_id: Uuid::new_v4().to_string(),
-                account_id: account_id_clone,
-                amount: format!("-{}", deduction_atomic_clone), // Debit
-                meta: serde_json::json!({"asset": asset_id_clone, "type": "debit"}).to_string(),
-                created_at: 0,
-                updated_at: 0,
+                id: Uuid::new_v4(),
+                tenant_id: Uuid::parse_str(&tenant_id_clone).unwrap(),
+                event_id: Uuid::new_v4(),
+                account_id: Uuid::parse_str(&account_id_clone).unwrap(),
+                amount: Decimal::from_str(&format!("-{}", deduction_atomic_clone)).unwrap(),
+                meta: serde_json::json!({"asset": asset_id_clone, "type": "debit"}),
+                created_at: chrono::Utc::now(),
+                updated_at: chrono::Utc::now(),
             };
 
             // Retry loop for handling OptimisticLockingError

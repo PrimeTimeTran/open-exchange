@@ -1,4 +1,5 @@
-use super::super::super::proto::common::{LedgerEntry, LedgerEvent, Trade};
+use crate::domain::ledger::model::{LedgerEntry, LedgerEvent};
+use crate::domain::trade::model::Trade;
 use crate::domain::transaction::RepositoryTransaction;
 use crate::error::Result;
 use async_trait::async_trait;

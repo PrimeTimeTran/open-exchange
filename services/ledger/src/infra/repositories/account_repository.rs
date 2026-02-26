@@ -55,25 +55,25 @@ impl AccountRepository for PostgresAccountRepository {
         let user_id = Uuid::parse_str(&account.user_id)
             .map_err(|_| AppError::ValidationError("Invalid user_id".into()))?;
 
-        let rec: AccountRow = sqlx::query_as(
-            r#"
+        let rec: AccountRow = sqlx
+            ::query_as(
+                r#"
             INSERT INTO "Account" (id, "tenantId", "userId", name, type, status, meta, "createdAt", "updatedAt")
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING id, "tenantId", "userId", name, type, status, meta, "createdAt", "updatedAt"
             "#
-        )
-        .bind(account.id)
-        .bind(tenant_id)
-        .bind(user_id)
-        .bind(account.name)
-        .bind(account.r#type)
-        .bind(account.status)
-        .bind(account.meta)
-        .bind(account.created_at)
-        .bind(account.updated_at)
-        .fetch_one(&self.pool)
-        .await
-        .map_err(AppError::DatabaseError)?;
+            )
+            .bind(account.id)
+            .bind(tenant_id)
+            .bind(user_id)
+            .bind(account.name)
+            .bind(account.r#type)
+            .bind(account.status)
+            .bind(account.meta)
+            .bind(account.created_at)
+            .bind(account.updated_at)
+            .fetch_one(&self.pool).await
+            .map_err(AppError::DatabaseError)?;
 
         Ok(rec.into())
     }
@@ -99,28 +99,31 @@ impl AccountRepository for PostgresAccountRepository {
         let user_id = Uuid::parse_str(&account.user_id)
             .map_err(|_| AppError::ValidationError("Invalid user_id".into()))?;
 
-        let rec: AccountRow = sqlx::query_as(
-            r#"
+        let rec: AccountRow = sqlx
+            ::query_as(
+                r#"
             UPDATE "Account"
             SET "tenantId" = $2, "userId" = $3, name = $4, type = $5, status = $6, meta = $7, "updatedAt" = $8
             WHERE id = $1
             RETURNING id, "tenantId", "userId", name, type, status, meta, "createdAt", "updatedAt"
             "#
-        )
-        .bind(account.id)
-        .bind(tenant_id)
-        .bind(user_id)
-        .bind(account.name)
-        .bind(account.r#type)
-        .bind(account.status)
-        .bind(account.meta)
-        .bind(chrono::Utc::now())
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|e| match e {
-            sqlx::Error::RowNotFound => AppError::NotFound(format!("Account {} not found", account.id)),
-            _ => AppError::DatabaseError(e),
-        })?;
+            )
+            .bind(account.id)
+            .bind(tenant_id)
+            .bind(user_id)
+            .bind(account.name)
+            .bind(account.r#type)
+            .bind(account.status)
+            .bind(account.meta)
+            .bind(chrono::Utc::now())
+            .fetch_one(&self.pool).await
+            .map_err(|e| {
+                match e {
+                    sqlx::Error::RowNotFound =>
+                        AppError::NotFound(format!("Account {} not found", account.id)),
+                    _ => AppError::DatabaseError(e),
+                }
+            })?;
 
         Ok(rec.into())
     }
@@ -140,7 +143,7 @@ impl AccountRepository for PostgresAccountRepository {
     }
 
     async fn list_by_user(&self, user_id: &str) -> Result<Vec<Account>> {
-        log::info!("Listing accounts for user_id: {}", user_id);
+        tracing::info!("Listing accounts for user_id: {}", user_id);
         let user_uuid = Uuid::parse_str(user_id)
             .map_err(|_| AppError::ValidationError("Invalid user_id".into()))?;
 

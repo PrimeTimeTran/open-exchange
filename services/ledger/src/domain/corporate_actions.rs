@@ -1,3 +1,4 @@
+use crate::domain::utils::parse;
 use crate::domain::wallets::WalletService;
 /// Corporate action services for equities: dividends and stock splits.
 ///
@@ -6,12 +7,7 @@ use crate::domain::wallets::WalletService;
 use crate::error::Result;
 use rust_decimal::Decimal;
 use rust_decimal::MathematicalOps;
-use std::str::FromStr;
 use std::sync::Arc;
-
-fn parse(s: &str) -> Decimal {
-    Decimal::from_str(s).unwrap_or_default()
-}
 
 #[derive(Clone)]
 pub struct CorporateActionService {
@@ -44,7 +40,7 @@ impl CorporateActionService {
             .await?;
 
         for holder in holders {
-            let shares = parse(&holder.available);
+            let shares = parse(&holder.available)?;
             if shares <= Decimal::ZERO {
                 continue;
             }
@@ -59,8 +55,8 @@ impl CorporateActionService {
                 .get_wallet_by_account_and_asset(&holder.account_id, quote_asset_id)
                 .await?
             {
-                cash.available = (parse(&cash.available) + payout).to_string();
-                cash.total = (parse(&cash.total) + payout).to_string();
+                cash.available = (parse(&cash.available)? + payout).to_string();
+                cash.total = (parse(&cash.total)? + payout).to_string();
                 cash.updated_at = chrono::Utc::now().timestamp_millis();
                 self.wallet_service.update_wallet(cash).await?;
             }
@@ -90,7 +86,7 @@ impl CorporateActionService {
         let scale = Decimal::from(10).powi(base_decimals as i64);
 
         for mut holder in holders {
-            let shares_atomic = parse(&holder.available);
+            let shares_atomic = parse(&holder.available)?;
             if shares_atomic <= Decimal::ZERO {
                 continue;
             }
@@ -99,7 +95,7 @@ impl CorporateActionService {
                 // Multiply share count; total / locked scale proportionally.
                 let new_shares = shares_atomic * ratio_dec;
                 holder.available = new_shares.to_string();
-                holder.total = (parse(&holder.total) * ratio_dec).to_string();
+                holder.total = (parse(&holder.total)? * ratio_dec).to_string();
                 holder.updated_at = chrono::Utc::now().timestamp_millis();
                 self.wallet_service.update_wallet(holder).await?;
             } else {
@@ -142,8 +138,8 @@ impl CorporateActionService {
                         .get_wallet_by_account_and_asset(&account_id, quote_asset_id)
                         .await?
                     {
-                        cash.available = (parse(&cash.available) + cash_payout).to_string();
-                        cash.total = (parse(&cash.total) + cash_payout).to_string();
+                        cash.available = (parse(&cash.available)? + cash_payout).to_string();
+                        cash.total = (parse(&cash.total)? + cash_payout).to_string();
                         cash.updated_at = chrono::Utc::now().timestamp_millis();
                         self.wallet_service.update_wallet(cash).await?;
                     }

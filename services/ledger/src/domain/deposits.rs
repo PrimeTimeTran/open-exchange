@@ -1,18 +1,99 @@
-use crate::proto::common;
+pub mod model;
+
+use crate::domain::deposits::model::Deposit;
+use crate::error::{AppError, Result};
 use chrono::Utc;
+use rust_decimal::Decimal;
+use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
-#[derive(Debug, Default, Clone)]
+pub trait DepositRepository: Send + Sync + std::fmt::Debug {
+    fn create(&self, deposit: Deposit) -> Result<()>;
+    fn get(&self, deposit_id: Uuid) -> Result<Option<Deposit>>;
+    fn update(&self, deposit: Deposit) -> Result<bool>;
+    fn delete(&self, deposit_id: Uuid) -> Result<bool>;
+    fn list_by_wallet(&self, wallet_id: Uuid) -> Result<Vec<Deposit>>;
+}
+
+#[derive(Debug, Default)]
+pub struct InMemoryDepositRepository {
+    deposits: Mutex<Vec<Deposit>>,
+}
+
+impl InMemoryDepositRepository {
+    pub fn new() -> Self {
+        Self {
+            deposits: Mutex::new(Vec::new()),
+        }
+    }
+}
+
+impl DepositRepository for InMemoryDepositRepository {
+    fn create(&self, deposit: Deposit) -> Result<()> {
+        let mut deposits = self
+            .deposits
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Deposit mutex poisoned: {}", e)))?;
+        deposits.push(deposit);
+        Ok(())
+    }
+
+    fn get(&self, deposit_id: Uuid) -> Result<Option<Deposit>> {
+        let deposits = self
+            .deposits
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Deposit mutex poisoned: {}", e)))?;
+        Ok(deposits.iter().find(|x| x.id == deposit_id).cloned())
+    }
+
+    fn update(&self, deposit: Deposit) -> Result<bool> {
+        let mut deposits = self
+            .deposits
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Deposit mutex poisoned: {}", e)))?;
+        if let Some(pos) = deposits.iter().position(|x| x.id == deposit.id) {
+            deposits[pos] = deposit;
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+    }
+
+    fn delete(&self, deposit_id: Uuid) -> Result<bool> {
+        let mut deposits = self
+            .deposits
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Deposit mutex poisoned: {}", e)))?;
+        if let Some(pos) = deposits.iter().position(|x| x.id == deposit_id) {
+            deposits.remove(pos);
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+    }
+
+    fn list_by_wallet(&self, wallet_id: Uuid) -> Result<Vec<Deposit>> {
+        let deposits = self
+            .deposits
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Deposit mutex poisoned: {}", e)))?;
+        Ok(deposits
+            .iter()
+            .filter(|x| x.wallet_id == wallet_id)
+            .cloned()
+            .collect())
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct DepositService {
-    deposits: Arc<Mutex<Vec<common::Deposit>>>,
+    repo: Arc<dyn DepositRepository>,
 }
 
 impl DepositService {
-    pub fn new() -> Self {
-        Self {
-            deposits: Arc::new(Mutex::new(Vec::new())),
-        }
+    pub fn new(repo: Arc<dyn DepositRepository>) -> Self {
+        Self { repo }
     }
 
     pub fn create_new_deposit(
@@ -20,75 +101,48 @@ impl DepositService {
         wallet_id: String,
         amount: String,
         tx_ref: String,
-    ) -> common::Deposit {
-        let deposit = common::Deposit {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: "default".to_string(),
-            account_id: "".to_string(),
-            asset_id: "".to_string(),
-            wallet_id,
-            amount,
+    ) -> Result<Deposit> {
+        let amount_decimal = Decimal::from_str(&amount)
+            .map_err(|_| AppError::ValidationError("Invalid amount".into()))?;
+        let wallet_uuid = Uuid::parse_str(&wallet_id)
+            .map_err(|_| AppError::ValidationError("Invalid wallet ID".into()))?;
+
+        let deposit = Deposit {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::nil(),   // Placeholder, should be passed in
+            account_id: Uuid::nil(),  // Placeholder
+            asset_id: "".to_string(), // Placeholder
+            wallet_id: wallet_uuid,
+            amount: amount_decimal,
+            fee: Decimal::ZERO,
             status: "pending".to_string(),
-            chain: "internal".to_string(),
-            tx_hash: tx_ref,
-            from_address: "".to_string(),
-            confirmations: 0,
-            required_confirmations: 1,
-            detected_at: Utc::now().timestamp_millis(),
-            confirmed_at: 0,
-            credited_at: 0,
-            meta: "{}".to_string(),
-            created_at: Utc::now().timestamp_millis(),
-            updated_at: Utc::now().timestamp_millis(),
+            transaction_ref: tx_ref,
+            meta: serde_json::json!({}),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         };
 
-        let mut deposits = self.deposits.lock().unwrap();
-        deposits.push(deposit.clone());
-        deposit
+        self.repo.create(deposit.clone())?;
+        Ok(deposit)
     }
 
-    pub fn create_deposit(&self, deposit: common::Deposit) {
-        let mut deposits = self.deposits.lock().unwrap();
-        deposits.push(deposit);
+    pub fn create_deposit(&self, deposit: Deposit) -> Result<()> {
+        self.repo.create(deposit)
     }
 
-    pub fn get_deposit(&self, deposit_id: &str) -> Option<common::Deposit> {
-        let deposits = self.deposits.lock().unwrap();
-        deposits.iter().find(|x| x.id == deposit_id).cloned()
+    pub fn get_deposit(&self, deposit_id: Uuid) -> Result<Option<Deposit>> {
+        self.repo.get(deposit_id)
     }
 
-    pub fn update_deposit(&self, deposit: common::Deposit) -> bool {
-        let mut deposits = self.deposits.lock().unwrap();
-        if let Some(pos) = deposits.iter().position(|x| x.id == deposit.id) {
-            deposits[pos] = deposit;
-            true
-        } else {
-            false
-        }
+    pub fn update_deposit(&self, deposit: Deposit) -> Result<bool> {
+        self.repo.update(deposit)
     }
 
-    pub fn cancel_deposit(&self, deposit_id: &str) -> bool {
-        let mut deposits = self.deposits.lock().unwrap();
-        if let Some(pos) = deposits.iter().position(|x| x.id == deposit_id) {
-            // In a real system, we might mark as cancelled instead of removing
-            // But for consistency with other services in MVP:
-            deposits.remove(pos);
-            true
-        } else {
-            false
-        }
+    pub fn cancel_deposit(&self, deposit_id: Uuid) -> Result<bool> {
+        self.repo.delete(deposit_id)
     }
 
-    pub fn list_deposits(&self, wallet_id: &str) -> Vec<common::Deposit> {
-        let deposits = self.deposits.lock().unwrap();
-        if wallet_id.is_empty() {
-            deposits.clone()
-        } else {
-            deposits
-                .iter()
-                .filter(|x| x.wallet_id == wallet_id)
-                .cloned()
-                .collect()
-        }
+    pub fn list_deposits(&self, wallet_id: Uuid) -> Result<Vec<Deposit>> {
+        self.repo.list_by_wallet(wallet_id)
     }
 }

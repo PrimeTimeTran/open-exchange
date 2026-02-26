@@ -1,9 +1,10 @@
 mod helpers;
+use chrono::Utc;
 use helpers::postgres::{atomic, PostgresTestContext};
 use ledger::domain::accounts::repository::AccountRepository;
 use ledger::domain::orders::model::{Order, OrderSide};
+use ledger::domain::trade::model::Trade;
 use ledger::domain::wallets::Wallet;
-use ledger::proto::common::Trade;
 use rust_decimal::Decimal;
 use std::str::FromStr;
 use uuid::Uuid;
@@ -157,16 +158,16 @@ async fn test_conservation_of_money_spot_trading() {
         .unwrap();
 
     let trade = Trade {
-        id: Uuid::new_v4().to_string(),
-        tenant_id: ctx.tenant_id.clone(),
-        instrument_id: instr_id.clone(),
-        buy_order_id: buy_order.id.to_string(),
-        sell_order_id: sell_order.id.to_string(),
-        price: "100.0".to_string(),
-        quantity: "1.0".to_string(),
-        meta: "{}".to_string(),
-        created_at: 0,
-        updated_at: 0,
+        id: Uuid::new_v4(),
+        tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+        instrument_id: Uuid::parse_str(&instr_id).unwrap(),
+        buy_order_id: buy_order.id,
+        sell_order_id: sell_order.id,
+        price: Decimal::new(100, 0),
+        quantity: Decimal::new(1, 0),
+        meta: serde_json::json!({}),
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
     };
 
     ctx.settlement_service
