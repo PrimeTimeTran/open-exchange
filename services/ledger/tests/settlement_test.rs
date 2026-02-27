@@ -26,94 +26,119 @@ macro_rules! assert_decimal_eq {
 
 #[tokio::test]
 async fn test_settlement_basic_buy_sell() -> Result<(), Box<dyn std::error::Error>> {
-    // 1. Setup Context
     let ctx = InMemoryTestContext::new();
 
-    // 2. Setup Wallets (Atomic Units)
-    // Buyer: 100k USD -> 10,000,000 cents. 50k Locked -> 5,000,000.
+    // 1. Setup Participants (Object Mother)
+    // Buyer: 100k USD (Atomic). Seller: 2 BTC (Atomic).
+    let initial_usd_atomic = to_atomic_usd(100_000.0).to_string();
+    let initial_btc_atomic = to_atomic_btc(2.0).to_string();
+    let p = ctx.btc_spot_participants(&initial_usd_atomic, &initial_btc_atomic);
+
+    // Ensure counter-party wallets exist for settlement
     ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        5000000.0,
-        5000000.0,
-        10000000.0,
+        p.buyer.account_id,
+        &ctx.assets.btc.to_string(),
+        0.0,
+        0.0,
+        0.0,
     );
-    // Buyer: 0 BTC
-    ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
-    // Seller: 0 USD
-    ctx.create_wallet(ctx.account_b, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
-    // Seller: 2 BTC -> 200,000,000 sats. 1 Locked -> 100,000,000.
     ctx.create_wallet(
-        ctx.account_b,
-        &ctx.btc_id.to_string(),
-        100000000.0,
-        100000000.0,
-        200000000.0,
+        p.seller.account_id,
+        &ctx.assets.usd.to_string(),
+        0.0,
+        0.0,
+        0.0,
     );
 
-    // 3. Setup Orders (Human Readable)
-    let buy_order = ctx.create_order(ctx.account_a, "buy", 50000.0, 1.0);
-    let sell_order = ctx.create_order(ctx.account_b, "sell", 50000.0, 1.0);
+    // 2. Place Orders (Locks Funds Automatically via Service)
+    // Buy 1 BTC @ 50,000 USD
+    let buy_order = ctx
+        .place_limit_order(
+            p.buyer.account_id,
+            OrderSide::Buy,
+            Decimal::from_str("50000.0")?,
+            Decimal::from(1),
+        )
+        .await?;
 
-    // 4. Initialize Services
-    let (settlement_service, wallet_service) = ctx.init_test_services();
+    // Sell 1 BTC @ 50,000 USD
+    let sell_order = ctx
+        .place_limit_order(
+            p.seller.account_id,
+            OrderSide::Sell,
+            Decimal::from_str("50000.0")?,
+            Decimal::from(1),
+        )
+        .await?;
 
-    // 5. Create Trade
+    // 3. Match & Settle
     let trade = ctx.create_trade(buy_order.id, sell_order.id, 50000.0, 1.0);
 
-    // 6. Process Trade
-    settlement_service
+    ctx.settlement_service
         .process_trade_event(trade.clone())
-        .await
-        .expect("Failed to process trade");
+        .await?;
 
-    // Calculate Expected Values
+    // Expected post-settlement values.
     let trade_amount_atomic = to_atomic_usd(50000.0);
     let buyer_fee = calc_taker_fee(trade_amount_atomic);
     let seller_fee = calc_maker_fee(trade_amount_atomic);
 
-    let buyer_avail_start = to_atomic_usd(50000.0); // 50k available initially
-    let buyer_expected_avail = buyer_avail_start - buyer_fee;
-    let buyer_expected_total = buyer_expected_avail; // Locked becomes 0
-
+    let buyer_expected_avail = to_atomic_usd(50000.0) - buyer_fee; // 50k available minus fee
     let seller_expected_total = trade_amount_atomic - seller_fee;
 
-    // 7. Verify Wallets
-    let b_usd = wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
-        .await
-        .expect("Failed to fetch buyer usd wallet")
-        .expect("Buyer usd wallet not found");
+    // Buyer USD: locked consumed by trade, fee deducted from available.
+    let b_usd = ctx
+        .wallet_service
+        .get_wallet_by_account_and_asset(
+            &p.buyer.account_id.to_string(),
+            &ctx.assets.usd.to_string(),
+        )
+        .await?
+        .expect("Buyer USD wallet not found");
     assert_decimal_val_eq!(b_usd.available, buyer_expected_avail);
     assert_decimal_val_eq!(b_usd.locked, Decimal::ZERO);
-    assert_decimal_val_eq!(b_usd.total, buyer_expected_total);
+    assert_decimal_val_eq!(b_usd.total, buyer_expected_avail);
 
-    let b_btc = wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string())
-        .await
-        .expect("Failed to fetch buyer btc wallet")
-        .expect("Buyer btc wallet not found");
+    // Buyer BTC: credited 1 BTC from the trade.
+    let b_btc = ctx
+        .wallet_service
+        .get_wallet_by_account_and_asset(
+            &p.buyer.account_id.to_string(),
+            &ctx.assets.btc.to_string(),
+        )
+        .await?
+        .expect("Buyer BTC wallet not found");
     assert_decimal_val_eq!(b_btc.available, to_atomic_btc(1.0));
     assert_decimal_val_eq!(b_btc.locked, Decimal::ZERO);
     assert_decimal_val_eq!(b_btc.total, to_atomic_btc(1.0));
 
-    let s_usd = wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &ctx.usd_id.to_string())
-        .await
-        .expect("Failed to fetch seller usd wallet")
-        .expect("Seller usd wallet not found");
+    // Seller USD: credited trade proceeds minus maker fee.
+    let s_usd = ctx
+        .wallet_service
+        .get_wallet_by_account_and_asset(
+            &p.seller.account_id.to_string(),
+            &ctx.assets.usd.to_string(),
+        )
+        .await?
+        .expect("Seller USD wallet not found");
     assert_decimal_val_eq!(s_usd.available, seller_expected_total);
     assert_decimal_val_eq!(s_usd.locked, Decimal::ZERO);
     assert_decimal_val_eq!(s_usd.total, seller_expected_total);
 
-    let s_btc = wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &ctx.btc_id.to_string())
-        .await
-        .expect("Failed to fetch seller btc wallet")
-        .expect("Seller btc wallet not found");
-    assert_decimal_val_eq!(s_btc.available, to_atomic_btc(1.0)); // Started with 2.0
+    // Seller BTC: 1 BTC sold, 1 BTC remaining (started with 2 BTC).
+    let s_btc = ctx
+        .wallet_service
+        .get_wallet_by_account_and_asset(
+            &p.seller.account_id.to_string(),
+            &ctx.assets.btc.to_string(),
+        )
+        .await?
+        .expect("Seller BTC wallet not found");
+    assert_decimal_val_eq!(s_btc.available, to_atomic_btc(1.0));
     assert_decimal_val_eq!(s_btc.locked, Decimal::ZERO);
     assert_decimal_val_eq!(s_btc.total, to_atomic_btc(1.0));
+
+    // Fill records: one per order side.
     let buy_fills = ctx.fill_repo.list_by_order(buy_order.id).await?;
     assert_eq!(buy_fills.len(), 1);
     assert_eq!(buy_fills[0].side, "buy");
@@ -124,17 +149,15 @@ async fn test_settlement_basic_buy_sell() -> Result<(), Box<dyn std::error::Erro
     assert_eq!(sell_fills[0].side, "sell");
     assert_eq!(sell_fills[0].quantity, Decimal::from(1));
 
-    // 9. Verify Ledger Persistence
-    let events = ctx.ledger_repo.get_events().expect("Failed to get events");
+    // Ledger persistence: 1 trade event, 6 entries (debit/credit each side + fees).
+    let events = ctx.ledger_repo.get_events()?;
     assert_eq!(events.len(), 1, "Expected 1 ledger event");
     assert_eq!(events[0].r#type, "trade");
     assert_eq!(events[0].reference_id, trade.id);
 
-    let entries = ctx
-        .ledger_repo
-        .get_entries()
-        .expect("Failed to get entries");
+    let entries = ctx.ledger_repo.get_entries()?;
     assert_eq!(entries.len(), 6, "Expected 6 ledger entries");
+
     Ok(())
 }
 

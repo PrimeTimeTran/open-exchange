@@ -1,10 +1,20 @@
 #![allow(dead_code)]
+pub mod container;
 pub mod memory;
 pub mod postgres;
 
 use ledger::domain::fees::constants::FeeConstants;
 use rust_decimal::prelude::FromPrimitive;
 use rust_decimal::Decimal;
+use uuid::Uuid;
+
+/// Returned by Object Mother scenario methods on both `InMemoryTestContext`
+/// and `PostgresTestContext`. Holds the minimal IDs a test needs to reference
+/// a funded account and its wallet without any further setup.
+pub struct FundedAccount {
+    pub account_id: Uuid,
+    pub wallet_id: Uuid,
+}
 
 pub fn to_atomic_usd(amount: f64) -> Decimal {
     (Decimal::from_f64(amount).unwrap() * Decimal::new(100, 0)).floor()

@@ -1,4 +1,6 @@
 #![allow(dead_code)]
+use crate::helpers::FundedAccount;
+use rust_decimal::Decimal;
 use sqlx::{
     postgres::{PgConnectOptions, PgPoolOptions},
     ConnectOptions, Executor, PgPool,
@@ -449,6 +451,37 @@ impl PostgresTestContext {
             .execute(pool).await
             .expect("Create Asset");
         id.to_string()
+    }
+
+    /// Creates a new account funded with `amount` of `asset_id`.
+    /// Mirrors the Object Mother primitive on `InMemoryTestContext`, giving
+    /// Postgres integration tests the same one-line setup ergonomics.
+    pub async fn funded_account(&self, asset_id: Uuid, amount: &str) -> FundedAccount {
+        let amount_dec =
+            Decimal::from_str(amount).unwrap_or_else(|_| panic!("Invalid amount: {}", amount));
+
+        let user_id = self.create_user().await;
+        let account_id_str = self.create_account(&user_id).await;
+        let account_id = Uuid::parse_str(&account_id_str).unwrap();
+
+        let wallet = self
+            .wallet_service
+            .create_wallet(ledger::domain::wallets::Wallet {
+                id: Uuid::new_v4(),
+                tenant_id: Uuid::parse_str(&self.tenant_id).unwrap(),
+                account_id,
+                asset_id,
+                available: amount_dec,
+                total: amount_dec,
+                ..Default::default()
+            })
+            .await
+            .expect("funded_account: failed to create wallet");
+
+        FundedAccount {
+            account_id,
+            wallet_id: wallet.id,
+        }
     }
 }
 

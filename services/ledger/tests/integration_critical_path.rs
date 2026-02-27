@@ -18,32 +18,17 @@ use uuid::Uuid;
 async fn test_deposit_increases_balance() {
     let ctx = PostgresTestContext::new(true).await;
 
-    let asset_id = ctx.create_asset("USDT", 2).await;
-    let user_id = ctx.create_user().await;
-    let account_id = ctx.create_account(&user_id).await;
-
-    let wallet_id = ctx
-        .wallet_service
-        .create_wallet(Wallet {
-            id: Uuid::new_v4(),
-            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
-            account_id: Uuid::parse_str(&account_id).unwrap(),
-            asset_id: Uuid::parse_str(&asset_id).unwrap(),
-            available: Decimal::ZERO,
-            ..Default::default()
-        })
-        .await
-        .expect("Create Wallet")
-        .id;
+    let usdt_id = Uuid::parse_str(&ctx.create_asset("USDT", 2).await).unwrap();
+    let account = ctx.funded_account(usdt_id, "0").await;
 
     let deposit_amount = Decimal::from_str("100.50").unwrap();
     let entry = LedgerEntry {
         id: Uuid::new_v4(),
         tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
         event_id: Uuid::new_v4(),
-        account_id: Uuid::parse_str(&account_id).unwrap(),
+        account_id: account.account_id,
         amount: deposit_amount,
-        meta: serde_json::json!({"asset": asset_id, "type": "credit"}),
+        meta: serde_json::json!({"asset": usdt_id.to_string(), "type": "credit"}),
         created_at: chrono::Utc::now(),
         updated_at: chrono::Utc::now(),
     };
@@ -55,7 +40,7 @@ async fn test_deposit_increases_balance() {
 
     let updated = ctx
         .wallet_service
-        .get_wallet(&wallet_id.to_string())
+        .get_wallet(&account.wallet_id.to_string())
         .await
         .unwrap()
         .unwrap();
