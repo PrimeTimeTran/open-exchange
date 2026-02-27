@@ -9,24 +9,24 @@ pub struct OrderMapper;
 
 impl OrderMapper {
     pub fn to_proto(order: Order) -> common::Order {
-        let side = match order.side {
+        let side = (match order.side {
             OrderSide::Buy => common::OrderSide::Buy,
             OrderSide::Sell => common::OrderSide::Sell,
-        } as i32;
+        }) as i32;
 
-        let status = match order.status {
+        let status = (match order.status {
             OrderStatus::New => common::OrderStatus::Unspecified,
             OrderStatus::Open => common::OrderStatus::Open,
             OrderStatus::PartialFill => common::OrderStatus::PartialFill,
             OrderStatus::Filled => common::OrderStatus::Filled,
             OrderStatus::Cancelled => common::OrderStatus::Cancelled,
             OrderStatus::Rejected => common::OrderStatus::Rejected,
-        } as i32;
+        }) as i32;
 
-        let order_type = match order.r#type {
+        let order_type = (match order.r#type {
             OrderType::Limit => common::OrderType::Limit,
             OrderType::Market => common::OrderType::Market,
-        } as i32;
+        }) as i32;
 
         common::Order {
             id: order.id.to_string(),
@@ -65,15 +65,21 @@ impl OrderMapper {
             .map_err(|_| Status::invalid_argument("Invalid quantity format"))?;
         let price = Decimal::from_str(&proto_order.price)
             .map_err(|_| Status::invalid_argument("Invalid price format"))?;
-        let filled_quantity =
-            Decimal::from_str(&proto_order.quantity_filled).unwrap_or(Decimal::ZERO);
+        let filled_quantity = if proto_order.quantity_filled.is_empty() {
+            Decimal::ZERO
+        } else {
+            Decimal::from_str(&proto_order.quantity_filled)
+                .map_err(|_| Status::invalid_argument("Invalid filled quantity format"))?
+        };
 
         let side_enum = common::OrderSide::try_from(proto_order.side)
             .map_err(|_| Status::invalid_argument("Invalid side"))?;
         let side = match side_enum {
             common::OrderSide::Buy => OrderSide::Buy,
             common::OrderSide::Sell => OrderSide::Sell,
-            _ => return Err(Status::invalid_argument("Unspecified side")),
+            _ => {
+                return Err(Status::invalid_argument("Unspecified side"));
+            }
         };
 
         let status_enum = common::OrderStatus::try_from(proto_order.status)
@@ -92,10 +98,17 @@ impl OrderMapper {
         let order_type = match type_enum {
             common::OrderType::Limit => OrderType::Limit,
             common::OrderType::Market => OrderType::Market,
-            _ => return Err(Status::invalid_argument("Unspecified order type")),
+            _ => {
+                return Err(Status::invalid_argument("Unspecified order type"));
+            }
         };
 
-        let meta = serde_json::from_str(&proto_order.meta).unwrap_or(serde_json::json!({}));
+        let meta = if proto_order.meta.is_empty() {
+            serde_json::json!({})
+        } else {
+            serde_json::from_str(&proto_order.meta)
+                .map_err(|_| Status::invalid_argument("Invalid meta JSON"))?
+        };
 
         Ok(Order {
             id: order_id,

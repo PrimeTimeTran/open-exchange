@@ -470,7 +470,7 @@ mod tests {
                 updated_at: Utc::now(),
             })
             .await
-            .unwrap();
+            .expect("Failed to create BTC asset");
 
         asset_repo
             .create(Asset {
@@ -484,7 +484,7 @@ mod tests {
                 updated_at: Utc::now(),
             })
             .await
-            .unwrap();
+            .expect("Failed to create USD asset");
 
         // Setup Fee Account
         let fees_account_id = Uuid::new_v4();
@@ -501,7 +501,7 @@ mod tests {
                 updated_at: Utc::now(),
             })
             .await
-            .unwrap();
+            .expect("Failed to create fees account");
 
         let instrument = Instrument {
             id: instrument_id,
@@ -509,13 +509,16 @@ mod tests {
             symbol: "BTC-USD".to_string(),
             r#type: "spot".to_string(),
             status: "active".to_string(),
-            underlying_asset_id: Uuid::parse_str(&btc_id).unwrap(),
-            quote_asset_id: Uuid::parse_str(&usd_id).unwrap(),
+            underlying_asset_id: Uuid::parse_str(&btc_id).expect("Invalid BTC ID"),
+            quote_asset_id: Uuid::parse_str(&usd_id).expect("Invalid USD ID"),
             meta: serde_json::json!({}),
             created_at: Utc::now(),
             updated_at: Utc::now(),
         };
-        instrument_repo.create(instrument).await.unwrap();
+        instrument_repo
+            .create(instrument)
+            .await
+            .expect("Failed to create instrument");
 
         let buy_order = Order {
             id: Uuid::new_v4(),
@@ -551,8 +554,14 @@ mod tests {
             updated_at: Utc::now(),
         };
 
-        order_repo.create(buy_order.clone()).await.unwrap();
-        order_repo.create(sell_order.clone()).await.unwrap();
+        order_repo
+            .create(buy_order.clone())
+            .await
+            .expect("Failed to create buy order");
+        order_repo
+            .create(sell_order.clone())
+            .await
+            .expect("Failed to create sell order");
 
         let trade = Trade {
             id: Uuid::new_v4(),
@@ -569,9 +578,9 @@ mod tests {
         let buyer_fee = Decimal::new(50, 0);
         let seller_fee = Decimal::ZERO;
         let result = service.process_trade(trade, buyer_fee, seller_fee).await;
-        assert!(result.is_ok());
+        assert!(result.is_ok(), "Process trade failed: {:?}", result.err());
 
-        let (event, entries) = result.unwrap();
+        let (event, entries) = result.expect("Process trade failed");
         assert_eq!(event.r#type, "trade");
 
         assert_eq!(entries.len(), 6);
@@ -579,19 +588,19 @@ mod tests {
         let buyer_btc = entries.iter().find(|e| {
             e.account_id == account_a && e.meta["asset"] == btc_id && e.meta["type"] == "credit"
         });
-        assert!(buyer_btc.is_some());
+        assert!(buyer_btc.is_some(), "Buyer BTC entry missing");
         assert_eq!(
-            buyer_btc.unwrap().amount,
-            Decimal::from_str("100000000").unwrap()
+            buyer_btc.expect("Buyer BTC missing").amount,
+            Decimal::from_str("100000000").expect("Invalid decimal")
         );
 
         let buyer_usd = entries.iter().find(|e| {
             e.account_id == account_a && e.meta["asset"] == usd_id && e.meta["type"] == "debit"
         });
-        assert!(buyer_usd.is_some());
+        assert!(buyer_usd.is_some(), "Buyer USD entry missing");
         assert_eq!(
-            buyer_usd.unwrap().amount,
-            Decimal::from_str("-5000000").unwrap()
+            buyer_usd.expect("Buyer USD missing").amount,
+            Decimal::from_str("-5000000").expect("Invalid decimal")
         );
     }
 }

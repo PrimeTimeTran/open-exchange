@@ -215,7 +215,9 @@ async fn test_market_buy_partial_fill_refunds_unused_budget() {
         Decimal::from_str("1.0").unwrap(),
         Decimal::from_str("500.0").unwrap(),
     );
-    ctx.order_repo.add(buy_order.clone());
+    ctx.order_repo
+        .add(buy_order.clone())
+        .expect("Failed to add buy order");
 
     let sell_order = ctx.create_order(ctx.account_b, "sell", 500.0, 0.5);
 

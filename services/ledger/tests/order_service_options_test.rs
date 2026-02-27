@@ -33,7 +33,8 @@ async fn test_sell_call_option_locks_underlying_collateral(
             }),
             created_at: Utc::now(),
             updated_at: Utc::now(),
-        });
+        })
+        .expect("Failed to add BTC-CALL-50K instrument");
 
     let qty_btc_atomic = to_atomic_btc(1.0);
     let qty_btc_standard = Decimal::from_str("1.0")?;
@@ -113,7 +114,8 @@ async fn test_sell_put_option_locks_cash_collateral() -> Result<(), Box<dyn std:
             }),
             created_at: Utc::now(),
             updated_at: Utc::now(),
-        });
+        })
+        .expect("Failed to add BTC-PUT-50K instrument");
 
     let qty_btc_standard = Decimal::from_str("1.0")?; // 1 BTC contract
 
@@ -204,7 +206,8 @@ async fn test_sell_put_option_fails_insufficient_collateral(
             }),
             created_at: Utc::now(),
             updated_at: Utc::now(),
-        });
+        })
+        .expect("Failed to add BTC-PUT-50K instrument");
 
     let qty_btc = to_atomic_btc(1.0);
     // Need 50k USD (atomic 5,000,000), but give only 10k (atomic 1,000,000)

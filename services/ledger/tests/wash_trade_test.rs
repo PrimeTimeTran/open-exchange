@@ -151,8 +151,8 @@ async fn test_cross_account_same_user_wash_trade_detected() {
     let mut sell = ctx.order_repo.get(sell_order.id).await.unwrap().unwrap();
     buy.meta = serde_json::json!({"user_id": ctx.user_id.to_string()});
     sell.meta = serde_json::json!({"user_id": ctx.user_id.to_string()});
-    ctx.order_repo.add(buy);
-    ctx.order_repo.add(sell);
+    ctx.order_repo.add(buy).expect("Failed to add buy order");
+    ctx.order_repo.add(sell).expect("Failed to add sell order");
 
     let usd_a_before = ctx
         .wallet_service

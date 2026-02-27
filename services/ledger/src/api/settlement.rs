@@ -1,4 +1,5 @@
 use crate::domain::settlement::service::SettlementService;
+use crate::infra::mappers::match_mapper::MatchMapper;
 use crate::proto::ledger::settlement_server::Settlement;
 use crate::proto::ledger::{CommitRequest, CommitResponse};
 use std::sync::Arc;
@@ -28,10 +29,22 @@ impl Settlement for SettlementServiceImpl {
             return Err(Status::invalid_argument("No matches provided"));
         }
 
-        let (trade_ids, errors) = self
-            .settlement_service
-            .process_matches(matches, tenant_id)
-            .await;
+        let mut trades = Vec::new();
+        let mut errors = Vec::new();
+
+        for match_data in matches {
+            match MatchMapper::to_trade(match_data, &tenant_id) {
+                Ok(trade) => trades.push(trade),
+                Err(e) => {
+                    errors.push(format!("Failed to map match: {:?}", e));
+                }
+            }
+        }
+
+        let (trade_ids, processing_errors) = self.settlement_service.process_matches(trades).await;
+
+        errors.extend(processing_errors);
+
         // Todo:
         // Create email, notification,
 

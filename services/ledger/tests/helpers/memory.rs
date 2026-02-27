@@ -234,53 +234,61 @@ impl InMemoryTestContext {
         let instrument_id = Uuid::new_v4();
 
         // Add Assets
-        asset_repo.add(ledger::domain::assets::model::Asset {
-            id: btc_id,
-            tenant_id,
-            symbol: "BTC".to_string(),
-            decimals: 8,
-            r#type: "CRYPTO".to_string(),
-            meta: serde_json::json!({}),
-            created_at: chrono::Utc::now(),
-            updated_at: chrono::Utc::now(),
-        });
-        asset_repo.add(ledger::domain::assets::model::Asset {
-            id: usd_id,
-            tenant_id,
-            symbol: "USD".to_string(),
-            decimals: 2,
-            r#type: "FIAT".to_string(),
-            meta: serde_json::json!({}),
-            created_at: chrono::Utc::now(),
-            updated_at: chrono::Utc::now(),
-        });
+        asset_repo
+            .add(ledger::domain::assets::model::Asset {
+                id: btc_id,
+                tenant_id,
+                symbol: "BTC".to_string(),
+                decimals: 8,
+                r#type: "CRYPTO".to_string(),
+                meta: serde_json::json!({}),
+                created_at: chrono::Utc::now(),
+                updated_at: chrono::Utc::now(),
+            })
+            .expect("Failed to add BTC asset");
+        asset_repo
+            .add(ledger::domain::assets::model::Asset {
+                id: usd_id,
+                tenant_id,
+                symbol: "USD".to_string(),
+                decimals: 2,
+                r#type: "FIAT".to_string(),
+                meta: serde_json::json!({}),
+                created_at: chrono::Utc::now(),
+                updated_at: chrono::Utc::now(),
+            })
+            .expect("Failed to add USD asset");
 
         // Add Fee Account
-        account_repo.add(ledger::domain::accounts::Account {
-            id: Uuid::new_v4(),
-            tenant_id: tenant_id.to_string(),
-            user_id: "".to_string(),
-            name: "fees_account".to_string(),
-            r#type: "fees".to_string(),
-            status: "active".to_string(),
-            meta: serde_json::json!({}),
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-        });
+        account_repo
+            .add(ledger::domain::accounts::Account {
+                id: Uuid::new_v4(),
+                tenant_id: tenant_id.to_string(),
+                user_id: "".to_string(),
+                name: "fees_account".to_string(),
+                r#type: "fees".to_string(),
+                status: "active".to_string(),
+                meta: serde_json::json!({}),
+                created_at: Utc::now(),
+                updated_at: Utc::now(),
+            })
+            .expect("Failed to add fee account");
 
         // Add default BTC-USD instrument
-        instrument_repo.add(Instrument {
-            id: instrument_id,
-            tenant_id,
-            symbol: "BTC-USD".to_string(),
-            r#type: "spot".to_string(),
-            status: "active".to_string(),
-            underlying_asset_id: btc_id,
-            quote_asset_id: usd_id,
-            meta: serde_json::json!({}),
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-        });
+        instrument_repo
+            .add(Instrument {
+                id: instrument_id,
+                tenant_id,
+                symbol: "BTC-USD".to_string(),
+                r#type: "spot".to_string(),
+                status: "active".to_string(),
+                underlying_asset_id: btc_id,
+                quote_asset_id: usd_id,
+                meta: serde_json::json!({}),
+                created_at: Utc::now(),
+                updated_at: Utc::now(),
+            })
+            .expect("Failed to add BTC-USD instrument");
 
         Self {
             order_repo,
@@ -351,7 +359,9 @@ impl InMemoryTestContext {
             created_at: Utc::now(),
             updated_at: Utc::now(),
         };
-        self.order_repo.add(order.clone());
+        self.order_repo
+            .add(order.clone())
+            .expect("Failed to add order");
         order
     }
 
@@ -416,7 +426,9 @@ impl InMemoryTestContext {
             created_at: Utc::now(),
             updated_at: Utc::now(),
         };
-        self.wallet_repo.add(wallet.clone());
+        self.wallet_repo
+            .add(wallet.clone())
+            .expect("Failed to add wallet");
         wallet
     }
 

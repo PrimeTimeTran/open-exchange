@@ -111,7 +111,12 @@ impl DepositService for DepositServiceImpl {
         // But for now we keep it here as it was before, just adding error handling
         if let Ok(Some(mut wallet)) = self.wallet_service.get_wallet(&req.wallet_id).await {
             let _current_avail = wallet.available;
-            let deposit_amount = Decimal::from_str(&req.amount).unwrap_or_default();
+            let deposit_amount = Decimal::from_str(&req.amount).map_err(|_| {
+                Status::internal(format!(
+                    "Invalid amount format in DB/Request: {}",
+                    req.amount
+                ))
+            })?;
             let _current_total = wallet.total;
 
             wallet.available += deposit_amount;

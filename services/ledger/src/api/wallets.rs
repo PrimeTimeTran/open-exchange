@@ -4,6 +4,24 @@ use crate::proto::ledger::*;
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
 
+fn to_proto_wallet(wallet: crate::domain::wallets::Wallet) -> crate::proto::common::Wallet {
+    crate::proto::common::Wallet {
+        id: wallet.id.to_string(),
+        tenant_id: wallet.tenant_id.to_string(),
+        user_id: wallet.user_id,
+        account_id: wallet.account_id.to_string(),
+        asset_id: wallet.asset_id.to_string(),
+        available: wallet.available.to_string(),
+        locked: wallet.locked.to_string(),
+        total: wallet.total.to_string(),
+        status: wallet.status,
+        meta: wallet.meta.to_string(),
+        version: wallet.version,
+        created_at: wallet.created_at.timestamp_millis(),
+        updated_at: wallet.updated_at.timestamp_millis(),
+    }
+}
+
 pub struct WalletServiceImpl {
     wallet_service: Arc<WalletDomainService>,
 }
@@ -39,7 +57,7 @@ impl WalletService for WalletServiceImpl {
             .map_err(|e| Status::internal(e.to_string()))?;
 
         Ok(Response::new(CreateWalletResponse {
-            wallet: Some(wallet.into()),
+            wallet: Some(to_proto_wallet(wallet)),
         }))
     }
 
@@ -55,7 +73,7 @@ impl WalletService for WalletServiceImpl {
             .map_err(|e| Status::internal(e.to_string()))?
         {
             Ok(Response::new(GetWalletResponse {
-                wallet: Some(wallet.into()),
+                wallet: Some(to_proto_wallet(wallet)),
             }))
         } else {
             Err(Status::not_found("Wallet not found"))
@@ -86,7 +104,7 @@ impl WalletService for WalletServiceImpl {
                 .map_err(|e| Status::internal(e.to_string()))?;
 
             Ok(Response::new(UpdateWalletResponse {
-                wallet: Some(updated.into()),
+                wallet: Some(to_proto_wallet(updated)),
             }))
         } else {
             Err(Status::not_found("Wallet not found"))
@@ -119,7 +137,7 @@ impl WalletService for WalletServiceImpl {
             .await
             .map_err(|e| Status::internal(e.to_string()))?;
         Ok(Response::new(ListWalletsResponse {
-            wallets: wallets.into_iter().map(|w| w.into()).collect(),
+            wallets: wallets.into_iter().map(to_proto_wallet).collect(),
         }))
     }
 }

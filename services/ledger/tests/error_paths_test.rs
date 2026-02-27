@@ -142,7 +142,9 @@ async fn test_malformed_request_error() {
     };
 
     // Add to repo
-    ctx.instrument_repo.add(option_instrument);
+    ctx.instrument_repo
+        .add(option_instrument)
+        .expect("Failed to add option instrument");
 
     // Create an order for this option (Sell side usually triggers checks in OptionHandler)
     let order = Order::new(

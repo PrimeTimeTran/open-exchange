@@ -125,12 +125,15 @@ async fn test_settlement_basic_buy_sell() -> Result<(), Box<dyn std::error::Erro
     assert_eq!(sell_fills[0].quantity, Decimal::from(1));
 
     // 9. Verify Ledger Persistence
-    let events = ctx.ledger_repo.get_events();
+    let events = ctx.ledger_repo.get_events().expect("Failed to get events");
     assert_eq!(events.len(), 1, "Expected 1 ledger event");
     assert_eq!(events[0].r#type, "trade");
     assert_eq!(events[0].reference_id, trade.id);
 
-    let entries = ctx.ledger_repo.get_entries();
+    let entries = ctx
+        .ledger_repo
+        .get_entries()
+        .expect("Failed to get entries");
     assert_eq!(entries.len(), 6, "Expected 6 ledger entries");
     Ok(())
 }
@@ -210,12 +213,15 @@ async fn test_settlement_partial_fill() -> Result<(), Box<dyn std::error::Error>
     assert_decimal_val_eq!(s_btc.total, Decimal::ZERO);
 
     // Verify Ledger Persistence
-    let events = ctx.ledger_repo.get_events();
+    let events = ctx.ledger_repo.get_events().expect("Failed to get events");
     assert_eq!(events.len(), 1, "Expected 1 ledger event");
     assert_eq!(events[0].r#type, "trade");
     assert_eq!(events[0].reference_id, trade.id);
 
-    let entries = ctx.ledger_repo.get_entries();
+    let entries = ctx
+        .ledger_repo
+        .get_entries()
+        .expect("Failed to get entries");
     assert_eq!(entries.len(), 6, "Expected 6 ledger entries");
     Ok(())
 }
@@ -265,12 +271,15 @@ async fn test_settlement_insufficient_funds() {
     assert_decimal_eq!(b_usd.total, "-5010000"); // 5,000,000 + 10,000
 
     // Verify Ledger Persistence
-    let events = ctx.ledger_repo.get_events();
+    let events = ctx.ledger_repo.get_events().expect("Failed to get events");
     assert_eq!(events.len(), 1, "Expected 1 ledger event");
     assert_eq!(events[0].r#type, "trade");
     assert_eq!(events[0].reference_id, trade.id);
 
-    let entries = ctx.ledger_repo.get_entries();
+    let entries = ctx
+        .ledger_repo
+        .get_entries()
+        .expect("Failed to get entries");
     assert_eq!(entries.len(), 6, "Expected 6 ledger entries");
 }
 
@@ -371,12 +380,15 @@ async fn test_settlement_multiple_matches() {
     assert_decimal_val_eq!(s_btc.total, Decimal::ZERO);
 
     // 7. Verify Ledger Persistence
-    let events = ctx.ledger_repo.get_events();
+    let events = ctx.ledger_repo.get_events().expect("Failed to get events");
     assert_eq!(events.len(), 2, "Expected 2 ledger events");
     assert_eq!(events[0].reference_id, trade1.id);
     assert_eq!(events[1].reference_id, trade2.id);
 
-    let entries = ctx.ledger_repo.get_entries();
+    let entries = ctx
+        .ledger_repo
+        .get_entries()
+        .expect("Failed to get entries");
     assert_eq!(entries.len(), 12, "Expected 12 ledger entries");
 }
 
@@ -558,7 +570,9 @@ async fn test_settlement_cross_tenant_isolation() {
         created_at: chrono::Utc::now(),
         updated_at: chrono::Utc::now(),
     };
-    ctx.wallet_repo.add(wallet_t2);
+    ctx.wallet_repo
+        .add(wallet_t2)
+        .expect("Failed to add wallet_t2");
 
     let (settlement_service, wallet_service) = ctx.init_test_services();
 
@@ -576,7 +590,9 @@ async fn test_settlement_cross_tenant_isolation() {
         Decimal::from(1),
         Decimal::from(50000),
     );
-    ctx.order_repo.add(sell_order.clone());
+    ctx.order_repo
+        .add(sell_order.clone())
+        .expect("Failed to add sell order");
 
     // 4. Attempt Match (Cross-Tenant)
     let trade = ctx.create_trade(buy_order.id, sell_order.id, 50000.0, 1.0);
@@ -924,7 +940,9 @@ async fn test_settlement_equity_stock_trade() {
             Decimal::from_f64(shares).unwrap(),
             Decimal::from_str("180.50").unwrap(),
         );
-        ctx.order_repo.add(o.clone());
+        ctx.order_repo
+            .add(o.clone())
+            .expect("Failed to add buy order");
         o
     };
 
@@ -938,7 +956,9 @@ async fn test_settlement_equity_stock_trade() {
             Decimal::from_f64(shares).unwrap(),
             Decimal::from_str("180.50").unwrap(),
         );
-        ctx.order_repo.add(o.clone());
+        ctx.order_repo
+            .add(o.clone())
+            .expect("Failed to add sell order");
         o
     };
 
@@ -1057,7 +1077,9 @@ async fn test_settlement_fractional_shares() {
             Decimal::from_str("0.5").unwrap(),
             Decimal::from_str("180.0").unwrap(),
         );
-        ctx.order_repo.add(o.clone());
+        ctx.order_repo
+            .add(o.clone())
+            .expect("Failed to add buy order");
         o
     };
 
@@ -1071,7 +1093,9 @@ async fn test_settlement_fractional_shares() {
             Decimal::from_str("0.5").unwrap(),
             Decimal::from_str("180.0").unwrap(),
         );
-        ctx.order_repo.add(o.clone());
+        ctx.order_repo
+            .add(o.clone())
+            .expect("Failed to add sell order");
         o
     };
 
@@ -1178,7 +1202,9 @@ async fn test_settlement_high_precision_altcoin() {
             Decimal::ONE,
             Decimal::from_str("3000.0").unwrap(),
         );
-        ctx.order_repo.add(o.clone());
+        ctx.order_repo
+            .add(o.clone())
+            .expect("Failed to add buy order");
         o
     };
 
@@ -1192,7 +1218,9 @@ async fn test_settlement_high_precision_altcoin() {
             Decimal::ONE,
             Decimal::from_str("3000.0").unwrap(),
         );
-        ctx.order_repo.add(o.clone());
+        ctx.order_repo
+            .add(o.clone())
+            .expect("Failed to add sell order");
         o
     };
 

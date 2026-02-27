@@ -63,7 +63,9 @@ async fn test_ioc_partial_fill_cancels_remainder() {
     );
     ioc_buy_order.meta = serde_json::json!({"time_in_force": "IOC"});
     ioc_buy_order.status = OrderStatus::Open;
-    ctx.order_repo.add(ioc_buy_order.clone());
+    ctx.order_repo
+        .add(ioc_buy_order.clone())
+        .expect("Failed to add IOC buy order");
 
     let sell_order = ctx.create_order(ctx.account_b, "sell", price, partial_qty);
 
@@ -139,7 +141,9 @@ async fn test_ioc_zero_fill_cancels_entirely() {
     );
     ioc_order.meta = serde_json::json!({"time_in_force": "IOC"});
     ioc_order.status = OrderStatus::Open;
-    ctx.order_repo.add(ioc_order.clone());
+    ctx.order_repo
+        .add(ioc_order.clone())
+        .expect("Failed to add IOC order");
 
     // No trade occurs. Matching engine cancels the IOC order immediately.
     ctx.order_service.cancel_order(ioc_order.id).await.unwrap();
@@ -194,7 +198,9 @@ async fn test_fok_cancels_if_not_fully_fillable() {
     );
     fok_order.meta = serde_json::json!({"time_in_force": "FOK"});
     fok_order.status = OrderStatus::Open;
-    ctx.order_repo.add(fok_order.clone());
+    ctx.order_repo
+        .add(fok_order.clone())
+        .expect("Failed to add FOK order");
 
     // Only 1.0 BTC available — FOK condition fails; no trade, just cancel
     ctx.order_service.cancel_order(fok_order.id).await.unwrap();

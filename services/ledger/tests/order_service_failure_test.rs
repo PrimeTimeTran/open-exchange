@@ -109,28 +109,32 @@ mod tests {
         let instr_id = Uuid::new_v4();
         let tenant_id = Uuid::new_v4();
 
-        asset_repo.add(Asset {
-            id: usd_id,
-            tenant_id,
-            symbol: "USD".into(),
-            decimals: 2,
-            r#type: "FIAT".into(),
-            meta: serde_json::json!({}),
-            created_at: chrono::Utc::now(),
-            updated_at: chrono::Utc::now(),
-        });
-        instrument_repo.add(Instrument {
-            id: instr_id,
-            tenant_id,
-            symbol: "BTC-USD".into(),
-            r#type: "spot".into(),
-            status: "active".into(),
-            underlying_asset_id: btc_id,
-            quote_asset_id: usd_id,
-            meta: serde_json::json!({}),
-            created_at: chrono::Utc::now(),
-            updated_at: chrono::Utc::now(),
-        });
+        asset_repo
+            .add(Asset {
+                id: usd_id,
+                tenant_id,
+                symbol: "USD".into(),
+                decimals: 2,
+                r#type: "FIAT".into(),
+                meta: serde_json::json!({}),
+                created_at: chrono::Utc::now(),
+                updated_at: chrono::Utc::now(),
+            })
+            .expect("Failed to add USD asset");
+        instrument_repo
+            .add(Instrument {
+                id: instr_id,
+                tenant_id,
+                symbol: "BTC-USD".into(),
+                r#type: "spot".into(),
+                status: "active".into(),
+                underlying_asset_id: btc_id,
+                quote_asset_id: usd_id,
+                meta: serde_json::json!({}),
+                created_at: chrono::Utc::now(),
+                updated_at: chrono::Utc::now(),
+            })
+            .expect("Failed to add BTC-USD instrument");
 
         // Add Wallet with Funds (Atomic Units: 1000.00 USD -> 100000 cents)
         let wallet = Wallet {

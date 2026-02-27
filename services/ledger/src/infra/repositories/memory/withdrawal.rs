@@ -24,7 +24,7 @@ impl WithdrawalRepository for InMemoryWithdrawalRepository {
         let mut withdrawals = self
             .withdrawals
             .lock()
-            .map_err(|_| AppError::Internal("Failed to lock withdrawals".into()))?;
+            .map_err(|e| AppError::Internal(format!("Failed to lock withdrawals: {}", e)))?;
         withdrawals.push(withdrawal.clone());
         Ok(withdrawal)
     }
@@ -33,7 +33,7 @@ impl WithdrawalRepository for InMemoryWithdrawalRepository {
         let withdrawals = self
             .withdrawals
             .lock()
-            .map_err(|_| AppError::Internal("Failed to lock withdrawals".into()))?;
+            .map_err(|e| AppError::Internal(format!("Failed to lock withdrawals: {}", e)))?;
         Ok(withdrawals.iter().find(|w| w.id == id).cloned())
     }
 
@@ -41,7 +41,7 @@ impl WithdrawalRepository for InMemoryWithdrawalRepository {
         let mut withdrawals = self
             .withdrawals
             .lock()
-            .map_err(|_| AppError::Internal("Failed to lock withdrawals".into()))?;
+            .map_err(|e| AppError::Internal(format!("Failed to lock withdrawals: {}", e)))?;
         if let Some(pos) = withdrawals.iter().position(|w| w.id == withdrawal.id) {
             withdrawals[pos] = withdrawal.clone();
             Ok(withdrawal)
@@ -57,7 +57,7 @@ impl WithdrawalRepository for InMemoryWithdrawalRepository {
         let withdrawals = self
             .withdrawals
             .lock()
-            .map_err(|_| AppError::Internal("Failed to lock withdrawals".into()))?;
+            .map_err(|e| AppError::Internal(format!("Failed to lock withdrawals: {}", e)))?;
         Ok(withdrawals
             .iter()
             .filter(|w| w.wallet_id == wallet_id)

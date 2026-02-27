@@ -17,10 +17,13 @@ impl InMemoryInstrumentRepository {
         }
     }
 
-    pub fn add(&self, instrument: Instrument) {
-        if let Ok(mut instruments) = self.instruments.lock() {
-            instruments.push(instrument);
-        }
+    pub fn add(&self, instrument: Instrument) -> Result<()> {
+        let mut instruments = self
+            .instruments
+            .lock()
+            .map_err(|e| AppError::Internal(format!("Failed to lock instruments: {}", e)))?;
+        instruments.push(instrument);
+        Ok(())
     }
 }
 
@@ -30,7 +33,7 @@ impl InstrumentRepository for InMemoryInstrumentRepository {
         let instruments = self
             .instruments
             .lock()
-            .map_err(|_| AppError::Internal("Failed to lock instruments".into()))?;
+            .map_err(|e| AppError::Internal(format!("Failed to lock instruments: {}", e)))?;
         Ok(instruments.iter().find(|i| i.id == id).cloned())
     }
 
@@ -38,7 +41,7 @@ impl InstrumentRepository for InMemoryInstrumentRepository {
         let instruments = self
             .instruments
             .lock()
-            .map_err(|_| AppError::Internal("Failed to lock instruments".into()))?;
+            .map_err(|e| AppError::Internal(format!("Failed to lock instruments: {}", e)))?;
         Ok(instruments.iter().find(|i| i.symbol == symbol).cloned())
     }
 
@@ -46,7 +49,7 @@ impl InstrumentRepository for InMemoryInstrumentRepository {
         let instruments = self
             .instruments
             .lock()
-            .map_err(|_| AppError::Internal("Failed to lock instruments".into()))?;
+            .map_err(|e| AppError::Internal(format!("Failed to lock instruments: {}", e)))?;
         Ok(instruments.clone())
     }
 
@@ -54,7 +57,7 @@ impl InstrumentRepository for InMemoryInstrumentRepository {
         let mut instruments = self
             .instruments
             .lock()
-            .map_err(|_| AppError::Internal("Failed to lock instruments".into()))?;
+            .map_err(|e| AppError::Internal(format!("Failed to lock instruments: {}", e)))?;
         instruments.push(instrument.clone());
         Ok(instrument)
     }

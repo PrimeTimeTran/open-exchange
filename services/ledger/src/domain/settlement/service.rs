@@ -10,9 +10,7 @@ use crate::domain::trade::TradeRepository;
 use crate::domain::transaction::{RepositoryTransaction, TransactionManager};
 use crate::domain::wallets::WalletService;
 use crate::error::{AppError, Result};
-use crate::infra::mappers::match_mapper::MatchMapper;
 use crate::infra::repositories::InstrumentRepository;
-use crate::proto::ledger::Match;
 use rust_decimal::Decimal;
 use std::future::Future;
 use std::pin::Pin;
@@ -56,30 +54,18 @@ impl SettlementService {
         }
     }
 
-    pub async fn process_matches(
-        &self,
-        matches: Vec<Match>,
-        tenant_id: String,
-    ) -> (Vec<String>, Vec<String>) {
+    pub async fn process_matches(&self, trades: Vec<Trade>) -> (Vec<String>, Vec<String>) {
         let mut trade_ids = Vec::new();
         let mut errors = Vec::new();
 
-        for match_data in matches {
-            match MatchMapper::to_trade(match_data, &tenant_id) {
-                Ok(trade) => {
-                    let trade_id = trade.id.to_string();
-                    match self.process_trade_event(trade).await {
-                        Ok(_) => trade_ids.push(trade_id),
-                        Err(e) => {
-                            let msg = format!("Failed to settle trade {}: {:?}", trade_id, e);
-                            tracing::error!("{}", msg);
-                            errors.push(msg);
-                        }
-                    }
-                }
+        for trade in trades {
+            let trade_id = trade.id.to_string();
+            match self.process_trade_event(trade).await {
+                Ok(_) => trade_ids.push(trade_id),
                 Err(e) => {
-                    tracing::error!("{}", e);
-                    errors.push(e);
+                    let msg = format!("Failed to settle trade {}: {:?}", trade_id, e);
+                    tracing::error!("{}", msg);
+                    errors.push(msg);
                 }
             }
         }

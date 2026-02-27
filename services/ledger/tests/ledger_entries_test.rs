@@ -113,7 +113,11 @@ async fn test_process_trade_creates_entries() {
 
     // 6. Exchange receives +30 USD Fee Revenue (3,000 cents)
     let entry_exchange = find_entry(
-        ctx.account_repo.get_accounts()[0].id.to_string(),
+        ctx.account_repo
+            .get_accounts()
+            .expect("Failed to get accounts")[0]
+            .id
+            .to_string(),
         "3000",
         "revenue",
     );
