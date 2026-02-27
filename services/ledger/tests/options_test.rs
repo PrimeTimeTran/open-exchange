@@ -59,9 +59,9 @@ async fn test_option_buy_deducts_premium_from_buyer() {
         .unwrap();
 
     // After buying, premium is deducted from buyer
-    let buyer_total = Decimal::from_str(&usd_wallet.total).unwrap();
+    let buyer_total = &usd_wallet.total;
     assert!(
-        buyer_total < premium,
+        *buyer_total < premium,
         "Buyer premium should have been deducted"
     );
 }
@@ -122,13 +122,10 @@ async fn test_option_write_credits_premium_and_locks_collateral() {
         .unwrap();
 
     // BTC should be locked as collateral
-    assert_eq!(Decimal::from_str(&btc_wallet.locked).unwrap(), initial_btc);
-    assert_eq!(
-        Decimal::from_str(&btc_wallet.available).unwrap(),
-        Decimal::ZERO
-    );
+    assert_eq!(btc_wallet.locked, initial_btc);
+    assert_eq!(btc_wallet.available, Decimal::ZERO);
     // USD premium credited
-    assert_eq!(Decimal::from_str(&usd_wallet.available).unwrap(), premium);
+    assert_eq!(usd_wallet.available, premium);
 }
 
 /// Test: Call Option Exercise Transfers Underlying at Strike Price
@@ -201,11 +198,8 @@ async fn test_call_option_exercise_transfers_underlying_at_strike() {
         .unwrap()
         .unwrap();
 
-    assert_eq!(Decimal::from_str(&buyer_btc.available).unwrap(), qty_btc);
-    assert_eq!(
-        Decimal::from_str(&writer_btc.locked).unwrap(),
-        Decimal::ZERO
-    );
+    assert_eq!(buyer_btc.available, qty_btc);
+    assert_eq!(writer_btc.locked, Decimal::ZERO);
 }
 
 /// Test: Put Option Exercise Transfers Quote Asset to Buyer at Strike
@@ -277,11 +271,8 @@ async fn test_put_option_exercise_transfers_quote_at_strike() {
         .unwrap()
         .unwrap();
 
-    assert_eq!(Decimal::from_str(&buyer_usd.available).unwrap(), strike_usd);
-    assert_eq!(
-        Decimal::from_str(&writer_usd.locked).unwrap(),
-        Decimal::ZERO
-    );
+    assert_eq!(buyer_usd.available, strike_usd);
+    assert_eq!(writer_usd.locked, Decimal::ZERO);
 }
 
 /// Test: OTM Option Expiry Releases Writer's Locked Collateral
@@ -318,14 +309,8 @@ async fn test_otm_option_expiry_releases_writer_collateral() {
         .unwrap()
         .unwrap();
 
-    assert_eq!(
-        Decimal::from_str(&writer_btc.locked).unwrap(),
-        Decimal::ZERO
-    );
-    assert_eq!(
-        Decimal::from_str(&writer_btc.available).unwrap(),
-        collateral
-    );
+    assert_eq!(writer_btc.locked, Decimal::ZERO);
+    assert_eq!(writer_btc.available, collateral);
 }
 
 /// Test: Option Assignment Debits the Assigned Writer's Collateral
@@ -396,8 +381,7 @@ async fn test_option_assignment_debits_writer_on_exercise() {
         .unwrap()
         .unwrap();
 
-    let total_locked =
-        Decimal::from_str(&writer_a.locked).unwrap() + Decimal::from_str(&writer_b.locked).unwrap();
+    let total_locked = &writer_a.locked + &writer_b.locked;
 
     // One was assigned (locked → 0), one was not (locked = collateral)
     assert_eq!(
@@ -562,10 +546,7 @@ async fn test_partial_exercise_updates_balances_correctly() {
         .await
         .unwrap()
         .unwrap();
-    assert_eq!(
-        Decimal::from_str(&buyer_btc.available).unwrap(),
-        exercise_qty_btc
-    );
+    assert_eq!(buyer_btc.available, exercise_qty_btc);
 
     // Verify Writer: Should still have 1.5 BTC locked (2.0 - 0.5)
     let writer_btc = ctx
@@ -575,10 +556,7 @@ async fn test_partial_exercise_updates_balances_correctly() {
         .unwrap()
         .unwrap();
     let expected_remaining_locked = total_qty_btc - exercise_qty_btc;
-    assert_eq!(
-        Decimal::from_str(&writer_btc.locked).unwrap(),
-        expected_remaining_locked
-    );
+    assert_eq!(writer_btc.locked, expected_remaining_locked);
 }
 
 /// Test: Expire Option Idempotency
@@ -612,10 +590,7 @@ async fn test_expire_option_idempotency() {
         .await
         .unwrap()
         .unwrap();
-    assert_eq!(
-        Decimal::from_str(&writer_btc.locked).unwrap(),
-        Decimal::ZERO
-    );
+    assert_eq!(writer_btc.available, Decimal::ZERO);
 }
 
 /// Test: Cash Settlement of ITM Call Option at Expiry
@@ -691,14 +666,8 @@ async fn test_cash_settlement_itm_call_option() {
         .unwrap()
         .unwrap();
 
-    assert_eq!(
-        Decimal::from_str(&buyer_usd.available).unwrap(),
-        expected_payout
-    );
-    assert_eq!(
-        Decimal::from_str(&writer_usd.available).unwrap(),
-        Decimal::ZERO
-    );
+    assert_eq!(buyer_usd.available, expected_payout);
+    assert_eq!(writer_usd.available, Decimal::ZERO);
 }
 
 /// Test: Cash Settlement of ITM Put Option at Expiry
@@ -772,14 +741,8 @@ async fn test_cash_settlement_itm_put_option() {
         .unwrap()
         .unwrap();
 
-    assert_eq!(
-        Decimal::from_str(&buyer_usd.available).unwrap(),
-        expected_payout
-    );
-    assert_eq!(
-        Decimal::from_str(&writer_usd.available).unwrap(),
-        Decimal::ZERO
-    );
+    assert_eq!(buyer_usd.available, expected_payout);
+    assert_eq!(writer_usd.available, Decimal::ZERO);
 }
 
 /// Test: Sell Call (Covered) - ITM, OTM, ATM Scenarios
@@ -869,13 +832,10 @@ async fn test_sell_call_scenarios() {
             .unwrap()
             .unwrap();
 
-        assert_eq!(Decimal::from_str(&w_btc.locked).unwrap(), qty_btc);
+        assert_eq!(w_btc.locked, qty_btc);
         // Available USD = Initial (500k) + Premium (5k)
         let initial_plus_premium = expected_payout + premium;
-        assert_eq!(
-            Decimal::from_str(&w_usd.available).unwrap(),
-            initial_plus_premium
-        );
+        assert_eq!(w_usd.available, initial_plus_premium);
 
         // 2. Settlement (ITM)
         ctx.exercise_service
@@ -918,20 +878,14 @@ async fn test_sell_call_scenarios() {
             .unwrap();
 
         // Writer USD: (500k + 5k) - 500k Payout = 5k (Retains Premium)
-        assert_eq!(Decimal::from_str(&w_usd_final.available).unwrap(), premium);
+        assert_eq!(w_usd_final.available, premium);
 
         // Writer BTC: Fully released
-        assert_eq!(
-            Decimal::from_str(&w_btc_final.locked).unwrap(),
-            Decimal::ZERO
-        );
-        assert_eq!(Decimal::from_str(&w_btc_final.available).unwrap(), qty_btc);
+        assert_eq!(w_btc_final.locked, Decimal::ZERO);
+        assert_eq!(w_btc_final.available, qty_btc);
 
         // Buyer USD: +500k (Payout)
-        assert_eq!(
-            Decimal::from_str(&b_usd_final.available).unwrap(),
-            expected_payout
-        );
+        assert_eq!(b_usd_final.available, expected_payout);
     }
 
     // --- Scenario 2: OTM Close at $45,000 ---
@@ -1005,7 +959,7 @@ async fn test_sell_call_scenarios() {
             .unwrap();
 
         // Writer keeps premium ($5000)
-        assert_eq!(Decimal::from_str(&w_usd.available).unwrap(), premium);
+        assert_eq!(w_usd.available, premium);
     }
 
     // --- Scenario 3: ATM Close at $50,000 ---
@@ -1078,6 +1032,6 @@ async fn test_sell_call_scenarios() {
             .unwrap();
 
         // Writer keeps premium ($5000)
-        assert_eq!(Decimal::from_str(&w_usd.available).unwrap(), premium);
+        assert_eq!(w_usd.available, premium);
     }
 }

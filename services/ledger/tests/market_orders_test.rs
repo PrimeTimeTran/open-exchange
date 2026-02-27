@@ -54,7 +54,7 @@ async fn test_market_buy_locks_max_budget() {
         .unwrap()
         .unwrap();
 
-    let total = Decimal::from_str(&wallet.total).unwrap();
+    let total = wallet.total;
     assert_decimal_val_eq!(wallet.locked, budget);
     assert_decimal_val_eq!(wallet.available, initial_usd - budget);
     assert_eq!(total, initial_usd, "Total must not change when locking");

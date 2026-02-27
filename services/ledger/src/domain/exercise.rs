@@ -1,4 +1,3 @@
-use crate::domain::utils::parse;
 use crate::domain::wallets::WalletService;
 /// Options contract lifecycle service.
 ///
@@ -213,8 +212,8 @@ impl ExerciseService {
             .get_wallet_by_account_and_asset(account, asset)
             .await?
         {
-            let locked = parse(&w.locked)?;
-            let total = parse(&w.total)?;
+            let locked = w.locked;
+            let _total = w.total;
             if locked < amount {
                 return Err(AppError::InsufficientFunds {
                     asset: asset.to_string(),
@@ -222,9 +221,9 @@ impl ExerciseService {
                     available: locked.to_string(),
                 });
             }
-            w.locked = (locked - amount).to_string();
-            w.total = (total - amount).to_string();
-            w.updated_at = chrono::Utc::now().timestamp_millis();
+            w.locked -= amount;
+            w.total -= amount;
+            w.updated_at = chrono::Utc::now();
             self.wallet_service.update_wallet(w).await?;
         }
         Ok(())
@@ -236,8 +235,8 @@ impl ExerciseService {
             .get_wallet_by_account_and_asset(account, asset)
             .await?
         {
-            let available = parse(&w.available)?;
-            let total = parse(&w.total)?;
+            let available = w.available;
+            let _total = w.total;
             if available < amount {
                 return Err(AppError::InsufficientFunds {
                     asset: asset.to_string(),
@@ -245,9 +244,9 @@ impl ExerciseService {
                     available: available.to_string(),
                 });
             }
-            w.available = (available - amount).to_string();
-            w.total = (total - amount).to_string();
-            w.updated_at = chrono::Utc::now().timestamp_millis();
+            w.available -= amount;
+            w.total -= amount;
+            w.updated_at = chrono::Utc::now();
             self.wallet_service.update_wallet(w).await?;
         }
         Ok(())
@@ -264,9 +263,9 @@ impl ExerciseService {
             .get_wallet_by_account_and_asset(account, asset)
             .await?
         {
-            w.available = (parse(&w.available)? + amount).to_string();
-            w.total = (parse(&w.total)? + amount).to_string();
-            w.updated_at = chrono::Utc::now().timestamp_millis();
+            w.available += amount;
+            w.total += amount;
+            w.updated_at = chrono::Utc::now();
             self.wallet_service.update_wallet(w).await?;
         }
         Ok(())
@@ -278,8 +277,8 @@ impl ExerciseService {
             .get_wallet_by_account_and_asset(account, asset)
             .await?
         {
-            let available = parse(&w.available)?;
-            let locked = parse(&w.locked)?;
+            let available = w.available;
+            let _locked = w.locked;
             if available < amount {
                 return Err(AppError::InsufficientFunds {
                     asset: asset.to_string(),
@@ -287,9 +286,9 @@ impl ExerciseService {
                     available: available.to_string(),
                 });
             }
-            w.available = (available - amount).to_string();
-            w.locked = (locked + amount).to_string();
-            w.updated_at = chrono::Utc::now().timestamp_millis();
+            w.available -= amount;
+            w.locked += amount;
+            w.updated_at = chrono::Utc::now();
             self.wallet_service.update_wallet(w).await?;
         }
         Ok(())
@@ -301,13 +300,13 @@ impl ExerciseService {
             .get_wallet_by_account_and_asset(account, asset)
             .await?
         {
-            let locked = parse(&w.locked)?;
-            let available = parse(&w.available)?;
+            let locked = w.locked;
+            let _available = w.available;
             let release = amount.min(locked);
             if release > Decimal::ZERO {
-                w.locked = (locked - release).to_string();
-                w.available = (available + release).to_string();
-                w.updated_at = chrono::Utc::now().timestamp_millis();
+                w.locked -= release;
+                w.available += release;
+                w.updated_at = chrono::Utc::now();
                 self.wallet_service.update_wallet(w).await?;
             }
         }

@@ -5,7 +5,6 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use sqlx::{FromRow, PgPool};
-use std::str::FromStr;
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -42,19 +41,19 @@ struct WalletRow {
 impl From<WalletRow> for Wallet {
     fn from(row: WalletRow) -> Self {
         Self {
-            id: row.id.to_string(),
-            tenant_id: row.tenant_id.to_string(),
+            id: row.id,
+            tenant_id: row.tenant_id,
             user_id: "".to_string(),
-            account_id: row.account_id.to_string(),
-            asset_id: row.asset_id.to_string(),
-            available: row.available.unwrap_or_default().normalize().to_string(),
-            locked: row.locked.unwrap_or_default().normalize().to_string(),
-            total: row.total.unwrap_or_default().normalize().to_string(),
+            account_id: row.account_id,
+            asset_id: row.asset_id,
+            available: row.available.unwrap_or_default(),
+            locked: row.locked.unwrap_or_default(),
+            total: row.total.unwrap_or_default(),
             version: row.version.unwrap_or(1),
             status: "active".to_string(),
-            meta: row.meta.unwrap_or(serde_json::json!({})).to_string(),
-            created_at: row.created_at.timestamp_millis(),
-            updated_at: row.updated_at.timestamp_millis(),
+            meta: row.meta.unwrap_or(serde_json::json!({})),
+            created_at: row.created_at,
+            updated_at: row.updated_at,
         }
     }
 }
@@ -66,12 +65,6 @@ use crate::domain::transaction::RepositoryTransaction;
 #[async_trait]
 impl WalletRepository for PostgresWalletRepository {
     async fn create(&self, wallet: Wallet) -> Result<Wallet> {
-        let account_id = Uuid::parse_str(&wallet.account_id)
-            .map_err(|_| AppError::ValidationError("Invalid account_id".into()))?;
-        let asset_id = Uuid::parse_str(&wallet.asset_id)
-            .map_err(|_| AppError::ValidationError("Invalid asset_id".into()))?;
-        let tenant_id = Uuid::parse_str(&wallet.tenant_id).unwrap_or_default();
-
         let rec: WalletRow = sqlx
             ::query_as(
                 r#"
@@ -82,21 +75,17 @@ impl WalletRepository for PostgresWalletRepository {
                       version, meta, "createdAt", "updatedAt"
             "#
             )
-            .bind(Uuid::parse_str(&wallet.id).unwrap_or(Uuid::new_v4()))
-            .bind(tenant_id)
-            .bind(account_id)
-            .bind(asset_id)
-            .bind(Decimal::from_str(&wallet.available).unwrap_or_default())
-            .bind(Decimal::from_str(&wallet.locked).unwrap_or_default())
-            .bind(Decimal::from_str(&wallet.total).unwrap_or_default())
+            .bind(wallet.id)
+            .bind(wallet.tenant_id)
+            .bind(wallet.account_id)
+            .bind(wallet.asset_id)
+            .bind(wallet.available)
+            .bind(wallet.locked)
+            .bind(wallet.total)
             .bind(wallet.version)
-            .bind(
-                serde_json
-                    ::from_str::<serde_json::Value>(&wallet.meta)
-                    .unwrap_or(serde_json::json!({}))
-            )
-            .bind(chrono::Utc::now())
-            .bind(chrono::Utc::now())
+            .bind(&wallet.meta)
+            .bind(wallet.created_at)
+            .bind(wallet.updated_at)
             .fetch_one(&self.pool).await
             .map_err(AppError::DatabaseError)?;
 
@@ -219,9 +208,6 @@ impl WalletRepository for PostgresWalletRepository {
     }
 
     async fn update(&self, wallet: Wallet) -> Result<Wallet> {
-        let id = Uuid::parse_str(&wallet.id)
-            .map_err(|_| AppError::ValidationError("Invalid wallet id".into()))?;
-
         let rec = sqlx::query_as::<_, WalletRow>(
             r#"
             UPDATE "Wallet"
@@ -232,10 +218,10 @@ impl WalletRepository for PostgresWalletRepository {
                       version, meta, "createdAt", "updatedAt"
             "#,
         )
-        .bind(id)
-        .bind(Decimal::from_str(&wallet.available).unwrap_or_default())
-        .bind(Decimal::from_str(&wallet.locked).unwrap_or_default())
-        .bind(Decimal::from_str(&wallet.total).unwrap_or_default())
+        .bind(wallet.id)
+        .bind(wallet.available)
+        .bind(wallet.locked)
+        .bind(wallet.total)
         .bind(chrono::Utc::now())
         .bind(wallet.version)
         .fetch_one(&self.pool)
@@ -261,8 +247,6 @@ impl WalletRepository for PostgresWalletRepository {
             .downcast_mut::<PostgresTransaction>()
             .ok_or_else(|| AppError::Internal("Transaction is not a PostgresTransaction".into()))?;
         let tx = &mut tx.conn;
-        let id = Uuid::parse_str(&wallet.id)
-            .map_err(|_| AppError::ValidationError("Invalid wallet id".into()))?;
 
         let rec = sqlx::query_as::<_, WalletRow>(
             r#"
@@ -274,10 +258,10 @@ impl WalletRepository for PostgresWalletRepository {
                       version, meta, "createdAt", "updatedAt"
             "#,
         )
-        .bind(id)
-        .bind(Decimal::from_str(&wallet.available).unwrap_or_default())
-        .bind(Decimal::from_str(&wallet.locked).unwrap_or_default())
-        .bind(Decimal::from_str(&wallet.total).unwrap_or_default())
+        .bind(wallet.id)
+        .bind(wallet.available)
+        .bind(wallet.locked)
+        .bind(wallet.total)
         .bind(chrono::Utc::now())
         .bind(wallet.version)
         .fetch_one(&mut **tx)

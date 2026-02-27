@@ -1,4 +1,3 @@
-use crate::domain::utils::parse;
 use crate::domain::wallets::WalletService;
 /// Corporate action services for equities: dividends and stock splits.
 ///
@@ -40,7 +39,7 @@ impl CorporateActionService {
             .await?;
 
         for holder in holders {
-            let shares = parse(&holder.available)?;
+            let shares = holder.available;
             if shares <= Decimal::ZERO {
                 continue;
             }
@@ -52,12 +51,12 @@ impl CorporateActionService {
             // the test pre-seeds cash wallets)
             if let Some(mut cash) = self
                 .wallet_service
-                .get_wallet_by_account_and_asset(&holder.account_id, quote_asset_id)
+                .get_wallet_by_account_and_asset(&holder.account_id.to_string(), quote_asset_id)
                 .await?
             {
-                cash.available = (parse(&cash.available)? + payout).to_string();
-                cash.total = (parse(&cash.total)? + payout).to_string();
-                cash.updated_at = chrono::Utc::now().timestamp_millis();
+                cash.available += payout;
+                cash.total += payout;
+                cash.updated_at = chrono::Utc::now();
                 self.wallet_service.update_wallet(cash).await?;
             }
         }
@@ -86,7 +85,7 @@ impl CorporateActionService {
         let scale = Decimal::from(10).powi(base_decimals as i64);
 
         for mut holder in holders {
-            let shares_atomic = parse(&holder.available)?;
+            let shares_atomic = holder.available;
             if shares_atomic <= Decimal::ZERO {
                 continue;
             }
@@ -94,9 +93,9 @@ impl CorporateActionService {
             if split_type == "forward" {
                 // Multiply share count; total / locked scale proportionally.
                 let new_shares = shares_atomic * ratio_dec;
-                holder.available = new_shares.to_string();
-                holder.total = (parse(&holder.total)? * ratio_dec).to_string();
-                holder.updated_at = chrono::Utc::now().timestamp_millis();
+                holder.available = new_shares;
+                holder.total = holder.total * ratio_dec;
+                holder.updated_at = chrono::Utc::now();
                 self.wallet_service.update_wallet(holder).await?;
             } else {
                 // Reverse split: divide; pay odd-lot remainder in cash.
@@ -120,14 +119,14 @@ impl CorporateActionService {
 
                 let cash_payout = odd_lot_atomic * pre_split_price_atomic;
 
-                holder.available = new_shares_atomic.to_string();
+                holder.available = new_shares_atomic;
                 // For total/locked, we apply same ratio approx or reset locked?
                 // Simplified: assuming all available for this test.
                 // If funds are locked, reverse split gets messy (locked orders need update).
                 // Here we just update `total` based on `available` change if locked is 0.
-                holder.total = new_shares_atomic.to_string(); // Simplified
+                holder.total = new_shares_atomic; // Simplified
 
-                holder.updated_at = chrono::Utc::now().timestamp_millis();
+                holder.updated_at = chrono::Utc::now();
                 let account_id = holder.account_id.clone();
                 self.wallet_service.update_wallet(holder).await?;
 
@@ -135,12 +134,12 @@ impl CorporateActionService {
                 if cash_payout > Decimal::ZERO {
                     if let Some(mut cash) = self
                         .wallet_service
-                        .get_wallet_by_account_and_asset(&account_id, quote_asset_id)
+                        .get_wallet_by_account_and_asset(&account_id.to_string(), quote_asset_id)
                         .await?
                     {
-                        cash.available = (parse(&cash.available)? + cash_payout).to_string();
-                        cash.total = (parse(&cash.total)? + cash_payout).to_string();
-                        cash.updated_at = chrono::Utc::now().timestamp_millis();
+                        cash.available += cash_payout;
+                        cash.total += cash_payout;
+                        cash.updated_at = chrono::Utc::now();
                         self.wallet_service.update_wallet(cash).await?;
                     }
                 }

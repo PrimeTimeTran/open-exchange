@@ -6,7 +6,6 @@ use ledger::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
 use ledger::domain::orders::OrderRepository;
 use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
 use rust_decimal::Decimal;
-use std::str::FromStr;
 
 /// Test: IOC — Partial Fill Cancels Remainder
 ///

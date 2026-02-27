@@ -1,4 +1,3 @@
-use crate::domain::utils::parse;
 use crate::domain::wallets::WalletService;
 /// Short-selling borrow service.
 ///
@@ -59,8 +58,7 @@ impl BorrowService {
             .get_wallet_by_account_and_asset(&account_id.to_string(), collateral_asset_id)
             .await?
         {
-            let available = parse(&w.available)?;
-            let locked = parse(&w.locked)?;
+            let available = w.available;
             if available < collateral {
                 return Err(AppError::InsufficientFunds {
                     asset: collateral_asset_id.to_string(),
@@ -68,9 +66,9 @@ impl BorrowService {
                     available: available.to_string(),
                 });
             }
-            w.available = (available - collateral).to_string();
-            w.locked = (locked + collateral).to_string();
-            w.updated_at = Utc::now().timestamp_millis();
+            w.available -= collateral;
+            w.locked += collateral;
+            w.updated_at = Utc::now();
             self.wallet_service.update_wallet(w).await?;
         }
 
@@ -87,9 +85,9 @@ impl BorrowService {
             .get_wallet_by_account_and_asset(&account_id.to_string(), asset_id)
             .await?
         {
-            w.available = (parse(&w.available)? + qty).to_string();
-            w.total = (parse(&w.total)? + qty).to_string();
-            w.updated_at = Utc::now().timestamp_millis();
+            w.available += qty;
+            w.total += qty;
+            w.updated_at = Utc::now();
             self.wallet_service.update_wallet(w).await?;
         } else {
             // Logic to create wallet if not exists would go here, or return error.
@@ -137,8 +135,8 @@ impl BorrowService {
             .get_wallet_by_account_and_asset(&borrow.account_id.to_string(), &borrow.asset_id)
             .await?
         {
-            let available = parse(&w.available)?;
-            let total = parse(&w.total)?;
+            let available = w.available;
+            let _total = w.total;
             if available < borrow.qty {
                 return Err(AppError::InsufficientFunds {
                     asset: borrow.asset_id.to_string(),
@@ -146,9 +144,9 @@ impl BorrowService {
                     available: available.to_string(),
                 });
             }
-            w.available = (available - borrow.qty).to_string();
-            w.total = (total - borrow.qty).to_string();
-            w.updated_at = Utc::now().timestamp_millis();
+            w.available -= borrow.qty;
+            w.total -= borrow.qty;
+            w.updated_at = Utc::now();
             self.wallet_service.update_wallet(w).await?;
         }
 
@@ -161,16 +159,16 @@ impl BorrowService {
             )
             .await?
         {
-            let locked = parse(&w.locked)?;
-            let available = parse(&w.available)?;
-            let total = parse(&w.total)?;
+            let locked = w.locked;
+            let _available = w.available;
+            let _total = w.total;
             let release = (borrow.collateral - borrow_fee).max(Decimal::ZERO);
             let net_deduct = borrow.collateral - release; // = borrow_fee capped at collateral
 
-            w.locked = (locked - borrow.collateral).max(Decimal::ZERO).to_string();
-            w.available = (available + release).to_string();
-            w.total = (total - net_deduct).to_string();
-            w.updated_at = Utc::now().timestamp_millis();
+            w.locked = (locked - borrow.collateral).max(Decimal::ZERO);
+            w.available += release;
+            w.total -= net_deduct;
+            w.updated_at = Utc::now();
             self.wallet_service.update_wallet(w).await?;
         }
 

@@ -1,4 +1,3 @@
-use crate::domain::utils::parse;
 use crate::domain::wallets::WalletService;
 /// Perpetual futures funding-rate and mark-to-market settlement services.
 ///
@@ -15,9 +14,9 @@ use uuid::Uuid;
 
 async fn credit(ws: &WalletService, account: &str, asset: &str, amount: Decimal) -> Result<()> {
     if let Some(mut w) = ws.get_wallet_by_account_and_asset(account, asset).await? {
-        w.available = (parse(&w.available)? + amount).to_string();
-        w.total = (parse(&w.total)? + amount).to_string();
-        w.updated_at = chrono::Utc::now().timestamp_millis();
+        w.available += amount;
+        w.total += amount;
+        w.updated_at = chrono::Utc::now();
         ws.update_wallet(w).await?;
     }
     Ok(())
@@ -30,7 +29,7 @@ async fn debit_available(
     amount: Decimal,
 ) -> Result<()> {
     if let Some(mut w) = ws.get_wallet_by_account_and_asset(account, asset).await? {
-        let available = parse(&w.available)?;
+        let available = w.available;
         if available < amount {
             return Err(AppError::InsufficientFunds {
                 asset: asset.to_string(),
@@ -38,9 +37,9 @@ async fn debit_available(
                 available: available.to_string(),
             });
         }
-        w.available = (available - amount).to_string();
-        w.total = (parse(&w.total)? - amount).to_string();
-        w.updated_at = chrono::Utc::now().timestamp_millis();
+        w.available = available - amount;
+        w.total -= amount;
+        w.updated_at = chrono::Utc::now();
         ws.update_wallet(w).await?;
     }
     Ok(())
@@ -48,11 +47,11 @@ async fn debit_available(
 
 async fn release_all_locked(ws: &WalletService, account: &str, asset: &str) -> Result<()> {
     if let Some(mut w) = ws.get_wallet_by_account_and_asset(account, asset).await? {
-        let locked = parse(&w.locked)?;
+        let locked = w.locked;
         if locked > Decimal::ZERO {
-            w.available = (parse(&w.available)? + locked).to_string();
-            w.locked = Decimal::ZERO.to_string();
-            w.updated_at = chrono::Utc::now().timestamp_millis();
+            w.available += locked;
+            w.locked = Decimal::ZERO;
+            w.updated_at = chrono::Utc::now();
             ws.update_wallet(w).await?;
         }
     }

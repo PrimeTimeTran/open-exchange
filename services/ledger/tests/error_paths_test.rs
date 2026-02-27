@@ -2,12 +2,12 @@
 mod helpers;
 
 use helpers::memory::InMemoryTestContext;
-use ledger::domain::orders::model::{ Order, OrderSide, OrderType };
 use ledger::domain::instruments::model::Instrument;
+use ledger::domain::orders::model::{Order, OrderSide, OrderType};
 use ledger::error::AppError;
 use rust_decimal::Decimal;
-use std::str::FromStr;
 use serde_json::json;
+use std::str::FromStr;
 use uuid::Uuid;
 
 #[tokio::test]
@@ -25,13 +25,17 @@ async fn test_insufficient_funds_error_details() {
         OrderSide::Buy,
         OrderType::Limit,
         Decimal::from_str("1.0").unwrap(),
-        Decimal::from_str("500.0").unwrap()
+        Decimal::from_str("500.0").unwrap(),
     );
 
     let result = ctx.order_service.create_order(order).await;
 
     match result {
-        Err(AppError::InsufficientFunds { asset, required, available }) => {
+        Err(AppError::InsufficientFunds {
+            asset,
+            required,
+            available,
+        }) => {
             assert_eq!(asset, ctx.usd_id.to_string());
             assert!(!required.is_empty());
             assert!(!available.is_empty());
@@ -52,7 +56,7 @@ async fn test_invalid_instrument_error() {
         OrderSide::Buy,
         OrderType::Limit,
         Decimal::from_str("1.0").unwrap(),
-        Decimal::from_str("100.0").unwrap()
+        Decimal::from_str("100.0").unwrap(),
     );
 
     let result = ctx.order_service.create_order(order).await;
@@ -99,7 +103,7 @@ async fn test_validation_error() {
         OrderSide::Buy,
         OrderType::Limit,
         Decimal::from_str("1.0").unwrap(),
-        Decimal::from_str("-10.0").unwrap()
+        Decimal::from_str("-10.0").unwrap(),
     );
 
     let result = ctx.order_service.create_order(order).await;
@@ -111,7 +115,10 @@ async fn test_validation_error() {
                 msg.to_lowercase().contains("price") || msg.to_lowercase().contains("positive")
             );
         }
-        _ => panic!("Expected ValidationError for negative price, got: {:?}", result),
+        _ => panic!(
+            "Expected ValidationError for negative price, got: {:?}",
+            result
+        ),
     }
 }
 
@@ -145,7 +152,7 @@ async fn test_malformed_request_error() {
         OrderSide::Sell,
         OrderType::Limit,
         Decimal::from_str("1.0").unwrap(),
-        Decimal::from_str("100.0").unwrap()
+        Decimal::from_str("100.0").unwrap(),
     );
 
     let result = ctx.order_service.create_order(order).await;

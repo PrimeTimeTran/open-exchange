@@ -1,5 +1,5 @@
 mod helpers;
-use helpers::postgres::{atomic, PostgresTestContext};
+use helpers::postgres::PostgresTestContext;
 use ledger::domain::orders::model::{Order, OrderSide};
 use ledger::domain::wallets::Wallet;
 use rust_decimal::Decimal;
@@ -17,17 +17,33 @@ async fn test_create_order_idempotency() {
     let account_id = ctx.create_account(&user_id).await;
 
     // Fund: 1000 USDT
-    ctx.wallet_service
+    let _wallet = ctx
+        .wallet_service
         .create_wallet(Wallet {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.clone(),
-            account_id: account_id.clone(),
-            asset_id: asset_id.clone(),
-            available: atomic("1000.00", 2),
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+            account_id: Uuid::parse_str(&account_id).unwrap(),
+            asset_id: Uuid::parse_str(&asset_id).unwrap(),
+            available: Decimal::from_str("100000").unwrap(), // 1000.00 * 100
             ..Default::default()
         })
         .await
         .unwrap();
+
+    // Check funds
+    let w_check = ctx
+        .wallet_service
+        .get_wallet_by_account_and_asset(&account_id, &asset_id)
+        .await
+        .unwrap();
+    if let Some(w) = &w_check {
+        println!(
+            "Initial Wallet Balance: Available={}, Locked={}, Asset={}",
+            w.available, w.locked, w.asset_id
+        );
+    } else {
+        println!("Wallet NOT FOUND after creation!");
+    }
 
     let order = Order::new(
         Uuid::parse_str(&ctx.tenant_id).unwrap(),
@@ -41,6 +57,9 @@ async fn test_create_order_idempotency() {
 
     // 1. First Request
     let res1 = ctx.order_service.create_order(order.clone()).await;
+    if let Err(e) = &res1 {
+        println!("Create Order Error: {:?}", e);
+    }
     assert!(res1.is_ok());
 
     let w1 = ctx
@@ -49,8 +68,8 @@ async fn test_create_order_idempotency() {
         .await
         .unwrap()
         .unwrap();
-    assert_eq!(w1.locked, atomic("100.00", 2));
-    assert_eq!(w1.available, atomic("900.00", 2)); // 1000 - 100
+    assert_eq!(w1.locked, Decimal::from_str("10000").unwrap()); // 100.00 * 100
+    assert_eq!(w1.available, Decimal::from_str("90000").unwrap()); // (1000 - 100) * 100
 
     // 2. Second Request (Duplicate)
     let res2 = ctx.order_service.create_order(order.clone()).await;
@@ -62,7 +81,8 @@ async fn test_create_order_idempotency() {
         .await
         .unwrap()
         .unwrap();
-    // Verify funds were NOT locked a second time
-    assert_eq!(w2.locked, atomic("100.00", 2));
-    assert_eq!(w2.available, atomic("900.00", 2));
+
+    // Balance should NOT change again
+    assert_eq!(w2.locked, Decimal::from_str("10000").unwrap());
+    assert_eq!(w2.available, Decimal::from_str("90000").unwrap());
 }

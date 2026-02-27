@@ -26,12 +26,6 @@ pub fn calc_maker_fee(amount_atomic: Decimal) -> Decimal {
 #[macro_export]
 macro_rules! assert_decimal_val_eq {
     ($left:expr, $right:expr) => {
-        assert_eq!(
-            rust_decimal::Decimal::from_str(&$left).unwrap(),
-            $right,
-            "Expected {} but got {}",
-            $right,
-            &$left
-        );
+        assert_eq!($left, $right, "Expected {} but got {}", $right, $left);
     };
 }

@@ -78,7 +78,7 @@ impl WithdrawalService for WithdrawalServiceImpl {
             .map_err(|e| Status::internal(e.to_string()))?
             .ok_or_else(|| Status::not_found("Wallet not found"))?;
 
-        let available = Decimal::from_str(&wallet.available).unwrap_or_default();
+        let available = wallet.available;
 
         if available < amount {
             return Err(Status::failed_precondition(format!(
@@ -88,10 +88,10 @@ impl WithdrawalService for WithdrawalServiceImpl {
         }
 
         let mut wallet = wallet;
-        let locked = Decimal::from_str(&wallet.locked).unwrap_or_default();
-        wallet.available = (available - amount).to_string();
-        wallet.locked = (locked + amount).to_string();
-        wallet.updated_at = chrono::Utc::now().timestamp_millis();
+        let _locked = wallet.locked;
+        wallet.available -= amount;
+        wallet.locked += amount;
+        wallet.updated_at = chrono::Utc::now();
 
         self.wallet_service
             .update_wallet(wallet)
@@ -180,11 +180,9 @@ impl WithdrawalService for WithdrawalServiceImpl {
             .await
         {
             let amount = withdrawal.amount;
-            let available = Decimal::from_str(&wallet.available).unwrap_or_default();
-            let locked = Decimal::from_str(&wallet.locked).unwrap_or_default();
-            wallet.available = (available + amount).to_string();
-            wallet.locked = (locked - amount).max(Decimal::ZERO).to_string();
-            wallet.updated_at = chrono::Utc::now().timestamp_millis();
+            wallet.available += amount;
+            wallet.locked = (wallet.locked - amount).max(Decimal::ZERO);
+            wallet.updated_at = chrono::Utc::now();
             let _ = self.wallet_service.update_wallet(wallet).await;
         }
 

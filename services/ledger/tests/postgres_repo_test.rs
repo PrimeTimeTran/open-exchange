@@ -65,19 +65,19 @@ async fn test_postgres_wallet_persistence() {
 
     // 3. Test Create Wallet
     let wallet = Wallet {
-        id: wallet_id.to_string(),
-        tenant_id: tenant_id.to_string(),
-        account_id: account_id.to_string(),
-        asset_id: asset_id.to_string(),
-        available: "100.00".to_string(),
-        locked: "0.00".to_string(),
-        total: "100.00".to_string(),
+        id: wallet_id,
+        tenant_id: tenant_id,
+        account_id: account_id,
+        asset_id: asset_id,
+        available: Decimal::from_str("100.00").unwrap(),
+        locked: Decimal::from_str("0.00").unwrap(),
+        total: Decimal::from_str("100.00").unwrap(),
         user_id: "".to_string(),
         version: 1,
         status: "active".to_string(),
-        meta: "{}".to_string(),
-        created_at: Utc::now().timestamp_millis(),
-        updated_at: Utc::now().timestamp_millis(),
+        meta: serde_json::json!({}),
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
     };
 
     let created = repo
@@ -92,15 +92,12 @@ async fn test_postgres_wallet_persistence() {
         .await
         .expect("Failed to get wallet")
         .expect("Wallet not found");
-    assert_eq!(
-        Decimal::from_str(&fetched.available).unwrap(),
-        Decimal::from_str("100").unwrap()
-    );
+    assert_eq!(fetched.available, Decimal::from_str("100").unwrap());
 
     // 5. Test Update Wallet (Optimistic Locking)
     let mut updated = fetched.clone();
-    updated.available = "50.00".to_string(); // Will be stored as 50
-    updated.total = "50.00".to_string();
+    updated.available = Decimal::from_str("50.00").unwrap(); // Will be stored as 50
+    updated.total = Decimal::from_str("50.00").unwrap();
 
     // Success case
     let saved = repo
@@ -108,10 +105,7 @@ async fn test_postgres_wallet_persistence() {
         .await
         .expect("Failed to update wallet");
     assert_eq!(saved.version, 2);
-    assert_eq!(
-        Decimal::from_str(&saved.available).unwrap(),
-        Decimal::from_str("50").unwrap()
-    );
+    assert_eq!(saved.available, Decimal::from_str("50").unwrap());
 
     // Failure case (Old Version)
     let mut old_version = updated.clone();

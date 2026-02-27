@@ -464,8 +464,8 @@ impl Drop for PostgresTestContext {
     }
 }
 
-pub fn atomic(amount: &str, decimals: u32) -> String {
+pub fn atomic(amount: &str, decimals: u32) -> rust_decimal::Decimal {
     let d = rust_decimal::Decimal::from_str(amount).unwrap();
     let m = rust_decimal::Decimal::from((10u64).pow(decimals));
-    (d * m).round().to_string()
+    (d * m).round()
 }

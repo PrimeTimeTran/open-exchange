@@ -29,12 +29,12 @@ async fn test_conservation_of_money_spot_trading() {
     // Buyer: 1000 USD, 0 BTC
     ctx.wallet_service
         .create_wallet(Wallet {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.clone(),
-            account_id: buyer_acc.clone(),
-            asset_id: usd_id.clone(),
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+            account_id: Uuid::parse_str(&buyer_acc).unwrap(),
+            asset_id: Uuid::parse_str(&usd_id).unwrap(),
             available: atomic("1000.00", 2),
-            locked: "0".to_string(),
+            locked: Decimal::ZERO,
             total: atomic("1000.00", 2),
             ..Default::default()
         })
@@ -44,13 +44,13 @@ async fn test_conservation_of_money_spot_trading() {
     // Create Buyer BTC wallet (for receiving)
     ctx.wallet_service
         .create_wallet(Wallet {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.clone(),
-            account_id: buyer_acc.clone(),
-            asset_id: btc_id.clone(),
-            available: "0".to_string(),
-            locked: "0".to_string(),
-            total: "0".to_string(),
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+            account_id: Uuid::parse_str(&buyer_acc).unwrap(),
+            asset_id: Uuid::parse_str(&btc_id).unwrap(),
+            available: Decimal::ZERO,
+            locked: Decimal::ZERO,
+            total: Decimal::ZERO,
             ..Default::default()
         })
         .await
@@ -59,12 +59,12 @@ async fn test_conservation_of_money_spot_trading() {
     // Seller: 0 USD, 10 BTC
     ctx.wallet_service
         .create_wallet(Wallet {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.clone(),
-            account_id: seller_acc.clone(),
-            asset_id: btc_id.clone(),
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+            account_id: Uuid::parse_str(&seller_acc).unwrap(),
+            asset_id: Uuid::parse_str(&btc_id).unwrap(),
             available: atomic("10.00", 8),
-            locked: "0".to_string(),
+            locked: Decimal::ZERO,
             total: atomic("10.00", 8),
             ..Default::default()
         })
@@ -74,13 +74,13 @@ async fn test_conservation_of_money_spot_trading() {
     // Create Seller USD wallet (for receiving)
     ctx.wallet_service
         .create_wallet(Wallet {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.clone(),
-            account_id: seller_acc.clone(),
-            asset_id: usd_id.clone(),
-            available: "0".to_string(),
-            locked: "0".to_string(),
-            total: "0".to_string(),
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+            account_id: Uuid::parse_str(&seller_acc).unwrap(),
+            asset_id: Uuid::parse_str(&usd_id).unwrap(),
+            available: Decimal::ZERO,
+            locked: Decimal::ZERO,
+            total: Decimal::ZERO,
             ..Default::default()
         })
         .await
@@ -95,13 +95,13 @@ async fn test_conservation_of_money_spot_trading() {
         .unwrap();
     ctx.wallet_service
         .create_wallet(Wallet {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.clone(),
-            account_id: fee_acc.id.to_string(),
-            asset_id: usd_id.clone(),
-            available: "0".to_string(),
-            locked: "0".to_string(),
-            total: "0".to_string(),
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+            account_id: fee_acc.id,
+            asset_id: Uuid::parse_str(&usd_id).unwrap(),
+            available: Decimal::ZERO,
+            locked: Decimal::ZERO,
+            total: Decimal::ZERO,
             ..Default::default()
         })
         .await
@@ -109,13 +109,13 @@ async fn test_conservation_of_money_spot_trading() {
 
     ctx.wallet_service
         .create_wallet(Wallet {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.clone(),
-            account_id: fee_acc.id.to_string(),
-            asset_id: btc_id.clone(),
-            available: "0".to_string(),
-            locked: "0".to_string(),
-            total: "0".to_string(),
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+            account_id: fee_acc.id,
+            asset_id: Uuid::parse_str(&btc_id).unwrap(),
+            available: Decimal::ZERO,
+            locked: Decimal::ZERO,
+            total: Decimal::ZERO,
             ..Default::default()
         })
         .await
@@ -230,7 +230,7 @@ async fn get_balance(ctx: &PostgresTestContext, account_id: &str, asset_id: &str
         .await
         .unwrap()
     {
-        Some(w) => Decimal::from_str(&w.total).unwrap(),
+        Some(w) => w.total,
         None => Decimal::ZERO,
     }
 }

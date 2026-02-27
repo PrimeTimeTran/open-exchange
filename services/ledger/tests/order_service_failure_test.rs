@@ -103,7 +103,7 @@ mod tests {
         ));
 
         // Setup Data
-        let account_id = Uuid::new_v4().to_string();
+        let account_id = Uuid::new_v4();
         let usd_id = Uuid::new_v4();
         let btc_id = Uuid::new_v4();
         let instr_id = Uuid::new_v4();
@@ -120,7 +120,7 @@ mod tests {
             updated_at: chrono::Utc::now(),
         });
         instrument_repo.add(Instrument {
-            id: Uuid::parse_str(&instr_id.to_string()).unwrap(),
+            id: instr_id,
             tenant_id,
             symbol: "BTC-USD".into(),
             r#type: "spot".into(),
@@ -134,10 +134,10 @@ mod tests {
 
         // Add Wallet with Funds (Atomic Units: 1000.00 USD -> 100000 cents)
         let wallet = Wallet {
-            account_id: account_id.clone(),
-            asset_id: usd_id.to_string(),
-            available: "100000".to_string(),
-            locked: "0".to_string(),
+            account_id,
+            asset_id: usd_id,
+            available: Decimal::from_str("100000").unwrap(),
+            locked: Decimal::from_str("0").unwrap(),
             ..Default::default()
         };
         wallet_service.create_wallet(wallet).await.unwrap();
@@ -151,7 +151,7 @@ mod tests {
         // 1.0 @ 100.0 = 100 USD -> 10000 atomic.
         let order = Order::new(
             Uuid::new_v4(),
-            Uuid::parse_str(&account_id).unwrap(),
+            account_id,
             instr_id,
             OrderSide::Buy,
             ledger::domain::orders::model::OrderType::Limit,
@@ -166,13 +166,13 @@ mod tests {
 
         // Check funds were deducted (logic mismatch behavior - funds locked but order create failed)
         let wallet = wallet_service
-            .get_wallet_by_account_and_asset(&account_id, &usd_id.to_string())
+            .get_wallet_by_account_and_asset(&account_id.to_string(), &usd_id.to_string())
             .await
             .unwrap()
             .unwrap();
 
         // 100000 - 10000 = 90000
-        assert_eq!(wallet.available, "90000");
-        assert_eq!(wallet.locked, "10000");
+        assert_eq!(wallet.available, Decimal::from_str("90000").unwrap());
+        assert_eq!(wallet.locked, Decimal::from_str("10000").unwrap());
     }
 }

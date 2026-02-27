@@ -1,10 +1,9 @@
-use crate::helpers::memory::assert_decimal;
 use crate::helpers::memory::InMemoryTestContext;
 use ledger::proto::common::{Order, OrderSide, OrderStatus, OrderType, TimeInForce};
 use ledger::proto::ledger::account_service_server::AccountService;
 use ledger::proto::ledger::asset_service_server::AssetService;
 use ledger::proto::ledger::deposit_service_server::DepositService;
-use ledger::proto::ledger::order_service_server::OrderService; // Trait
+use ledger::proto::ledger::order_service_server::OrderService;
 use ledger::proto::ledger::wallet_service_server::WalletService as WalletServiceTrait;
 use ledger::proto::ledger::{
     CreateAccountRequest, CreateAssetRequest, CreateDepositRequest, CreateInstrumentRequest,
@@ -149,11 +148,14 @@ async fn test_order_scaling_and_locking() {
         .list_wallets_internal(&account_id)
         .await
         .unwrap();
-    let usd_wallet = wallets.iter().find(|w| w.asset_id == usd_id).unwrap();
+    let usd_wallet = wallets
+        .iter()
+        .find(|w| w.asset_id.to_string() == usd_id)
+        .unwrap();
 
     let expected_locked = Decimal::from(10_000_000); // 100k * 100
     let expected_available = Decimal::from_str(initial_balance_atomic).unwrap() - expected_locked;
 
-    assert_decimal(&usd_wallet.locked, &expected_locked.to_string());
-    assert_decimal(&usd_wallet.available, &expected_available.to_string());
+    assert_eq!(usd_wallet.locked, expected_locked);
+    assert_eq!(usd_wallet.available, expected_available);
 }

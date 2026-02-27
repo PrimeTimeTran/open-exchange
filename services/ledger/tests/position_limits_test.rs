@@ -83,7 +83,7 @@ async fn test_order_exceeding_max_size_rejected() {
     assert!(result.is_err(), "Oversized order must be rejected");
     match result.unwrap_err() {
         ledger::error::AppError::ValidationError(msg) => {
-            assert!(msg.contains("position limit") || msg.contains("max allowed"))
+            assert!(msg.contains("position limit") || msg.contains("max allowed"));
         }
         e => panic!("Unexpected error: {:?}", e),
     }
@@ -97,7 +97,8 @@ async fn test_order_exceeding_max_size_rejected() {
         .unwrap();
 
     assert_eq!(
-        wallet.locked, "0",
+        wallet.locked,
+        Decimal::ZERO,
         "No funds should be locked for a rejected order"
     );
 }

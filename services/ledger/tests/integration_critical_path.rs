@@ -1,6 +1,6 @@
 mod helpers;
 use chrono::Utc;
-use helpers::postgres::{atomic, PostgresTestContext};
+use helpers::postgres::PostgresTestContext;
 use ledger::domain::accounts::repository::AccountRepository;
 use ledger::domain::ledger::model::LedgerEntry;
 use ledger::domain::orders::model::{Order, OrderSide, OrderStatus};
@@ -25,11 +25,11 @@ async fn test_deposit_increases_balance() {
     let wallet_id = ctx
         .wallet_service
         .create_wallet(Wallet {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.clone(),
-            account_id: account_id.clone(),
-            asset_id: asset_id.clone(),
-            available: "0".to_string(),
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+            account_id: Uuid::parse_str(&account_id).unwrap(),
+            asset_id: Uuid::parse_str(&asset_id).unwrap(),
+            available: Decimal::ZERO,
             ..Default::default()
         })
         .await
@@ -55,14 +55,11 @@ async fn test_deposit_increases_balance() {
 
     let updated = ctx
         .wallet_service
-        .get_wallet(&wallet_id)
+        .get_wallet(&wallet_id.to_string())
         .await
         .unwrap()
         .unwrap();
-    assert_eq!(
-        Decimal::from_str(&updated.available).unwrap(),
-        deposit_amount
-    );
+    assert_eq!(updated.available, deposit_amount);
 }
 
 // 2. Withdrawal Insufficient Funds
@@ -77,14 +74,14 @@ async fn test_withdrawal_insufficient_funds() {
     let user_id = ctx.create_user().await;
     let account_id = ctx.create_account(&user_id).await;
 
-    // Fund 10.00 USD (Atomic: 1000)
-    let amount = atomic("10.00", 2);
+    // Fund 10.00 USD
+    let amount = Decimal::from_str("10.00").unwrap();
     ctx.wallet_service
         .create_wallet(Wallet {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.clone(),
-            account_id: account_id.clone(),
-            asset_id: usd_id.clone(),
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+            account_id: Uuid::parse_str(&account_id).unwrap(),
+            asset_id: Uuid::parse_str(&usd_id).unwrap(),
             available: amount,
             ..Default::default()
         })
@@ -118,13 +115,13 @@ async fn test_create_order_buy_limit_locks_quote() {
 
     ctx.wallet_service
         .create_wallet(Wallet {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.clone(),
-            account_id: account_id.clone(),
-            asset_id: usd_id.clone(),
-            available: atomic("1000.00", 2),
-            locked: "0".to_string(),
-            total: atomic("1000.00", 2),
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+            account_id: Uuid::parse_str(&account_id).unwrap(),
+            asset_id: Uuid::parse_str(&usd_id).unwrap(),
+            available: Decimal::from_str("100000").unwrap(), // 1000.00 * 100
+            locked: Decimal::ZERO,
+            total: Decimal::from_str("100000").unwrap(),
             ..Default::default()
         })
         .await
@@ -137,7 +134,7 @@ async fn test_create_order_buy_limit_locks_quote() {
         instrument_id: Uuid::parse_str(&instr_id).unwrap(),
         side: OrderSide::Buy,
         quantity: Decimal::from_str("2.0").unwrap(),
-        price: Decimal::from_str("100.0").unwrap(),
+        price: Decimal::from_str("100.0").unwrap(), // Cost: 200 * 100 = 20000
         ..Default::default()
     };
 
@@ -152,8 +149,8 @@ async fn test_create_order_buy_limit_locks_quote() {
         .await
         .unwrap()
         .unwrap();
-    assert_eq!(w.available, atomic("800.00", 2));
-    assert_eq!(w.locked, atomic("200.00", 2));
+    assert_eq!(w.available, Decimal::from_str("80000").unwrap()); // 800 * 100
+    assert_eq!(w.locked, Decimal::from_str("20000").unwrap()); // 200 * 100
 }
 
 // 4. Sell Limit Locks Base
@@ -168,13 +165,13 @@ async fn test_create_order_sell_limit_locks_base() {
 
     ctx.wallet_service
         .create_wallet(Wallet {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.clone(),
-            account_id: account_id.clone(),
-            asset_id: btc_id.clone(),
-            available: atomic("10.00", 8),
-            locked: "0".to_string(),
-            total: atomic("10.00", 8),
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+            account_id: Uuid::parse_str(&account_id).unwrap(),
+            asset_id: Uuid::parse_str(&btc_id).unwrap(),
+            available: Decimal::from_str("1000000000").unwrap(), // 10.00 * 10^8
+            locked: Decimal::ZERO,
+            total: Decimal::from_str("1000000000").unwrap(),
             ..Default::default()
         })
         .await
@@ -186,7 +183,7 @@ async fn test_create_order_sell_limit_locks_base() {
         account_id: Uuid::parse_str(&account_id).unwrap(),
         instrument_id: Uuid::parse_str(&instr_id).unwrap(),
         side: OrderSide::Sell,
-        quantity: Decimal::from_str("2.0").unwrap(),
+        quantity: Decimal::from_str("2.0").unwrap(), // 2 * 10^8 = 200000000
         price: Decimal::from_str("100.0").unwrap(),
         ..Default::default()
     };
@@ -202,8 +199,8 @@ async fn test_create_order_sell_limit_locks_base() {
         .await
         .unwrap()
         .unwrap();
-    assert_eq!(w.available, atomic("8.00", 8));
-    assert_eq!(w.locked, atomic("2.00", 8));
+    assert_eq!(w.available, Decimal::from_str("800000000").unwrap()); // 8 * 10^8
+    assert_eq!(w.locked, Decimal::from_str("200000000").unwrap()); // 2 * 10^8
 }
 
 // 5. Insufficient Funds
@@ -216,14 +213,14 @@ async fn test_create_order_insufficient_funds() {
     let user_id = ctx.create_user().await;
     let account_id = ctx.create_account(&user_id).await;
 
-    // Fund 50 USD -> 5000 atomic
+    // Fund 50 USD
     ctx.wallet_service
         .create_wallet(Wallet {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.clone(),
-            account_id: account_id.clone(),
-            asset_id: usd_id.clone(),
-            available: atomic("50.00", 2),
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+            account_id: Uuid::parse_str(&account_id).unwrap(),
+            asset_id: Uuid::parse_str(&usd_id).unwrap(),
+            available: Decimal::from_str("50.00").unwrap(),
             ..Default::default()
         })
         .await
@@ -260,12 +257,12 @@ async fn test_cancel_order_unlocks_funds() {
 
     ctx.wallet_service
         .create_wallet(Wallet {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.clone(),
-            account_id: account_id.clone(),
-            asset_id: usd_id.clone(),
-            available: atomic("1000.00", 2),
-            locked: "0".to_string(),
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+            account_id: Uuid::parse_str(&account_id).unwrap(),
+            asset_id: Uuid::parse_str(&usd_id).unwrap(),
+            available: Decimal::from_str("100000").unwrap(),
+            locked: Decimal::ZERO,
             ..Default::default()
         })
         .await
@@ -279,11 +276,14 @@ async fn test_cancel_order_unlocks_funds() {
         instrument_id: Uuid::parse_str(&instr_id).unwrap(),
         side: OrderSide::Buy,
         quantity: Decimal::from_str("1.0").unwrap(),
-        price: Decimal::from_str("100.0").unwrap(),
+        price: Decimal::from_str("100.0").unwrap(), // 10000 atomic
         status: OrderStatus::Open,
         ..Default::default()
     };
-    ctx.order_service.create_order(order).await.unwrap();
+    ctx.order_service
+        .create_order(order)
+        .await
+        .expect("Order create success");
 
     ctx.order_service
         .cancel_order(order_id)
@@ -296,8 +296,8 @@ async fn test_cancel_order_unlocks_funds() {
         .await
         .unwrap()
         .unwrap();
-    assert_eq!(w.available, atomic("1000.00", 2));
-    assert_eq!(w.locked, "0");
+    assert_eq!(w.available, Decimal::from_str("100000").unwrap());
+    assert_eq!(w.locked, Decimal::ZERO);
 }
 
 // 7. Full Fill Settlement
@@ -317,11 +317,11 @@ async fn test_trade_settlement_full_fill() {
 
     ctx.wallet_service
         .create_wallet(Wallet {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.clone(),
-            account_id: buyer_id.clone(),
-            asset_id: usd_id.clone(),
-            available: atomic("1000.00", 2),
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+            account_id: Uuid::parse_str(&buyer_id).unwrap(),
+            asset_id: Uuid::parse_str(&usd_id).unwrap(),
+            available: Decimal::from_str("100000").unwrap(), // 1000.00 * 100
             ..Default::default()
         })
         .await
@@ -329,11 +329,11 @@ async fn test_trade_settlement_full_fill() {
 
     ctx.wallet_service
         .create_wallet(Wallet {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.clone(),
-            account_id: seller_id.clone(),
-            asset_id: btc_id.clone(),
-            available: atomic("10.00", 8),
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+            account_id: Uuid::parse_str(&seller_id).unwrap(),
+            asset_id: Uuid::parse_str(&btc_id).unwrap(),
+            available: Decimal::from_str("1000000000").unwrap(), // 10.00 * 10^8
             ..Default::default()
         })
         .await
@@ -394,11 +394,11 @@ async fn test_trade_settlement_full_fill() {
         .unwrap()
         .unwrap();
     // 900.00 minus fees (approx 0.2%)
-    let balance = Decimal::from_str(&buyer_usd.available).unwrap();
-    let expected_max = Decimal::from_str(&atomic("900.00", 2)).unwrap();
+    let balance = buyer_usd.available;
+    let expected_max = Decimal::from_str("90000").unwrap(); // 900.00 * 100
     assert!(balance <= expected_max);
-    assert!(balance > Decimal::from_str(&atomic("890.00", 2)).unwrap());
-    assert_eq!(buyer_usd.locked, "0");
+    assert!(balance > Decimal::from_str("89000").unwrap()); // 890.00 * 100
+    assert_eq!(buyer_usd.locked, Decimal::ZERO);
 
     let seller_btc = ctx
         .wallet_service
@@ -406,8 +406,11 @@ async fn test_trade_settlement_full_fill() {
         .await
         .unwrap()
         .unwrap();
-    assert_eq!(seller_btc.available, atomic("9.00", 8));
-    assert_eq!(seller_btc.locked, "0");
+    assert_eq!(
+        seller_btc.available,
+        Decimal::from_str("900000000").unwrap()
+    ); // 9.00 * 10^8
+    assert_eq!(seller_btc.locked, Decimal::ZERO);
 }
 
 // 8. Partial Fill
@@ -425,11 +428,11 @@ async fn test_trade_settlement_partial_fill() {
 
     ctx.wallet_service
         .create_wallet(Wallet {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.clone(),
-            account_id: account_id.clone(),
-            asset_id: usd_id.clone(),
-            available: atomic("1000.00", 2),
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+            account_id: Uuid::parse_str(&account_id).unwrap(),
+            asset_id: Uuid::parse_str(&usd_id).unwrap(),
+            available: Decimal::from_str("100000").unwrap(), // 1000.00 * 100
             ..Default::default()
         })
         .await
@@ -456,16 +459,16 @@ async fn test_trade_settlement_partial_fill() {
         .await
         .unwrap()
         .unwrap();
-    assert_eq!(w1.locked, atomic("200.00", 2));
+    assert_eq!(w1.locked, Decimal::from_str("20000").unwrap()); // 200.00 * 100
 
     let sell_order_id = Uuid::new_v4();
     ctx.wallet_service
         .create_wallet(Wallet {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.clone(),
-            account_id: seller_id.clone(),
-            asset_id: btc_id.clone(),
-            available: atomic("10.0", 8),
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+            account_id: Uuid::parse_str(&seller_id).unwrap(),
+            asset_id: Uuid::parse_str(&btc_id).unwrap(),
+            available: Decimal::from_str("1000000000").unwrap(), // 10.0 * 10^8
             ..Default::default()
         })
         .await
@@ -510,10 +513,10 @@ async fn test_trade_settlement_partial_fill() {
         .await
         .unwrap()
         .unwrap();
-    assert_eq!(w2.locked, atomic("100.00", 2));
+    assert_eq!(w2.locked, Decimal::from_str("10000").unwrap()); // 100.00 * 100
 
-    let available = Decimal::from_str(&w2.available).unwrap();
-    let expected_available = Decimal::from_str(&atomic("800.00", 2)).unwrap();
+    let available = w2.available;
+    let expected_available = Decimal::from_str("80000").unwrap(); // 800.00 * 100
     assert!(available <= expected_available);
 }
 
@@ -527,11 +530,11 @@ async fn test_ledger_entry_integrity_check() {
 
     ctx.wallet_service
         .create_wallet(Wallet {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.clone(),
-            account_id: account_id.clone(),
-            asset_id: asset_id.clone(),
-            available: "0".to_string(),
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+            account_id: Uuid::parse_str(&account_id).unwrap(),
+            asset_id: Uuid::parse_str(&asset_id).unwrap(),
+            available: Decimal::ZERO,
             ..Default::default()
         })
         .await
@@ -541,15 +544,15 @@ async fn test_ledger_entry_integrity_check() {
     let mut total = Decimal::ZERO;
 
     for amount in amounts {
-        let atom = atomic(amount, 2);
-        total += Decimal::from_str(&atom).unwrap();
+        let val = Decimal::from_str(amount).unwrap();
+        total += val;
 
         let entry = LedgerEntry {
             id: Uuid::new_v4(),
             tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
             event_id: Uuid::new_v4(),
             account_id: Uuid::parse_str(&account_id).unwrap(),
-            amount: Decimal::from_str(&atom).unwrap(),
+            amount: val,
             meta: serde_json::json!({"asset": asset_id, "type": "credit"}),
             created_at: chrono::Utc::now(),
             updated_at: chrono::Utc::now(),
@@ -566,7 +569,7 @@ async fn test_ledger_entry_integrity_check() {
         .await
         .unwrap()
         .unwrap();
-    assert_eq!(Decimal::from_str(&w.total).unwrap(), total);
+    assert_eq!(w.total, total);
 }
 
 #[tokio::test]
@@ -584,22 +587,22 @@ async fn test_system_fee_collection() {
 
     ctx.wallet_service
         .create_wallet(Wallet {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.clone(),
-            account_id: buyer_id.clone(),
-            asset_id: usd_id.clone(),
-            available: atomic("1000.0", 2),
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+            account_id: Uuid::parse_str(&buyer_id).unwrap(),
+            asset_id: Uuid::parse_str(&usd_id).unwrap(),
+            available: Decimal::from_str("100000").unwrap(), // 1000.0 * 100
             ..Default::default()
         })
         .await
         .unwrap();
     ctx.wallet_service
         .create_wallet(Wallet {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.clone(),
-            account_id: seller_id.clone(),
-            asset_id: btc_id.clone(),
-            available: atomic("10.0", 8),
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+            account_id: Uuid::parse_str(&seller_id).unwrap(),
+            asset_id: Uuid::parse_str(&btc_id).unwrap(),
+            available: Decimal::from_str("1000000000").unwrap(), // 10.0 * 10^8
             ..Default::default()
         })
         .await
@@ -666,6 +669,6 @@ async fn test_system_fee_collection() {
         .unwrap();
 
     if let Some(w) = fee_wallet {
-        assert!(Decimal::from_str(&w.total).unwrap() >= Decimal::ZERO);
+        assert!(w.total >= Decimal::ZERO);
     }
 }

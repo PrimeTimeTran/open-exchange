@@ -3,7 +3,6 @@ use helpers::postgres::{atomic, PostgresTestContext};
 use ledger::domain::ledger::model::LedgerEntry;
 use ledger::domain::wallets::Wallet;
 use rust_decimal::Decimal;
-use std::str::FromStr;
 use uuid::Uuid;
 
 #[tokio::test]
@@ -22,11 +21,11 @@ async fn test_precision_overflow_limits() {
     let wallet_id = ctx
         .wallet_service
         .create_wallet(Wallet {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.clone(),
-            account_id: account_id.clone(),
-            asset_id: eth_id.clone(),
-            available: "0".to_string(),
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+            account_id: Uuid::parse_str(&account_id).unwrap(),
+            asset_id: Uuid::parse_str(&eth_id).unwrap(),
+            available: Decimal::ZERO,
             ..Default::default()
         })
         .await
@@ -39,7 +38,7 @@ async fn test_precision_overflow_limits() {
         tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
         event_id: Uuid::new_v4(),
         account_id: Uuid::parse_str(&account_id).unwrap(),
-        amount: Decimal::from_str(&tiny_atomic).unwrap(),
+        amount: tiny_atomic,
         meta: serde_json::json!({"asset": eth_id, "type": "credit"}),
         created_at: chrono::Utc::now(),
         updated_at: chrono::Utc::now(),
@@ -51,16 +50,16 @@ async fn test_precision_overflow_limits() {
 
     let w = ctx
         .wallet_service
-        .get_wallet(&wallet_id)
+        .get_wallet(&wallet_id.to_string())
         .await
         .unwrap()
         .unwrap();
-    assert_eq!(w.available, "1");
+    assert_eq!(w.available, Decimal::from(1));
 
     // 2. Large Amount (Trillions) to test overflow safety
     // 1 Trillion ETH = 1,000,000,000,000 * 10^18 atomic units = 10^30
-    // rust_decimal (and Postgres NUMERIC) supports up to 96-bit integer significand (approx 7.9e28)
-    // Wait, rust_decimal is 96-bit int coeff * 10^-scale.
+    // rust_decimal (and Postgres NUMERIC) supports up to 96-bit integer significant (approx 7.9e28)
+    // Wait, rust_decimal is 96-bit int co-efficient * 10^-scale.
     // Max value is (2^96 - 1) / 10^scale.
     // 2^96 is approx 7.9 x 10^28.
 
@@ -74,7 +73,7 @@ async fn test_precision_overflow_limits() {
         tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
         event_id: Uuid::new_v4(),
         account_id: Uuid::parse_str(&account_id).unwrap(),
-        amount: Decimal::from_str(&large_atomic).unwrap(),
+        amount: large_atomic,
         meta: serde_json::json!({"asset": eth_id, "type": "credit"}),
         created_at: chrono::Utc::now(),
         updated_at: chrono::Utc::now(),
@@ -86,13 +85,12 @@ async fn test_precision_overflow_limits() {
 
     let w2 = ctx
         .wallet_service
-        .get_wallet(&wallet_id)
+        .get_wallet(&wallet_id.to_string())
         .await
         .unwrap()
         .unwrap();
-    let total = Decimal::from_str(&w2.available).unwrap();
+    let total = w2.available;
 
-    let expected =
-        Decimal::from_str(&tiny_atomic).unwrap() + Decimal::from_str(&large_atomic).unwrap();
+    let expected = tiny_atomic + large_atomic;
     assert_eq!(total, expected);
 }

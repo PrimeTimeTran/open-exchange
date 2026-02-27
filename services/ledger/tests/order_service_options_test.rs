@@ -81,8 +81,8 @@ async fn test_sell_call_option_locks_underlying_collateral(
         .expect("Failed to get wallet")
         .expect("Wallet not found");
     // Wallet stores Atomic units. 1.0 BTC standard = 100,000,000 atomic
-    assert_eq!(Decimal::from_str(&btc_wallet.locked)?, qty_btc_atomic);
-    assert_eq!(Decimal::from_str(&btc_wallet.available)?, Decimal::ZERO);
+    assert_eq!(&btc_wallet.locked, &qty_btc_atomic);
+    assert_eq!(&btc_wallet.available, &Decimal::ZERO);
     Ok(())
 }
 
@@ -163,8 +163,7 @@ async fn test_sell_put_option_locks_cash_collateral() -> Result<(), Box<dyn std:
         .expect("Failed to get wallet")
         .expect("Wallet not found");
     assert_eq!(
-        Decimal::from_str(&usd_wallet.locked)?,
-        required_collateral_atomic,
+        &usd_wallet.locked, &required_collateral_atomic,
         "Should lock Strike * Qty in Cash"
     );
 
@@ -175,7 +174,7 @@ async fn test_sell_put_option_locks_cash_collateral() -> Result<(), Box<dyn std:
         .await
         .expect("Failed to get wallet")
         .expect("Wallet not found");
-    assert_eq!(Decimal::from_str(&btc_wallet.locked)?, Decimal::ZERO);
+    assert_eq!(&btc_wallet.locked, &Decimal::ZERO);
     Ok(())
 }
 

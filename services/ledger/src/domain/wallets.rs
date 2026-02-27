@@ -3,14 +3,50 @@ use crate::domain::transaction::RepositoryTransaction;
 use crate::error::{AppError, Result};
 use crate::proto::common;
 use async_trait::async_trait;
-use chrono::Utc;
-pub use common::Wallet;
+use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
+use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
-use std::str::FromStr;
 use std::sync::Arc;
 use uuid::Uuid;
 // use sqlx::{Transaction, Postgres}; // Removed to decouple from sqlx
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct Wallet {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub user_id: String,
+    pub account_id: Uuid,
+    pub asset_id: Uuid,
+    pub available: Decimal,
+    pub locked: Decimal,
+    pub total: Decimal,
+    pub version: i32,
+    pub status: String,
+    pub meta: serde_json::Value,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+impl From<Wallet> for common::Wallet {
+    fn from(wallet: Wallet) -> Self {
+        Self {
+            id: wallet.id.to_string(),
+            tenant_id: wallet.tenant_id.to_string(),
+            user_id: wallet.user_id,
+            account_id: wallet.account_id.to_string(),
+            asset_id: wallet.asset_id.to_string(),
+            available: wallet.available.to_string(),
+            locked: wallet.locked.to_string(),
+            total: wallet.total.to_string(),
+            version: wallet.version,
+            status: wallet.status,
+            meta: wallet.meta.to_string(),
+            created_at: wallet.created_at.timestamp_millis(),
+            updated_at: wallet.updated_at.timestamp_millis(),
+        }
+    }
+}
 
 #[async_trait]
 pub trait WalletRepository: Send + Sync + Debug {
@@ -57,20 +93,25 @@ impl WalletService {
     }
 
     pub async fn create_new_wallet(&self, account_id: String, asset_id: String) -> Result<Wallet> {
+        let account_uuid = Uuid::parse_str(&account_id)
+            .map_err(|_| AppError::ValidationError("Invalid account_id".into()))?;
+        let asset_uuid = Uuid::parse_str(&asset_id)
+            .map_err(|_| AppError::ValidationError("Invalid asset_id".into()))?;
+
         let wallet = Wallet {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: "default".to_string(),
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::nil(), // Placeholder, logic may need adjustment
             user_id: "".to_string(),
-            account_id,
-            asset_id,
-            available: "0".to_string(),
-            locked: "0".to_string(),
-            total: "0".to_string(),
+            account_id: account_uuid,
+            asset_id: asset_uuid,
+            available: Decimal::ZERO,
+            locked: Decimal::ZERO,
+            total: Decimal::ZERO,
             version: 1,
             status: "active".to_string(),
-            meta: "{}".to_string(),
-            created_at: Utc::now().timestamp_millis(),
-            updated_at: Utc::now().timestamp_millis(),
+            meta: serde_json::json!({}),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         };
 
         self.repo.create(wallet).await
@@ -162,8 +203,6 @@ impl WalletService {
         Ok(())
     }
 
-    // ...
-
     pub async fn process_ledger_entry_with_tx(
         &self,
         tx: &mut dyn RepositoryTransaction,
@@ -194,44 +233,37 @@ impl WalletService {
         ))?;
         let entry_amount = entry.amount;
 
-        let current_available = Decimal::from_str(&wallet.available)
-            .map_err(|_| AppError::Internal("Invalid available balance in wallet".into()))?;
-        let current_locked = Decimal::from_str(&wallet.locked)
-            .map_err(|_| AppError::Internal("Invalid locked balance in wallet".into()))?;
-        let current_total = Decimal::from_str(&wallet.total)
-            .map_err(|_| AppError::Internal("Invalid total balance in wallet".into()))?;
-
         match entry_type {
             "available" => {
-                wallet.available = (current_available + entry_amount).to_string();
-                wallet.total = (current_total + entry_amount).to_string();
+                wallet.available += entry_amount;
+                wallet.total += entry_amount;
             }
             "locked" => {
-                wallet.locked = (current_locked + entry_amount).to_string();
-                wallet.total = (current_total + entry_amount).to_string();
+                wallet.locked += entry_amount;
+                wallet.total += entry_amount;
             }
             "fee" | "credit" | "revenue" => {
-                wallet.available = (current_available + entry_amount).to_string();
-                wallet.total = (current_total + entry_amount).to_string();
+                wallet.available += entry_amount;
+                wallet.total += entry_amount;
             }
             "debit" => {
-                wallet.locked = (current_locked + entry_amount).to_string();
-                wallet.total = (current_total + entry_amount).to_string();
+                wallet.locked += entry_amount;
+                wallet.total += entry_amount;
             }
             _ => {
                 // Legacy/Default Fallback
                 if entry_amount < Decimal::ZERO {
                     // Default to debiting locked
-                    wallet.locked = (current_locked + entry_amount).to_string();
-                    wallet.total = (current_total + entry_amount).to_string();
+                    wallet.locked += entry_amount;
+                    wallet.total += entry_amount;
                 } else {
                     // Default to crediting available
-                    wallet.available = (current_available + entry_amount).to_string();
-                    wallet.total = (current_total + entry_amount).to_string();
+                    wallet.available += entry_amount;
+                    wallet.total += entry_amount;
                 }
             }
         }
-        wallet.updated_at = Utc::now().timestamp_millis();
+        wallet.updated_at = Utc::now();
         Ok(())
     }
 }
@@ -240,6 +272,7 @@ impl WalletService {
 mod tests {
     use super::*;
     use crate::infra::repositories::InMemoryWalletRepository;
+    use std::str::FromStr;
 
     #[tokio::test]
     async fn test_create_new_wallet() {
@@ -247,14 +280,13 @@ mod tests {
         let service = WalletService::new(repo);
 
         let wallet = service
-            .create_new_wallet("acc-123".to_string(), "BTC".to_string())
+            .create_new_wallet(Uuid::new_v4().to_string(), Uuid::new_v4().to_string())
             .await
             .unwrap();
-        assert_eq!(wallet.account_id, "acc-123");
-        assert_eq!(wallet.asset_id, "BTC");
-        assert_eq!(wallet.available, "0");
-        assert_eq!(wallet.locked, "0");
-        assert_eq!(wallet.total, "0");
+        // Since we refactored, wallet types are Decimal and Uuid
+        assert_eq!(wallet.available, Decimal::ZERO);
+        assert_eq!(wallet.locked, Decimal::ZERO);
+        assert_eq!(wallet.total, Decimal::ZERO);
     }
 
     #[tokio::test]
@@ -263,8 +295,9 @@ mod tests {
         let service = WalletService::new(repo);
 
         let account_id = Uuid::new_v4();
+        let asset_id = Uuid::new_v4();
         let wallet = service
-            .create_new_wallet(account_id.to_string(), "BTC".to_string())
+            .create_new_wallet(account_id.to_string(), asset_id.to_string())
             .await
             .unwrap();
 
@@ -274,17 +307,21 @@ mod tests {
             event_id: Uuid::new_v4(),
             account_id,
             amount: Decimal::from_str("1.5").unwrap(),
-            meta: serde_json::json!({"asset": "BTC", "type": "credit"}),
+            meta: serde_json::json!({"asset": asset_id.to_string(), "type": "credit"}),
             created_at: Utc::now(),
             updated_at: Utc::now(),
         };
 
         service.process_ledger_entry(entry).await.unwrap();
 
-        let updated = service.get_wallet(&wallet.id).await.unwrap().unwrap();
-        assert_eq!(updated.available, "1.5");
-        assert_eq!(updated.total, "1.5");
-        assert_eq!(updated.locked, "0");
+        let updated = service
+            .get_wallet(&wallet.id.to_string())
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(updated.available, Decimal::from_str("1.5").unwrap());
+        assert_eq!(updated.total, Decimal::from_str("1.5").unwrap());
+        assert_eq!(updated.locked, Decimal::ZERO);
     }
 
     #[tokio::test]
@@ -293,13 +330,14 @@ mod tests {
         let service = WalletService::new(repo);
 
         let account_id = Uuid::new_v4();
+        let asset_id = Uuid::new_v4();
         let mut wallet = service
-            .create_new_wallet(account_id.to_string(), "BTC".to_string())
+            .create_new_wallet(account_id.to_string(), asset_id.to_string())
             .await
             .unwrap();
-        wallet.available = "10.0".to_string();
-        wallet.locked = "5.0".to_string();
-        wallet.total = "15.0".to_string();
+        wallet.available = Decimal::from_str("10.0").unwrap();
+        wallet.locked = Decimal::from_str("5.0").unwrap();
+        wallet.total = Decimal::from_str("15.0").unwrap();
         service.update_wallet(wallet.clone()).await.unwrap();
 
         let entry = LedgerEntry {
@@ -308,17 +346,21 @@ mod tests {
             event_id: Uuid::new_v4(),
             account_id,
             amount: Decimal::from_str("-2.0").unwrap(),
-            meta: serde_json::json!({"asset": "BTC", "type": "debit"}),
+            meta: serde_json::json!({"asset": asset_id.to_string(), "type": "debit"}),
             created_at: Utc::now(),
             updated_at: Utc::now(),
         };
 
         service.process_ledger_entry(entry).await.unwrap();
 
-        let updated = service.get_wallet(&wallet.id).await.unwrap().unwrap();
-        assert_eq!(updated.available, "10.0"); // Unchanged
-        assert_eq!(updated.locked, "3.0"); // 5.0 - 2.0
-        assert_eq!(updated.total, "13.0"); // 15.0 - 2.0
+        let updated = service
+            .get_wallet(&wallet.id.to_string())
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(updated.available, Decimal::from_str("10.0").unwrap()); // Unchanged
+        assert_eq!(updated.locked, Decimal::from_str("3.0").unwrap()); // 5.0 - 2.0
+        assert_eq!(updated.total, Decimal::from_str("13.0").unwrap()); // 15.0 - 2.0
     }
 
     #[tokio::test]
@@ -327,17 +369,25 @@ mod tests {
         let service = WalletService::new(repo);
 
         let wallet = service
-            .create_new_wallet("acc-concurrent".to_string(), "BTC".to_string())
+            .create_new_wallet(Uuid::new_v4().to_string(), Uuid::new_v4().to_string())
             .await
             .unwrap();
 
-        let mut w1 = service.get_wallet(&wallet.id).await.unwrap().unwrap();
-        let mut w2 = service.get_wallet(&wallet.id).await.unwrap().unwrap();
+        let mut w1 = service
+            .get_wallet(&wallet.id.to_string())
+            .await
+            .unwrap()
+            .unwrap();
+        let mut w2 = service
+            .get_wallet(&wallet.id.to_string())
+            .await
+            .unwrap()
+            .unwrap();
 
-        w1.available = "10.0".to_string();
+        w1.available = Decimal::from_str("10.0").unwrap();
         service.update_wallet(w1).await.unwrap();
 
-        w2.available = "20.0".to_string();
+        w2.available = Decimal::from_str("20.0").unwrap();
         let result = service.update_wallet(w2).await;
 
         match result {

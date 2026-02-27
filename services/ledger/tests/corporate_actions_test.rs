@@ -84,13 +84,11 @@ async fn test_cash_dividend_credited_to_all_equity_holders() {
     let expected_b = to_atomic_usd(7.5);
 
     assert_eq!(
-        Decimal::from_str(&holder_a_usd.available).unwrap(),
-        expected_a,
+        holder_a_usd.available, expected_a,
         "Account A should receive $15.00 dividend"
     );
     assert_eq!(
-        Decimal::from_str(&holder_b_usd.available).unwrap(),
-        expected_b,
+        holder_b_usd.available, expected_b,
         "Account B should receive $7.50 dividend"
     );
 
@@ -144,8 +142,7 @@ async fn test_stock_split_doubles_quantity_halves_book_price() {
         Decimal::from_str(&initial_shares.to_string()).unwrap() * Decimal::from(2);
 
     assert_eq!(
-        Decimal::from_str(&wallet_after.available).unwrap(),
-        expected_shares,
+        wallet_after.available, expected_shares,
         "2:1 split should double share count"
     );
 }
@@ -220,8 +217,7 @@ async fn test_reverse_split_halves_quantity_doubles_price() {
     // 2 shares = 200 atomic units.
     let expected_shares_atomic = Decimal::from(200);
     assert_eq!(
-        Decimal::from_str(&shares_after.available).unwrap(),
-        expected_shares_atomic,
+        shares_after.available, expected_shares_atomic,
         "After 1:2 reverse split, 5 shares → 2 shares (rounded down)"
     );
 
@@ -231,8 +227,7 @@ async fn test_reverse_split_halves_quantity_doubles_price() {
 
     let expected_cash = to_atomic_usd(100.0);
     assert_eq!(
-        Decimal::from_str(&cash_after.available).unwrap(),
-        expected_cash,
+        cash_after.available, expected_cash,
         "Odd-lot remainder should be paid out in cash ($100 for 1 old share)"
     );
 }

@@ -303,7 +303,7 @@ impl WalletRepository for InMemoryWalletRepository {
             .wallets
             .lock()
             .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
-        Ok(wallets.iter().find(|w| w.id == id.to_string()).cloned())
+        Ok(wallets.iter().find(|w| w.id == id).cloned())
     }
 
     async fn get_by_account_and_asset(
@@ -311,13 +311,16 @@ impl WalletRepository for InMemoryWalletRepository {
         account_id: &str,
         asset_id: &str,
     ) -> Result<Option<Wallet>> {
+        let acc_uuid = Uuid::parse_str(account_id).unwrap_or_default();
+        let asset_uuid = Uuid::parse_str(asset_id).unwrap_or_default();
+
         let wallets = self
             .wallets
             .lock()
             .map_err(|_| AppError::Internal("Failed to lock wallets".into()))?;
         Ok(wallets
             .iter()
-            .find(|w| w.account_id == account_id && w.asset_id == asset_id)
+            .find(|w| w.account_id == acc_uuid && w.asset_id == asset_uuid)
             .cloned())
     }
 
@@ -353,7 +356,7 @@ impl WalletRepository for InMemoryWalletRepository {
                 )));
             }
             wallet.version += 1;
-            wallet.updated_at = chrono::Utc::now().timestamp_millis();
+            wallet.updated_at = chrono::Utc::now();
             wallets[pos] = wallet.clone();
             Ok(wallet)
         } else {
@@ -377,7 +380,7 @@ impl WalletRepository for InMemoryWalletRepository {
             .wallets
             .lock()
             .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
-        if let Some(pos) = wallets.iter().position(|w| w.id == id.to_string()) {
+        if let Some(pos) = wallets.iter().position(|w| w.id == id) {
             wallets.remove(pos);
             Ok(())
         } else {
@@ -386,25 +389,27 @@ impl WalletRepository for InMemoryWalletRepository {
     }
 
     async fn list_by_account(&self, account_id: &str) -> Result<Vec<Wallet>> {
+        let acc_uuid = Uuid::parse_str(account_id).unwrap_or_default();
         let wallets = self
             .wallets
             .lock()
             .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
         Ok(wallets
             .iter()
-            .filter(|w| w.account_id == account_id)
+            .filter(|w| w.account_id == acc_uuid)
             .cloned()
             .collect())
     }
 
     async fn list_by_asset(&self, asset_id: &str) -> Result<Vec<Wallet>> {
+        let asset_uuid = Uuid::parse_str(asset_id).unwrap_or_default();
         let wallets = self
             .wallets
             .lock()
             .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
         Ok(wallets
             .iter()
-            .filter(|w| w.asset_id == asset_id)
+            .filter(|w| w.asset_id == asset_uuid)
             .cloned()
             .collect())
     }

@@ -1,7 +1,6 @@
 use ledger::domain::ledger::model::LedgerEntry;
 use ledger::domain::wallets::Wallet;
 use rust_decimal::Decimal;
-use std::str::FromStr;
 use std::sync::Arc;
 use tokio::task::JoinSet;
 use uuid::Uuid;
@@ -26,12 +25,12 @@ async fn test_concurrency_lost_updates() {
     let wallet_id = ctx
         .wallet_service
         .create_wallet(Wallet {
-            id: Uuid::new_v4().to_string(),
-            tenant_id: ctx.tenant_id.clone(),
-            account_id: account_id.clone(),
-            asset_id: asset_id.clone(),
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
+            account_id: Uuid::parse_str(&account_id).unwrap(),
+            asset_id: Uuid::parse_str(&asset_id).unwrap(),
             available: initial_atomic.clone(),
-            locked: "0".to_string(),
+            locked: Decimal::ZERO,
             total: initial_atomic.clone(),
             ..Default::default()
         })
@@ -61,7 +60,7 @@ async fn test_concurrency_lost_updates() {
                 tenant_id: Uuid::parse_str(&tenant_id_clone).unwrap(),
                 event_id: Uuid::new_v4(),
                 account_id: Uuid::parse_str(&account_id_clone).unwrap(),
-                amount: Decimal::from_str(&format!("-{}", deduction_atomic_clone)).unwrap(),
+                amount: -deduction_atomic_clone,
                 meta: serde_json::json!({"asset": asset_id_clone, "type": "debit"}),
                 created_at: chrono::Utc::now(),
                 updated_at: chrono::Utc::now(),
@@ -109,7 +108,7 @@ async fn test_concurrency_lost_updates() {
     // 5. Verification
     let wallet = ctx
         .wallet_service
-        .get_wallet(&wallet_id)
+        .get_wallet(&wallet_id.to_string())
         .await
         .unwrap()
         .unwrap();
@@ -121,7 +120,7 @@ async fn test_concurrency_lost_updates() {
     // Final Total: 10000 + (-10000) = 0.
     // Final Avail: 10000 (Unchanged).
 
-    let final_total = Decimal::from_str(&wallet.total).unwrap();
+    let final_total = wallet.total;
     let expected_balance = Decimal::ZERO;
 
     // If locking fails, some updates will be lost, and total > 0

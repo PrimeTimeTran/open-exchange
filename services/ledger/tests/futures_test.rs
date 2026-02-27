@@ -56,14 +56,10 @@ async fn test_futures_order_locks_initial_margin_only() {
         .unwrap();
 
     assert_eq!(
-        Decimal::from_str(&usd_wallet.locked).unwrap(),
-        initial_margin,
+        &usd_wallet.locked, &initial_margin,
         "Should lock only initial margin, not full notional"
     );
-    assert_eq!(
-        Decimal::from_str(&usd_wallet.available).unwrap(),
-        starting_usd - initial_margin
-    );
+    assert_eq!(&usd_wallet.available, &(starting_usd - initial_margin));
 
     todo!("Implement FuturesMarginService then complete this test")
 }
@@ -111,13 +107,12 @@ async fn test_perpetual_positive_funding_rate_long_pays_short() {
         .unwrap();
 
     assert_eq!(
-        Decimal::from_str(&long_usd.total).unwrap(),
-        position_notional - funding_payment,
+        &long_usd.total,
+        &(position_notional - funding_payment),
         "Long holder should be debited funding payment"
     );
     assert_eq!(
-        Decimal::from_str(&short_usd.total).unwrap(),
-        funding_payment,
+        &short_usd.total, &funding_payment,
         "Short holder should be credited funding payment"
     );
 
@@ -163,11 +158,8 @@ async fn test_perpetual_negative_funding_rate_short_pays_long() {
         .unwrap()
         .unwrap();
 
-    assert_eq!(Decimal::from_str(&long_usd.total).unwrap(), funding_payment);
-    assert_eq!(
-        Decimal::from_str(&short_usd.total).unwrap(),
-        position_notional - funding_payment
-    );
+    assert_eq!(&long_usd.total, &funding_payment);
+    assert_eq!(&short_usd.total, &(position_notional - funding_payment));
 
     todo!("Implement FundingRateService then complete this test")
 }
@@ -222,14 +214,8 @@ async fn test_mark_to_market_settlement_credits_profitable_side() {
         .unwrap()
         .unwrap();
 
-    assert_eq!(
-        Decimal::from_str(&long_usd.total).unwrap(),
-        entry_price + pnl
-    );
-    assert_eq!(
-        Decimal::from_str(&short_usd.total).unwrap(),
-        entry_price - pnl
-    );
+    assert_eq!(&long_usd.total, &(entry_price + pnl));
+    assert_eq!(&short_usd.total, &(entry_price - pnl));
 
     todo!("Implement MarkToMarketService then complete this test")
 }
@@ -280,16 +266,10 @@ async fn test_dated_futures_expiry_settles_at_index_price() {
         .unwrap()
         .unwrap();
 
-    assert_eq!(
-        Decimal::from_str(&long_usd.total).unwrap(),
-        entry_price + pnl
-    );
-    assert_eq!(
-        Decimal::from_str(&short_usd.total).unwrap(),
-        entry_price - pnl
-    );
-    assert_eq!(Decimal::from_str(&long_usd.locked).unwrap(), Decimal::ZERO);
-    assert_eq!(Decimal::from_str(&short_usd.locked).unwrap(), Decimal::ZERO);
+    assert_eq!(&long_usd.total, &(entry_price + pnl));
+    assert_eq!(&short_usd.total, &(entry_price - pnl));
+    assert_eq!(&long_usd.locked, &Decimal::ZERO);
+    assert_eq!(&short_usd.locked, &Decimal::ZERO);
 
     todo!("Implement FuturesSettlementService then complete this test")
 }
@@ -327,8 +307,8 @@ async fn test_futures_position_close_releases_margin() {
         .unwrap();
 
     assert_eq!(
-        Decimal::from_str(&usd_wallet.locked).unwrap(),
-        Decimal::ZERO,
+        &usd_wallet.locked,
+        &Decimal::ZERO,
         "All margin should be released on position close"
     );
 

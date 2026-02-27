@@ -1,15 +1,14 @@
-use crate::domain::orders::model::{ Order, OrderStatus, OrderType };
 use super::repository::OrderRepository;
 use crate::domain::assets::AssetService;
 use crate::domain::instruments::factory::InstrumentHandlerFactory;
+use crate::domain::orders::model::{Order, OrderStatus, OrderType};
 use crate::domain::position_limits::PositionLimitService;
-use crate::domain::transaction::{ RepositoryTransaction, TransactionManager };
+use crate::domain::transaction::{RepositoryTransaction, TransactionManager};
 use crate::domain::wallets::WalletService;
-use crate::error::{ AppError, Result };
+use crate::error::{AppError, Result};
 use rust_decimal::Decimal;
 use rust_decimal::MathematicalOps;
 use std::fmt;
-use std::str::FromStr;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -47,7 +46,7 @@ impl OrderServiceBuilder {
     pub fn new(
         repo: Arc<dyn OrderRepository>,
         wallet_service: Arc<WalletService>,
-        asset_service: Arc<AssetService>
+        asset_service: Arc<AssetService>,
     ) -> Self {
         Self {
             repo,
@@ -90,7 +89,7 @@ impl OrderService {
     pub fn builder(
         repo: Arc<dyn OrderRepository>,
         wallet_service: Arc<WalletService>,
-        asset_service: Arc<AssetService>
+        asset_service: Arc<AssetService>,
     ) -> OrderServiceBuilder {
         OrderServiceBuilder::new(repo, wallet_service, asset_service)
     }
@@ -100,15 +99,22 @@ impl OrderService {
         let instr_uuid = order.instrument_id.to_string();
 
         if order.quantity <= Decimal::ZERO {
-            return Err(AppError::ValidationError("Order quantity must be positive".into()));
+            return Err(AppError::ValidationError(
+                "Order quantity must be positive".into(),
+            ));
         }
         if order.price <= Decimal::ZERO && order.r#type == OrderType::Limit {
-            return Err(
-                AppError::ValidationError("Order price must be positive for limit orders".into())
-            );
+            return Err(AppError::ValidationError(
+                "Order price must be positive for limit orders".into(),
+            ));
         }
 
-        if self.asset_service.get_instrument(&instr_uuid).await?.is_none() {
+        if self
+            .asset_service
+            .get_instrument(&instr_uuid)
+            .await?
+            .is_none()
+        {
             return Err(AppError::InvalidInstrument(instr_uuid));
         }
 
@@ -122,15 +128,15 @@ impl OrderService {
         if let Some(pos_limit) = &self.position_limit_service {
             // 1. Max Order Size Check
             // Need atomic units for BASE asset
-            if
-                let Some(instr) = self.asset_service.get_instrument(
-                    &order.instrument_id.to_string()
-                ).await?
+            if let Some(instr) = self
+                .asset_service
+                .get_instrument(&order.instrument_id.to_string())
+                .await?
             {
-                if
-                    let Some(base_asset) = self.asset_service.get_asset(
-                        instr.underlying_asset_id
-                    ).await?
+                if let Some(base_asset) = self
+                    .asset_service
+                    .get_asset(instr.underlying_asset_id)
+                    .await?
                 {
                     let scale = Decimal::from(10).powi(base_asset.decimals as i64);
                     let qty_atomic = (order.quantity * scale).floor();
@@ -143,7 +149,8 @@ impl OrderService {
             let mut tx = tx_manager.begin().await?;
 
             // Bypass RLS for system operations if needed, or rely on service user
-            self.validate_and_reserve_funds_with_tx(&mut *tx, &order).await?;
+            self.validate_and_reserve_funds_with_tx(&mut *tx, &order)
+                .await?;
             let o = self.repo.create_with_tx(&mut *tx, order.clone()).await?;
 
             tx.commit().await?;
@@ -184,7 +191,9 @@ impl OrderService {
             if let Some(order) = self.repo.get_for_update(&mut *tx, id).await? {
                 if order.status == OrderStatus::Open || order.status == OrderStatus::PartialFill {
                     self.process_funds_with_tx(&mut *tx, &order, false).await?;
-                    self.repo.update_status_with_tx(&mut *tx, id, OrderStatus::Cancelled).await?;
+                    self.repo
+                        .update_status_with_tx(&mut *tx, id, OrderStatus::Cancelled)
+                        .await?;
                 }
             }
             tx.commit().await?;
@@ -209,7 +218,7 @@ impl OrderService {
     pub async fn validate_and_reserve_funds_with_tx(
         &self,
         tx: &mut dyn RepositoryTransaction,
-        order: &Order
+        order: &Order,
     ) -> Result<()> {
         self.process_funds_with_tx(tx, order, true).await
     }
@@ -221,12 +230,8 @@ impl OrderService {
     /// Unified logic for locking (reserve) and unlocking (release) funds.
     async fn process_funds(&self, order: &Order, is_reservation: bool) -> Result<()> {
         if let Some((asset_id, amount_atomic)) = self.calculate_fund_requirement(order).await? {
-            self.update_wallet_balance(
-                order.account_id,
-                asset_id,
-                amount_atomic,
-                is_reservation
-            ).await?;
+            self.update_wallet_balance(order.account_id, asset_id, amount_atomic, is_reservation)
+                .await?;
         }
         Ok(())
     }
@@ -235,7 +240,7 @@ impl OrderService {
         &self,
         tx: &mut dyn RepositoryTransaction,
         order: &Order,
-        is_reservation: bool
+        is_reservation: bool,
     ) -> Result<()> {
         if let Some((asset_id, amount_atomic)) = self.calculate_fund_requirement(order).await? {
             self.update_wallet_balance_with_tx(
@@ -243,8 +248,9 @@ impl OrderService {
                 order.account_id,
                 asset_id,
                 amount_atomic,
-                is_reservation
-            ).await?;
+                is_reservation,
+            )
+            .await?;
         }
         Ok(())
     }
@@ -273,11 +279,12 @@ impl OrderService {
         let raw_amount = handler.calculate_raw_collateral_amount(order, &instrument)?;
 
         // Fetch asset to get decimals for scaling
-        let asset_uuid = Uuid::parse_str(&asset_id).map_err(|_|
-            AppError::ValidationError("Invalid asset ID".into())
-        )?;
-        let asset = self.asset_service
-            .get_asset(asset_uuid).await?
+        let asset_uuid = Uuid::parse_str(&asset_id)
+            .map_err(|_| AppError::ValidationError("Invalid asset ID".into()))?;
+        let asset = self
+            .asset_service
+            .get_asset(asset_uuid)
+            .await?
             .ok_or_else(|| AppError::NotFound(format!("Asset {} not found", asset_id)))?;
 
         let scale_factor = Decimal::from(10).powi(asset.decimals as i64);
@@ -292,15 +299,18 @@ impl OrderService {
         account_id: Uuid,
         asset_id: String,
         amount_atomic: Decimal,
-        is_reservation: bool
+        is_reservation: bool,
     ) -> Result<()> {
         let account_uuid = account_id.to_string();
 
-        let wallet_opt = self.wallet_service
-            .get_wallet_by_account_and_asset(&account_uuid, &asset_id).await
+        let wallet_opt = self
+            .wallet_service
+            .get_wallet_by_account_and_asset(&account_uuid, &asset_id)
+            .await
             .map_err(|e| AppError::Internal(e.to_string()))?;
 
-        self.apply_balance_update(wallet_opt, amount_atomic, is_reservation).await
+        self.apply_balance_update(wallet_opt, amount_atomic, is_reservation)
+            .await
     }
 
     async fn update_wallet_balance_with_tx(
@@ -309,18 +319,21 @@ impl OrderService {
         account_id: Uuid,
         asset_id: String,
         amount_atomic: Decimal,
-        is_reservation: bool
+        is_reservation: bool,
     ) -> Result<()> {
         let account_uuid: String = account_id.to_string();
 
-        let wallet_opt = self.wallet_service
-            .get_wallet_by_account_and_asset_for_update(tx, &account_uuid, &asset_id).await
+        let wallet_opt = self
+            .wallet_service
+            .get_wallet_by_account_and_asset_for_update(tx, &account_uuid, &asset_id)
+            .await
             .map_err(|e| AppError::Internal(e.to_string()))?;
 
         if let Some(mut wallet) = wallet_opt {
             Self::mutate_wallet_balance(&mut wallet, amount_atomic, is_reservation)?;
             self.wallet_service
-                .update_wallet_with_tx(tx, wallet).await
+                .update_wallet_with_tx(tx, wallet)
+                .await
                 .map_err(|e| AppError::Internal(e.to_string()))?;
         } else if is_reservation {
             return Err(AppError::InsufficientFunds {
@@ -336,20 +349,19 @@ impl OrderService {
         &self,
         wallet_opt: Option<crate::domain::wallets::Wallet>,
         amount_atomic: Decimal,
-        is_reservation: bool
+        is_reservation: bool,
     ) -> Result<()> {
         if let Some(mut wallet) = wallet_opt {
             Self::mutate_wallet_balance(&mut wallet, amount_atomic, is_reservation)?;
             self.wallet_service
-                .update_wallet(wallet).await
+                .update_wallet(wallet)
+                .await
                 .map_err(|e| AppError::Internal(e.to_string()))?;
         } else if is_reservation {
             // Note: In real app we should thread the asset_id here to give better error
-            return Err(
-                AppError::ValidationError(
-                    "Wallet for required asset not found in account".to_string()
-                )
-            );
+            return Err(AppError::ValidationError(
+                "Wallet for required asset not found in account".to_string(),
+            ));
         }
         Ok(())
     }
@@ -357,31 +369,27 @@ impl OrderService {
     fn mutate_wallet_balance(
         wallet: &mut crate::domain::wallets::Wallet,
         amount_atomic: Decimal,
-        is_reservation: bool
+        is_reservation: bool,
     ) -> Result<()> {
-        let available = Decimal::from_str(&wallet.available).map_err(|_|
-            AppError::Internal("Invalid available balance".into())
-        )?;
-        let locked = Decimal::from_str(&wallet.locked).map_err(|_|
-            AppError::Internal("Invalid locked balance".into())
-        )?;
+        let available = wallet.available;
+        let _locked = wallet.locked;
 
         if is_reservation {
             if available < amount_atomic {
                 return Err(AppError::InsufficientFunds {
-                    asset: wallet.asset_id.clone(),
+                    asset: wallet.asset_id.to_string(),
                     required: amount_atomic.to_string(),
                     available: available.to_string(),
                 });
             }
-            wallet.available = (available - amount_atomic).to_string();
-            wallet.locked = (locked + amount_atomic).to_string();
+            wallet.available -= amount_atomic;
+            wallet.locked += amount_atomic;
         } else {
-            wallet.available = (available + amount_atomic).to_string();
-            wallet.locked = (locked - amount_atomic).to_string();
+            wallet.available += amount_atomic;
+            wallet.locked -= amount_atomic;
         }
 
-        wallet.updated_at = chrono::Utc::now().timestamp_millis();
+        wallet.updated_at = chrono::Utc::now();
         Ok(())
     }
 
@@ -391,23 +399,27 @@ impl OrderService {
         &self,
         tx: &mut dyn RepositoryTransaction,
         order_id_str: &str,
-        trade_qty: Decimal
+        trade_qty: Decimal,
     ) -> Result<()> {
         let order_uuid = self.parse_uuid(order_id_str)?;
-        let updated_order = self.repo.increment_filled_amount_with_tx(
-            tx,
-            order_uuid,
-            trade_qty
-        ).await?;
+        let updated_order = self
+            .repo
+            .increment_filled_amount_with_tx(tx, order_uuid, trade_qty)
+            .await?;
 
         let status = self.determine_status(updated_order.filled_quantity, updated_order.quantity);
-        self.repo.update_status_with_tx(tx, order_uuid, status).await?;
+        self.repo
+            .update_status_with_tx(tx, order_uuid, status)
+            .await?;
         Ok(())
     }
 
     pub async fn update_status(&self, order_id_str: &str, trade_qty: Decimal) -> Result<()> {
         let order_uuid = self.parse_uuid(order_id_str)?;
-        let updated_order = self.repo.increment_filled_amount(order_uuid, trade_qty).await?;
+        let updated_order = self
+            .repo
+            .increment_filled_amount(order_uuid, trade_qty)
+            .await?;
 
         let status = self.determine_status(updated_order.filled_quantity, updated_order.quantity);
         self.repo.update_status(order_uuid, status).await?;
@@ -421,6 +433,10 @@ impl OrderService {
     }
 
     fn determine_status(&self, filled: Decimal, total: Decimal) -> OrderStatus {
-        if filled >= total { OrderStatus::Filled } else { OrderStatus::PartialFill }
+        if filled >= total {
+            OrderStatus::Filled
+        } else {
+            OrderStatus::PartialFill
+        }
     }
 }

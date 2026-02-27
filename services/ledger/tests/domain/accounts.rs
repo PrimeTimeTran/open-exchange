@@ -7,6 +7,8 @@ use ledger::proto::ledger::{
     DeleteAccountRequest, GetWalletRequest, ListAccountsRequest, RecordOrderRequest,
     UpdateAccountRequest,
 };
+use rust_decimal::Decimal;
+use std::str::FromStr;
 use tonic::Request;
 
 /// Test: User Account Setup
@@ -145,8 +147,14 @@ async fn test_order_validation_sufficient_funds() {
         .wallet
         .unwrap();
 
-    crate::helpers::memory::assert_decimal(&wallet.available, "100000"); // 5,100,000 - 5,000,000
-    crate::helpers::memory::assert_decimal(&wallet.locked, "5000000");
+    assert_eq!(
+        Decimal::from_str(&wallet.available).unwrap(),
+        Decimal::from_str("100000").unwrap()
+    ); // 5,100,000 - 5,000,000
+    assert_eq!(
+        Decimal::from_str(&wallet.locked).unwrap(),
+        Decimal::from_str("5000000").unwrap()
+    );
 }
 
 #[tokio::test]
@@ -256,8 +264,14 @@ async fn test_frozen_account_cannot_place_orders() {
         .into_inner()
         .wallet
         .unwrap();
-    crate::helpers::memory::assert_decimal(&wallet.locked, "0");
-    crate::helpers::memory::assert_decimal(&wallet.available, "5000000");
+    assert_eq!(
+        Decimal::from_str(&wallet.locked).unwrap(),
+        Decimal::from_str("0").unwrap()
+    );
+    assert_eq!(
+        Decimal::from_str(&wallet.available).unwrap(),
+        Decimal::from_str("5000000").unwrap()
+    );
 }
 
 /// Test: Frozen Account Can Still Cancel Existing Orders
@@ -318,8 +332,14 @@ async fn test_frozen_account_can_cancel_existing_orders() {
         .into_inner()
         .wallet
         .unwrap();
-    crate::helpers::memory::assert_decimal(&wallet.locked, "0");
-    crate::helpers::memory::assert_decimal(&wallet.available, "5000000");
+    assert_eq!(
+        Decimal::from_str(&wallet.locked).unwrap(),
+        Decimal::from_str("0").unwrap()
+    );
+    assert_eq!(
+        Decimal::from_str(&wallet.available).unwrap(),
+        Decimal::from_str("5000000").unwrap()
+    );
 }
 
 /// Test: Closed Account Rejects Deposits
@@ -370,6 +390,6 @@ async fn test_closed_account_rejects_deposits() {
         .await
         .unwrap()
         .unwrap();
-    crate::helpers::memory::assert_decimal(&wallet.available, "0");
-    crate::helpers::memory::assert_decimal(&wallet.total, "0");
+    assert_eq!(wallet.available, Decimal::from_str("0").unwrap());
+    assert_eq!(wallet.total, Decimal::from_str("0").unwrap());
 }

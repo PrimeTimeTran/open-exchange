@@ -12,12 +12,16 @@ use uuid::Uuid;
 
 macro_rules! assert_decimal {
     ($left:expr, $right:expr) => {
+        let right_val = $right;
+        let right_dec: Decimal = if let Ok(d) = Decimal::from_str(&right_val.to_string()) {
+            d
+        } else {
+            Decimal::from_str(&right_val.to_string()).unwrap()
+        };
         assert_eq!(
-            Decimal::from_str($left).unwrap(),
-            Decimal::from_str($right).unwrap(),
+            *$left, right_dec,
             "Decimal mismatch: {} != {}",
-            $left,
-            $right
+            $left, $right
         );
     };
 }
@@ -142,11 +146,11 @@ async fn test_withdrawal_completion_reduces_total() {
     // In a real system, completing a withdrawal also debits the locked amount
     // from total. For now we simulate this via direct wallet mutation.
     if let Some(mut wallet) = ctx.wallet_service.get_wallet(&wallet_id).await.unwrap() {
-        let locked = Decimal::from_str(&wallet.locked).unwrap_or_default();
-        let total = Decimal::from_str(&wallet.total).unwrap_or_default();
+        let locked = wallet.locked;
+        let total = wallet.total;
         let amount = Decimal::from_str(withdraw_amount).unwrap();
-        wallet.locked = (locked - amount).to_string();
-        wallet.total = (total - amount).to_string();
+        wallet.locked = locked - amount;
+        wallet.total = total - amount;
         ctx.wallet_service.update_wallet(wallet).await.unwrap();
     }
 

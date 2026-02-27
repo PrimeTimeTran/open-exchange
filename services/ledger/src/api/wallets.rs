@@ -39,7 +39,7 @@ impl WalletService for WalletServiceImpl {
             .map_err(|e| Status::internal(e.to_string()))?;
 
         Ok(Response::new(CreateWalletResponse {
-            wallet: Some(wallet),
+            wallet: Some(wallet.into()),
         }))
     }
 
@@ -55,7 +55,7 @@ impl WalletService for WalletServiceImpl {
             .map_err(|e| Status::internal(e.to_string()))?
         {
             Ok(Response::new(GetWalletResponse {
-                wallet: Some(wallet),
+                wallet: Some(wallet.into()),
             }))
         } else {
             Err(Status::not_found("Wallet not found"))
@@ -77,7 +77,7 @@ impl WalletService for WalletServiceImpl {
             if !req.status.is_empty() {
                 wallet.status = req.status;
             }
-            wallet.updated_at = chrono::Utc::now().timestamp_millis();
+            wallet.updated_at = chrono::Utc::now();
 
             let updated = self
                 .wallet_service
@@ -86,7 +86,7 @@ impl WalletService for WalletServiceImpl {
                 .map_err(|e| Status::internal(e.to_string()))?;
 
             Ok(Response::new(UpdateWalletResponse {
-                wallet: Some(updated),
+                wallet: Some(updated.into()),
             }))
         } else {
             Err(Status::not_found("Wallet not found"))
@@ -118,6 +118,8 @@ impl WalletService for WalletServiceImpl {
             .list_wallets(&req.account_id)
             .await
             .map_err(|e| Status::internal(e.to_string()))?;
-        Ok(Response::new(ListWalletsResponse { wallets }))
+        Ok(Response::new(ListWalletsResponse {
+            wallets: wallets.into_iter().map(|w| w.into()).collect(),
+        }))
     }
 }

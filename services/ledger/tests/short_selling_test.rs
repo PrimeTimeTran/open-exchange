@@ -98,7 +98,7 @@ async fn test_short_sell_locks_collateral_not_base_asset() {
 
     // USD must be locked as collateral
     assert!(
-        Decimal::from_str(&usd_wallet.locked).unwrap() >= usd_collateral,
+        usd_wallet.locked >= usd_collateral,
         "USD collateral must be locked for short position"
     );
 
@@ -112,12 +112,12 @@ async fn test_short_sell_locks_collateral_not_base_asset() {
     if let Some(w) = btc_wallet {
         // Available is 0 because we placed a sell order for the full amount
         assert_eq!(
-            Decimal::from_str(&w.available).unwrap(),
+            w.available,
             Decimal::ZERO,
             "Short seller should have locked the borrowed BTC in the sell order"
         );
         assert_eq!(
-            Decimal::from_str(&w.locked).unwrap(),
+            w.locked,
             to_atomic_btc(1.0),
             "Borrowed BTC should be locked"
         );
@@ -203,10 +203,8 @@ async fn test_short_sell_settlement_credits_quote_to_seller() {
         .unwrap()
         .unwrap();
     let mut seller_btc_mut = seller_btc.clone();
-    seller_btc_mut.available =
-        (Decimal::from_str(&seller_btc.available).unwrap() - to_atomic_btc(1.0)).to_string();
-    seller_btc_mut.total =
-        (Decimal::from_str(&seller_btc.total).unwrap() - to_atomic_btc(1.0)).to_string();
+    seller_btc_mut.available = seller_btc.available - to_atomic_btc(1.0);
+    seller_btc_mut.total = seller_btc.total - to_atomic_btc(1.0);
     ctx.wallet_service
         .update_wallet(seller_btc_mut)
         .await
@@ -220,9 +218,8 @@ async fn test_short_sell_settlement_credits_quote_to_seller() {
         .unwrap()
         .unwrap();
     let mut seller_usd_mut = seller_usd.clone();
-    seller_usd_mut.available =
-        (Decimal::from_str(&seller_usd.available).unwrap() + proceeds).to_string();
-    seller_usd_mut.total = (Decimal::from_str(&seller_usd.total).unwrap() + proceeds).to_string();
+    seller_usd_mut.available = seller_usd.available + proceeds;
+    seller_usd_mut.total = seller_usd.total + proceeds;
     ctx.wallet_service
         .update_wallet(seller_usd_mut)
         .await
@@ -237,7 +234,7 @@ async fn test_short_sell_settlement_credits_quote_to_seller() {
 
     // Seller received proceeds from selling the borrowed BTC
     assert!(
-        Decimal::from_str(&seller_usd.available).unwrap() > Decimal::ZERO,
+        seller_usd.available > Decimal::ZERO,
         "Short seller should have received USD proceeds"
     );
 }
@@ -295,10 +292,8 @@ async fn test_short_position_cover_buy_reduces_collateral_lock() {
         .unwrap()
         .unwrap();
     let mut btc_wallet_mut = btc_wallet.clone();
-    btc_wallet_mut.available =
-        (Decimal::from_str(&btc_wallet.available).unwrap() + to_atomic_btc(1.0)).to_string();
-    btc_wallet_mut.total =
-        (Decimal::from_str(&btc_wallet.total).unwrap() + to_atomic_btc(1.0)).to_string();
+    btc_wallet_mut.available = btc_wallet.available + to_atomic_btc(1.0);
+    btc_wallet_mut.total += to_atomic_btc(1.0);
     ctx.wallet_service
         .update_wallet(btc_wallet_mut)
         .await
@@ -319,13 +314,13 @@ async fn test_short_position_cover_buy_reduces_collateral_lock() {
         .unwrap();
 
     assert_eq!(
-        Decimal::from_str(&usd_wallet.locked).unwrap(),
+        usd_wallet.locked,
         Decimal::ZERO,
         "Collateral must be released after covering the short"
     );
 
     // Available should be close to original (minus any borrow fees)
-    let available = Decimal::from_str(&usd_wallet.available).unwrap();
+    let available = usd_wallet.available;
     assert!(
         available <= collateral,
         "Available should be at most collateral after fees"

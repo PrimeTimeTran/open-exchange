@@ -87,13 +87,12 @@ impl DepositService for DepositServiceImpl {
 
         // Reject deposits to closed accounts
         if let Ok(Some(wallet)) = self.wallet_service.get_wallet(&req.wallet_id).await {
-            if let Ok(account_id) = Uuid::parse_str(&wallet.account_id) {
-                if let Ok(Some(account)) = self.account_service.get_account(account_id).await {
-                    if account.status == "closed" {
-                        return Err(Status::failed_precondition(
-                            "Cannot deposit to a closed account",
-                        ));
-                    }
+            let account_id = wallet.account_id;
+            if let Ok(Some(account)) = self.account_service.get_account(account_id).await {
+                if account.status == "closed" {
+                    return Err(Status::failed_precondition(
+                        "Cannot deposit to a closed account",
+                    ));
                 }
             }
         }
@@ -111,13 +110,13 @@ impl DepositService for DepositServiceImpl {
         // Note: This logic should ideally be transactional and part of the deposit service or a higher level orchestration
         // But for now we keep it here as it was before, just adding error handling
         if let Ok(Some(mut wallet)) = self.wallet_service.get_wallet(&req.wallet_id).await {
-            let current_avail = Decimal::from_str(&wallet.available).unwrap_or_default();
+            let _current_avail = wallet.available;
             let deposit_amount = Decimal::from_str(&req.amount).unwrap_or_default();
-            let current_total = Decimal::from_str(&wallet.total).unwrap_or_default();
+            let _current_total = wallet.total;
 
-            wallet.available = (current_avail + deposit_amount).to_string();
-            wallet.total = (current_total + deposit_amount).to_string();
-            wallet.updated_at = chrono::Utc::now().timestamp_millis();
+            wallet.available += deposit_amount;
+            wallet.total += deposit_amount;
+            wallet.updated_at = chrono::Utc::now();
 
             let _ = self.wallet_service.update_wallet(wallet).await;
         }

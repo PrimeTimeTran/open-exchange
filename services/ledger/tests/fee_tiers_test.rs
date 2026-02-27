@@ -86,16 +86,12 @@ async fn test_taker_fee_deducted_exactly_from_buyer_proceeds() {
         .await
         .unwrap()
         .unwrap();
-
-    // Buyer started with exactly the notional amount locked.
-    // After settlement: total should be -(fee), meaning the fee came out of that balance.
-    let buyer_total = Decimal::from_str(&buyer_usd.total).unwrap();
     let expected_total = Decimal::ZERO - taker_fee;
 
     assert_eq!(
-        buyer_total, expected_total,
+        &buyer_usd.total, &expected_total,
         "Buyer total should be -taker_fee ({}), got {}",
-        expected_total, buyer_total
+        &expected_total, &buyer_usd.total
     );
 }
 
@@ -237,7 +233,7 @@ async fn test_fee_revenue_always_positive() {
         .await
         .unwrap()
         .unwrap();
-    let pre_balance = Decimal::from_str(&pre_fees_wallet.total).unwrap();
+    let pre_balance = &pre_fees_wallet.total;
 
     // Execute a trade
     let buy_order = ctx.create_order(ctx.account_a, "buy", price, qty);
@@ -252,7 +248,7 @@ async fn test_fee_revenue_always_positive() {
         .await
         .unwrap()
         .unwrap();
-    let post_balance = Decimal::from_str(&post_fees_wallet.total).unwrap();
+    let post_balance = &post_fees_wallet.total;
 
     assert!(
         post_balance >= pre_balance,

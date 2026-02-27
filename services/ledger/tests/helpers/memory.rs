@@ -402,19 +402,19 @@ impl InMemoryTestContext {
         total: Decimal,
     ) -> ledger::domain::wallets::Wallet {
         let wallet = ledger::domain::wallets::Wallet {
-            id: Uuid::new_v4().to_string(),
-            account_id: account_id.to_string(),
-            asset_id: asset_id.to_string(),
-            available: available.to_string(),
-            locked: locked.to_string(),
-            total: total.to_string(),
-            tenant_id: self.tenant_id.to_string(),
+            id: Uuid::new_v4(),
+            account_id: account_id,
+            asset_id: Uuid::parse_str(asset_id).expect("Invalid asset_id"),
+            available: available,
+            locked: locked,
+            total: total,
+            tenant_id: self.tenant_id,
             user_id: "".to_string(),
             version: 1,
             status: "active".to_string(),
-            meta: "{}".to_string(),
-            created_at: Utc::now().timestamp_millis(),
-            updated_at: Utc::now().timestamp_millis(),
+            meta: serde_json::Value::Null,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         };
         self.wallet_repo.add(wallet.clone());
         wallet

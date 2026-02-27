@@ -58,13 +58,13 @@ async fn test_margin_buy_locks_partial_collateral() -> Result<(), Box<dyn std::e
         .expect("Wallet not found");
 
     assert_eq!(
-        Decimal::from_str(&usd_wallet.locked)?,
-        initial_margin,
+        &usd_wallet.locked, &initial_margin,
         "2× leverage should require 50% initial margin"
     );
     assert_eq!(
-        Decimal::from_str(&usd_wallet.available)?,
-        starting_usd - initial_margin
+        usd_wallet.available,
+        starting_usd - initial_margin,
+        "Available should be starting minus locked"
     );
     Ok(())
 }
@@ -150,8 +150,8 @@ async fn test_forced_liquidation_triggered_below_maintenance(
         .await
         .expect("Failed to fetch wallet")
         .expect("Wallet not found");
-    w.locked = to_atomic_usd(50.0).to_string();
-    w.available = (Decimal::from_str(&w.total)? - to_atomic_usd(50.0)).to_string();
+    w.locked = to_atomic_usd(50.0);
+    w.available = &w.total - to_atomic_usd(50.0);
     ctx.wallet_service
         .update_wallet(w)
         .await
@@ -172,7 +172,7 @@ async fn test_forced_liquidation_triggered_below_maintenance(
 
     // After liquidation: locked should be zero (all positions closed)
     assert_eq!(
-        Decimal::from_str(&usd_wallet.locked)?,
+        usd_wallet.locked,
         Decimal::ZERO,
         "All positions should be closed after liquidation"
     );
@@ -281,7 +281,7 @@ async fn test_cross_margin_multiple_positions_net_equity() {
         .await
         .unwrap()
         .unwrap();
-    w.total = expected_equity.to_string();
+    w.total = expected_equity;
     ctx.wallet_service.update_wallet(w).await.unwrap();
 
     let equity = ctx
@@ -346,8 +346,7 @@ async fn test_isolated_margin_loss_capped_at_allocated_collateral() {
 
     // The other account must be completely unaffected
     assert_eq!(
-        Decimal::from_str(&other_wallet.total).unwrap(),
-        other_balance,
+        other_wallet.total, other_balance,
         "Isolated margin loss must not spill into unrelated accounts"
     );
 }

@@ -4,8 +4,6 @@ use helpers::memory::InMemoryTestContext;
 use helpers::{to_atomic_btc, to_atomic_usd};
 use ledger::domain::orders::OrderRepository;
 use rust_decimal::prelude::ToPrimitive;
-use rust_decimal::Decimal;
-use std::str::FromStr;
 
 // macro_rules! assert_decimal_val_eq {
 //     ($left:expr, $right:expr) => {
@@ -97,14 +95,8 @@ async fn test_self_trade_same_account_both_sides_flagged() {
         .unwrap()
         .unwrap();
 
-    assert_decimal_val_eq!(
-        usd_after.total,
-        Decimal::from_str(&usd_before.total).unwrap()
-    );
-    assert_decimal_val_eq!(
-        btc_after.total,
-        Decimal::from_str(&btc_before.total).unwrap()
-    );
+    assert_decimal_val_eq!(usd_after.total, usd_before.total);
+    assert_decimal_val_eq!(btc_after.total, btc_before.total);
 }
 
 /// Test: Cross-Account Same-User Wash Trade Is Detected
@@ -186,8 +178,5 @@ async fn test_cross_account_same_user_wash_trade_detected() {
         .unwrap()
         .unwrap();
 
-    assert_decimal_val_eq!(
-        usd_a_after.total,
-        Decimal::from_str(&usd_a_before.total).unwrap()
-    );
+    assert_decimal_val_eq!(usd_a_after.total, usd_a_before.total);
 }
