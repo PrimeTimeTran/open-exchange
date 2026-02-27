@@ -29,10 +29,10 @@ pub struct PositionLimitConfig {
 impl Default for PositionLimitConfig {
     fn default() -> Self {
         Self {
-            max_order_size: parse("10000000000").unwrap(), // 100 BTC (8 decimals)
-            max_notional_per_account: parse("50000000").unwrap(), // $500,000 (2 decimals)
-            max_open_interest: parse("100000000000").unwrap(), // 1,000 BTC (8 decimals)
-            max_concentration: Decimal::from_str("1.00").unwrap(), // 100% (effectively disabled for standard)
+            max_order_size: parse("10000000000").expect("Invalid static decimal"), // 100 BTC (8 decimals)
+            max_notional_per_account: parse("50000000").expect("Invalid static decimal"), // $500,000 (2 decimals)
+            max_open_interest: parse("100000000000").expect("Invalid static decimal"), // 1,000 BTC (8 decimals)
+            max_concentration: Decimal::from_str("1.00").expect("Invalid static decimal"), // 100% (effectively disabled for standard)
         }
     }
 }

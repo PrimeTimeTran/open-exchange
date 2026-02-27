@@ -29,7 +29,6 @@ use std::str::FromStr;
 ///
 /// Assert: locked = notional * 0.50; available = starting - locked
 #[tokio::test]
-// #[ignore = "Track B: Requires MarginService implementation"]
 async fn test_margin_buy_locks_partial_collateral() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = InMemoryTestContext::new();
 
@@ -78,7 +77,6 @@ async fn test_margin_buy_locks_partial_collateral() -> Result<(), Box<dyn std::e
 ///
 /// Assert: new order returns MarginInsufficient error when equity < maintenance
 #[tokio::test]
-// #[ignore = "Track B: Requires MarginService implementation"]
 async fn test_margin_account_equity_falls_below_maintenance(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let ctx = InMemoryTestContext::new();
@@ -126,7 +124,6 @@ async fn test_margin_account_equity_falls_below_maintenance(
 ///
 /// Assert: after liquidation, locked = 0; borrow repaid; account at zero or positive
 #[tokio::test]
-// #[ignore = "Track B: Requires LiquidationService and MarginService"]
 async fn test_forced_liquidation_triggered_below_maintenance(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let ctx = InMemoryTestContext::new();
@@ -191,7 +188,6 @@ async fn test_forced_liquidation_triggered_below_maintenance(
 ///
 /// Assert: total equity = sum of all position PnLs + cash
 #[tokio::test]
-// #[ignore = "Track B: Requires CrossMarginService"]
 async fn test_cross_margin_multiple_positions_net_equity() {
     let ctx = InMemoryTestContext::new();
 
@@ -306,7 +302,6 @@ async fn test_cross_margin_multiple_positions_net_equity() {
 ///
 /// Assert: isolated position equity = 0 (fully lost); other wallets unchanged
 #[tokio::test]
-// #[ignore = "Track B: Requires IsolatedMarginService"]
 async fn test_isolated_margin_loss_capped_at_allocated_collateral() {
     let ctx = InMemoryTestContext::new();
 

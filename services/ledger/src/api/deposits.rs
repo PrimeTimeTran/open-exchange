@@ -85,21 +85,32 @@ impl DepositService for DepositServiceImpl {
             }));
         }
 
-        // Reject deposits to closed accounts
-        if let Ok(Some(wallet)) = self.wallet_service.get_wallet(&req.wallet_id).await {
-            let account_id = wallet.account_id;
-            if let Ok(Some(account)) = self.account_service.get_account(account_id).await {
-                if account.status == "closed" {
-                    return Err(Status::failed_precondition(
-                        "Cannot deposit to a closed account",
-                    ));
+        // Reject deposits to closed accounts and gather context
+        let (tenant_id, account_id, asset_id) =
+            if let Ok(Some(wallet)) = self.wallet_service.get_wallet(&req.wallet_id).await {
+                let account_id = wallet.account_id;
+                if let Ok(Some(account)) = self.account_service.get_account(account_id).await {
+                    if account.status == "closed" {
+                        return Err(Status::failed_precondition(
+                            "Cannot deposit to a closed account",
+                        ));
+                    }
                 }
-            }
-        }
+                (
+                    wallet.tenant_id,
+                    wallet.account_id,
+                    wallet.asset_id.to_string(),
+                )
+            } else {
+                return Err(Status::not_found("Wallet not found"));
+            };
 
         let deposit = self
             .deposit_service
             .create_new_deposit(
+                tenant_id,
+                account_id,
+                asset_id,
                 req.wallet_id.clone(),
                 req.amount.clone(),
                 req.transaction_ref,

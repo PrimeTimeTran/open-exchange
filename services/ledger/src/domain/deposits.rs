@@ -98,6 +98,9 @@ impl DepositService {
 
     pub fn create_new_deposit(
         &self,
+        tenant_id: Uuid,
+        account_id: Uuid,
+        asset_id: String,
         wallet_id: String,
         amount: String,
         tx_ref: String,
@@ -109,9 +112,9 @@ impl DepositService {
 
         let deposit = Deposit {
             id: Uuid::new_v4(),
-            tenant_id: Uuid::nil(),   // Placeholder, should be passed in
-            account_id: Uuid::nil(),  // Placeholder
-            asset_id: "".to_string(), // Placeholder
+            tenant_id,
+            account_id,
+            asset_id,
             wallet_id: wallet_uuid,
             amount: amount_decimal,
             fee: Decimal::ZERO,

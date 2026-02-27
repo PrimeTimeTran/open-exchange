@@ -13,9 +13,10 @@ mod tests {
         let service = WalletService::new(repo);
         let account_id = Uuid::new_v4().to_string();
         let asset_id = Uuid::new_v4().to_string();
+        let tenant_id = Uuid::new_v4();
 
         let new_wallet = service
-            .create_new_wallet(account_id.clone(), asset_id.clone())
+            .create_new_wallet(tenant_id, account_id.clone(), asset_id.clone())
             .await
             .unwrap();
 
@@ -37,9 +38,10 @@ mod tests {
         let service = WalletService::new(repo);
         let account_id = Uuid::new_v4().to_string();
         let asset_id = Uuid::new_v4().to_string();
+        let tenant_id = Uuid::new_v4();
 
         let mut wallet = service
-            .create_new_wallet(account_id, asset_id)
+            .create_new_wallet(tenant_id, account_id, asset_id)
             .await
             .unwrap();
 
@@ -75,13 +77,13 @@ mod tests {
 
         let handle = tokio::spawn(async move {
             service_clone
-                .create_new_wallet(account_thread_clone, asset_thread_clone)
+                .create_new_wallet(Uuid::new_v4(), account_thread_clone, asset_thread_clone)
                 .await
                 .unwrap();
         });
 
         service
-            .create_new_wallet(account_main.clone(), asset_main.clone())
+            .create_new_wallet(Uuid::new_v4(), account_main.clone(), asset_main.clone())
             .await
             .unwrap();
         handle.await.unwrap();

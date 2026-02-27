@@ -83,6 +83,7 @@ impl UserService {
     /// Creates a new user with generated ID and timestamps
     pub fn create_new_user(
         &self,
+        tenant_id: Uuid,
         email: String,
         password: String,
         _first_name: String,
@@ -90,7 +91,7 @@ impl UserService {
     ) -> Result<User> {
         let user = User {
             id: Uuid::new_v4(),
-            tenant_id: Uuid::nil(),
+            tenant_id,
             username: email.clone(),
             email,
             password_hash: password,

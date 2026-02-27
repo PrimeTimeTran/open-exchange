@@ -273,7 +273,6 @@ async fn test_insurance_fund_covers_liquidation_shortfall() {
 ///
 /// Assert: only one set of liquidation orders exists; position closed once
 #[tokio::test]
-// #[ignore = "Track B: Requires LiquidationService with idempotency checks"]
 async fn test_liquidation_does_not_double_close_same_position() {
     use std::sync::Arc;
 

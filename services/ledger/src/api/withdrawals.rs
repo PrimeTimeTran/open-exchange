@@ -88,6 +88,10 @@ impl WithdrawalService for WithdrawalServiceImpl {
         }
 
         let mut wallet = wallet;
+        let tenant_id = wallet.tenant_id;
+        let account_id = wallet.account_id;
+        let asset_id = wallet.asset_id.to_string();
+
         let _locked = wallet.locked;
         wallet.available -= amount;
         wallet.locked += amount;
@@ -100,7 +104,14 @@ impl WithdrawalService for WithdrawalServiceImpl {
 
         let withdrawal = self
             .withdrawal_service
-            .create_new_withdrawal(req.wallet_id, req.amount, req.address)
+            .create_new_withdrawal(
+                tenant_id,
+                account_id,
+                asset_id,
+                req.wallet_id,
+                req.amount,
+                req.address,
+            )
             .await
             .map_err(|e| Status::internal(e.to_string()))?;
 

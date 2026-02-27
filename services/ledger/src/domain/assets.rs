@@ -39,13 +39,14 @@ impl AssetService {
 
     pub async fn create_new_asset(
         &self,
+        tenant_id: Uuid,
         symbol: String,
         asset_type: String,
         precision: i32,
     ) -> Result<Asset> {
         let asset = Asset {
             id: Uuid::new_v4(),
-            tenant_id: Uuid::nil(),
+            tenant_id,
             symbol,
             r#type: asset_type,
             decimals: precision,
@@ -60,6 +61,7 @@ impl AssetService {
 
     pub async fn create_new_instrument(
         &self,
+        tenant_id: Uuid,
         symbol: String,
         instrument_type: String,
         base_id: String,
@@ -67,7 +69,7 @@ impl AssetService {
     ) -> Result<Instrument> {
         let instrument = Instrument {
             id: Uuid::new_v4(),
-            tenant_id: Uuid::nil(),
+            tenant_id,
             symbol,
             r#type: instrument_type,
             status: "active".to_string(),

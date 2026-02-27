@@ -18,7 +18,12 @@ impl WalletService {
         Self { repo }
     }
 
-    pub async fn create_new_wallet(&self, account_id: String, asset_id: String) -> Result<Wallet> {
+    pub async fn create_new_wallet(
+        &self,
+        tenant_id: Uuid,
+        account_id: String,
+        asset_id: String,
+    ) -> Result<Wallet> {
         let account_uuid = Uuid::parse_str(&account_id)
             .map_err(|_| AppError::ValidationError("Invalid account_id".into()))?;
         let asset_uuid = Uuid::parse_str(&asset_id)
@@ -26,7 +31,7 @@ impl WalletService {
 
         let wallet = Wallet {
             id: Uuid::new_v4(),
-            tenant_id: Uuid::nil(), // Placeholder, logic may need adjustment
+            tenant_id,
             user_id: "".to_string(),
             account_id: account_uuid,
             asset_id: asset_uuid,
@@ -206,7 +211,11 @@ mod tests {
         let service = WalletService::new(repo);
 
         let wallet = service
-            .create_new_wallet(Uuid::new_v4().to_string(), Uuid::new_v4().to_string())
+            .create_new_wallet(
+                Uuid::new_v4(),
+                Uuid::new_v4().to_string(),
+                Uuid::new_v4().to_string(),
+            )
             .await
             .expect("Failed to create new wallet");
         // Since we refactored, wallet types are Decimal and Uuid
@@ -223,7 +232,7 @@ mod tests {
         let account_id = Uuid::new_v4();
         let asset_id = Uuid::new_v4();
         let wallet = service
-            .create_new_wallet(account_id.to_string(), asset_id.to_string())
+            .create_new_wallet(Uuid::new_v4(), account_id.to_string(), asset_id.to_string())
             .await
             .expect("Failed to create wallet");
 
@@ -267,7 +276,7 @@ mod tests {
         let account_id = Uuid::new_v4();
         let asset_id = Uuid::new_v4();
         let mut wallet = service
-            .create_new_wallet(account_id.to_string(), asset_id.to_string())
+            .create_new_wallet(Uuid::new_v4(), account_id.to_string(), asset_id.to_string())
             .await
             .expect("Failed to create wallet");
         wallet.available = Decimal::from_str("10.0").expect("Invalid decimal");
@@ -319,7 +328,11 @@ mod tests {
         let service = WalletService::new(repo);
 
         let wallet = service
-            .create_new_wallet(Uuid::new_v4().to_string(), Uuid::new_v4().to_string())
+            .create_new_wallet(
+                Uuid::new_v4(),
+                Uuid::new_v4().to_string(),
+                Uuid::new_v4().to_string(),
+            )
             .await
             .expect("Failed to create wallet");
 

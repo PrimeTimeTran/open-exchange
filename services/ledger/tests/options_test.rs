@@ -30,7 +30,6 @@ use std::str::FromStr;
 ///
 /// Assert: buyer.usd_total = initial - premium
 #[tokio::test]
-// #[ignore = "Track B: Requires ExerciseService and option instrument type"]
 async fn test_option_buy_deducts_premium_from_buyer() {
     let ctx = InMemoryTestContext::new();
 
@@ -78,7 +77,6 @@ async fn test_option_buy_deducts_premium_from_buyer() {
 ///
 /// Assert: writer.usd_available += premium; writer.btc_locked = 1 BTC
 #[tokio::test]
-// #[ignore = "Track B: Requires ExerciseService and option instrument type"]
 async fn test_option_write_credits_premium_and_locks_collateral() {
     let ctx = InMemoryTestContext::new();
 
@@ -137,7 +135,6 @@ async fn test_option_write_credits_premium_and_locks_collateral() {
 ///
 /// Assert: buyer.btc += qty; buyer.usd -= strike*qty; writer.btc_locked -= qty
 #[tokio::test]
-// #[ignore = "Track B: Requires ExerciseService and option instrument type"]
 async fn test_call_option_exercise_transfers_underlying_at_strike() {
     let ctx = InMemoryTestContext::new();
 
@@ -210,7 +207,6 @@ async fn test_call_option_exercise_transfers_underlying_at_strike() {
 ///
 /// Assert: buyer.usd += strike*qty; buyer.btc -= qty; writer.usd_locked = 0
 #[tokio::test]
-// #[ignore = "Track B: Requires ExerciseService and option instrument type"]
 async fn test_put_option_exercise_transfers_quote_at_strike() {
     let ctx = InMemoryTestContext::new();
 
@@ -283,7 +279,6 @@ async fn test_put_option_exercise_transfers_quote_at_strike() {
 ///
 /// Assert: writer.btc_locked = 0; writer.btc_available = original_collateral
 #[tokio::test]
-// #[ignore = "Track B: Requires ExerciseService and option instrument type"]
 async fn test_otm_option_expiry_releases_writer_collateral() {
     let ctx = InMemoryTestContext::new();
 
@@ -321,7 +316,6 @@ async fn test_otm_option_expiry_releases_writer_collateral() {
 ///
 /// Assert: assigned_writer.btc_locked = 0; unassigned_writer.btc_locked unchanged
 #[tokio::test]
-// #[ignore = "Track B: Requires ExerciseService and option instrument type"]
 async fn test_option_assignment_debits_writer_on_exercise() {
     let ctx = InMemoryTestContext::new();
 

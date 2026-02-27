@@ -101,10 +101,11 @@ impl AssetService for AssetServiceImpl {
         request: Request<CreateAssetRequest>,
     ) -> Result<Response<CreateAssetResponse>, Status> {
         let req = request.into_inner();
+        let tenant_id = Uuid::nil(); // TODO: Extract from auth context/metadata
 
         let asset = self
             .asset_service
-            .create_new_asset(req.symbol, req.klass, req.precision)
+            .create_new_asset(tenant_id, req.symbol, req.klass, req.precision)
             .await
             .map_err(|e| Status::internal(e.to_string()))?;
 
@@ -118,10 +119,12 @@ impl AssetService for AssetServiceImpl {
         request: Request<CreateInstrumentRequest>,
     ) -> Result<Response<CreateInstrumentResponse>, Status> {
         let req = request.into_inner();
+        let tenant_id = Uuid::nil(); // TODO: Extract from auth context/metadata
 
         let instrument = self
             .asset_service
             .create_new_instrument(
+                tenant_id,
                 req.symbol,
                 req.r#type,
                 req.base_asset_id,

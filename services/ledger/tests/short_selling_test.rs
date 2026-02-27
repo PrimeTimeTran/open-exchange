@@ -32,7 +32,6 @@ use std::str::FromStr;
 ///
 /// Assert: usd_locked = collateral_amount; btc wallet = 0 (never held it)
 #[tokio::test]
-// #[ignore = "Track B: Requires BorrowService implementation"]
 async fn test_short_sell_locks_collateral_not_base_asset() {
     let ctx = InMemoryTestContext::new();
 
@@ -137,7 +136,6 @@ async fn test_short_sell_locks_collateral_not_base_asset() {
 ///
 /// Assert: seller.usd_available increases by trade proceeds after settlement
 #[tokio::test]
-// #[ignore = "Track B: Requires BorrowService implementation"]
 async fn test_short_sell_settlement_credits_quote_to_seller() {
     let ctx = InMemoryTestContext::new();
 
@@ -247,7 +245,6 @@ async fn test_short_sell_settlement_credits_quote_to_seller() {
 ///
 /// Assert: after cover, usd_locked = 0; available restored (minus borrow fee)
 #[tokio::test]
-// #[ignore = "Track B: Requires BorrowService implementation"]
 async fn test_short_position_cover_buy_reduces_collateral_lock() {
     let ctx = InMemoryTestContext::new();
 
@@ -338,7 +335,6 @@ async fn test_short_position_cover_buy_reduces_collateral_lock() {
 ///
 /// Assert: sell order > available base asset balance returns InsufficientFunds
 #[tokio::test]
-// #[ignore = "Track B: Requires account-type enforcement in OrderService"]
 async fn test_short_sell_rejected_in_cash_account() {
     let ctx = InMemoryTestContext::new();
 

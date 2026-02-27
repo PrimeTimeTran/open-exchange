@@ -30,6 +30,9 @@ impl WithdrawalService {
 
     pub async fn create_new_withdrawal(
         &self,
+        tenant_id: Uuid,
+        account_id: Uuid,
+        asset_id: String,
         wallet_id: String,
         amount: String,
         address: String,
@@ -42,9 +45,9 @@ impl WithdrawalService {
 
         let withdrawal = Withdrawal {
             id: Uuid::new_v4(),
-            tenant_id: Uuid::nil(),   // Placeholder
-            account_id: Uuid::nil(),  // Placeholder
-            asset_id: "".to_string(), // Placeholder
+            tenant_id,
+            account_id,
+            asset_id,
             wallet_id: wallet_uuid,
             amount: amount_dec,
             fee: Decimal::ZERO,

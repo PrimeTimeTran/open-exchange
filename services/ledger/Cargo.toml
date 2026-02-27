@@ -28,3 +28,6 @@ tonic-build = "0.12"
 name = "ledger"
 path = "src/main.rs"
 test = false
+
+[dev-dependencies]
+proptest = "1.10.0"

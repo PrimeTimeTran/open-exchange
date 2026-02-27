@@ -3,6 +3,7 @@ use crate::proto::ledger::wallet_service_server::WalletService;
 use crate::proto::ledger::*;
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
+use uuid::Uuid;
 
 fn to_proto_wallet(wallet: crate::domain::wallets::Wallet) -> crate::proto::common::Wallet {
     crate::proto::common::Wallet {
@@ -49,10 +50,11 @@ impl WalletService for WalletServiceImpl {
         request: Request<CreateWalletRequest>,
     ) -> Result<Response<CreateWalletResponse>, Status> {
         let req = request.into_inner();
+        let tenant_id = Uuid::nil(); // TODO: Extract from auth context
 
         let wallet = self
             .wallet_service
-            .create_new_wallet(req.account_id, req.asset_id)
+            .create_new_wallet(tenant_id, req.account_id, req.asset_id)
             .await
             .map_err(|e| Status::internal(e.to_string()))?;
 

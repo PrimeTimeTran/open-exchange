@@ -3,6 +3,7 @@ use crate::proto::ledger::user_service_server::UserService;
 use crate::proto::ledger::*;
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
+use uuid::Uuid;
 
 pub struct UserServiceImpl {
     user_service: Arc<UserDomainService>,
@@ -33,10 +34,17 @@ impl UserService for UserServiceImpl {
         request: Request<CreateUserRequest>,
     ) -> Result<Response<CreateUserResponse>, Status> {
         let req = request.into_inner();
+        let tenant_id = Uuid::nil(); // TODO: Extract from auth context
 
         let user = self
             .user_service
-            .create_new_user(req.email, req.password, req.first_name, req.last_name)
+            .create_new_user(
+                tenant_id,
+                req.email,
+                req.password,
+                req.first_name,
+                req.last_name,
+            )
             .map_err(|e| Status::internal(e.to_string()))?;
 
         Ok(Response::new(CreateUserResponse {

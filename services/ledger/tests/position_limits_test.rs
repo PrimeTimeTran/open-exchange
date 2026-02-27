@@ -38,7 +38,6 @@ fn dec(s: &str) -> Decimal {
 ///   - Order creation returns an error (PositionLimitExceeded or ValidationError)
 ///   - Account wallet balances are completely unchanged (no funds locked)
 #[tokio::test]
-// #[ignore = "Track B: Requires PositionLimitService implementation"]
 async fn test_order_exceeding_max_size_rejected() {
     let ctx = InMemoryTestContext::new();
 
