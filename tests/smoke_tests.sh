@@ -18,7 +18,7 @@ GREEN='\033[0;32m'
 # Report Setup
 TIMESTAMP=$(date +"%Y-%m-%d-%H%M%S")
 # Use absolute path for report file to avoid issues with pushd/popd
-REPORT_FILE="$PROJECT_ROOT/tests/tmp/test-report-${TIMESTAMP}.csv"
+REPORT_FILE="$PROJECT_ROOT/tests/reports/test-report-${TIMESTAMP}.csv"
 touch "$REPORT_FILE"
 
 echo -e "${BOLD}💓 Pulse Check: Starting System Verification...${NC}"

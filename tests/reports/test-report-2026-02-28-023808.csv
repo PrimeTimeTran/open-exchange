@@ -8,7 +8,7 @@ Go Tests, Passed, Passed: 7 / Failed: 0
 
 Service: Ledger Service
 Test Suite, Result, Count
-Rust Tests, Passed, Passed: 126 / Failed: 0
+Rust Tests, Passed, Passed: 137 / Failed: 0
 
 Service: Client Service
 Test Suite, Result, Count
