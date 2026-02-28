@@ -9,7 +9,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY src/prisma/schema.prisma ./src/prisma/schema.prisma
 
-RUN npm ci
+RUN npm install
 
 COPY . .
 
