@@ -28,7 +28,7 @@ export default async function DynamicLayoutPage() {
   }
 
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full overflow-x-hidden">
       <DynamicDashboard
         initialMarketData={marketData}
         initialChartData={chartData}

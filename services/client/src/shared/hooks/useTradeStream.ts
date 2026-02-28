@@ -28,7 +28,7 @@ export function useTradeStream(
     };
 
     eventSource.onerror = (err) => {
-      console.error('[useTradeStream] Connection Error:', err);
+      // console.error('[useTradeStream] Connection Error:', err);
     };
 
     eventSource.onmessage = (event) => {

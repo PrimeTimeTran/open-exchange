@@ -1,4 +1,3 @@
-import { credentials } from '@grpc/grpc-js';
 import {
   AssetServiceClient,
   OrderServiceClient,
@@ -24,72 +23,77 @@ import {
   CreateAccountResponse,
   CreateDepositResponse,
 } from 'src/proto/ledger/ledger';
+import { promisify } from './grpc-helpers';
+import { createLazyClient } from './lazy-client';
 
 const LEDGER_SERVICE_URL = process.env.LEDGER_SERVICE_URL || 'localhost:50052';
 
-console.log('LedgerClient: Connecting to', LEDGER_SERVICE_URL);
-
-const assetClient = new AssetServiceClient(
+const getAssetClient = createLazyClient(
+  AssetServiceClient,
   LEDGER_SERVICE_URL,
-  credentials.createInsecure(),
+  'Ledger Asset Service',
 );
-const orderClient = new OrderServiceClient(
+const getOrderClient = createLazyClient(
+  OrderServiceClient,
   LEDGER_SERVICE_URL,
-  credentials.createInsecure(),
+  'Ledger Order Service',
 );
-const accountClient = new AccountServiceClient(
+const getAccountClient = createLazyClient(
+  AccountServiceClient,
   LEDGER_SERVICE_URL,
-  credentials.createInsecure(),
+  'Ledger Account Service',
 );
-const walletClient = new WalletServiceClient(
+const getWalletClient = createLazyClient(
+  WalletServiceClient,
   LEDGER_SERVICE_URL,
-  credentials.createInsecure(),
+  'Ledger Wallet Service',
 );
-const depositClient = new DepositServiceClient(
+const getDepositClient = createLazyClient(
+  DepositServiceClient,
   LEDGER_SERVICE_URL,
-  credentials.createInsecure(),
+  'Ledger Deposit Service',
 );
-
-const promisify = <TReq, TRes>(
-  fn: (req: TReq, callback: (err: any, response: TRes) => void) => void,
-  req: TReq,
-): Promise<TRes> => {
-  return new Promise((resolve, reject) => {
-    fn(req, (err, response) => {
-      if (err) reject(err);
-      else resolve(response);
-    });
-  });
-};
 
 export const ledgerClient = {
   getAsset: (request: GetAssetRequest): Promise<GetAssetResponse> =>
-    promisify(assetClient.getAsset.bind(assetClient), request),
+    promisify(getAssetClient().getAsset.bind(getAssetClient()), request),
 
   listAssets: (request: ListAssetsRequest): Promise<ListAssetsResponse> =>
-    promisify(assetClient.listAssets.bind(assetClient), request),
+    promisify(getAssetClient().listAssets.bind(getAssetClient()), request),
 
   createAccount: (
     request: CreateAccountRequest,
   ): Promise<CreateAccountResponse> =>
-    promisify(accountClient.createAccount.bind(accountClient), request),
+    promisify(
+      getAccountClient().createAccount.bind(getAccountClient()),
+      request,
+    ),
 
   createWallet: (request: CreateWalletRequest): Promise<CreateWalletResponse> =>
-    promisify(walletClient.createWallet.bind(walletClient), request),
+    promisify(getWalletClient().createWallet.bind(getWalletClient()), request),
 
   createDeposit: (
     request: CreateDepositRequest,
   ): Promise<CreateDepositResponse> =>
-    promisify(depositClient.createDeposit.bind(depositClient), request),
+    promisify(
+      getDepositClient().createDeposit.bind(getDepositClient()),
+      request,
+    ),
 
   listAccounts: (request: ListAccountsRequest): Promise<ListAccountsResponse> =>
-    promisify(accountClient.listAccounts.bind(accountClient), request),
+    promisify(
+      getAccountClient().listAccounts.bind(getAccountClient()),
+      request,
+    ),
 
   listWallets: (request: ListWalletsRequest): Promise<ListWalletsResponse> =>
-    promisify(walletClient.listWallets.bind(walletClient), request),
+    promisify(getWalletClient().listWallets.bind(getWalletClient()), request),
 
   recordOrder: (request: RecordOrderRequest): Promise<RecordOrderResponse> => {
     console.log('LedgerClient: recordOrder request:', request);
-    return promisify(orderClient.recordOrder.bind(orderClient), request);
+    return promisify(
+      getOrderClient().recordOrder.bind(getOrderClient()),
+      request,
+    );
   },
 };

@@ -1,19 +1,22 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import GridLayout, { Responsive as ResponsiveImport } from 'react-grid-layout';
 // @ts-ignore
-import * as ReactGridLayoutNamespace from 'react-grid-layout';
+import 'react-grid-layout/css/styles.css';
+// @ts-ignore
+import 'react-resizable/css/styles.css';
+import React, { useState, useEffect, useRef } from 'react';
+// @ts-ignore
 import _ from 'lodash';
+import { Plus, LayoutGrid } from 'lucide-react';
+import * as ReactGridLayoutNamespace from 'react-grid-layout';
+import GridLayout, { Responsive as ResponsiveImport } from 'react-grid-layout';
+
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, X, LayoutGrid, Maximize2 } from 'lucide-react';
-import 'react-grid-layout/css/styles.css';
-import 'react-resizable/css/styles.css';
-import { DEFAULT_LAYOUTS, LayoutConfig, Widget } from './layouts';
 import { WidgetContent } from './widget-content';
 import { PriceUpdate } from 'src/proto/market/market';
 import { ChartDataPoint } from '@/shared/hooks/useMarketChart';
+import { DEFAULT_LAYOUTS, LayoutConfig, Widget } from './layouts';
 
 interface DynamicDashboardProps {
   initialMarketData?: PriceUpdate;
@@ -30,7 +33,10 @@ const Responsive =
 
 const ResponsiveGridLayout = Responsive;
 
-export function DynamicDashboard({ initialMarketData, initialChartData }: DynamicDashboardProps) {
+export function DynamicDashboard({
+  initialMarketData,
+  initialChartData,
+}: DynamicDashboardProps) {
   const [activeLayoutId, setActiveLayoutId] = useState<string>('options');
   const [layouts, setLayouts] = useState<LayoutConfig[]>(DEFAULT_LAYOUTS);
   const [isMounted, setIsMounted] = useState(false);
@@ -268,8 +274,8 @@ export function DynamicDashboard({ initialMarketData, initialChartData }: Dynami
   };
 
   return (
-    <div className="flex h-[calc(100vh-64px)] w-full flex-col gap-2 p-2 overflow-hidden">
-      <div className="flex items-center justify-between border-b pb-2 shrink-0">
+    <div className="flex h-[calc(100vh-64px)] w-full flex-col gap-2 p-2 overflow-x-hidden bg-zinc-950 overscroll-x-none">
+      <div className="flex items-center justify-between shrink-0">
         <div className="flex gap-2">
           {layouts.map((layout) => (
             <Button
@@ -293,31 +299,33 @@ export function DynamicDashboard({ initialMarketData, initialChartData }: Dynami
 
       <div className="flex-1 min-h-0 w-full" ref={containerRef}>
         <ResponsiveGridLayout
-          className="layout h-full w-full"
-          layouts={responsiveLayouts}
-          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-          cols={{ lg: 12, md: 12, sm: 12, xs: 12, xxs: 12 }}
-          rowHeight={rowHeight}
+          // @ts-ignore
+          isBounded
+          isResizable
+          isDraggable
           width={width}
-          onLayoutChange={() => {}}
-          onDragStart={onDragStart}
+          compactType={null}
+          maxRows={TOTAL_ROWS}
+          rowHeight={rowHeight}
           onDragStop={onDragStop}
           onResize={handleResize}
-          onResizeStop={handleResize}
-          resizeHandles={['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne']}
+          onLayoutChange={() => {}}
+          onDragStart={onDragStart}
+          preventCollision={false}
           margin={[MARGIN, MARGIN]}
           containerPadding={[0, 0]}
-          isResizable={true}
-          isDraggable={true}
-          compactType={null}
-          preventCollision={false}
-          maxRows={TOTAL_ROWS}
-          isBounded={true}
+          onResizeStop={handleResize}
+          layouts={responsiveLayouts}
+          className="layout h-full w-full"
+          cols={{ lg: 12, md: 12, sm: 12, xs: 12, xxs: 12 }}
+          resizeHandles={['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne']}
+          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
         >
           {activeLayout.widgets.map((widget) => (
             <div key={widget.i} className="relative group">
-              <Card className="h-full w-full overflow-hidden flex flex-col shadow-sm border-border bg-card rounded-none">
-                <div className="drag-handle flex items-center justify-between border-b bg-muted/30 px-2 py-1 cursor-move select-none">
+              <Card className="h-full w-full overflow-hidden flex flex-col shadow-sm border-none rounded-none">
+                {/* Header
+                <div className="drag-handle flex items-center justify-between bg-muted/30 px-2 py-1 cursor-move select-none">
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
                     {widget.title}
                   </span>
@@ -333,9 +341,9 @@ export function DynamicDashboard({ initialMarketData, initialChartData }: Dynami
                       <X className="h-3 w-3" />
                     </Button>
                   </div>
-                </div>
-                <div className="flex-1 overflow-auto p-1">
-                  <WidgetContent 
+                </div> */}
+                <div className="flex-1 overflow-auto">
+                  <WidgetContent
                     type={widget.type}
                     initialMarketData={initialMarketData}
                     initialChartData={initialChartData}

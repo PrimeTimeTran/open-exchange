@@ -2,6 +2,9 @@ import Redis from 'ioredis';
 import { NextRequest } from 'next/server';
 
 export async function GET(req: NextRequest) {
+  // Disable streams in dev sometimes
+  // return new Response('Stream disabled', { status: 200 });
+
   const { searchParams } = new URL(req.url);
   const instrumentIdsParam = searchParams.get('instrumentId');
 

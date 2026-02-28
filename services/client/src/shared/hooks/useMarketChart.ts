@@ -6,6 +6,11 @@ import { DATA_RANGES } from '@/components/charts/constants';
 export interface ChartDataPoint {
   time: number | string;
   value: number;
+  open?: number;
+  high?: number;
+  low?: number;
+  close?: number;
+  volume?: number;
 }
 
 interface UseMarketChartProps {
@@ -93,6 +98,11 @@ export function useMarketChart({
           data.map((d) => ({
             time: d.time,
             value: d.value,
+            open: d.open,
+            high: d.high,
+            low: d.low,
+            close: d.close,
+            volume: d.volume,
           })),
         );
       } else {

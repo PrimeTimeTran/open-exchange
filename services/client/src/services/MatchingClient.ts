@@ -1,4 +1,3 @@
-import { credentials } from '@grpc/grpc-js';
 import { MatchingClient } from 'src/proto/matching/engine';
 import {
   PlaceOrderRequest,
@@ -6,45 +5,22 @@ import {
   GetOrderBookRequest,
   GetOrderBookResponse,
 } from 'src/proto/matching/engine';
+import { promisify } from './grpc-helpers';
+import { createLazyClient } from './lazy-client';
 
 const MATCHING_ENGINE_URL =
   process.env.MATCHING_ENGINE_URL || 'localhost:50051';
 
-console.log('MatchingClient: Connecting to', MATCHING_ENGINE_URL);
-
-// We instantiate the client once.
-// In a real app, you might want to handle connection pooling or reconnection strategies.
-const client = new MatchingClient(
+const getClient = createLazyClient(
+  MatchingClient,
   MATCHING_ENGINE_URL,
-  credentials.createInsecure(),
+  'Matching Engine',
 );
 
 export const matchingClient = {
-  placeOrder: async (
-    request: PlaceOrderRequest,
-  ): Promise<PlaceOrderResponse> => {
-    return new Promise((resolve, reject) => {
-      client.placeOrder(request, (err, response) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(response);
-        }
-      });
-    });
-  },
+  placeOrder: (request: PlaceOrderRequest): Promise<PlaceOrderResponse> =>
+    promisify(getClient().placeOrder.bind(getClient()), request),
 
-  getOrderBook: async (
-    request: GetOrderBookRequest,
-  ): Promise<GetOrderBookResponse> => {
-    return new Promise((resolve, reject) => {
-      client.getOrderBook(request, (err, response) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(response);
-        }
-      });
-    });
-  },
+  getOrderBook: (request: GetOrderBookRequest): Promise<GetOrderBookResponse> =>
+    promisify(getClient().getOrderBook.bind(getClient()), request),
 };

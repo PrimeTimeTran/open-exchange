@@ -1,7 +1,12 @@
 import { WidgetType } from './layouts';
-import { ChartWidget } from '@/components/charts/ChartWidget';
 import { PriceUpdate } from 'src/proto/market/market';
+import { ChartWidget } from '@/components/charts/ChartWidget';
 import { ChartDataPoint } from '@/shared/hooks/useMarketChart';
+import { WatchlistWidget } from '@/components/widgets/watchlist/WatchlistWidget';
+import { PositionsWidget } from '@/components/widgets/positions/PositionsWidget';
+import { PortfolioWidget } from '@/components/widgets/portfolio/PortfolioWidget';
+import { RecentOrdersWidget } from '@/components/widgets/orders/RecentOrdersWidget';
+import { OptionsChainWidget } from '@/components/widgets/options-chain/OptionsChainWidget';
 
 interface WidgetContentProps {
   type: WidgetType;
@@ -11,16 +16,32 @@ interface WidgetContentProps {
 
 export const WidgetContent = ({
   type,
-  initialMarketData,
   initialChartData,
+  initialMarketData,
 }: WidgetContentProps) => {
   switch (type) {
+    case 'positions':
+      return <PositionsWidget />;
+    case 'recent_orders':
+      return <RecentOrdersWidget />;
+    case 'watchlist':
+      return <WatchlistWidget />;
+    case 'options_chain':
+      return <OptionsChainWidget />;
+    case 'portfolio':
+      return <PortfolioWidget />;
     case 'chart':
       return (
         <ChartWidget
-          initialMarketData={initialMarketData}
           initialChartData={initialChartData}
+          initialMarketData={initialMarketData}
         />
+      );
+    case 'news':
+      return (
+        <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+          News Feed
+        </div>
       );
     case 'orderbook':
       return (
@@ -39,53 +60,13 @@ export const WidgetContent = ({
           ))}
         </div>
       );
-    case 'positions':
+    default: {
+      const label = type as string;
       return (
-        <div className="flex h-full w-full items-center justify-center bg-background/50 text-muted-foreground">
-          No open positions
+        <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+          {label.charAt(0).toUpperCase() + label.slice(1)} Widget
         </div>
       );
-    case 'watchlist':
-      return (
-        <div className="flex h-full w-full flex-col p-2 text-xs">
-          <div className="font-bold border-b pb-1 mb-1">Symbol</div>
-          {['BTC-USD', 'ETH-USD', 'SOL-USD'].map((s) => (
-            <div key={s} className="py-1 flex justify-between">
-              <span>{s}</span>
-              <span className="text-green-500">+2.4%</span>
-            </div>
-          ))}
-        </div>
-      );
-    case 'portfolio':
-      return (
-        <div className="flex h-full w-full items-center justify-center bg-background/50 text-muted-foreground">
-          Portfolio Overview
-        </div>
-      );
-    case 'options_chain':
-      return (
-        <div className="flex h-full w-full items-center justify-center bg-background/50 text-muted-foreground">
-          Options Chain
-        </div>
-      );
-    case 'recent_orders':
-      return (
-        <div className="flex h-full w-full items-center justify-center bg-background/50 text-muted-foreground">
-          Recent Orders
-        </div>
-      );
-    case 'news':
-      return (
-        <div className="flex h-full w-full items-center justify-center bg-background/50 text-muted-foreground">
-          News Feed
-        </div>
-      );
-    default:
-      return (
-        <div className="flex h-full w-full items-center justify-center bg-background/50 text-muted-foreground">
-          {type.charAt(0).toUpperCase() + type.slice(1)} Widget
-        </div>
-      );
+    }
   }
 };

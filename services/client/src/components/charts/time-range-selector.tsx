@@ -11,12 +11,12 @@ export function TimeRangeSelector({
   onRangeChange,
 }: TimeRangeSelectorProps) {
   return (
-    <div className="flex items-center border-b border-border pb-2">
+    <div className="flex items-center border-border pb-2">
       {CHART_RANGES.map((range) => (
         <button
           key={range}
           onClick={() => onRangeChange(range)}
-          className={`px-4 py-2 text-sm font-bold transition-colors ${
+          className={`px-2 py-1 text-xs font-bold transition-colors ${
             currentRange === range
               ? 'text-primary'
               : 'text-muted-foreground hover:text-foreground'

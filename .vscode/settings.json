@@ -46,6 +46,7 @@
     "**/proto": true,
     "proto": true,
     
+    "**/types": true,
     "docs": true,
     "scripts": true,
     "notes": true,
@@ -58,11 +59,13 @@
     "**/go.sum": true,
     "**/go.mod": true,
     "**/server_bin": true,
-    "**/Dockerfile": true,
     "**/Dockerfile.dev": true,
     "**/tsconfig.json": true,
     "**/tsconfig.app.json": true,
     "**/public": true,
+    "**/.env.example": true,
+    "**/.env.local": true,
+    "**/translation": true,
   },
   "search.exclude": {
     "services/admin/src/proto": true,

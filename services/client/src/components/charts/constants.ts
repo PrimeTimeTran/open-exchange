@@ -1,44 +1,134 @@
+// Helper to generate candle data
+const generateCandles = (
+  count: number,
+  startPrice: number,
+  intervalType: 'day' | 'month' | 'year' = 'day',
+) => {
+  let currentPrice = startPrice;
+  const now = Date.now();
+
+  return Array.from({ length: count }, (_, i) => {
+    const volatility = currentPrice * 0.02; // 2% volatility
+    const change = (Math.random() - 0.5) * volatility;
+    const close = currentPrice + change;
+    const open = currentPrice;
+    const high = Math.max(open, close) + Math.random() * (volatility * 0.5);
+    const low = Math.min(open, close) - Math.random() * (volatility * 0.5);
+    const volume = Math.floor(Math.random() * 10000);
+
+    currentPrice = close;
+
+    const offset = count - 1 - i;
+    const date = new Date(now);
+
+    if (intervalType === 'month') {
+      date.setMonth(date.getMonth() - offset);
+    } else if (intervalType === 'year') {
+      date.setFullYear(date.getFullYear() - offset);
+    } else {
+      date.setDate(date.getDate() - offset);
+    }
+
+    return {
+      time: date.getTime(),
+      value: close,
+      open,
+      high,
+      low,
+      close,
+      volume,
+    };
+  });
+};
+
+// 1D specific mock
+const generate1D = () => {
+  const points: {
+    time: number;
+    value: number;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume: number;
+  }[] = [];
+  let price = 24500;
+  const now = new Date();
+  now.setHours(9, 30, 0, 0); // Start at 9:30 AM today
+
+  for (let i = 0; i < 20; i++) {
+    const volatility = price * 0.005;
+    const change = (Math.random() - 0.5) * volatility;
+    const close = price + change;
+    const open = price;
+    const high = Math.max(open, close) + Math.random() * (volatility * 0.2);
+    const low = Math.min(open, close) - Math.random() * (volatility * 0.2);
+
+    const time = new Date(now.getTime() + i * 30 * 60000).getTime(); // Add 30 mins per point
+
+    points.push({
+      time,
+      value: close,
+      open,
+      high,
+      low,
+      close,
+      volume: Math.floor(Math.random() * 5000),
+    });
+    price = close;
+  }
+  return points;
+};
+
+// 1W specific mock (4h candles)
+const generate1W = () => {
+  const points: {
+    time: number;
+    value: number;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume: number;
+  }[] = [];
+  let price = 24000;
+  const now = Date.now();
+  const totalPoints = 42; // 7 days * 24h / 4h = 42 points
+  const interval = 4 * 60 * 60 * 1000; // 4 hours
+
+  for (let i = 0; i < totalPoints; i++) {
+    const volatility = price * 0.01;
+    const change = (Math.random() - 0.5) * volatility;
+    const close = price + change;
+    const open = price;
+    const high = Math.max(open, close) + Math.random() * (volatility * 0.3);
+    const low = Math.min(open, close) - Math.random() * (volatility * 0.3);
+
+    // Calculate time working backwards from now
+    const time = now - (totalPoints - 1 - i) * interval;
+
+    points.push({
+      time,
+      value: close,
+      open,
+      high,
+      low,
+      close,
+      volume: Math.floor(Math.random() * 8000),
+    });
+    price = close;
+  }
+  return points;
+};
+
 export const DATA_RANGES = {
-  '1D': [
-    { time: '9:30', value: 24500 },
-    { time: '10:00', value: 24650 },
-    { time: '10:30', value: 24580 },
-    { time: '11:00', value: 24720 },
-    { time: '11:30', value: 24800 },
-    { time: '12:00', value: 24750 },
-    { time: '12:30', value: 24890 },
-    { time: '13:00', value: 24950 },
-    { time: '13:30', value: 24900 },
-    { time: '14:00', value: 25100 },
-    { time: '14:30', value: 25050 },
-    { time: '15:00', value: 25150 },
-    { time: '15:30', value: 25232 },
-    { time: '16:00', value: 25232 },
-  ],
-  '1W': Array.from({ length: 7 }, (_, i) => ({
-    time: `Day ${i + 1}`,
-    value: 24000 + Math.random() * 2000,
-  })),
-  '1M': Array.from({ length: 30 }, (_, i) => ({
-    time: `Day ${i + 1}`,
-    value: 23000 + Math.random() * 3000,
-  })),
-  '3M': Array.from({ length: 90 }, (_, i) => ({
-    time: `Day ${i + 1}`,
-    value: 20000 + Math.random() * 6000,
-  })),
-  YTD: Array.from({ length: 100 }, (_, i) => ({
-    time: `Day ${i + 1}`,
-    value: 18000 + Math.random() * 8000,
-  })),
-  '1Y': Array.from({ length: 12 }, (_, i) => ({
-    time: `Month ${i + 1}`,
-    value: 15000 + Math.random() * 12000,
-  })),
-  ALL: Array.from({ length: 50 }, (_, i) => ({
-    time: `Year ${i + 1}`,
-    value: 5000 + Math.random() * 25000,
-  })),
+  '1D': generate1D(),
+  '1W': generate1W(),
+  '1M': generateCandles(30, 23000, 'day'),
+  '3M': generateCandles(90, 20000, 'day'),
+  YTD: generateCandles(100, 18000, 'day'),
+  '1Y': generateCandles(365, 15000, 'day'),
+  ALL: generateCandles(50, 5000, 'year'),
 };
 
 export const CHART_RANGES = ['1D', '1W', '1M', '3M', 'YTD', '1Y', 'ALL'];

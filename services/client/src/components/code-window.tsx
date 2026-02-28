@@ -26,7 +26,7 @@ export function CodeWindow({
   }, []);
 
   return (
-    <div className="relative bg-[#1e1e1e] rounded-xl border border-white/10 shadow-2xl overflow-hidden group">
+    <div className="relative bg-background/50 rounded-xl border border-white/10 shadow-2xl overflow-hidden group">
       <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10 bg-white/5">
         <div className="flex gap-1.5">
           <div className="w-3 h-3 rounded-full bg-[#ff5f56]" />
