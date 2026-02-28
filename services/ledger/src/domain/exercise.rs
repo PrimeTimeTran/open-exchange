@@ -25,26 +25,36 @@ impl ExerciseService {
     pub async fn buy_option(
         &self,
         buyer: Uuid,
-        quote_asset_id: &str,
+        quote_asset_id: Uuid,
         premium: Decimal,
     ) -> Result<()> {
-        self.debit_locked(&buyer.to_string(), quote_asset_id, premium)
-            .await
+        self.debit_locked(buyer, quote_asset_id, premium).await
     }
 
     /// Credit the option premium to the writer and lock the base asset as collateral.
     pub async fn write_call(
         &self,
         writer: Uuid,
-        base_asset_id: &str,
-        quote_asset_id: &str,
+        base_asset_id: Uuid,
+        quote_asset_id: Uuid,
         qty: Decimal,
         premium: Decimal,
     ) -> Result<()> {
-        self.lock_funds(&writer.to_string(), base_asset_id, qty)
+        self.lock_funds(writer, base_asset_id, qty).await?;
+        self.credit_available(writer, quote_asset_id, premium).await
+    }
+
+    /// Credit the option premium to the writer and lock the quote asset as collateral (Cash Secured Put).
+    pub async fn write_put(
+        &self,
+        writer: Uuid,
+        quote_asset_id: Uuid,
+        collateral_amount: Decimal, // Strike * Qty
+        premium: Decimal,
+    ) -> Result<()> {
+        self.lock_funds(writer, quote_asset_id, collateral_amount)
             .await?;
-        self.credit_available(&writer.to_string(), quote_asset_id, premium)
-            .await
+        self.credit_available(writer, quote_asset_id, premium).await
     }
 
     // ── Exercise ─────────────────────────────────────────────────────────────
@@ -60,24 +70,37 @@ impl ExerciseService {
         buyer: Uuid,
         writer: Uuid,
         qty_base: Decimal,
-        strike_quote: Decimal,
-        base_asset_id: &str,
-        quote_asset_id: &str,
+        strike_quote_total: Decimal,
+        base_asset_id: Uuid,
+        quote_asset_id: Uuid,
+        market_price: Decimal,
+        base_decimals: u32,
+        quote_decimals: u32,
     ) -> Result<()> {
-        self.debit_locked(&buyer.to_string(), quote_asset_id, strike_quote)
+        let scale_base = Decimal::from(10).powi(base_decimals as i64);
+        let scale_quote = Decimal::from(10).powi(quote_decimals as i64);
+
+        // Price Per Unit = (Total Quote / 10^Quote) / (Qty Base / 10^Base)
+        let strike_price_unit = (strike_quote_total * scale_base) / (qty_base * scale_quote);
+
+        // OTM Check: Call is OTM if Market < Strike
+        if market_price < strike_price_unit {
+            return Err(AppError::ValidationError(format!(
+                "Cannot exercise OTM call: Market {} < Strike {}",
+                market_price, strike_price_unit
+            )));
+        }
+
+        self.debit_locked(buyer, quote_asset_id, strike_quote_total)
             .await?;
-        self.credit_available(&buyer.to_string(), base_asset_id, qty_base)
+        self.credit_available(buyer, base_asset_id, qty_base)
             .await?;
-        self.consume_locked(&writer.to_string(), base_asset_id, qty_base)
-            .await?;
-        self.credit_available(&writer.to_string(), quote_asset_id, strike_quote)
+        self.consume_locked(writer, base_asset_id, qty_base).await?;
+        self.credit_available(writer, quote_asset_id, strike_quote_total)
             .await
     }
 
     /// Exercise a put option.
-    ///
-    /// - Buyer's locked BTC consumed.
-    /// - Buyer receives USD (strike payment).
     /// - Writer's locked USD consumed.
     /// - Writer receives BTC.
     pub async fn exercise_put(
@@ -85,23 +108,35 @@ impl ExerciseService {
         buyer: Uuid,
         writer: Uuid,
         qty_base: Decimal,
-        strike_quote: Decimal,
-        base_asset_id: &str,
-        quote_asset_id: &str,
+        strike_quote_total: Decimal,
+        base_asset_id: Uuid,
+        quote_asset_id: Uuid,
+        market_price: Decimal,
+        base_decimals: u32,
+        quote_decimals: u32,
     ) -> Result<()> {
-        self.consume_locked(&buyer.to_string(), base_asset_id, qty_base)
+        let scale_base = Decimal::from(10).powi(base_decimals as i64);
+        let scale_quote = Decimal::from(10).powi(quote_decimals as i64);
+
+        let strike_price_unit = (strike_quote_total * scale_base) / (qty_base * scale_quote);
+
+        // OTM Check: Put is OTM if Market > Strike
+        if market_price > strike_price_unit {
+            return Err(AppError::ValidationError(format!(
+                "Cannot exercise OTM put: Market {} > Strike {}",
+                market_price, strike_price_unit
+            )));
+        }
+
+        self.consume_locked(buyer, base_asset_id, qty_base).await?;
+        self.credit_available(buyer, quote_asset_id, strike_quote_total)
             .await?;
-        self.credit_available(&buyer.to_string(), quote_asset_id, strike_quote)
+        self.consume_locked(writer, quote_asset_id, strike_quote_total)
             .await?;
-        self.consume_locked(&writer.to_string(), quote_asset_id, strike_quote)
-            .await?;
-        self.credit_available(&writer.to_string(), base_asset_id, qty_base)
-            .await
+        self.credit_available(writer, base_asset_id, qty_base).await
     }
 
     /// Cash settle a call option.
-    /// Payout = (Settlement Price - Strike Price) * (QtyBase / 10^BaseDecimals)
-    /// Returns the payout amount credited to the buyer.
     pub async fn cash_settle_call(
         &self,
         buyer: Uuid,
@@ -110,7 +145,7 @@ impl ExerciseService {
         base_decimals: u32,
         strike_price: Decimal,
         settlement_price: Decimal,
-        quote_asset_id: &str,
+        quote_asset_id: Uuid,
     ) -> Result<Decimal> {
         let profit_per_unit = settlement_price - strike_price;
         if profit_per_unit <= Decimal::ZERO {
@@ -124,10 +159,8 @@ impl ExerciseService {
         // Transfer payout from Writer to Buyer.
         // We assume Writer has funds available (or locked as margin).
         // For this implementation, we try to debit available.
-        self.debit_available(&writer.to_string(), quote_asset_id, payout)
-            .await?;
-        self.credit_available(&buyer.to_string(), quote_asset_id, payout)
-            .await?;
+        self.debit_available(writer, quote_asset_id, payout).await?;
+        self.credit_available(buyer, quote_asset_id, payout).await?;
 
         Ok(payout)
     }
@@ -143,7 +176,7 @@ impl ExerciseService {
         base_decimals: u32,
         strike_price: Decimal,
         settlement_price: Decimal,
-        quote_asset_id: &str,
+        quote_asset_id: Uuid,
     ) -> Result<Decimal> {
         let profit_per_unit = strike_price - settlement_price;
         if profit_per_unit <= Decimal::ZERO {
@@ -155,10 +188,8 @@ impl ExerciseService {
         let payout = (profit_per_unit * quantity_units).floor();
 
         // Transfer payout from Writer to Buyer.
-        self.debit_available(&writer.to_string(), quote_asset_id, payout)
-            .await?;
-        self.credit_available(&buyer.to_string(), quote_asset_id, payout)
-            .await?;
+        self.debit_available(writer, quote_asset_id, payout).await?;
+        self.credit_available(buyer, quote_asset_id, payout).await?;
 
         Ok(payout)
     }
@@ -169,11 +200,10 @@ impl ExerciseService {
     pub async fn expire_option(
         &self,
         writer: Uuid,
-        collateral_asset_id: &str,
+        collateral_asset_id: Uuid,
         qty: Decimal,
     ) -> Result<()> {
-        self.release_locked(&writer.to_string(), collateral_asset_id, qty)
-            .await
+        self.release_locked(writer, collateral_asset_id, qty).await
     }
 
     // ── Assignment ───────────────────────────────────────────────────────────
@@ -185,9 +215,12 @@ impl ExerciseService {
         buyer: Uuid,
         writers: &[Uuid],
         qty_base: Decimal,
-        strike_quote: Decimal,
-        base_asset_id: &str,
-        quote_asset_id: &str,
+        strike_quote_total: Decimal,
+        base_asset_id: Uuid,
+        quote_asset_id: Uuid,
+        market_price: Decimal,
+        base_decimals: u32,
+        quote_decimals: u32,
     ) -> Result<()> {
         let assigned = writers.first().ok_or_else(|| {
             AppError::ValidationError("No writers available for assignment".into())
@@ -197,19 +230,22 @@ impl ExerciseService {
             buyer,
             *assigned,
             qty_base,
-            strike_quote,
+            strike_quote_total,
             base_asset_id,
             quote_asset_id,
+            market_price,
+            base_decimals,
+            quote_decimals,
         )
         .await
     }
 
     // ── Wallet helpers ───────────────────────────────────────────────────────
 
-    async fn debit_locked(&self, account: &str, asset: &str, amount: Decimal) -> Result<()> {
+    async fn debit_locked(&self, account: Uuid, asset: Uuid, amount: Decimal) -> Result<()> {
         if let Some(mut w) = self
             .wallet_service
-            .get_wallet_by_account_and_asset(account, asset)
+            .get_wallet_by_account_and_asset(&account.to_string(), &asset.to_string())
             .await?
         {
             let locked = w.locked;
@@ -229,10 +265,10 @@ impl ExerciseService {
         Ok(())
     }
 
-    async fn debit_available(&self, account: &str, asset: &str, amount: Decimal) -> Result<()> {
+    async fn debit_available(&self, account: Uuid, asset: Uuid, amount: Decimal) -> Result<()> {
         if let Some(mut w) = self
             .wallet_service
-            .get_wallet_by_account_and_asset(account, asset)
+            .get_wallet_by_account_and_asset(&account.to_string(), &asset.to_string())
             .await?
         {
             let available = w.available;
@@ -253,14 +289,14 @@ impl ExerciseService {
     }
 
     /// Consume locked funds (same as debit_locked).
-    async fn consume_locked(&self, account: &str, asset: &str, amount: Decimal) -> Result<()> {
+    async fn consume_locked(&self, account: Uuid, asset: Uuid, amount: Decimal) -> Result<()> {
         self.debit_locked(account, asset, amount).await
     }
 
-    async fn credit_available(&self, account: &str, asset: &str, amount: Decimal) -> Result<()> {
+    async fn credit_available(&self, account: Uuid, asset: Uuid, amount: Decimal) -> Result<()> {
         if let Some(mut w) = self
             .wallet_service
-            .get_wallet_by_account_and_asset(account, asset)
+            .get_wallet_by_account_and_asset(&account.to_string(), &asset.to_string())
             .await?
         {
             w.available += amount;
@@ -271,10 +307,10 @@ impl ExerciseService {
         Ok(())
     }
 
-    async fn lock_funds(&self, account: &str, asset: &str, amount: Decimal) -> Result<()> {
+    async fn lock_funds(&self, account: Uuid, asset: Uuid, amount: Decimal) -> Result<()> {
         if let Some(mut w) = self
             .wallet_service
-            .get_wallet_by_account_and_asset(account, asset)
+            .get_wallet_by_account_and_asset(&account.to_string(), &asset.to_string())
             .await?
         {
             let available = w.available;
@@ -294,10 +330,10 @@ impl ExerciseService {
         Ok(())
     }
 
-    async fn release_locked(&self, account: &str, asset: &str, amount: Decimal) -> Result<()> {
+    async fn release_locked(&self, account: Uuid, asset: Uuid, amount: Decimal) -> Result<()> {
         if let Some(mut w) = self
             .wallet_service
-            .get_wallet_by_account_and_asset(account, asset)
+            .get_wallet_by_account_and_asset(&account.to_string(), &asset.to_string())
             .await?
         {
             let locked = w.locked;

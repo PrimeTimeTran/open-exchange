@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 use crate::helpers::FundedAccount;
-use rust_decimal::Decimal;
+use rust_decimal::prelude::FromPrimitive;
+use rust_decimal::{Decimal, MathematicalOps};
 use sqlx::{
     postgres::{PgConnectOptions, PgPoolOptions},
     ConnectOptions, Executor, PgPool,
@@ -165,6 +166,7 @@ impl PostgresTestContext {
                 ),
                 Arc::new(PostgresInstrumentRepository::new(pool.clone())),
                 Arc::new(LedgerService::new(
+                    Arc::new(PostgresLedgerRepository::new(pool.clone())),
                     Arc::new(PostgresOrderRepository::new(pool.clone())),
                     Arc::new(PostgresInstrumentRepository::new(pool.clone())),
                     Arc::new(PostgresAssetRepository::new(pool.clone())),
@@ -315,6 +317,7 @@ impl PostgresTestContext {
         );
 
         let ledger_service = Arc::new(LedgerService::new(
+            ledger_repo.clone(),
             order_repo.clone(),
             instrument_repo.clone(),
             asset_repo.clone(),
@@ -451,6 +454,54 @@ impl PostgresTestContext {
             .execute(pool).await
             .expect("Create Asset");
         id.to_string()
+    }
+
+    pub async fn seed_wallet(
+        &self,
+        account_id: Uuid,
+        asset_id: Uuid,
+        available: f64,
+        locked: f64,
+        total: f64,
+    ) -> ledger::domain::wallets::Wallet {
+        let asset = self
+            .asset_service
+            .get_asset(asset_id)
+            .await
+            .unwrap()
+            .unwrap();
+        let decimals = asset.decimals;
+        let scale = Decimal::from(10).powu(decimals as u64);
+
+        let to_atomic = |val: f64| -> Decimal {
+            (Decimal::from_f64(val).expect("Invalid float") * scale).floor()
+        };
+
+        use ledger::domain::wallets::Wallet;
+        let wallet = Wallet {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::parse_str(&self.tenant_id).unwrap(),
+            account_id,
+            asset_id,
+            available: to_atomic(available),
+            locked: to_atomic(locked),
+            total: to_atomic(total),
+            user_id: "".to_string(),
+            version: 1,
+            status: "active".to_string(),
+            meta: serde_json::Value::Null,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        };
+
+        self.wallet_service
+            .create_wallet(wallet)
+            .await
+            .expect("Failed to seed wallet")
+    }
+
+    pub async fn empty_wallet(&self, account_id: Uuid, asset_id: Uuid) {
+        self.seed_wallet(account_id, asset_id, 0.0, 0.0, 0.0).await;
     }
 
     /// Creates a new account funded with `amount` of `asset_id`.

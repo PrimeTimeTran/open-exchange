@@ -34,6 +34,17 @@ impl WalletRepository for InMemoryWalletRepository {
             .wallets
             .lock()
             .map_err(|e| AppError::Internal(format!("Failed to acquire lock: {}", e)))?;
+
+        // Check for duplicate
+        if wallets
+            .iter()
+            .any(|w| w.account_id == wallet.account_id && w.asset_id == wallet.asset_id)
+        {
+            return Err(AppError::ValidationError(
+                "Wallet already exists for this account and asset".into(),
+            ));
+        }
+
         wallets.push(wallet.clone());
         Ok(wallet)
     }

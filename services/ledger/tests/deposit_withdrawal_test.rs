@@ -1,30 +1,15 @@
 mod helpers;
 use helpers::memory::InMemoryTestContext;
 use ledger::proto::ledger::deposit_service_server::DepositService as DepositServiceTrait;
+use ledger::proto::ledger::wallet_service_server::WalletService as WalletServiceTrait;
 use ledger::proto::ledger::withdrawal_service_server::WithdrawalService as WithdrawalServiceTrait;
 use ledger::proto::ledger::{
-    CancelWithdrawalRequest, CreateDepositRequest, CreateWithdrawalRequest,
+    CancelWithdrawalRequest, CreateDepositRequest, CreateWithdrawalRequest, UpdateWalletRequest,
 };
 use rust_decimal::Decimal;
 use std::str::FromStr;
 use tonic::Request;
 use uuid::Uuid;
-
-macro_rules! assert_decimal {
-    ($left:expr, $right:expr) => {
-        let right_val = $right;
-        let right_dec: Decimal = if let Ok(d) = Decimal::from_str(&right_val.to_string()) {
-            d
-        } else {
-            Decimal::from_str(&right_val.to_string()).unwrap()
-        };
-        assert_eq!(
-            *$left, right_dec,
-            "Decimal mismatch: {} != {}",
-            $left, $right
-        );
-    };
-}
 
 /// Test: Duplicate Deposit with Same Transaction Ref is Idempotent
 ///
@@ -45,12 +30,13 @@ async fn test_duplicate_deposit_same_transaction_ref_idempotent() {
         .await;
 
     let tx_ref = format!("txn-{}", Uuid::new_v4());
-    let amount = "100000"; // 1,000.00 USD in cents
+    let amount_val = helpers::to_atomic_usd(1000.0); // $1,000.00
+    let amount = amount_val.to_string();
 
     // First deposit
     let req1 = Request::new(CreateDepositRequest {
         wallet_id: wallet_id.clone(),
-        amount: amount.to_string(),
+        amount: amount.clone(),
         transaction_ref: tx_ref.clone(),
     });
     ctx.deposit_api.create_deposit(req1).await.unwrap();
@@ -58,7 +44,7 @@ async fn test_duplicate_deposit_same_transaction_ref_idempotent() {
     // Second deposit — same tx_ref
     let req2 = Request::new(CreateDepositRequest {
         wallet_id: wallet_id.clone(),
-        amount: amount.to_string(),
+        amount: amount.clone(),
         transaction_ref: tx_ref.clone(),
     });
     ctx.deposit_api.create_deposit(req2).await.unwrap();
@@ -71,8 +57,8 @@ async fn test_duplicate_deposit_same_transaction_ref_idempotent() {
         .unwrap();
 
     // Should only be credited once
-    assert_decimal!(&wallet.available, amount);
-    assert_decimal!(&wallet.total, amount);
+    assert_decimal_eq!(wallet.available, amount_val);
+    assert_decimal_eq!(wallet.total, amount_val);
 }
 
 /// Test: Withdrawal Request Locks Exact Requested Amount
@@ -90,16 +76,18 @@ async fn test_duplicate_deposit_same_transaction_ref_idempotent() {
 #[tokio::test]
 async fn test_withdrawal_request_locks_exact_amount() {
     let ctx = InMemoryTestContext::new();
-    let wallet_id = ctx
-        .create_wallet_api(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
+    // 500,000 cents = $5,000.00
+    let wallet = ctx
+        .seed_wallet(ctx.account_a, ctx.assets.usd, 5000.0, 0.0, 5000.0)
         .await;
-    ctx.deposit_funds_api(&wallet_id, "500000").await;
+    let wallet_id = wallet.id.to_string();
 
-    let withdraw_amount = "100000";
+    let withdraw_amount_val = helpers::to_atomic_usd(1000.0); // $1,000.00
+    let withdraw_amount = withdraw_amount_val.to_string();
 
     let req = Request::new(CreateWithdrawalRequest {
         wallet_id: wallet_id.clone(),
-        amount: withdraw_amount.to_string(),
+        amount: withdraw_amount.clone(),
         address: "destination-address-abc".to_string(),
     });
     ctx.withdrawal_api.create_withdrawal(req).await.unwrap();
@@ -111,9 +99,10 @@ async fn test_withdrawal_request_locks_exact_amount() {
         .unwrap()
         .unwrap();
 
-    assert_decimal!(&wallet.available, "400000");
-    assert_decimal!(&wallet.locked, withdraw_amount);
-    assert_decimal!(&wallet.total, "500000"); // total unchanged
+    let expected_available = helpers::to_atomic_usd(4000.0); // $5,000 - $1,000
+    assert_decimal_eq!(wallet.available, expected_available);
+    assert_decimal_eq!(wallet.locked, withdraw_amount_val);
+    assert_decimal_eq!(&wallet.total, "500000"); // total unchanged
 }
 
 /// Test: Withdrawal Completion Reduces Total Balance
@@ -126,10 +115,11 @@ async fn test_withdrawal_request_locks_exact_amount() {
 #[tokio::test]
 async fn test_withdrawal_completion_reduces_total() {
     let ctx = InMemoryTestContext::new();
-    let wallet_id = ctx
-        .create_wallet_api(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
+    // 500,000 cents = $5,000.00
+    let wallet = ctx
+        .seed_wallet(ctx.account_a, ctx.assets.usd, 5000.0, 0.0, 5000.0)
         .await;
-    ctx.deposit_funds_api(&wallet_id, "500000").await;
+    let wallet_id = wallet.id.to_string();
 
     let withdraw_amount = "100000";
 
@@ -161,8 +151,8 @@ async fn test_withdrawal_completion_reduces_total() {
         .unwrap()
         .unwrap();
 
-    assert_decimal!(&wallet.locked, "0");
-    assert_decimal!(&wallet.total, "400000");
+    assert_decimal_eq!(&wallet.locked, "0");
+    assert_decimal_eq!(&wallet.total, "400000");
 
     let _ = withdrawal_id; // used above
 }
@@ -177,10 +167,11 @@ async fn test_withdrawal_completion_reduces_total() {
 #[tokio::test]
 async fn test_withdrawal_cancellation_restores_available() {
     let ctx = InMemoryTestContext::new();
-    let wallet_id = ctx
-        .create_wallet_api(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
+    // 500,000 cents = $5,000.00
+    let wallet = ctx
+        .seed_wallet(ctx.account_a, ctx.assets.usd, 5000.0, 0.0, 5000.0)
         .await;
-    ctx.deposit_funds_api(&wallet_id, "500000").await;
+    let wallet_id = wallet.id.to_string();
 
     let withdraw_amount = "100000";
 
@@ -218,9 +209,9 @@ async fn test_withdrawal_cancellation_restores_available() {
         .unwrap()
         .unwrap();
 
-    assert_decimal!(&wallet.available, "500000");
-    assert_decimal!(&wallet.locked, "0");
-    assert_decimal!(&wallet.total, "500000");
+    assert_decimal_eq!(&wallet.available, "500000");
+    assert_decimal_eq!(&wallet.locked, "0");
+    assert_decimal_eq!(&wallet.total, "500000");
 }
 
 /// Test: Minimum Withdrawal Amount Is Enforced
@@ -236,10 +227,11 @@ async fn test_withdrawal_cancellation_restores_available() {
 #[tokio::test]
 async fn test_minimum_withdrawal_amount_enforced() {
     let ctx = InMemoryTestContext::new();
-    let wallet_id = ctx
-        .create_wallet_api(&ctx.account_a.to_string(), &ctx.btc_id.to_string())
+    // 1,000,000 sats = 0.01 BTC
+    let wallet = ctx
+        .seed_wallet(ctx.account_a, ctx.assets.btc, 0.01, 0.0, 0.01)
         .await;
-    ctx.deposit_funds_api(&wallet_id, "1000000").await; // 0.01 BTC
+    let wallet_id = wallet.id.to_string();
 
     // Attempt to withdraw 100 satoshis — below the typical minimum of 1,000
     let req = Request::new(CreateWithdrawalRequest {
@@ -263,6 +255,254 @@ async fn test_minimum_withdrawal_amount_enforced() {
         .await
         .unwrap()
         .unwrap();
-    assert_decimal!(&wallet.available, "1000000");
-    assert_decimal!(&wallet.locked, "0");
+    assert_decimal_eq!(&wallet.available, "1000000");
+    assert_decimal_eq!(&wallet.locked, "0");
+}
+
+/// Test: Withdrawal Exceeds Available Balance Is Rejected
+///
+/// A user cannot withdraw more than their `available` balance. Locked funds
+/// (e.g., in open orders) are not withdrawable.
+///
+/// Setup: 500 total, 400 locked, 100 available.
+/// Action: Attempt to withdraw 200.
+/// Expect: Error (insufficient funds), wallet balances unchanged.
+#[tokio::test]
+async fn test_withdrawal_exceeds_available_rejected() {
+    let ctx = InMemoryTestContext::new();
+    // 100 available, 400 locked, 500 total
+    let wallet = ctx
+        .seed_wallet(ctx.account_a, ctx.assets.usd, 100.0, 400.0, 500.0)
+        .await;
+    let wallet_id = wallet.id.to_string();
+
+    let req = Request::new(CreateWithdrawalRequest {
+        wallet_id: wallet_id.clone(),
+        amount: helpers::to_atomic_usd(200.0).to_string(), // Request 200 > 100
+        address: "addr".to_string(),
+    });
+
+    let result = ctx.withdrawal_api.create_withdrawal(req).await;
+
+    assert!(
+        result.is_err(),
+        "Withdrawal exceeding available balance should be rejected"
+    );
+
+    // Verify balances unchanged
+    let wallet = ctx
+        .wallet_service
+        .get_wallet(&wallet_id)
+        .await
+        .unwrap()
+        .unwrap();
+    assert_decimal_eq!(wallet.available, helpers::to_atomic_usd(100.0));
+    assert_decimal_eq!(wallet.locked, helpers::to_atomic_usd(400.0));
+    assert_decimal_eq!(wallet.total, helpers::to_atomic_usd(500.0));
+}
+
+/// Test: Withdrawal of Locked Funds Rejected
+///
+/// This explicitly verifies that the "locked" portion of a wallet is not
+/// available for withdrawal, even if the total balance is sufficient.
+///
+/// Setup: 500 total, 400 locked, 100 available.
+/// Action: Attempt to withdraw 150 (total > 150, but available < 150).
+#[tokio::test]
+async fn test_withdrawal_of_locked_funds_rejected() {
+    let ctx = InMemoryTestContext::new();
+    // 100 available, 400 locked, 500 total
+    let wallet = ctx
+        .seed_wallet(ctx.account_a, ctx.assets.usd, 100.0, 400.0, 500.0)
+        .await;
+    let wallet_id = wallet.id.to_string();
+
+    let req = Request::new(CreateWithdrawalRequest {
+        wallet_id: wallet_id.clone(),
+        amount: helpers::to_atomic_usd(150.0).to_string(),
+        address: "addr".to_string(),
+    });
+
+    let result = ctx.withdrawal_api.create_withdrawal(req).await;
+    assert!(
+        result.is_err(),
+        "Withdrawal accessing locked funds should be rejected"
+    );
+}
+
+/// Test: Deposit Below Minimum Rejected
+///
+/// Deposits below a configured minimum threshold (to prevent dust spam) must be rejected.
+///
+/// Action: Deposit 1 satoshi (0.00000001 BTC).
+/// Expect: Error (amount too low).
+#[tokio::test]
+async fn test_deposit_below_minimum_rejected() {
+    let ctx = InMemoryTestContext::new();
+    let wallet_id = ctx
+        .create_wallet_api(&ctx.account_a.to_string(), &ctx.assets.btc.to_string())
+        .await;
+
+    // Attempt to deposit 1 satoshi
+    let req = Request::new(CreateDepositRequest {
+        wallet_id: wallet_id.clone(),
+        amount: "1".to_string(),
+        transaction_ref: "tx-dust-1".to_string(),
+    });
+
+    let result = ctx.deposit_api.create_deposit(req).await;
+    assert!(
+        result.is_err(),
+        "Deposit below minimum (dust) should be rejected"
+    );
+}
+
+/// Test: Withdrawal Above Maximum Rejected
+///
+/// Withdrawals exceeding the daily or per-transaction limit must be rejected,
+/// even if the user has sufficient funds.
+///
+/// Setup: Wallet with $20M available.
+/// Action: Attempt to withdraw $15M (assuming max is e.g. $10M).
+/// Expect: Rejection (limit exceeded).
+#[tokio::test]
+async fn test_withdrawal_above_maximum_rejected() {
+    let ctx = InMemoryTestContext::new();
+    // Seed with $20M
+    let wallet = ctx
+        .seed_wallet(
+            ctx.account_a,
+            ctx.assets.usd,
+            20_000_000.0,
+            0.0,
+            20_000_000.0,
+        )
+        .await;
+    let wallet_id = wallet.id.to_string();
+
+    // Attempt to withdraw $15M
+    let req = Request::new(CreateWithdrawalRequest {
+        wallet_id: wallet_id.clone(),
+        amount: helpers::to_atomic_usd(15_000_000.0).to_string(),
+        address: "addr-limit-check".to_string(),
+    });
+
+    let result = ctx.withdrawal_api.create_withdrawal(req).await;
+    assert!(
+        result.is_err(),
+        "Withdrawal exceeding maximum limit should be rejected"
+    );
+}
+
+/// Test: Pending Withdrawal Blocks Second Withdrawal (Insufficient Funds)
+///
+/// If a user has 100 and requests a withdrawal of 100, those funds are locked.
+/// A second request for 100 must be rejected because the funds are already
+/// committed to the first withdrawal, even if it hasn't been processed on-chain.
+///
+/// Setup: 100 available.
+/// Action 1: Withdraw 100.
+/// Action 2: Withdraw 100.
+/// Expect: Action 2 fails due to insufficient available funds.
+#[tokio::test]
+async fn test_pending_withdrawal_blocks_second_withdrawal() {
+    let ctx = InMemoryTestContext::new();
+    let wallet = ctx
+        .seed_wallet(ctx.account_a, ctx.assets.usd, 100.0, 0.0, 100.0)
+        .await;
+    let wallet_id = wallet.id.to_string();
+
+    // First withdrawal (locks 100)
+    let req1 = Request::new(CreateWithdrawalRequest {
+        wallet_id: wallet_id.clone(),
+        amount: helpers::to_atomic_usd(100.0).to_string(),
+        address: "addr1".to_string(),
+    });
+    ctx.withdrawal_api.create_withdrawal(req1).await.unwrap();
+
+    // Second withdrawal (locks another 100 -> requires 200 total)
+    let req2 = Request::new(CreateWithdrawalRequest {
+        wallet_id: wallet_id.clone(),
+        amount: helpers::to_atomic_usd(100.0).to_string(),
+        address: "addr2".to_string(),
+    });
+
+    let result = ctx.withdrawal_api.create_withdrawal(req2).await;
+    assert!(
+        result.is_err(),
+        "Second withdrawal should be rejected due to insufficient available funds"
+    );
+}
+
+/// Test: Deposit To Frozen Wallet Rejected
+///
+/// A wallet in 'frozen' status (e.g. for compliance investigation) cannot receive
+/// deposits. This prevents funds from entering a suspicious account.
+///
+/// Setup: Wallet created, then updated to status="frozen".
+/// Action: Attempt deposit.
+/// Expect: Rejection.
+#[tokio::test]
+async fn test_deposit_to_frozen_wallet_rejected() {
+    let ctx = InMemoryTestContext::new();
+    let wallet_id = ctx
+        .create_wallet_api(&ctx.account_a.to_string(), &ctx.assets.usd.to_string())
+        .await;
+
+    // Freeze wallet
+    let freeze_req = Request::new(UpdateWalletRequest {
+        wallet_id: wallet_id.clone(),
+        status: "frozen".to_string(),
+    });
+    ctx.wallet_api.update_wallet(freeze_req).await.unwrap();
+
+    // Attempt deposit
+    let req = Request::new(CreateDepositRequest {
+        wallet_id: wallet_id.clone(),
+        amount: helpers::to_atomic_usd(100.0).to_string(),
+        transaction_ref: "tx-frozen".to_string(),
+    });
+
+    let result = ctx.deposit_api.create_deposit(req).await;
+    assert!(
+        result.is_err(),
+        "Deposit to frozen wallet should be rejected"
+    );
+}
+
+/// Test: Withdrawal From Frozen Wallet Rejected
+///
+/// A frozen wallet cannot be withdrawn from. This prevents funds from leaving
+/// a suspicious account.
+///
+/// Setup: Wallet created, updated to status="frozen".
+/// Action: Attempt withdrawal.
+/// Expect: Rejection.
+#[tokio::test]
+async fn test_withdrawal_from_frozen_wallet_rejected() {
+    let ctx = InMemoryTestContext::new();
+    let wallet = ctx
+        .seed_wallet(ctx.account_a, ctx.assets.usd, 100.0, 0.0, 100.0)
+        .await;
+    let wallet_id = wallet.id.to_string();
+
+    // Freeze wallet
+    let freeze_req = Request::new(UpdateWalletRequest {
+        wallet_id: wallet_id.clone(),
+        status: "frozen".to_string(),
+    });
+    ctx.wallet_api.update_wallet(freeze_req).await.unwrap();
+
+    // Attempt withdrawal
+    let req = Request::new(CreateWithdrawalRequest {
+        wallet_id: wallet_id.clone(),
+        amount: helpers::to_atomic_usd(10.0).to_string(),
+        address: "addr-frozen".to_string(),
+    });
+
+    let result = ctx.withdrawal_api.create_withdrawal(req).await;
+    assert!(
+        result.is_err(),
+        "Withdrawal from frozen wallet should be rejected"
+    );
 }

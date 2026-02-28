@@ -1,3 +1,4 @@
+#[macro_use]
 #[path = "../helpers/mod.rs"]
 mod helpers;
 

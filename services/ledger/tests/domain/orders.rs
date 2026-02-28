@@ -24,8 +24,7 @@ async fn test_create_order_flow() {
     ctx.deposit_funds_api(&wallet_a_usd, "6000000").await;
 
     // 3. Create Order (Buy 1 BTC @ 50000)
-    let mut order =
-        ctx.create_order_object(&account_a_id, &instr_id, OrderSide::Buy, "1.0", "50000.0");
+    let mut order = ctx.seed_order_proto(&account_a_id, &instr_id, OrderSide::Buy, 50000.0, 1.0);
     order.id = Uuid::new_v4().to_string(); // Ensure ID is set
 
     let req = Request::new(RecordOrderRequest {
@@ -49,7 +48,7 @@ async fn test_create_order_flow() {
         .orders;
     assert!(open_orders
         .iter()
-        .any(|o| o.id == order.id && o.status == OrderStatus::Open as i32));
+        .any(|o| o.id == order.id && o.status == (OrderStatus::Open as i32)));
 }
 
 #[tokio::test]
@@ -74,8 +73,7 @@ async fn test_match_orders_market() {
     ctx.deposit_funds_api(&wallet_b_btc, "100000000").await;
 
     // 4. Create Order A (Buy 1 BTC @ 50000)
-    let mut order_a =
-        ctx.create_order_object(&account_a_id, &instr_id, OrderSide::Buy, "1.0", "50000.0");
+    let mut order_a = ctx.seed_order_proto(&account_a_id, &instr_id, OrderSide::Buy, 50000.0, 1.0);
     order_a.id = Uuid::new_v4().to_string();
     ctx.order_api
         .record_order(Request::new(RecordOrderRequest {
@@ -85,8 +83,7 @@ async fn test_match_orders_market() {
         .unwrap();
 
     // 5. Create Order B (Sell 1 BTC @ 50000)
-    let mut order_b =
-        ctx.create_order_object(&account_b_id, &instr_id, OrderSide::Sell, "1.0", "50000.0");
+    let mut order_b = ctx.seed_order_proto(&account_b_id, &instr_id, OrderSide::Sell, 50000.0, 1.0);
     order_b.id = Uuid::new_v4().to_string();
     ctx.order_api
         .record_order(Request::new(RecordOrderRequest {
@@ -153,8 +150,7 @@ async fn test_partial_fill() {
     let wallet_a_usd = ctx.create_wallet_api(&account_a_id, &usd_id).await;
     ctx.deposit_funds_api(&wallet_a_usd, "6000000").await;
 
-    let mut order_a =
-        ctx.create_order_object(&account_a_id, &instr_id, OrderSide::Buy, "1.0", "50000.0");
+    let mut order_a = ctx.seed_order_proto(&account_a_id, &instr_id, OrderSide::Buy, 50000.0, 1.0);
     order_a.id = Uuid::new_v4().to_string();
     ctx.order_api
         .record_order(Request::new(RecordOrderRequest {
@@ -169,8 +165,7 @@ async fn test_partial_fill() {
     let wallet_b_btc = ctx.create_wallet_api(&account_b_id, &btc_id).await;
     ctx.deposit_funds_api(&wallet_b_btc, "100000000").await;
 
-    let mut order_b =
-        ctx.create_order_object(&account_b_id, &instr_id, OrderSide::Sell, "0.5", "50000.0");
+    let mut order_b = ctx.seed_order_proto(&account_b_id, &instr_id, OrderSide::Sell, 50000.0, 0.5);
     order_b.id = Uuid::new_v4().to_string();
     ctx.order_api
         .record_order(Request::new(RecordOrderRequest {
@@ -236,8 +231,7 @@ async fn test_multi_fill() {
     let wallet_a_btc = ctx.create_wallet_api(&account_a_id, &btc_id).await;
     ctx.deposit_funds_api(&wallet_a_btc, "100000000").await;
 
-    let mut order_a =
-        ctx.create_order_object(&account_a_id, &instr_id, OrderSide::Sell, "1.0", "50000.0");
+    let mut order_a = ctx.seed_order_proto(&account_a_id, &instr_id, OrderSide::Sell, 50000.0, 1.0);
     order_a.id = Uuid::new_v4().to_string();
     ctx.order_api
         .record_order(Request::new(RecordOrderRequest {
@@ -252,8 +246,7 @@ async fn test_multi_fill() {
     let wallet_b_btc = ctx.create_wallet_api(&account_b_id, &btc_id).await;
     ctx.deposit_funds_api(&wallet_b_btc, "100000000").await;
 
-    let mut order_b =
-        ctx.create_order_object(&account_b_id, &instr_id, OrderSide::Sell, "1.0", "50000.0");
+    let mut order_b = ctx.seed_order_proto(&account_b_id, &instr_id, OrderSide::Sell, 50000.0, 0.5);
     order_b.id = Uuid::new_v4().to_string();
     ctx.order_api
         .record_order(Request::new(RecordOrderRequest {
@@ -268,8 +261,7 @@ async fn test_multi_fill() {
     let wallet_c_usd = ctx.create_wallet_api(&account_c_id, &usd_id).await;
     ctx.deposit_funds_api(&wallet_c_usd, "10000000").await;
 
-    let mut order_c =
-        ctx.create_order_object(&account_c_id, &instr_id, OrderSide::Buy, "2.0", "50000.0");
+    let mut order_c = ctx.seed_order_proto(&account_c_id, &instr_id, OrderSide::Buy, 50000.0, 2.0);
     order_c.id = Uuid::new_v4().to_string();
     ctx.order_api
         .record_order(Request::new(RecordOrderRequest {

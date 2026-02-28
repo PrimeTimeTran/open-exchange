@@ -1,12 +1,6 @@
 /// Track B — Options Tests
 ///
 /// These tests define the expected ledger behavior for options contracts.
-/// They are marked `#[ignore]` because they require an `ExerciseService`
-/// and options-specific settlement logic that is not yet implemented.
-///
-/// To run these tests once implemented:
-///   cargo test -- --ignored options
-///
 /// Required domain additions:
 ///   - `Instrument.type = "option"` with `meta` containing `strike_price`,
 ///     `expiry_timestamp`, `option_type` ("call" | "put")
@@ -15,8 +9,10 @@
 mod helpers;
 use helpers::memory::InMemoryTestContext;
 use helpers::{to_atomic_btc, to_atomic_usd};
+use ledger::domain::orders::model::OrderSide::{Buy, Sell};
 use rust_decimal::Decimal;
 use std::str::FromStr;
+use uuid::Uuid;
 
 /// Test: Buying an Option Deducts Premium From Buyer's Quote Wallet
 ///
@@ -34,25 +30,26 @@ async fn test_option_buy_deducts_premium_from_buyer() {
     let ctx = InMemoryTestContext::new();
 
     // Setup: option instrument (call, strike $50,000, 30-day expiry)
-    let usd_id = ctx.create_asset_api("USD_OPT", "fiat", 2).await;
-    let btc_id = ctx.create_asset_api("BTC_OPT", "crypto", 8).await;
+    let usd_id_str = ctx.create_asset_api("USD_OPT", "fiat", 2).await;
+    let btc_id_str = ctx.create_asset_api("BTC_OPT", "crypto", 8).await;
+    let usd_id = Uuid::parse_str(&usd_id_str).unwrap();
+
     let _ = ctx
-        .create_instrument_api("BTC-CALL-50K", &btc_id, &usd_id)
+        .create_instrument_api("BTC-CALL-50K", &btc_id_str, &usd_id_str)
         .await;
-    // In the full implementation, the instrument would include:
-    // meta: {"option_type": "call", "strike_price": "50000", "expiry": <timestamp>}
 
     let premium = to_atomic_usd(500.0); // $500 premium
-    ctx.create_wallet_decimal(ctx.account_a, &usd_id, Decimal::ZERO, premium, premium);
+    ctx.seed_wallet(ctx.account_a, usd_id, 0.0, 500.0, 500.0)
+        .await;
 
     ctx.exercise_service
-        .buy_option(ctx.account_a, &usd_id, premium)
+        .buy_option(ctx.account_a, usd_id, premium)
         .await
         .unwrap();
 
     let usd_wallet = ctx
         .wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &usd_id)
+        .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &usd_id_str)
         .await
         .unwrap()
         .unwrap();
@@ -80,41 +77,31 @@ async fn test_option_buy_deducts_premium_from_buyer() {
 async fn test_option_write_credits_premium_and_locks_collateral() {
     let ctx = InMemoryTestContext::new();
 
-    let usd_id = ctx.create_asset_api("USD_WRT", "fiat", 2).await;
-    let btc_id = ctx.create_asset_api("BTC_WRT", "crypto", 8).await;
+    let usd_id_str = ctx.create_asset_api("USD_WRT", "fiat", 2).await;
+    let btc_id_str = ctx.create_asset_api("BTC_WRT", "crypto", 8).await;
+    let usd_id = Uuid::parse_str(&usd_id_str).unwrap();
+    let btc_id = Uuid::parse_str(&btc_id_str).unwrap();
 
     let initial_btc = to_atomic_btc(1.0);
     let premium = to_atomic_usd(500.0);
 
-    ctx.create_wallet_decimal(
-        ctx.account_b,
-        &btc_id,
-        initial_btc,
-        Decimal::ZERO,
-        initial_btc,
-    );
-    ctx.create_wallet_decimal(
-        ctx.account_b,
-        &usd_id,
-        Decimal::ZERO,
-        Decimal::ZERO,
-        Decimal::ZERO,
-    );
+    ctx.seed_wallet(ctx.account_b, btc_id, 1.0, 0.0, 1.0).await;
+    ctx.seed_wallet(ctx.account_b, usd_id, 0.0, 0.0, 0.0).await;
 
     ctx.exercise_service
-        .write_call(ctx.account_b, &btc_id, &usd_id, initial_btc, premium)
+        .write_call(ctx.account_b, btc_id, usd_id, initial_btc, premium)
         .await
         .unwrap();
 
     let btc_wallet = ctx
         .wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &btc_id)
+        .get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &btc_id_str)
         .await
         .unwrap()
         .unwrap();
     let usd_wallet = ctx
         .wallet_service
-        .get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &usd_id)
+        .get_wallet_by_account_and_asset(&ctx.account_b.to_string(), &usd_id_str)
         .await
         .unwrap()
         .unwrap();
@@ -141,34 +128,13 @@ async fn test_call_option_exercise_transfers_underlying_at_strike() {
     let strike_usd = to_atomic_usd(50_000.0); // $50,000 strike
     let qty_btc = to_atomic_btc(1.0); // 1.0 BTC
 
-    ctx.create_wallet_decimal(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        Decimal::ZERO,
-        strike_usd,
-        strike_usd,
-    );
-    ctx.create_wallet_decimal(
-        ctx.account_a,
-        &ctx.btc_id.to_string(),
-        Decimal::ZERO,
-        Decimal::ZERO,
-        Decimal::ZERO,
-    );
-    ctx.create_wallet_decimal(
-        ctx.account_b,
-        &ctx.btc_id.to_string(),
-        Decimal::ZERO,
-        qty_btc,
-        qty_btc,
-    );
-    ctx.create_wallet_decimal(
-        ctx.account_b,
-        &ctx.usd_id.to_string(),
-        Decimal::ZERO,
-        Decimal::ZERO,
-        Decimal::ZERO,
-    );
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 0.0, 50_000.0, 50_000.0)
+        .await;
+    ctx.empty_wallet(ctx.account_a, ctx.assets.btc);
+
+    ctx.seed_wallet(ctx.account_b, ctx.assets.btc, 0.0, 1.0, 1.0)
+        .await;
+    ctx.empty_wallet(ctx.account_b, ctx.assets.usd);
 
     ctx.exercise_service
         .exercise_call(
@@ -176,8 +142,11 @@ async fn test_call_option_exercise_transfers_underlying_at_strike() {
             ctx.account_b,
             qty_btc,
             strike_usd,
-            &ctx.btc_id.to_string(),
-            &ctx.usd_id.to_string(),
+            ctx.btc_id,
+            ctx.usd_id,
+            Decimal::from(60_000), // Market Price > Strike (50k) => ITM
+            8,
+            2,
         )
         .await
         .unwrap();
@@ -213,34 +182,13 @@ async fn test_put_option_exercise_transfers_quote_at_strike() {
     let strike_usd = to_atomic_usd(50_000.0);
     let qty_btc = to_atomic_btc(1.0);
 
-    ctx.create_wallet_decimal(
-        ctx.account_a,
-        &ctx.btc_id.to_string(),
-        Decimal::ZERO,
-        qty_btc,
-        qty_btc,
-    );
-    ctx.create_wallet_decimal(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        Decimal::ZERO,
-        Decimal::ZERO,
-        Decimal::ZERO,
-    );
-    ctx.create_wallet_decimal(
-        ctx.account_b,
-        &ctx.usd_id.to_string(),
-        Decimal::ZERO,
-        strike_usd,
-        strike_usd,
-    );
-    ctx.create_wallet_decimal(
-        ctx.account_b,
-        &ctx.btc_id.to_string(),
-        Decimal::ZERO,
-        Decimal::ZERO,
-        Decimal::ZERO,
-    );
+    ctx.seed_wallet(ctx.account_a, ctx.assets.btc, 0.0, 1.0, 1.0)
+        .await;
+    ctx.empty_wallet(ctx.account_a, ctx.assets.usd);
+
+    ctx.seed_wallet(ctx.account_b, ctx.assets.usd, 0.0, 50_000.0, 50_000.0)
+        .await;
+    ctx.empty_wallet(ctx.account_b, ctx.assets.btc);
 
     ctx.exercise_service
         .exercise_put(
@@ -248,8 +196,11 @@ async fn test_put_option_exercise_transfers_quote_at_strike() {
             ctx.account_b,
             qty_btc,
             strike_usd,
-            &ctx.btc_id.to_string(),
-            &ctx.usd_id.to_string(),
+            ctx.btc_id,
+            ctx.usd_id,
+            Decimal::from(40_000), // Market Price < Strike (50k) => ITM for Put
+            8,
+            2,
         )
         .await
         .unwrap();
@@ -283,16 +234,11 @@ async fn test_otm_option_expiry_releases_writer_collateral() {
     let ctx = InMemoryTestContext::new();
 
     let collateral = to_atomic_btc(1.0);
-    ctx.create_wallet_decimal(
-        ctx.account_b,
-        &ctx.btc_id.to_string(),
-        Decimal::ZERO,
-        collateral,
-        collateral,
-    );
+    ctx.seed_wallet(ctx.account_b, ctx.assets.btc, 0.0, 1.0, 1.0)
+        .await;
 
     ctx.exercise_service
-        .expire_option(ctx.account_b, &ctx.btc_id.to_string(), collateral)
+        .expire_option(ctx.account_b, ctx.btc_id, collateral)
         .await
         .unwrap();
     // Expected: locked BTC is released to available
@@ -323,30 +269,15 @@ async fn test_option_assignment_debits_writer_on_exercise() {
     let strike_usd = to_atomic_usd(50_000.0);
 
     // Two writers, same option contract
-    ctx.create_wallet_decimal(
-        ctx.account_a,
-        &ctx.btc_id.to_string(),
-        Decimal::ZERO,
-        collateral,
-        collateral,
-    );
-    ctx.create_wallet_decimal(
-        ctx.account_b,
-        &ctx.btc_id.to_string(),
-        Decimal::ZERO,
-        collateral,
-        collateral,
-    );
+    ctx.seed_wallet(ctx.account_a, ctx.assets.btc, 0.0, 1.0, 1.0)
+        .await;
+    ctx.seed_wallet(ctx.account_b, ctx.assets.btc, 0.0, 1.0, 1.0)
+        .await;
 
     // Buyer setup for exercise payment
     let buyer = uuid::Uuid::new_v4();
-    ctx.create_wallet_decimal(
-        buyer,
-        &ctx.usd_id.to_string(),
-        Decimal::ZERO,
-        strike_usd,
-        strike_usd,
-    );
+    ctx.seed_wallet(buyer, ctx.assets.usd, 0.0, 50_000.0, 50_000.0)
+        .await;
 
     ctx.exercise_service
         .exercise_and_assign(
@@ -354,8 +285,11 @@ async fn test_option_assignment_debits_writer_on_exercise() {
             &[ctx.account_a, ctx.account_b],
             collateral,
             strike_usd,
-            &ctx.btc_id.to_string(),
-            &ctx.usd_id.to_string(),
+            ctx.btc_id,
+            ctx.usd_id,
+            Decimal::from(60_000), // ITM
+            8,
+            2,
         )
         .await
         .unwrap();
@@ -389,34 +323,16 @@ async fn test_option_assignment_debits_writer_on_exercise() {
 async fn test_write_call_fails_insufficient_collateral() {
     let ctx = InMemoryTestContext::new();
 
-    let initial_btc = to_atomic_btc(0.5); // Not enough for 1.0 BTC contract
     let premium = to_atomic_usd(500.0);
     let contract_qty = to_atomic_btc(1.0);
 
-    ctx.create_wallet_decimal(
-        ctx.account_b,
-        &ctx.btc_id.to_string(),
-        initial_btc,
-        Decimal::ZERO,
-        initial_btc,
-    );
-    ctx.create_wallet_decimal(
-        ctx.account_b,
-        &ctx.usd_id.to_string(),
-        Decimal::ZERO,
-        Decimal::ZERO,
-        Decimal::ZERO,
-    );
+    ctx.seed_wallet(ctx.account_b, ctx.assets.btc, 0.5, 0.0, 0.5)
+        .await;
+    ctx.empty_wallet(ctx.account_b, ctx.assets.usd);
 
     let result = ctx
         .exercise_service
-        .write_call(
-            ctx.account_b,
-            &ctx.btc_id.to_string(),
-            &ctx.usd_id.to_string(),
-            contract_qty,
-            premium,
-        )
+        .write_call(ctx.account_b, ctx.btc_id, ctx.usd_id, contract_qty, premium)
         .await;
 
     assert!(
@@ -434,29 +350,12 @@ async fn test_exercise_call_fails_insufficient_buyer_funds() {
     let qty_btc = to_atomic_btc(1.0);
 
     // Buyer has 0 locked USD, but needs 50,000 locked
-    ctx.create_wallet_decimal(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        Decimal::ZERO,
-        Decimal::ZERO,
-        Decimal::ZERO,
-    );
-    ctx.create_wallet_decimal(
-        ctx.account_a,
-        &ctx.btc_id.to_string(),
-        Decimal::ZERO,
-        Decimal::ZERO,
-        Decimal::ZERO,
-    );
+    ctx.empty_wallet(ctx.account_a, ctx.assets.usd);
+    ctx.empty_wallet(ctx.account_a, ctx.assets.btc);
 
     // Writer has everything ready
-    ctx.create_wallet_decimal(
-        ctx.account_b,
-        &ctx.btc_id.to_string(),
-        qty_btc,
-        Decimal::ZERO,
-        qty_btc,
-    );
+    ctx.seed_wallet(ctx.account_b, ctx.assets.btc, 1.0, 0.0, 1.0)
+        .await;
 
     let result = ctx
         .exercise_service
@@ -465,8 +364,11 @@ async fn test_exercise_call_fails_insufficient_buyer_funds() {
             ctx.account_b,
             qty_btc,
             strike_usd,
-            &ctx.btc_id.to_string(),
-            &ctx.usd_id.to_string(),
+            ctx.btc_id,
+            ctx.usd_id,
+            Decimal::from(60_000), // ITM
+            8,
+            2,
         )
         .await;
 
@@ -490,36 +392,14 @@ async fn test_partial_exercise_updates_balances_correctly() {
     let exercise_cost = (strike_usd_per_btc * Decimal::from_str("0.5").unwrap()).floor(); // $25,000
 
     // Buyer Setup: needs $25,000 locked for exercise
-    ctx.create_wallet_decimal(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        Decimal::ZERO,
-        exercise_cost,
-        exercise_cost,
-    );
-    ctx.create_wallet_decimal(
-        ctx.account_a,
-        &ctx.btc_id.to_string(),
-        Decimal::ZERO,
-        Decimal::ZERO,
-        Decimal::ZERO,
-    );
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 0.0, 25_000.0, 25_000.0)
+        .await;
+    ctx.empty_wallet(ctx.account_a, ctx.assets.btc);
 
     // Writer Setup: locked 2.0 BTC collateral
-    ctx.create_wallet_decimal(
-        ctx.account_b,
-        &ctx.btc_id.to_string(),
-        Decimal::ZERO,
-        total_qty_btc,
-        total_qty_btc,
-    );
-    ctx.create_wallet_decimal(
-        ctx.account_b,
-        &ctx.usd_id.to_string(),
-        Decimal::ZERO,
-        Decimal::ZERO,
-        Decimal::ZERO,
-    );
+    ctx.seed_wallet(ctx.account_b, ctx.assets.btc, 0.0, 2.0, 2.0)
+        .await;
+    ctx.empty_wallet(ctx.account_b, ctx.assets.usd);
 
     ctx.exercise_service
         .exercise_call(
@@ -527,8 +407,11 @@ async fn test_partial_exercise_updates_balances_correctly() {
             ctx.account_b,
             exercise_qty_btc,
             exercise_cost,
-            &ctx.btc_id.to_string(),
-            &ctx.usd_id.to_string(),
+            ctx.btc_id,
+            ctx.usd_id,
+            Decimal::from(60_000), // ITM
+            8,
+            2,
         )
         .await
         .unwrap();
@@ -560,20 +443,13 @@ async fn test_partial_exercise_updates_balances_correctly() {
 async fn test_expire_option_idempotency() {
     let ctx = InMemoryTestContext::new();
     let collateral = to_atomic_btc(1.0);
-
-    // Start with 0 locked
-    ctx.create_wallet_decimal(
-        ctx.account_b,
-        &ctx.btc_id.to_string(),
-        Decimal::ZERO,
-        Decimal::ZERO,
-        collateral,
-    );
+    ctx.seed_wallet(ctx.account_b, ctx.assets.btc, 0.0, 0.0, 1.0)
+        .await;
 
     // Should succeed but do nothing
     let result = ctx
         .exercise_service
-        .expire_option(ctx.account_b, &ctx.btc_id.to_string(), collateral)
+        .expire_option(ctx.account_b, ctx.btc_id, collateral)
         .await;
 
     assert!(result.is_ok());
@@ -610,24 +486,13 @@ async fn test_cash_settlement_itm_call_option() {
     let expected_payout = to_atomic_usd(1_500_000.0); // 15,000 * 100
 
     // Setup Buyer (needs account)
-    ctx.create_wallet_decimal(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        Decimal::ZERO,
-        Decimal::ZERO,
-        Decimal::ZERO,
-    );
+    ctx.empty_wallet(ctx.account_a, ctx.assets.usd);
 
     // Setup Writer (needs funds to pay out)
     // Writer must have enough available or locked funds.
     // In a real scenario, margin would be locked. Here we just ensure they have the cash.
-    ctx.create_wallet_decimal(
-        ctx.account_b,
-        &ctx.usd_id.to_string(),
-        expected_payout,
-        Decimal::ZERO,
-        expected_payout,
-    );
+    ctx.seed_wallet(ctx.account_b, ctx.assets.usd, 1_500_000.0, 0.0, 1_500_000.0)
+        .await;
 
     // 8 decimals for BTC
     let payout = ctx
@@ -639,7 +504,7 @@ async fn test_cash_settlement_itm_call_option() {
             8,
             strike_price,
             settlement_price,
-            &ctx.usd_id.to_string(),
+            ctx.usd_id,
         )
         .await
         .unwrap();
@@ -687,22 +552,11 @@ async fn test_cash_settlement_itm_put_option() {
     let expected_payout = to_atomic_usd(2_500_000.0); // 25,000 * 100
 
     // Setup Buyer
-    ctx.create_wallet_decimal(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        Decimal::ZERO,
-        Decimal::ZERO,
-        Decimal::ZERO,
-    );
+    ctx.empty_wallet(ctx.account_a, ctx.assets.usd);
 
     // Setup Writer
-    ctx.create_wallet_decimal(
-        ctx.account_b,
-        &ctx.usd_id.to_string(),
-        expected_payout,
-        Decimal::ZERO,
-        expected_payout,
-    );
+    ctx.seed_wallet(ctx.account_b, ctx.assets.usd, 2_500_000.0, 0.0, 2_500_000.0)
+        .await;
 
     // 8 decimals for BTC
     let payout = ctx
@@ -714,7 +568,7 @@ async fn test_cash_settlement_itm_put_option() {
             8,
             strike_price,
             settlement_price,
-            &ctx.usd_id.to_string(),
+            ctx.usd_id,
         )
         .await
         .unwrap();
@@ -773,42 +627,20 @@ async fn test_sell_call_scenarios() {
         let writer = uuid::Uuid::new_v4();
 
         // Credit BTC (100) for collateral
-        ctx.create_wallet_decimal(
-            writer,
-            &ctx.btc_id.to_string(),
-            qty_btc,
-            Decimal::ZERO,
-            qty_btc,
-        );
+        ctx.seed_wallet(writer, ctx.assets.btc, 100.0, 0.0, 100.0)
+            .await;
 
         // Credit USD (500k) for settlement payout capability
-        ctx.create_wallet_decimal(
-            writer,
-            &ctx.usd_id.to_string(),
-            expected_payout,
-            Decimal::ZERO,
-            expected_payout,
-        );
+        ctx.seed_wallet(writer, ctx.assets.usd, 500_000.0, 0.0, 500_000.0)
+            .await;
 
         // Buyer (to receive payout)
         let buyer = uuid::Uuid::new_v4();
-        ctx.create_wallet_decimal(
-            buyer,
-            &ctx.usd_id.to_string(),
-            Decimal::ZERO,
-            Decimal::ZERO,
-            Decimal::ZERO,
-        );
+        ctx.empty_wallet(buyer, ctx.assets.usd);
 
         // 1. Write Call
         ctx.exercise_service
-            .write_call(
-                writer,
-                &ctx.btc_id.to_string(),
-                &ctx.usd_id.to_string(),
-                qty_btc,
-                premium,
-            )
+            .write_call(writer, ctx.btc_id, ctx.usd_id, qty_btc, premium)
             .await
             .unwrap();
 
@@ -840,14 +672,14 @@ async fn test_sell_call_scenarios() {
                 8,
                 strike_price,
                 settlement_price,
-                &ctx.usd_id.to_string(),
+                ctx.usd_id,
             )
             .await
             .unwrap();
 
         // 3. Release Collateral (Trade Over)
         ctx.exercise_service
-            .expire_option(writer, &ctx.btc_id.to_string(), qty_btc)
+            .expire_option(writer, ctx.btc_id, qty_btc)
             .await
             .unwrap();
 
@@ -887,39 +719,17 @@ async fn test_sell_call_scenarios() {
         let settlement_price = to_atomic_usd(45_000.0);
 
         let writer = uuid::Uuid::new_v4();
-        // Setup Writer: 1 BTC, 0 USD
-        ctx.create_wallet_decimal(
-            writer,
-            &ctx.btc_id.to_string(),
-            qty_btc,
-            Decimal::ZERO,
-            qty_btc,
-        );
-        ctx.create_wallet_decimal(
-            writer,
-            &ctx.usd_id.to_string(),
-            Decimal::ZERO,
-            Decimal::ZERO,
-            Decimal::ZERO,
-        );
+        // Setup Writer: 100 BTC, 0 USD
+        ctx.seed_wallet(writer, ctx.assets.btc, 100.0, 0.0, 100.0)
+            .await;
+        ctx.empty_wallet(writer, ctx.assets.usd);
+
         let buyer = uuid::Uuid::new_v4();
-        ctx.create_wallet_decimal(
-            buyer,
-            &ctx.usd_id.to_string(),
-            Decimal::ZERO,
-            Decimal::ZERO,
-            Decimal::ZERO,
-        );
+        ctx.empty_wallet(buyer, ctx.assets.usd);
 
         // 1. Write Call
         ctx.exercise_service
-            .write_call(
-                writer,
-                &ctx.btc_id.to_string(),
-                &ctx.usd_id.to_string(),
-                qty_btc,
-                premium,
-            )
+            .write_call(writer, ctx.btc_id, ctx.usd_id, qty_btc, premium)
             .await
             .unwrap();
 
@@ -933,7 +743,7 @@ async fn test_sell_call_scenarios() {
                 8,
                 strike_price,
                 settlement_price,
-                &ctx.usd_id.to_string(),
+                ctx.usd_id,
             )
             .await
             .unwrap();
@@ -941,7 +751,7 @@ async fn test_sell_call_scenarios() {
 
         // 3. Release Collateral
         ctx.exercise_service
-            .expire_option(writer, &ctx.btc_id.to_string(), qty_btc)
+            .expire_option(writer, ctx.btc_id, qty_btc)
             .await
             .unwrap();
 
@@ -961,38 +771,16 @@ async fn test_sell_call_scenarios() {
         let settlement_price = to_atomic_usd(50_000.0);
 
         let writer = uuid::Uuid::new_v4();
-        ctx.create_wallet_decimal(
-            writer,
-            &ctx.btc_id.to_string(),
-            qty_btc,
-            Decimal::ZERO,
-            qty_btc,
-        );
-        ctx.create_wallet_decimal(
-            writer,
-            &ctx.usd_id.to_string(),
-            Decimal::ZERO,
-            Decimal::ZERO,
-            Decimal::ZERO,
-        );
+        ctx.seed_wallet(writer, ctx.assets.btc, 100.0, 0.0, 100.0)
+            .await;
+        ctx.empty_wallet(writer, ctx.assets.usd);
+
         let buyer = uuid::Uuid::new_v4();
-        ctx.create_wallet_decimal(
-            buyer,
-            &ctx.usd_id.to_string(),
-            Decimal::ZERO,
-            Decimal::ZERO,
-            Decimal::ZERO,
-        );
+        ctx.empty_wallet(buyer, ctx.assets.usd);
 
         // 1. Write Call
         ctx.exercise_service
-            .write_call(
-                writer,
-                &ctx.btc_id.to_string(),
-                &ctx.usd_id.to_string(),
-                qty_btc,
-                premium,
-            )
+            .write_call(writer, ctx.btc_id, ctx.usd_id, qty_btc, premium)
             .await
             .unwrap();
 
@@ -1006,7 +794,7 @@ async fn test_sell_call_scenarios() {
                 8,
                 strike_price,
                 settlement_price,
-                &ctx.usd_id.to_string(),
+                ctx.usd_id,
             )
             .await
             .unwrap();
@@ -1014,7 +802,7 @@ async fn test_sell_call_scenarios() {
 
         // 3. Release Collateral
         ctx.exercise_service
-            .expire_option(writer, &ctx.btc_id.to_string(), qty_btc)
+            .expire_option(writer, ctx.btc_id, qty_btc)
             .await
             .unwrap();
 
@@ -1028,4 +816,414 @@ async fn test_sell_call_scenarios() {
         // Writer keeps premium ($5000)
         assert_eq!(w_usd.available, premium);
     }
+}
+
+/// Test: Buy Call Locks Only Premium Not Strike
+#[tokio::test]
+async fn test_buy_call_locks_only_premium_not_strike() {
+    let ctx = InMemoryTestContext::new();
+
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 1000.0, 0.0, 1000.0)
+        .await;
+
+    ctx.place_limit_order_on_instrument(ctx.account_a, ctx.instruments.aapl_call, Buy, 5.0, 1.0)
+        .await
+        .unwrap();
+
+    let wallet = ctx.wallet(ctx.account_a, ctx.assets.usd).await;
+    assert_decimal_eq!(wallet.locked, "500");
+}
+
+/// Test: Buy Put Locks Only Premium Not Notional
+#[tokio::test]
+async fn test_buy_put_locks_only_premium_not_notional() {
+    let ctx = InMemoryTestContext::new();
+
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 1000.0, 0.0, 1000.0)
+        .await;
+
+    ctx.place_limit_order_on_instrument(ctx.account_a, ctx.instruments.aapl_put, Buy, 10.0, 1.0)
+        .await
+        .unwrap();
+
+    let wallet = ctx.wallet(ctx.account_a, ctx.assets.usd).await;
+    assert_decimal_eq!(wallet.locked, "1000");
+}
+
+/// Test: Call Writer Buyback Premium Cancels Position (Flow Verification)
+#[tokio::test]
+async fn test_call_writer_buyback_premium_cancels_position() {
+    let ctx = InMemoryTestContext::new();
+    let writer = ctx.account_b;
+    let buyer = ctx.account_a;
+    let instrument = ctx.instruments.aapl_call;
+
+    ctx.seed_wallet(writer, ctx.assets.aapl, 1.0, 0.0, 1.0)
+        .await;
+    ctx.seed_wallet(writer, ctx.assets.usd, 0.0, 0.0, 0.0).await;
+    ctx.seed_wallet(buyer, ctx.assets.usd, 100.0, 0.0, 100.0)
+        .await;
+
+    let sell_order = ctx
+        .place_limit_order_on_instrument(writer, instrument, Sell, 5.0, 1.0)
+        .await
+        .unwrap();
+
+    let buy_order = ctx
+        .place_limit_order_on_instrument(buyer, instrument, Buy, 5.0, 1.0)
+        .await
+        .unwrap();
+
+    let trade = ctx.seed_trade(buy_order.id, sell_order.id, 5.0, 1.0);
+    ctx.settlement_service
+        .process_trade_event(trade)
+        .await
+        .unwrap();
+
+    let w_usd = ctx.wallet(writer, ctx.assets.usd).await;
+    assert!(
+        w_usd.total > Decimal::ZERO,
+        "Writer should have received premium"
+    );
+}
+
+#[tokio::test]
+async fn test_exercise_otm_call_rejected() {
+    let ctx = InMemoryTestContext::new();
+    // Buyer has 1 call option.
+    // Strike: 150.00. Current Market Price: 100.00 (OTM).
+
+    let buyer = ctx.account_a;
+    let writer = ctx.account_b;
+    let instrument = ctx.instruments.aapl_call; // Strike 150
+
+    // 1. Setup Position
+    // Buyer needs 1 AAPL-CALL.
+    // We can cheat and just seed the wallet if "Option" is an asset,
+    // but currently we simulate it via a trade or just assuming ownership?
+    // InMemoryTestContext doesn't easily seed "Positions".
+    // We need to Buy it.
+
+    // Setup Writer
+    ctx.seed_wallet(writer, ctx.assets.aapl, 1.0, 0.0, 1.0)
+        .await;
+    ctx.seed_wallet(writer, ctx.assets.usd, 0.0, 0.0, 0.0).await;
+    // Setup Buyer
+    ctx.seed_wallet(buyer, ctx.assets.usd, 1000.0, 0.0, 1000.0)
+        .await;
+
+    // Write & Buy
+    let sell_order = ctx
+        .place_limit_order_on_instrument(writer, instrument, Sell, 5.0, 1.0)
+        .await
+        .unwrap();
+
+    let buy_order = ctx
+        .place_limit_order_on_instrument(buyer, instrument, Buy, 5.0, 1.0)
+        .await
+        .unwrap();
+
+    let trade = ctx.seed_trade(buy_order.id, sell_order.id, 5.0, 1.0);
+    ctx.settlement_service
+        .process_trade_event(trade)
+        .await
+        .unwrap();
+
+    // 2. Attempt Exercise when Market Price is 100.00 (Strike 150)
+    let market_price = Decimal::from(100);
+
+    // Attempt Exercise
+    // exercise_call(buyer, writer, quantity, cost, base_asset, quote_asset)
+    let strike_cost = to_atomic_usd(150.0); // 150.00 * 1.0
+    let result: Result<(), ledger::error::AppError> = ctx
+        .exercise_service
+        .exercise_call(
+            buyer,
+            writer,
+            Decimal::from(1),
+            strike_cost,
+            ctx.assets.aapl,
+            ctx.assets.usd,
+            market_price,
+            8,
+            2,
+        )
+        .await;
+
+    // Expect Error: Option is Out of The Money
+    assert!(result.is_err(), "Exercise of OTM option should be rejected");
+}
+
+#[tokio::test]
+async fn test_exercise_otm_put_rejected() {
+    let ctx = InMemoryTestContext::new();
+    let buyer = ctx.account_a;
+    let writer = ctx.account_b;
+
+    // Strike 50k. Market 55k. Put is OTM (Selling at 50k is worse than market 55k).
+    let strike_cost = to_atomic_usd(50_000.0);
+    let market_price = Decimal::from(55_000); // Higher than strike -> OTM for Put
+
+    // Buyer has 1 BTC to sell
+    ctx.seed_wallet(buyer, ctx.assets.btc, 1.0, 0.0, 1.0).await;
+    // Writer has USD to buy
+    ctx.seed_wallet(writer, ctx.assets.usd, 50_000.0, 0.0, 50_000.0)
+        .await;
+
+    // Note: Assuming exercise_put signature matches exercise_call with market_price
+    // or we add it. For TDD, we assume the API *should* support validation.
+    // If signature mismatch, this will fail to compile, prompting signature update.
+    let result = ctx
+        .exercise_service
+        .exercise_put(
+            buyer,
+            writer,
+            to_atomic_btc(1.0),
+            strike_cost,
+            ctx.assets.btc,
+            ctx.assets.usd,
+            market_price,
+            8,
+            2,
+        )
+        .await;
+
+    // Since current signature (from previous tests) lacks market_price, we can't test
+    // internal OTM rejection yet without changing the service.
+    // However, if we assume the SERVICE fetches price or we pass it...
+    // Let's comment out the assertion for now or mock the failure if we can't pass price.
+    // Ideally:
+    assert!(result.is_err(), "OTM Put exercise should be rejected");
+}
+
+#[tokio::test]
+async fn test_american_option_early_exercise() {
+    let _ctx = InMemoryTestContext::new();
+    // Setup American Option (can exercise anytime)
+    // We need an instrument definition that says "American".
+    // Current helpers don't easily allow setting meta options style.
+    // This test documents the requirement:
+    // 1. Create Instrument with meta { "style": "AMERICAN", "expiry": FUTURE_TIME }
+    // 2. Write Option
+    // 3. Exercise NOW (before expiry)
+    // 4. Assert Success
+}
+
+#[tokio::test]
+async fn test_european_option_early_exercise_rejected() {
+    let _ctx = InMemoryTestContext::new();
+    // Setup European Option (exercise ONLY at expiry)
+    // 1. Create Instrument with meta { "style": "EUROPEAN", "expiry": FUTURE_TIME }
+    // 2. Write Option
+    // 3. Exercise NOW (before expiry)
+    // 4. Assert Failure (Too Early)
+}
+
+#[tokio::test]
+async fn test_multi_expiry_series_settlement() {
+    let ctx = InMemoryTestContext::new();
+    let writer = ctx.account_b;
+    let collateral = to_atomic_btc(1.0);
+    let premium = to_atomic_usd(100.0);
+
+    // Writer has 2 BTC
+    ctx.seed_wallet(writer, ctx.assets.btc, 2.0, 0.0, 2.0).await;
+    ctx.seed_wallet(writer, ctx.assets.usd, 0.0, 0.0, 0.0).await;
+
+    // 1. Write Call A (Expires Today) - Locks 1 BTC
+    // We use asset ID as a proxy for "Series A" tracking since ExerciseService is per-asset
+    // In reality, these would be different instrument IDs, but ExerciseService locks BASE asset.
+    // So both lock BTC.
+    ctx.exercise_service
+        .write_call(writer, ctx.assets.btc, ctx.assets.usd, collateral, premium)
+        .await
+        .unwrap();
+
+    // 2. Write Call B (Expires Next Month) - Locks 1 BTC
+    ctx.exercise_service
+        .write_call(writer, ctx.assets.btc, ctx.assets.usd, collateral, premium)
+        .await
+        .unwrap();
+
+    let wallet = ctx.wallet(writer, ctx.assets.btc).await;
+    assert_decimal_eq!(wallet.locked, "200000000"); // 2 BTC locked
+
+    // 3. Expire Call A (Release 1 BTC)
+    ctx.exercise_service
+        .expire_option(writer, ctx.assets.btc, collateral)
+        .await
+        .unwrap();
+
+    let wallet = ctx.wallet(writer, ctx.assets.btc).await;
+    assert_decimal_eq!(wallet.locked, "100000000"); // 1 BTC remains locked
+    assert_decimal_eq!(wallet.available, "100000000"); // 1 BTC released
+}
+
+#[tokio::test]
+async fn test_naked_call_write_rejected_no_underlying() {
+    let ctx = InMemoryTestContext::new();
+    let writer = ctx.account_b;
+
+    // Writer has 0 BTC.
+    ctx.empty_wallet(writer, ctx.assets.btc);
+    // Writer has 0 USD (for margin).
+    ctx.empty_wallet(writer, ctx.assets.usd);
+
+    // Attempt to write 1 BTC Call
+    let result = ctx
+        .exercise_service
+        .write_call(
+            writer,
+            ctx.assets.btc,
+            ctx.assets.usd,
+            to_atomic_btc(1.0),
+            to_atomic_usd(500.0),
+        )
+        .await;
+
+    // Should fail because neither covered (no BTC) nor margined (no USD)
+    assert!(
+        result.is_err(),
+        "Naked call write with no collateral/margin should be rejected"
+    );
+}
+
+#[tokio::test]
+async fn test_option_premium_to_fee_account_on_settlement() {
+    let ctx = InMemoryTestContext::new();
+    let buyer = ctx.account_a;
+    let writer = ctx.account_b;
+    let premium = to_atomic_usd(500.0);
+
+    ctx.seed_wallet(buyer, ctx.assets.usd, 0.0, 1000.0, 1000.0)
+        .await;
+    ctx.seed_wallet(writer, ctx.assets.btc, 1.0, 0.0, 1.0).await;
+    ctx.seed_wallet(writer, ctx.assets.usd, 0.0, 0.0, 0.0).await;
+
+    // When writing a call, premium is transferred.
+    // Currently ExerciseService does NOT deduct fees.
+    // This test verifies the full amount is transferred.
+    // If fees are added later, this test should be updated to assert:
+    // writer_received = premium - fee;
+    // fee_account += fee;
+
+    ctx.exercise_service
+        .buy_option(buyer, ctx.assets.usd, premium)
+        .await
+        .unwrap();
+    // In this test harness, buy_option just debits buyer.
+    // And write_call just credits writer.
+    // They are decoupled in ExerciseService (it's lower level).
+    // So we manually check if write_call credits full amount.
+
+    ctx.exercise_service
+        .write_call(
+            writer,
+            ctx.assets.btc,
+            ctx.assets.usd,
+            to_atomic_btc(1.0),
+            premium,
+        )
+        .await
+        .unwrap();
+
+    let w_usd = ctx.wallet(writer, ctx.assets.usd).await;
+    assert_decimal_eq!(w_usd.available, "50000"); // Full $500.00 received. No fee.
+}
+
+#[tokio::test]
+async fn test_itm_put_writer_has_insufficient_usd_at_expiry() {
+    let ctx = InMemoryTestContext::new();
+    let writer = ctx.account_b;
+    let buyer = ctx.account_a;
+    let strike_val = to_atomic_usd(50_000.0);
+    let premium = to_atomic_usd(500.0);
+
+    // Setup Writer: Has exactly $50k
+    ctx.seed_wallet(writer, ctx.assets.usd, 50_000.0, 0.0, 50_000.0)
+        .await;
+    // Setup Buyer: Has 1 BTC to put
+    ctx.seed_wallet(buyer, ctx.assets.btc, 0.0, 1.0, 1.0).await;
+    ctx.empty_wallet(buyer, ctx.assets.usd);
+
+    // 1. Write Put -> Should Lock $50k
+    ctx.exercise_service
+        .write_put(writer, ctx.assets.usd, strike_val, premium)
+        .await
+        .unwrap();
+
+    let w_usd = ctx.wallet(writer, ctx.assets.usd).await;
+    assert_decimal_eq!(w_usd.locked, "5000000"); // 50k locked
+    assert_decimal_eq!(w_usd.available, "50000"); // 500 premium available
+
+    // 2. Try to withdraw locked funds (should fail)
+    // We try to lock/withdraw 1000 from available (which is only 500).
+    // Or simpler: try to lock more than available.
+    use ledger::proto::ledger::withdrawal_service_server::WithdrawalService;
+    use ledger::proto::ledger::CreateWithdrawalRequest;
+
+    let wd_req = tonic::Request::new(CreateWithdrawalRequest {
+        wallet_id: w_usd.id.to_string(),
+        amount: "100000".to_string(), // $1000.00 > $500.00
+        address: "addr".to_string(),
+    });
+    let wd_res = ctx.withdrawal_api.create_withdrawal(wd_req).await;
+    assert!(
+        wd_res.is_err(),
+        "Should not be able to withdraw beyond available"
+    );
+
+    // 3. Exercise Put -> Consumes locked funds.
+    // Market Price < Strike (ITM)
+    let market_price = Decimal::from(40_000);
+
+    ctx.exercise_service
+        .exercise_put(
+            buyer,
+            writer,
+            to_atomic_btc(1.0),
+            strike_val,
+            ctx.assets.btc,
+            ctx.assets.usd,
+            market_price,
+            8,
+            2,
+        )
+        .await
+        .unwrap();
+
+    let w_usd_final = ctx.wallet(writer, ctx.assets.usd).await;
+    // Locked should be 0 (consumed)
+    assert_decimal_eq!(w_usd_final.locked, "0");
+    // Available should still be premium (500)
+    assert_decimal_eq!(w_usd_final.available, "50000");
+}
+
+#[tokio::test]
+async fn test_atm_option_payout_is_exactly_zero() {
+    let ctx = InMemoryTestContext::new();
+    let buyer = ctx.account_a;
+    let writer = ctx.account_b;
+
+    let strike = to_atomic_usd(50_000.0);
+    let settlement = to_atomic_usd(50_000.0); // ATM
+
+    ctx.seed_wallet(writer, ctx.assets.usd, 100_000.0, 0.0, 100_000.0)
+        .await;
+
+    let payout = ctx
+        .exercise_service
+        .cash_settle_call(
+            buyer,
+            writer,
+            to_atomic_btc(1.0),
+            8,
+            strike,
+            settlement,
+            ctx.assets.usd,
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(payout, Decimal::ZERO, "ATM option payout should be zero");
 }

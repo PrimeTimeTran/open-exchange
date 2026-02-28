@@ -47,21 +47,15 @@ async fn test_order_exceeding_max_size_rejected() {
 
     // Fund the account with enough USD to cover the order so only the size
     // limit (not balance) triggers the rejection.
-    let required_usd = oversized_qty_atomic * price_atomic;
-    ctx.create_wallet_decimal(
+    ctx.seed_wallet(
         ctx.account_a,
-        &ctx.usd_id.to_string(),
-        required_usd,
-        Decimal::ZERO,
-        required_usd,
-    );
-    ctx.create_wallet_decimal(
-        ctx.account_a,
-        &ctx.btc_id.to_string(),
-        Decimal::ZERO,
-        Decimal::ZERO,
-        Decimal::ZERO,
-    );
+        ctx.assets.usd,
+        100_000_000.0,
+        0.0,
+        100_000_000.0,
+    )
+    .await;
+    ctx.empty_wallet(ctx.account_a, ctx.assets.btc);
 
     // TODO: configure PositionLimitService with max_order_size = 100 BTC for BTC-USD
     // TODO: inject PositionLimitService into OrderService
@@ -123,15 +117,9 @@ async fn test_max_notional_exposure_blocks_new_order() {
     let ctx = InMemoryTestContext::new();
 
     // Seed account with $600,000 USD to ensure balance is not the limiting factor
-    let usd_balance = dec("60000000"); // $600,000.00 in cents
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        usd_balance.to_string().parse::<f64>().unwrap(),
-        0.0,
-        usd_balance.to_string().parse::<f64>().unwrap(),
-    );
-    ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 600_000.0, 0.0, 600_000.0)
+        .await;
+    ctx.empty_wallet(ctx.account_a, ctx.assets.btc);
 
     // TODO: configure PositionLimitService with max_notional_per_account = $500,000 (50_000_000 cents)
     // TODO: pre-populate existing open orders totaling $490,000 notional (49_000_000 cents)
@@ -173,24 +161,20 @@ async fn test_open_interest_cap_prevents_new_positions() {
     let ctx = InMemoryTestContext::new();
 
     // Fund account_a with enough USD for a 2 BTC buy
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        100_000_000.0, // $1,000,000 in cents
-        0.0,
-        100_000_000.0,
-    );
-    ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 1_000_000.0, 0.0, 1_000_000.0)
+        .await;
+    ctx.empty_wallet(ctx.account_a, ctx.assets.btc);
 
     // Fund account_b to simulate existing open interest
-    ctx.create_wallet(
+    ctx.seed_wallet(
         ctx.account_b,
-        &ctx.usd_id.to_string(),
-        99_900_000_000.0, // enough for 999 BTC of open orders
+        ctx.assets.usd,
+        999_000_000.0,
         0.0,
-        99_900_000_000.0,
-    );
-    ctx.create_wallet(ctx.account_b, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
+        999_000_000.0,
+    )
+    .await;
+    ctx.empty_wallet(ctx.account_b, ctx.assets.btc);
 
     // TODO: configure PositionLimitService with max_open_interest[BTC-USD] = 1,000 BTC (100_000_000_000 atomic)
     // TODO: pre-populate 999 BTC worth of open buy orders for account_b
@@ -235,22 +219,12 @@ async fn test_concentration_limit_per_single_asset() {
     //   USD: $80,500 cash
     // Total: $100,000
 
-    // BTC holding: 0.65 BTC = 65_000_000 atomic (8 decimals)
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.btc_id.to_string(),
-        65_000_000.0, // 0.65 BTC
-        0.0,
-        65_000_000.0,
-    );
-    // USD holding: $80,500 = 8_050_000 cents
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        8_050_000.0, // $80,500.00
-        0.0,
-        8_050_000.0,
-    );
+    // BTC holding: 0.65 BTC
+    ctx.seed_wallet(ctx.account_a, ctx.assets.btc, 0.65, 0.0, 0.65)
+        .await;
+    // USD holding: $80,500
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 80_500.0, 0.0, 80_500.0)
+        .await;
 
     // TODO: configure PositionLimitService with max_concentration = 0.20 (20%) per asset
     // TODO: configure mark-to-market oracle: BTC price = $30,000 (3_000_000 cents)

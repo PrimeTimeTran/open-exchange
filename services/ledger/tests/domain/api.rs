@@ -142,8 +142,8 @@ async fn test_cancel_order() {
         .wallet
         .unwrap();
     // 10,000,000 - 5,000,000 = 5,000,000 Available
-    crate::helpers::memory::assert_decimal(&w_locked.available, "5000000");
-    crate::helpers::memory::assert_decimal(&w_locked.locked, "5000000");
+    assert_decimal_eq!(w_locked.available, "5000000");
+    assert_decimal_eq!(w_locked.locked, "5000000");
 
     // Cancel Order
     let cancel_req = Request::new(CancelOrderRequest {

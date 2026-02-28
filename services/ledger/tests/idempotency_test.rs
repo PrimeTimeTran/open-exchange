@@ -1,7 +1,6 @@
 mod helpers;
 use helpers::postgres::PostgresTestContext;
 use ledger::domain::orders::model::{Order, OrderSide};
-use ledger::domain::wallets::Wallet;
 use rust_decimal::Decimal;
 use std::str::FromStr;
 use uuid::Uuid;
@@ -17,18 +16,11 @@ async fn test_create_order_idempotency() {
     let account_id = ctx.create_account(&user_id).await;
 
     // Fund: 1000 USDT
+    let asset_uuid = Uuid::parse_str(&asset_id).unwrap();
+    let account_uuid = Uuid::parse_str(&account_id).unwrap();
     let _wallet = ctx
-        .wallet_service
-        .create_wallet(Wallet {
-            id: Uuid::new_v4(),
-            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
-            account_id: Uuid::parse_str(&account_id).unwrap(),
-            asset_id: Uuid::parse_str(&asset_id).unwrap(),
-            available: Decimal::from_str("100000").unwrap(), // 1000.00 * 100
-            ..Default::default()
-        })
-        .await
-        .unwrap();
+        .seed_wallet(account_uuid, asset_uuid, 1000.0, 0.0, 1000.0)
+        .await;
 
     // Check funds
     let w_check = ctx

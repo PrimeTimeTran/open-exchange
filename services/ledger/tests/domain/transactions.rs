@@ -26,7 +26,7 @@ async fn test_deposit_increases_balance() {
     assert_eq!(w1.available, "0");
 
     // Deposit
-    ctx.deposit_funds_api(&wallet_id, "500").await;
+    ctx.deposit_funds_api(&wallet_id, "2000").await;
 
     // Final check
     let get_req2 = Request::new(GetWalletRequest {
@@ -40,7 +40,7 @@ async fn test_deposit_increases_balance() {
         .into_inner()
         .wallet
         .unwrap();
-    assert_eq!(w2.available, "500");
+    assert_eq!(w2.available, "2000");
 }
 
 #[tokio::test]

@@ -16,7 +16,6 @@ mod helpers;
 use helpers::memory::InMemoryTestContext;
 use helpers::to_atomic_usd;
 use ledger::domain::margin::MarginStatus;
-use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 use std::str::FromStr;
 
@@ -36,13 +35,8 @@ async fn test_margin_buy_locks_partial_collateral() -> Result<(), Box<dyn std::e
     let notional = to_atomic_usd(10_000.0);
     let initial_margin = (notional * Decimal::from_str("0.50")?).floor(); // 50%
 
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        starting_usd.to_f64().ok_or("Invalid decimal")?,
-        0.0,
-        starting_usd.to_f64().ok_or("Invalid decimal")?,
-    );
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 10_000.0, 0.0, 10_000.0)
+        .await;
 
     ctx.margin_service
         .create_leveraged_buy(ctx.account_a, &ctx.usd_id.to_string(), notional, 2)
@@ -83,13 +77,8 @@ async fn test_margin_account_equity_falls_below_maintenance(
 
     // Account equity is at exactly maintenance level (25% of $10,000 = $2,500)
     let maintenance_margin = to_atomic_usd(2_500.0);
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        maintenance_margin.to_f64().ok_or("Invalid decimal")?,
-        0.0,
-        maintenance_margin.to_f64().ok_or("Invalid decimal")?,
-    );
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 2_500.0, 0.0, 2_500.0)
+        .await;
 
     let status = ctx
         .margin_service
@@ -129,15 +118,9 @@ async fn test_forced_liquidation_triggered_below_maintenance(
     let ctx = InMemoryTestContext::new();
 
     // Account is below maintenance — simulate via very low equity
-    let equity = to_atomic_usd(100.0); // $1 — well below maintenance
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        equity.to_f64().ok_or("Invalid decimal")?,
-        0.0,
-        equity.to_f64().ok_or("Invalid decimal")?,
-    );
-    ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 100.0, 0.0, 100.0)
+        .await;
+    ctx.empty_wallet(ctx.account_a, ctx.assets.btc);
 
     // Simulate open position: Lock funds (so liquidation has something to unlock)
     // We need locked > 0 to see any effect.
@@ -196,77 +179,8 @@ async fn test_cross_margin_multiple_positions_net_equity() {
     let eth_pnl_neg = to_atomic_usd(-500.0); // loss
 
     // Seed margin wallet
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        cash_usd.to_f64().unwrap(),
-        0.0,
-        cash_usd.to_f64().unwrap(),
-    );
-
-    // Create other wallets to simulate positions (just balances for this service)
-    // CrossMarginService sums TOTAL balances of all wallets.
-    // BTC: +2000 USD equivalent (Need an asset for this? The test uses atomic USD for PnL?)
-    // The test says "BTC long: +$2,000 unrealized PnL".
-    // In our simplified model, MarkToMarketService applies PnL to WALLET TOTALS.
-    // So we just need to ensure the wallets have these balances.
-
-    // We'll create separate wallets for BTC and ETH positions to represent their PnL contribution?
-    // Wait, CrossMarginService sums ALL wallets.
-    // If we want +2000 USD from BTC, we can put 2000 USD in a "BTC_MARGIN" wallet or just add to USD?
-    // "Sum of all wallet totals... equity".
-    // If PnL is settled to USD wallet, it's already there.
-    // If PnL is "unrealized", it might be in a separate state.
-    // But `CrossMarginService` implementation:
-    // `wallets.iter().filter(|w| w.asset_id == base_asset_id).map(|w| parse(&w.total)).sum()`
-    // It sums wallets of ONE asset ("base_asset_id").
-    // Wait, that implementation looks wrong for CROSS margin (multi-asset).
-    // Cross margin usually converts ALL assets to USD value.
-    // The current implementation `filter(|w| w.asset_id == base_asset_id)` suggests it only sums one asset type.
-    //
-    // Let's re-read `CrossMarginService::calculate_equity`.
-    // It takes `base_asset_id`.
-    // This implies it calculates equity denominated in `base_asset_id`.
-    //
-    // For this test, we want Total Equity in USD.
-    // So we pass `usd_id`.
-    // We need to ensure all value is in USD wallets?
-    // Or does it convert?
-    // `CrossMarginService` implementation logic: `wallets.iter().filter(|w| w.asset_id == base_asset_id)...`
-    // This ONLY sums wallets matching the ID. It does NOT convert.
-    // So for this test to work with CURRENT implementation, all PnL must be in USD wallets (or multiple USD wallets?).
-    //
-    // Let's create a scenario that matches the implementation:
-    // User has multiple "USD" wallets? No, usually 1 per asset.
-    // User has USD, BTC, ETH.
-    // To calculate Equity in USD, we need Oracle/Price.
-    // The current `CrossMarginService` DOES NOT have an oracle.
-    // It assumes "MarkToMarketService" has already updated balances?
-    // If `MarkToMarketService` updates `total` in USD wallet, then `calculate_equity(..., usd_id)` just reads USD total.
-    //
-    // Let's assume `MarkToMarket` has run and updated the USD wallet with PnL.
-    // Then `cash + btc_pnl + eth_pnl` should all be in the USD wallet?
-    //
-    // Test says:
-    // cash_usd = 5000.
-    // btc_pnl = 2000.
-    // eth_pnl = -500.
-    // Expected = 6500.
-    //
-    // If we set wallet total to 6500, the test is trivial.
-    //
-    // Maybe `CrossMarginService` implementation needs to be updated to actually SUM different assets?
-    // But without prices, it can't.
-    //
-    // Let's stick to what we have: It sums wallets of a specific asset.
-    // If we want to test "Cross Margin", maybe we simulate multiple wallets of SAME asset?
-    // (e.g. sub-accounts).
-    //
-    // OR we update `CrossMarginService` to be smarter.
-    // Given "Track B", maybe we stick to simple.
-    //
-    // Let's just put the total expected equity in the USD wallet and verify the service reads it.
-    // This verifies the service reads "Total" correctly.
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 5_000.0, 0.0, 5_000.0)
+        .await;
 
     let expected_equity = cash_usd + btc_pnl + eth_pnl_neg;
 
@@ -305,23 +219,12 @@ async fn test_cross_margin_multiple_positions_net_equity() {
 async fn test_isolated_margin_loss_capped_at_allocated_collateral() {
     let ctx = InMemoryTestContext::new();
 
-    let isolated_margin = to_atomic_usd(1_000.0);
     let other_balance = to_atomic_usd(5_000.0); // account_b unrelated balance
 
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        isolated_margin.to_f64().unwrap(),
-        0.0,
-        isolated_margin.to_f64().unwrap(),
-    );
-    ctx.create_wallet(
-        ctx.account_b,
-        &ctx.usd_id.to_string(),
-        other_balance.to_f64().unwrap(),
-        0.0,
-        other_balance.to_f64().unwrap(),
-    );
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 1_000.0, 0.0, 1_000.0)
+        .await;
+    ctx.seed_wallet(ctx.account_b, ctx.assets.usd, 5_000.0, 0.0, 5_000.0)
+        .await;
 
     ctx.isolated_margin_service
         .apply_loss(
@@ -339,7 +242,6 @@ async fn test_isolated_margin_loss_capped_at_allocated_collateral() {
         .unwrap()
         .unwrap();
 
-    // The other account must be completely unaffected
     assert_eq!(
         other_wallet.total, other_balance,
         "Isolated margin loss must not spill into unrelated accounts"

@@ -11,6 +11,7 @@ use tonic::{Request, Response, Status};
 /// Minimum withdrawal amount in atomic units (asset-agnostic).
 /// 1 000 = 1 000 satoshis for BTC, or $0.10 for a 2-decimal asset.
 const MIN_WITHDRAWAL_AMOUNT: u64 = 1_000;
+const MAX_WITHDRAWAL_AMOUNT: u64 = 10_000_000;
 
 pub struct WithdrawalServiceImpl {
     withdrawal_service: Arc<WithdrawalDomainService>,
@@ -70,6 +71,13 @@ impl WithdrawalService for WithdrawalServiceImpl {
             )));
         }
 
+        if amount > Decimal::from(MAX_WITHDRAWAL_AMOUNT) {
+            return Err(Status::invalid_argument(format!(
+                "Withdrawal amount {} exceeds the maximum of {}",
+                amount, MAX_WITHDRAWAL_AMOUNT
+            )));
+        }
+
         // Lock funds: move amount from available → locked
         let wallet = self
             .wallet_service
@@ -77,6 +85,10 @@ impl WithdrawalService for WithdrawalServiceImpl {
             .await
             .map_err(|e| Status::internal(e.to_string()))?
             .ok_or_else(|| Status::not_found("Wallet not found"))?;
+
+        if wallet.status == "frozen" {
+            return Err(Status::permission_denied("Wallet is frozen"));
+        }
 
         let available = wallet.available;
 

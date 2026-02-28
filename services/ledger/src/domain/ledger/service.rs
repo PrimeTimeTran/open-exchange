@@ -1,6 +1,7 @@
 use crate::domain::accounts::repository::AccountRepository;
 use crate::domain::ledger::model::{LedgerEntry, LedgerEvent};
-use crate::domain::orders::model::{Order, OrderSide};
+use crate::domain::ledger::repository::LedgerRepository;
+use crate::domain::orders::model::{Order, OrderSide, OrderType};
 use crate::domain::orders::repository::OrderRepository;
 use crate::domain::trade::model::Trade;
 use crate::error::{AppError, Result};
@@ -27,6 +28,7 @@ struct TradeAmounts {
     total_atomic: Decimal,
     buyer_fee_atomic: Decimal,
     seller_fee_atomic: Decimal,
+    excess_unlock_atomic: Decimal,
 }
 
 struct OrderLockData {
@@ -35,6 +37,7 @@ struct OrderLockData {
 }
 
 pub struct LedgerService {
+    ledger_repo: Arc<dyn LedgerRepository>,
     order_repo: Arc<dyn OrderRepository>,
     instrument_repo: Arc<dyn InstrumentRepository>,
     asset_repo: Arc<dyn crate::infra::repositories::AssetRepository>,
@@ -43,12 +46,14 @@ pub struct LedgerService {
 
 impl LedgerService {
     pub fn new(
+        ledger_repo: Arc<dyn LedgerRepository>,
         order_repo: Arc<dyn OrderRepository>,
         instrument_repo: Arc<dyn InstrumentRepository>,
         asset_repo: Arc<dyn crate::infra::repositories::AssetRepository>,
         account_repo: Arc<dyn AccountRepository>,
     ) -> Self {
         Self {
+            ledger_repo,
             order_repo,
             instrument_repo,
             asset_repo,
@@ -121,6 +126,7 @@ impl LedgerService {
         // 2. Calculate amounts
         let amounts = self.calculate_trade_amounts(
             &trade,
+            &data.buy_order,
             data.base_decimals,
             data.quote_decimals,
             buyer_fee,
@@ -141,6 +147,59 @@ impl LedgerService {
         let entries = self.generate_trade_entries(tenant_id, event_id, &data, &amounts)?;
 
         Ok((event, entries))
+    }
+
+    pub async fn record_deposit(
+        &self,
+        tenant_id: Uuid,
+        account_id: Uuid,
+        wallet_id: Uuid,
+        asset_id: Uuid,
+        amount: Decimal,
+        deposit_id: Uuid,
+        tx_ref: String,
+    ) -> Result<(LedgerEvent, Vec<LedgerEntry>)> {
+        let event_id = Uuid::new_v4();
+        let timestamp = Utc::now();
+
+        let event = LedgerEvent {
+            id: event_id,
+            tenant_id,
+            r#type: "deposit".to_string(),
+            reference_id: deposit_id,
+            reference_type: "deposit".to_string(),
+            status: "completed".to_string(),
+            description: Some(format!("Deposit {}", tx_ref)),
+            meta: serde_json::json!({
+                "wallet_id": wallet_id,
+                "asset_id": asset_id,
+                "amount": amount,
+                "tx_ref": tx_ref
+            }),
+            created_at: timestamp,
+            updated_at: timestamp,
+        };
+
+        let entry = LedgerEntry {
+            id: Uuid::new_v4(),
+            tenant_id,
+            event_id,
+            account_id,
+            amount,
+            meta: serde_json::json!({
+                "asset": asset_id, // Important: storing asset ID here for filtering
+                "type": "credit",
+                "subtype": "deposit"
+            }),
+            created_at: timestamp,
+            updated_at: timestamp,
+        };
+
+        // Persist
+        self.ledger_repo.save_event(event.clone()).await?;
+        self.ledger_repo.save_entries(vec![entry.clone()]).await?;
+
+        Ok((event, vec![entry]))
     }
 
     pub async fn process_order_placed(
@@ -242,6 +301,7 @@ impl LedgerService {
     fn calculate_trade_amounts(
         &self,
         trade: &Trade,
+        buy_order: &Order,
         base_decimals: i32,
         quote_decimals: i32,
         buyer_fee: Decimal,
@@ -255,11 +315,22 @@ impl LedgerService {
         let base_scale = Decimal::from(10).powi(base_decimals as i64);
         let quote_scale = Decimal::from(10).powi(quote_decimals as i64);
 
+        // Calculate Excess Unlock if Buy Order Limit Price > Trade Price
+        let mut excess_unlock_atomic = Decimal::ZERO;
+        if buy_order.side == OrderSide::Buy && buy_order.r#type == OrderType::Limit {
+            if buy_order.price > trade_price {
+                let diff = buy_order.price - trade_price;
+                let excess_value = diff * trade_qty;
+                excess_unlock_atomic = (excess_value * quote_scale).floor();
+            }
+        }
+
         Ok(TradeAmounts {
             qty_atomic: (trade_qty * base_scale).floor(),
             total_atomic: (total_value * quote_scale).floor(),
             buyer_fee_atomic: (buyer_fee * quote_scale).floor(),
             seller_fee_atomic: (seller_fee * quote_scale).floor(),
+            excess_unlock_atomic,
         })
     }
 
@@ -271,6 +342,28 @@ impl LedgerService {
         amounts: &TradeAmounts,
     ) -> Result<Vec<LedgerEntry>> {
         let mut entries = Vec::new();
+
+        // Entry 0: Unlock Excess Funds (Price Improvement)
+        if !amounts.excess_unlock_atomic.is_zero() {
+            // Debit Locked (Reduce Locked)
+            entries.push(Self::create_entry(
+                tenant_id,
+                event_id,
+                data.buy_order.account_id,
+                -amounts.excess_unlock_atomic,
+                &data.quote_asset_id,
+                "locked",
+            ));
+            // Credit Available (Increase Available)
+            entries.push(Self::create_entry(
+                tenant_id,
+                event_id,
+                data.buy_order.account_id,
+                amounts.excess_unlock_atomic,
+                &data.quote_asset_id,
+                "available",
+            ));
+        }
 
         // Entry 1: Buyer receives Base Asset (+Qty)
         entries.push(Self::create_entry(
@@ -428,18 +521,20 @@ mod tests {
     use crate::domain::orders::model::{Order, OrderStatus, OrderType};
     use crate::infra::repositories::{
         AssetRepository, InMemoryAccountRepository, InMemoryAssetRepository,
-        InMemoryInstrumentRepository, InMemoryOrderRepository,
+        InMemoryInstrumentRepository, InMemoryLedgerRepository, InMemoryOrderRepository,
     };
     use rust_decimal::Decimal;
     use std::str::FromStr;
 
     #[tokio::test]
     async fn test_process_trade_events() {
+        let ledger_repo = Arc::new(InMemoryLedgerRepository::new());
         let order_repo = Arc::new(InMemoryOrderRepository::new());
         let instrument_repo = Arc::new(InMemoryInstrumentRepository::new());
         let asset_repo = Arc::new(InMemoryAssetRepository::new());
         let account_repo = Arc::new(InMemoryAccountRepository::new());
         let service = LedgerService::new(
+            ledger_repo.clone(),
             order_repo.clone(),
             instrument_repo.clone(),
             asset_repo.clone(),

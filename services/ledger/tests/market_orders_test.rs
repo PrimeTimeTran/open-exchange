@@ -4,7 +4,7 @@ use helpers::memory::InMemoryTestContext;
 use helpers::{calc_taker_fee, to_atomic_btc, to_atomic_usd};
 use ledger::domain::orders::model::{Order, OrderSide, OrderType};
 use ledger::error::AppError;
-use rust_decimal::prelude::ToPrimitive;
+
 use rust_decimal::Decimal;
 use std::str::FromStr;
 
@@ -24,13 +24,8 @@ async fn test_market_buy_locks_max_budget() {
     let initial_usd = to_atomic_usd(1000.0); // 100,000 cents
     let budget = to_atomic_usd(500.0); //  50,000 cents
 
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        100_000.0,
-        0.0,
-        100_000.0,
-    );
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 1000.0, 0.0, 1000.0)
+        .await;
 
     let order = Order::new(
         ctx.tenant_id,
@@ -55,8 +50,8 @@ async fn test_market_buy_locks_max_budget() {
         .unwrap();
 
     let total = wallet.total;
-    assert_decimal_val_eq!(wallet.locked, budget);
-    assert_decimal_val_eq!(wallet.available, initial_usd - budget);
+    assert_decimal_eq!(wallet.locked, budget);
+    assert_decimal_eq!(wallet.available, initial_usd - budget);
     assert_eq!(total, initial_usd, "Total must not change when locking");
 }
 
@@ -76,13 +71,8 @@ async fn test_market_sell_locks_full_base_quantity() {
     let initial_btc = to_atomic_btc(2.0);
     let lock_amount = to_atomic_btc(1.0);
 
-    ctx.create_wallet(
-        ctx.account_b,
-        &ctx.btc_id.to_string(),
-        200_000_000.0,
-        0.0,
-        200_000_000.0,
-    );
+    ctx.seed_wallet(ctx.account_b, ctx.assets.btc, 2.0, 0.0, 2.0)
+        .await;
 
     let order = Order::new(
         ctx.tenant_id,
@@ -106,8 +96,8 @@ async fn test_market_sell_locks_full_base_quantity() {
         .unwrap()
         .unwrap();
 
-    assert_decimal_val_eq!(wallet.locked, lock_amount);
-    assert_decimal_val_eq!(wallet.available, initial_btc - lock_amount);
+    assert_decimal_eq!(wallet.locked, lock_amount);
+    assert_decimal_eq!(wallet.available, initial_btc - lock_amount);
 }
 
 /// Test: Market Order Settles at Counterparty's Limit Price
@@ -126,38 +116,30 @@ async fn test_market_order_fills_at_counterparty_limit_price() {
 
     // Buyer locked $500 worth of USD budget (50,000 cents)
     let buyer_locked_usd = to_atomic_usd(500.0);
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        0.0,
-        buyer_locked_usd.to_f64().unwrap(),
-        buyer_locked_usd.to_f64().unwrap(),
-    );
-    ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 0.0, 500.0, 500.0)
+        .await;
+    ctx.empty_wallet(ctx.account_a, ctx.assets.btc);
 
     // Seller locked 1.0 BTC
-    let seller_locked_btc = to_atomic_btc(1.0);
-    ctx.create_wallet(
-        ctx.account_b,
-        &ctx.btc_id.to_string(),
-        0.0,
-        seller_locked_btc.to_f64().unwrap(),
-        seller_locked_btc.to_f64().unwrap(),
-    );
-    ctx.create_wallet(ctx.account_b, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
+    ctx.seed_wallet(ctx.account_b, ctx.assets.btc, 0.0, 1.0, 1.0)
+        .await;
+    ctx.empty_wallet(ctx.account_b, ctx.assets.usd);
 
     // The limit price is $480, not the market order's $500 budget
     let fill_price = 480.0_f64;
     let fill_qty = 1.0_f64;
 
-    let buy_order = ctx.create_order(ctx.account_a, "buy", fill_price, fill_qty);
-    let sell_order = ctx.create_order(ctx.account_b, "sell", fill_price, fill_qty);
-    let trade = ctx.create_trade(buy_order.id, sell_order.id, fill_price, fill_qty);
+    let buy_order = ctx.seed_order(ctx.account_a, "buy", 30000.0, 1.0);
+    let sell_order = ctx.seed_order(ctx.account_b, "sell", 30000.0, 1.0);
+    let trade = ctx.seed_trade(buy_order.id, sell_order.id, 480.0, 1.0);
 
-    let (settlement_service, wallet_service) = ctx.init_test_services();
-    settlement_service.process_trade_event(trade).await.unwrap();
+    ctx.settlement_service
+        .process_trade_event(trade)
+        .await
+        .unwrap();
 
-    let buyer_usd = wallet_service
+    let buyer_usd = ctx
+        .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
         .await
         .unwrap()
@@ -168,7 +150,7 @@ async fn test_market_order_fills_at_counterparty_limit_price() {
     let expected_total_usd = buyer_locked_usd - notional - taker_fee;
 
     // Buyer's total USD must reflect settlement at $480, not $500
-    assert_decimal_val_eq!(buyer_usd.total, expected_total_usd);
+    assert_decimal_eq!(buyer_usd.total, expected_total_usd);
 }
 
 /// Test: Market Buy Partial Fill Refunds Unused Budget
@@ -186,24 +168,14 @@ async fn test_market_order_fills_at_counterparty_limit_price() {
 async fn test_market_buy_partial_fill_refunds_unused_budget() {
     let ctx = InMemoryTestContext::new();
 
-    let budget = to_atomic_usd(500.0); // 1.0 BTC @ $500
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        0.0,
-        budget.to_f64().unwrap(),
-        budget.to_f64().unwrap(),
-    );
-    ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
+    // 1.0 BTC @ $500 = $500 budget
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 0.0, 500.0, 500.0)
+        .await;
+    ctx.empty_wallet(ctx.account_a, ctx.assets.btc);
 
-    ctx.create_wallet(
-        ctx.account_b,
-        &ctx.btc_id.to_string(),
-        to_atomic_btc(0.5).to_f64().unwrap(),
-        to_atomic_btc(0.5).to_f64().unwrap(),
-        to_atomic_btc(1.0).to_f64().unwrap(),
-    );
-    ctx.create_wallet(ctx.account_b, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
+    ctx.seed_wallet(ctx.account_b, ctx.assets.btc, 0.5, 0.5, 1.0)
+        .await;
+    ctx.empty_wallet(ctx.account_b, ctx.assets.usd);
 
     // Create market buy order
     let buy_order = Order::new(
@@ -219,24 +191,27 @@ async fn test_market_buy_partial_fill_refunds_unused_budget() {
         .add(buy_order.clone())
         .expect("Failed to add buy order");
 
-    let sell_order = ctx.create_order(ctx.account_b, "sell", 500.0, 0.5);
+    let sell_order = ctx.seed_order(ctx.account_b, "sell", 500.0, 0.5);
 
     // Settle 0.5 BTC partial fill
-    let trade = ctx.create_trade(buy_order.id, sell_order.id, 500.0, 0.5);
-    let (settlement_service, wallet_service) = ctx.init_test_services();
-    settlement_service.process_trade_event(trade).await.unwrap();
+    let trade = ctx.seed_trade(buy_order.id, sell_order.id, 500.0, 0.5);
+    ctx.settlement_service
+        .process_trade_event(trade)
+        .await
+        .unwrap();
 
     // Now cancel the unfilled remainder (simulating matching engine IOC cancel)
     ctx.order_service.cancel_order(buy_order.id).await.unwrap();
 
-    let usd_wallet = wallet_service
+    let usd_wallet = ctx
+        .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
         .await
         .unwrap()
         .unwrap();
 
     // After cancel, nothing should remain locked
-    assert_decimal_val_eq!(usd_wallet.locked, Decimal::ZERO);
+    assert_decimal_eq!(usd_wallet.locked, Decimal::ZERO);
 }
 
 /// Test: Market Order Rejected When Balance Is Zero
@@ -250,7 +225,8 @@ async fn test_market_order_zero_balance_rejected() {
     let ctx = InMemoryTestContext::new();
 
     // Wallet exists but has zero balance
-    ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 0.0, 0.0, 0.0)
+        .await;
 
     let order = Order::new(
         ctx.tenant_id,
@@ -279,6 +255,6 @@ async fn test_market_order_zero_balance_rejected() {
         .unwrap()
         .unwrap();
 
-    assert_decimal_val_eq!(wallet.available, Decimal::ZERO);
-    assert_decimal_val_eq!(wallet.locked, Decimal::ZERO);
+    assert_decimal_eq!(wallet.available, Decimal::ZERO);
+    assert_decimal_eq!(wallet.locked, Decimal::ZERO);
 }

@@ -15,7 +15,6 @@
 mod helpers;
 use helpers::memory::InMemoryTestContext;
 use helpers::to_atomic_usd;
-use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 use std::str::FromStr;
 
@@ -38,13 +37,8 @@ async fn test_futures_order_locks_initial_margin_only() {
     let initial_margin = (notional * margin_rate).floor();
     let starting_usd = to_atomic_usd(10_000.0);
 
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        starting_usd.to_f64().unwrap(),
-        0.0,
-        starting_usd.to_f64().unwrap(),
-    );
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 10_000.0, 0.0, 10_000.0)
+        .await;
 
     // TODO: ctx.futures_order_service.create_order(account_a, perp_btc_usd, side=Buy, qty=1, leverage=10).await;
 
@@ -82,14 +76,10 @@ async fn test_perpetual_positive_funding_rate_long_pays_short() {
     let funding_rate = Decimal::from_str("0.0001").unwrap(); // 0.01% per 8h
     let funding_payment = (position_notional * funding_rate).floor();
 
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        position_notional.to_f64().unwrap(),
-        0.0,
-        position_notional.to_f64().unwrap(),
-    ); // long
-    ctx.create_wallet(ctx.account_b, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0); // short
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 50_000.0, 0.0, 50_000.0)
+        .await; // long
+    ctx.seed_wallet(ctx.account_b, ctx.assets.usd, 0.0, 0.0, 0.0)
+        .await; // short
 
     // TODO: ctx.funding_rate_service.collect(instrument_id, rate=0.0001, long=account_a, short=account_b).await;
 
@@ -134,14 +124,10 @@ async fn test_perpetual_negative_funding_rate_short_pays_long() {
     let funding_rate = Decimal::from_str("0.0001").unwrap();
     let funding_payment = (position_notional * funding_rate).floor();
 
-    ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0); // long, starts with nothing
-    ctx.create_wallet(
-        ctx.account_b,
-        &ctx.usd_id.to_string(),
-        position_notional.to_f64().unwrap(),
-        0.0,
-        position_notional.to_f64().unwrap(),
-    ); // short
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 0.0, 0.0, 0.0)
+        .await; // long, starts with nothing
+    ctx.seed_wallet(ctx.account_b, ctx.assets.usd, 50_000.0, 0.0, 50_000.0)
+        .await; // short
 
     // TODO: ctx.funding_rate_service.collect(instrument_id, rate=-0.0001, long=account_a, short=account_b).await;
 
@@ -184,20 +170,10 @@ async fn test_mark_to_market_settlement_credits_profitable_side() {
     let mark_price = to_atomic_usd(50_000.0);
     let pnl = mark_price - entry_price; // 200,000 cents = $2,000
 
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        entry_price.to_f64().unwrap(),
-        0.0,
-        entry_price.to_f64().unwrap(),
-    ); // long
-    ctx.create_wallet(
-        ctx.account_b,
-        &ctx.usd_id.to_string(),
-        entry_price.to_f64().unwrap(),
-        0.0,
-        entry_price.to_f64().unwrap(),
-    ); // short
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 48_000.0, 0.0, 48_000.0)
+        .await; // long
+    ctx.seed_wallet(ctx.account_b, ctx.assets.usd, 48_000.0, 0.0, 48_000.0)
+        .await; // short
 
     // TODO: ctx.mark_to_market_service.settle(instrument_id, mark_price=50000, long=account_a, short=account_b).await;
 
@@ -236,20 +212,10 @@ async fn test_dated_futures_expiry_settles_at_index_price() {
     let settlement_price = to_atomic_usd(51_000.0);
     let pnl = settlement_price - entry_price; // $3,000 profit for long
 
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        entry_price.to_f64().unwrap(),
-        0.0,
-        entry_price.to_f64().unwrap(),
-    ); // long
-    ctx.create_wallet(
-        ctx.account_b,
-        &ctx.usd_id.to_string(),
-        entry_price.to_f64().unwrap(),
-        0.0,
-        entry_price.to_f64().unwrap(),
-    ); // short
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 48_000.0, 0.0, 48_000.0)
+        .await; // long
+    ctx.seed_wallet(ctx.account_b, ctx.assets.usd, 48_000.0, 0.0, 48_000.0)
+        .await; // short
 
     // TODO: ctx.futures_settlement_service.expire(contract_id, settlement_price=51000).await;
 
@@ -286,16 +252,8 @@ async fn test_dated_futures_expiry_settles_at_index_price() {
 async fn test_futures_position_close_releases_margin() {
     let ctx = InMemoryTestContext::new();
 
-    let initial_margin = to_atomic_usd(5_000.0);
-    let starting_usd = to_atomic_usd(10_000.0);
-
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        (starting_usd - initial_margin).to_f64().unwrap(),
-        initial_margin.to_f64().unwrap(),
-        starting_usd.to_f64().unwrap(),
-    );
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 5000.0, 5000.0, 10_000.0)
+        .await;
 
     // TODO: ctx.futures_service.close_position(account_a, instrument_id).await;
 

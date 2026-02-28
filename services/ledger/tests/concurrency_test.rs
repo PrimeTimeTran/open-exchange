@@ -1,5 +1,4 @@
 use ledger::domain::ledger::model::LedgerEntry;
-use ledger::domain::wallets::Wallet;
 use rust_decimal::Decimal;
 use std::sync::Arc;
 use tokio::task::JoinSet;
@@ -18,25 +17,14 @@ async fn test_concurrency_lost_updates() {
     let user_id = ctx.create_user().await;
     let account_id = ctx.create_account(&user_id).await;
 
-    // 2. Initial Balance: $100.00 (10,000 atomic units)
-    let initial_balance_str = "100.00";
-    let initial_atomic = atomic(initial_balance_str, 2);
+    // 2. Initial Balance: $100.00
+    let account_uuid = Uuid::parse_str(&account_id).unwrap();
+    let asset_uuid = Uuid::parse_str(&asset_id).unwrap();
 
-    let wallet_id = ctx
-        .wallet_service
-        .create_wallet(Wallet {
-            id: Uuid::new_v4(),
-            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
-            account_id: Uuid::parse_str(&account_id).unwrap(),
-            asset_id: Uuid::parse_str(&asset_id).unwrap(),
-            available: initial_atomic.clone(),
-            locked: Decimal::ZERO,
-            total: initial_atomic.clone(),
-            ..Default::default()
-        })
-        .await
-        .expect("Create Wallet")
-        .id;
+    let wallet = ctx
+        .seed_wallet(account_uuid, asset_uuid, 100.0, 0.0, 100.0)
+        .await;
+    let wallet_id = wallet.id;
 
     // 3. Concurrent Load: 10 tasks, each deducting $10.00
     // Total deduction should be $100.00, leaving $0.00.

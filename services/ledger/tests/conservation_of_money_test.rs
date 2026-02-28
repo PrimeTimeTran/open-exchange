@@ -1,10 +1,9 @@
 mod helpers;
 use chrono::Utc;
-use helpers::postgres::{atomic, PostgresTestContext};
+use helpers::postgres::PostgresTestContext;
 use ledger::domain::accounts::repository::AccountRepository;
 use ledger::domain::orders::model::{Order, OrderSide};
 use ledger::domain::trade::model::Trade;
-use ledger::domain::wallets::Wallet;
 use rust_decimal::Decimal;
 use std::str::FromStr;
 use uuid::Uuid;
@@ -26,65 +25,20 @@ async fn test_conservation_of_money_spot_trading() {
     let seller_acc = ctx.create_account(&seller_user).await;
 
     // 3. Fund Participants
-    // Buyer: 1000 USD, 0 BTC
-    ctx.wallet_service
-        .create_wallet(Wallet {
-            id: Uuid::new_v4(),
-            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
-            account_id: Uuid::parse_str(&buyer_acc).unwrap(),
-            asset_id: Uuid::parse_str(&usd_id).unwrap(),
-            available: atomic("1000.00", 2),
-            locked: Decimal::ZERO,
-            total: atomic("1000.00", 2),
-            ..Default::default()
-        })
-        .await
-        .unwrap();
+    let buyer_acc_id = Uuid::parse_str(&buyer_acc).unwrap();
+    let seller_acc_id = Uuid::parse_str(&seller_acc).unwrap();
+    let usd_asset_id = Uuid::parse_str(&usd_id).unwrap();
+    let btc_asset_id = Uuid::parse_str(&btc_id).unwrap();
 
-    // Create Buyer BTC wallet (for receiving)
-    ctx.wallet_service
-        .create_wallet(Wallet {
-            id: Uuid::new_v4(),
-            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
-            account_id: Uuid::parse_str(&buyer_acc).unwrap(),
-            asset_id: Uuid::parse_str(&btc_id).unwrap(),
-            available: Decimal::ZERO,
-            locked: Decimal::ZERO,
-            total: Decimal::ZERO,
-            ..Default::default()
-        })
-        .await
-        .unwrap();
+    // Buyer: 1000 USD, 0 BTC
+    ctx.seed_wallet(buyer_acc_id, usd_asset_id, 1000.0, 0.0, 1000.0)
+        .await;
+    ctx.empty_wallet(buyer_acc_id, btc_asset_id).await;
 
     // Seller: 0 USD, 10 BTC
-    ctx.wallet_service
-        .create_wallet(Wallet {
-            id: Uuid::new_v4(),
-            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
-            account_id: Uuid::parse_str(&seller_acc).unwrap(),
-            asset_id: Uuid::parse_str(&btc_id).unwrap(),
-            available: atomic("10.00", 8),
-            locked: Decimal::ZERO,
-            total: atomic("10.00", 8),
-            ..Default::default()
-        })
-        .await
-        .unwrap();
-
-    // Create Seller USD wallet (for receiving)
-    ctx.wallet_service
-        .create_wallet(Wallet {
-            id: Uuid::new_v4(),
-            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
-            account_id: Uuid::parse_str(&seller_acc).unwrap(),
-            asset_id: Uuid::parse_str(&usd_id).unwrap(),
-            available: Decimal::ZERO,
-            locked: Decimal::ZERO,
-            total: Decimal::ZERO,
-            ..Default::default()
-        })
-        .await
-        .unwrap();
+    ctx.seed_wallet(seller_acc_id, btc_asset_id, 10.0, 0.0, 10.0)
+        .await;
+    ctx.empty_wallet(seller_acc_id, usd_asset_id).await;
 
     // Create Fee Account Wallets
     let fee_acc = ctx
@@ -93,33 +47,8 @@ async fn test_conservation_of_money_spot_trading() {
         .await
         .unwrap()
         .unwrap();
-    ctx.wallet_service
-        .create_wallet(Wallet {
-            id: Uuid::new_v4(),
-            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
-            account_id: fee_acc.id,
-            asset_id: Uuid::parse_str(&usd_id).unwrap(),
-            available: Decimal::ZERO,
-            locked: Decimal::ZERO,
-            total: Decimal::ZERO,
-            ..Default::default()
-        })
-        .await
-        .unwrap();
-
-    ctx.wallet_service
-        .create_wallet(Wallet {
-            id: Uuid::new_v4(),
-            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
-            account_id: fee_acc.id,
-            asset_id: Uuid::parse_str(&btc_id).unwrap(),
-            available: Decimal::ZERO,
-            locked: Decimal::ZERO,
-            total: Decimal::ZERO,
-            ..Default::default()
-        })
-        .await
-        .unwrap();
+    ctx.empty_wallet(fee_acc.id, usd_asset_id).await;
+    ctx.empty_wallet(fee_acc.id, btc_asset_id).await;
 
     // Verify Initial Global State
     // USD Supply: 1000.00 (Buyer)
@@ -188,11 +117,6 @@ async fn test_conservation_of_money_spot_trading() {
         .unwrap();
     let fee_usd = get_balance(&ctx, &fee_acc.id.to_string(), &usd_id).await;
 
-    println!(
-        "DEBUG: Buyer USD: {}, Seller USD: {}, Fee USD: {}",
-        buyer_usd, seller_usd, fee_usd
-    );
-
     let total_usd = buyer_usd + seller_usd + fee_usd;
 
     // 1000.00 USD = 100000 atomic units
@@ -214,13 +138,27 @@ async fn test_conservation_of_money_spot_trading() {
         "BTC Leak Detected!"
     );
 
-    // Verify Distribution
-    // Buyer paid 100 USD + Fee. Seller got 100 USD - Fee? Or Buyer paid fee on top?
-    // Standard logic: Taker pays fee.
-    // If Buyer is taker (Buy Order matched): Paid 100 + Fee? Or Deducted from 100?
-    // Let's assume standard fee model: Fee is deducted from proceeds or added to cost.
+    // Verify Individual Distribution (Stronger Assertion)
+    // Trade: 1.0 BTC @ 100.00 USD
+    // Taker Fee (Buyer): 10 bps = 0.001 * 1.0 BTC = 0.001 BTC
+    // But wait, buyer pays fee in quote (USD) usually?
+    // Let's assume standard Exchange Model:
+    //  - Buyer receives 1.0 BTC.
+    //  - Seller pays fee? Or Buyer pays fee in addition?
 
-    // Just verifying the SUM proves money didn't vanish.
+    // Actually, checking the fee account balance specifically is the best way to verify correct attribution.
+    // If fees were charged, they must be in the fee account.
+    if fee_usd > Decimal::ZERO || fee_btc > Decimal::ZERO {
+        // Fees were collected, ensure they match the deficit from participants
+        let initial_usd = Decimal::from_str("100000").unwrap(); // 1000.00
+        let initial_btc = Decimal::from_str("1000000000").unwrap(); // 10.00000000
+
+        let current_usd = buyer_usd + seller_usd;
+        let current_btc = buyer_btc + seller_btc;
+
+        assert_eq!(initial_usd - current_usd, fee_usd, "USD Fee mismatch");
+        assert_eq!(initial_btc - current_btc, fee_btc, "BTC Fee mismatch");
+    }
 }
 
 async fn get_balance(ctx: &PostgresTestContext, account_id: &str, asset_id: &str) -> Decimal {

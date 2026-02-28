@@ -13,9 +13,8 @@
 ///   - Insurance fund account pre-seeded in the ledger
 mod helpers;
 use helpers::memory::InMemoryTestContext;
-use helpers::{to_atomic_btc, to_atomic_usd};
+use helpers::to_atomic_usd;
 use ledger::domain::orders::OrderRepository;
-use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 
 /// Test: Partial Liquidation Restores Account Above Maintenance
@@ -39,17 +38,8 @@ async fn test_partial_liquidation_restores_account_above_maintenance(
 
     // Initial State: Equity = 4,900.00 (Below Maintenance 5,000)
     // Setup wallet with 4900 equity. 0 locked.
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        (maintenance - to_atomic_usd(100.0))
-            .to_f64()
-            .ok_or("Invalid decimal")?,
-        0.0,
-        (maintenance - to_atomic_usd(100.0))
-            .to_f64()
-            .ok_or("Invalid decimal")?,
-    );
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 4900.0, 0.0, 4900.0)
+        .await;
 
     // Simulate open position: Lock 4,000 USD
     let mut w = ctx
@@ -97,15 +87,10 @@ async fn test_full_liquidation_at_near_zero_equity() -> Result<(), Box<dyn std::
     let ctx = InMemoryTestContext::new();
 
     // Account has near-zero equity — deeply underwater
-    let near_zero = to_atomic_usd(1.0); // $0.01
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        0.0,
-        near_zero.to_f64().ok_or("Invalid decimal")?,
-        near_zero.to_f64().ok_or("Invalid decimal")?,
-    );
-    ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
+
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 0.01, 0.0, 0.01)
+        .await;
+    ctx.empty_wallet(ctx.account_a, ctx.assets.btc);
 
     ctx.liquidation_service
         .full_liquidate(ctx.account_a, &ctx.usd_id.to_string())
@@ -165,10 +150,13 @@ async fn test_liquidation_order_is_market_not_limit() -> Result<(), Box<dyn std:
             .id
     };
     let instr_liq_uuid = uuid::Uuid::parse_str(&instr_liq_id)?;
+    let btc_liq_uuid = uuid::Uuid::parse_str(&btc_liq_id)?;
+    let usd_uuid = uuid::Uuid::parse_str(&usd_id)?;
 
-    ctx.create_wallet(ctx.account_a, &usd_id, 0.0, 0.0, 0.0);
+    ctx.empty_wallet(ctx.account_a, usd_uuid);
     // Lock 100 units to be liquidated (Decimals=0, so Atomic=Standard=100)
-    ctx.create_wallet(ctx.account_a, &btc_liq_id, 0.0, 100.0, 100.0);
+    ctx.seed_wallet(ctx.account_a, btc_liq_uuid, 0.0, 100.0, 100.0)
+        .await;
 
     // Call liquidate with instrument_id
     let _report = ctx
@@ -228,13 +216,14 @@ async fn test_insurance_fund_covers_liquidation_shortfall() {
         .unwrap()
         .expect("Insurance/fees account must exist");
 
-    ctx.create_wallet(
+    ctx.seed_wallet(
         insurance_account.id,
-        &ctx.usd_id.to_string(),
-        to_atomic_usd(100_000.0).to_f64().unwrap(),
+        ctx.assets.usd,
+        100_000.0,
         0.0,
-        to_atomic_usd(100_000.0).to_f64().unwrap(),
-    );
+        100_000.0,
+    )
+    .await;
 
     let pre_insurance = ctx
         .wallet_service
@@ -283,14 +272,10 @@ async fn test_liquidation_does_not_double_close_same_position() {
     let btc_id = ctx.create_asset_api("BTC", "crypto", 8).await;
     let instr_id = ctx.create_instrument_api("BTC-USD", &btc_id, &usd_id).await;
     let instr_uuid = uuid::Uuid::parse_str(&instr_id).unwrap();
+    let usd_uuid = uuid::Uuid::parse_str(&usd_id).unwrap();
 
-    ctx.create_wallet(
-        ctx.account_a,
-        &usd_id,
-        0.0,
-        to_atomic_btc(1.0).to_f64().unwrap(),
-        to_atomic_btc(1.0).to_f64().unwrap(),
-    );
+    ctx.seed_wallet(ctx.account_a, usd_uuid, 0.0, 1_000_000.0, 1_000_000.0)
+        .await;
 
     // Simulate two concurrent liquidation triggers
     let ctx1 = ctx.clone();

@@ -17,11 +17,12 @@ async fn test_process_trade_creates_entries() {
     let ctx = InMemoryTestContext::new();
 
     // 2. Create Orders
-    let buy_order = ctx.create_order(ctx.account_a, "buy", 30000.0, 1.0);
-    let sell_order = ctx.create_order(ctx.account_b, "sell", 30000.0, 1.0);
+    let buy_order = ctx.seed_order(ctx.account_a, "buy", 30000.0, 1.0);
+    let sell_order = ctx.seed_order(ctx.account_b, "sell", 30000.0, 1.0);
 
     // 3. Initialize Service
     let service = LedgerService::new(
+        ctx.ledger_repo.clone(),
         ctx.order_repo.clone(),
         ctx.instrument_repo.clone(),
         ctx.asset_repo.clone(),
@@ -29,7 +30,7 @@ async fn test_process_trade_creates_entries() {
     );
 
     // 4. Create Trade Event
-    let trade = ctx.create_trade(buy_order.id, sell_order.id, 30000.0, 1.0);
+    let trade = ctx.seed_trade(buy_order.id, sell_order.id, 30000.0, 1.0);
 
     // 5. Execute Logic
     // Expect 0.1% Buyer Fee (30 USD) and 0 Seller Fee based on assertions below
@@ -135,11 +136,12 @@ async fn test_ledger_entries_must_balance() {
     let ctx = InMemoryTestContext::new();
 
     // 2. Create Orders
-    let buy_order = ctx.create_order(ctx.account_a, "buy", 30000.0, 1.25);
-    let sell_order = ctx.create_order(ctx.account_b, "sell", 30000.0, 1.25);
+    let buy_order = ctx.seed_order(ctx.account_a, "buy", 30000.0, 1.25);
+    let sell_order = ctx.seed_order(ctx.account_b, "sell", 30000.0, 1.25);
 
     // 3. Initialize Service
     let service = LedgerService::new(
+        ctx.ledger_repo.clone(),
         ctx.order_repo.clone(),
         ctx.instrument_repo.clone(),
         ctx.asset_repo.clone(),
@@ -147,7 +149,7 @@ async fn test_ledger_entries_must_balance() {
     );
 
     // 4. Create Trade Event
-    let trade = ctx.create_trade(buy_order.id, sell_order.id, 30000.0, 1.25);
+    let trade = ctx.seed_trade(buy_order.id, sell_order.id, 30000.0, 1.25);
 
     // 5. Execute Logic
     // Use 0 fees for balance check to keep it simple (or non-zero, it should still balance)
@@ -197,6 +199,7 @@ async fn test_order_placement_locks_funds() {
 
     // 2. Initialize Service
     let service = LedgerService::new(
+        ctx.ledger_repo.clone(),
         ctx.order_repo.clone(),
         ctx.instrument_repo.clone(),
         ctx.asset_repo.clone(),
@@ -205,7 +208,7 @@ async fn test_order_placement_locks_funds() {
 
     // 3. Place Buy Order
     // Buying 1 BTC @ 30,000 USD -> Should lock 30,000 USD
-    let buy_order = ctx.create_order(ctx.account_a, "buy", 30000.0, 1.0);
+    let buy_order = ctx.seed_order(ctx.account_a, "buy", 30000.0, 1.0);
 
     // 4. Process Order Placement
     let result = service.process_order_placed(buy_order).await;
@@ -265,6 +268,7 @@ async fn test_trade_processor_flow() {
 
     // 2. Services
     let ledger_service = Arc::new(LedgerService::new(
+        ctx.ledger_repo.clone(),
         ctx.order_repo.clone(),
         ctx.instrument_repo.clone(),
         ctx.asset_repo.clone(),
@@ -303,9 +307,9 @@ async fn test_trade_processor_flow() {
     );
 
     // 3. Data
-    let buy_order = ctx.create_order(ctx.account_a, "buy", 30000.0, 1.0);
-    let sell_order = ctx.create_order(ctx.account_b, "sell", 30000.0, 1.0);
-    let trade = ctx.create_trade(buy_order.id, sell_order.id, 30000.0, 1.0);
+    let buy_order = ctx.seed_order(ctx.account_a, "buy", 30000.0, 1.0);
+    let sell_order = ctx.seed_order(ctx.account_b, "sell", 30000.0, 1.0);
+    let trade = ctx.seed_trade(buy_order.id, sell_order.id, 30000.0, 1.0);
 
     // 4. Execution
     let result = settlement_service.process_trade_event(trade).await;

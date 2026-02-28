@@ -1,7 +1,6 @@
 mod helpers;
 use helpers::postgres::{atomic, PostgresTestContext};
 use ledger::domain::ledger::model::LedgerEntry;
-use ledger::domain::wallets::Wallet;
 use rust_decimal::Decimal;
 use uuid::Uuid;
 
@@ -18,19 +17,11 @@ async fn test_precision_overflow_limits() {
     let tiny_amount = "0.000000000000000001";
     let tiny_atomic = atomic(tiny_amount, 18); // Should be "1"
 
-    let wallet_id = ctx
-        .wallet_service
-        .create_wallet(Wallet {
-            id: Uuid::new_v4(),
-            tenant_id: Uuid::parse_str(&ctx.tenant_id).unwrap(),
-            account_id: Uuid::parse_str(&account_id).unwrap(),
-            asset_id: Uuid::parse_str(&eth_id).unwrap(),
-            available: Decimal::ZERO,
-            ..Default::default()
-        })
-        .await
-        .expect("Create Wallet")
-        .id;
+    let account_uuid = Uuid::parse_str(&account_id).unwrap();
+    let eth_uuid = Uuid::parse_str(&eth_id).unwrap();
+
+    let wallet = ctx.seed_wallet(account_uuid, eth_uuid, 0.0, 0.0, 0.0).await;
+    let wallet_id = wallet.id;
 
     // Credit tiny amount
     let entry = LedgerEntry {

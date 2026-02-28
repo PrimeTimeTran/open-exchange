@@ -4,7 +4,7 @@ use helpers::memory::InMemoryTestContext;
 use helpers::{calc_taker_fee, to_atomic_btc, to_atomic_usd};
 use ledger::domain::orders::model::{Order, OrderSide, OrderStatus, OrderType};
 use ledger::domain::orders::OrderRepository;
-use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
+use rust_decimal::prelude::FromPrimitive;
 use rust_decimal::Decimal;
 
 /// Test: IOC — Partial Fill Cancels Remainder
@@ -27,29 +27,24 @@ async fn test_ioc_partial_fill_cancels_remainder() {
     let price = 50_000.0_f64;
     let full_qty = 1.0_f64;
     let partial_qty = 0.5_f64;
-    let full_budget = to_atomic_usd(price * full_qty);
     let partial_cost = to_atomic_usd(price * partial_qty);
     let _taker_fee = calc_taker_fee(partial_cost);
 
     // Buyer: USD budget for 1.0 BTC, 0 BTC
-    ctx.create_wallet(
+    ctx.seed_wallet(
         ctx.account_a,
-        &ctx.usd_id.to_string(),
+        ctx.assets.usd,
         0.0,
-        full_budget.to_f64().unwrap(),
-        full_budget.to_f64().unwrap(),
-    );
-    ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
+        price * full_qty,
+        price * full_qty,
+    )
+    .await;
+    ctx.empty_wallet(ctx.account_a, ctx.assets.btc);
 
     // Seller: 0.5 BTC locked
-    ctx.create_wallet(
-        ctx.account_b,
-        &ctx.btc_id.to_string(),
-        0.0,
-        to_atomic_btc(partial_qty).to_f64().unwrap(),
-        to_atomic_btc(partial_qty).to_f64().unwrap(),
-    );
-    ctx.create_wallet(ctx.account_b, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
+    ctx.seed_wallet(ctx.account_b, ctx.assets.btc, 0.0, partial_qty, partial_qty)
+        .await;
+    ctx.empty_wallet(ctx.account_b, ctx.assets.usd);
 
     // IOC buy order stored in repo (funds already locked)
     let mut ioc_buy_order = Order::new(
@@ -67,12 +62,14 @@ async fn test_ioc_partial_fill_cancels_remainder() {
         .add(ioc_buy_order.clone())
         .expect("Failed to add IOC buy order");
 
-    let sell_order = ctx.create_order(ctx.account_b, "sell", price, partial_qty);
+    let sell_order = ctx.seed_order(ctx.account_b, "sell", 50000.0, 0.5);
 
     // Step 1: Partial fill of 0.5 BTC
-    let trade = ctx.create_trade(ioc_buy_order.id, sell_order.id, price, partial_qty);
-    let (settlement_service, wallet_service) = ctx.init_test_services();
-    settlement_service.process_trade_event(trade).await.unwrap();
+    let trade = ctx.seed_trade(ioc_buy_order.id, sell_order.id, 50000.0, 0.5);
+    ctx.settlement_service
+        .process_trade_event(trade)
+        .await
+        .unwrap();
 
     // Step 2: Matching engine cancels the IOC remainder
     ctx.order_service
@@ -80,24 +77,26 @@ async fn test_ioc_partial_fill_cancels_remainder() {
         .await
         .unwrap();
 
-    let usd_wallet = wallet_service
+    let usd_wallet = ctx
+        .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
         .await
         .unwrap()
         .unwrap();
 
-    let btc_wallet = wallet_service
+    let btc_wallet = ctx
+        .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string())
         .await
         .unwrap()
         .unwrap();
 
     // All locks released after cancel
-    assert_decimal_val_eq!(usd_wallet.locked, Decimal::ZERO);
+    assert_decimal_eq!(usd_wallet.locked, Decimal::ZERO);
 
     // Buyer received 0.5 BTC
     let expected_btc = to_atomic_btc(partial_qty);
-    assert_decimal_val_eq!(btc_wallet.available, expected_btc);
+    assert_decimal_eq!(btc_wallet.available, expected_btc);
 
     // Verify order is cancelled or partial-fill
     let order = ctx.order_repo.get(ioc_buy_order.id).await.unwrap().unwrap();
@@ -122,13 +121,8 @@ async fn test_ioc_zero_fill_cancels_entirely() {
     let qty = 1.0_f64;
     let budget = to_atomic_usd(price * qty);
 
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        0.0,
-        budget.to_f64().unwrap(),
-        budget.to_f64().unwrap(),
-    );
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 0.0, price * qty, price * qty)
+        .await;
 
     let mut ioc_order = Order::new(
         ctx.tenant_id,
@@ -155,9 +149,9 @@ async fn test_ioc_zero_fill_cancels_entirely() {
         .unwrap()
         .unwrap();
 
-    assert_decimal_val_eq!(wallet.locked, Decimal::ZERO);
-    assert_decimal_val_eq!(wallet.available, budget);
-    assert_decimal_val_eq!(wallet.total, budget);
+    assert_decimal_eq!(wallet.locked, Decimal::ZERO);
+    assert_decimal_eq!(wallet.available, budget);
+    assert_decimal_eq!(wallet.total, budget);
 }
 
 /// Test: FOK — Cancelled When Not Fully Fillable
@@ -178,14 +172,9 @@ async fn test_fok_cancels_if_not_fully_fillable() {
     let qty = 2.0_f64;
     let budget = to_atomic_usd(price * qty);
 
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        0.0,
-        budget.to_f64().unwrap(),
-        budget.to_f64().unwrap(),
-    );
-    ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 0.0, price * qty, price * qty)
+        .await;
+    ctx.empty_wallet(ctx.account_a, ctx.assets.btc);
 
     let mut fok_order = Order::new(
         ctx.tenant_id,
@@ -219,9 +208,9 @@ async fn test_fok_cancels_if_not_fully_fillable() {
         .unwrap()
         .unwrap();
 
-    assert_decimal_val_eq!(usd_wallet.locked, Decimal::ZERO);
-    assert_decimal_val_eq!(usd_wallet.available, budget);
-    assert_decimal_val_eq!(btc_wallet.available, Decimal::ZERO);
+    assert_decimal_eq!(usd_wallet.locked, Decimal::ZERO);
+    assert_decimal_eq!(usd_wallet.available, budget);
+    assert_decimal_eq!(btc_wallet.available, Decimal::ZERO);
 }
 
 /// Test: FOK — Succeeds When Fully Fillable
@@ -242,46 +231,40 @@ async fn test_fok_succeeds_when_fully_fillable() {
     let notional = to_atomic_usd(price * qty);
     let taker_fee = calc_taker_fee(notional);
 
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        0.0,
-        notional.to_f64().unwrap(),
-        notional.to_f64().unwrap(),
-    );
-    ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 0.0, price * qty, price * qty)
+        .await;
+    ctx.empty_wallet(ctx.account_a, ctx.assets.btc);
 
-    ctx.create_wallet(
-        ctx.account_b,
-        &ctx.btc_id.to_string(),
-        0.0,
-        to_atomic_btc(qty).to_f64().unwrap(),
-        to_atomic_btc(qty).to_f64().unwrap(),
-    );
-    ctx.create_wallet(ctx.account_b, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
+    ctx.seed_wallet(ctx.account_b, ctx.assets.btc, qty, 0.0, qty)
+        .await;
+    ctx.empty_wallet(ctx.account_b, ctx.assets.usd);
 
-    let fok_order = ctx.create_order(ctx.account_a, "buy", price, qty);
-    let sell_order = ctx.create_order(ctx.account_b, "sell", price, qty);
+    let fok_order = ctx.seed_order(ctx.account_a, "buy", 50000.0, 1.0);
+    let sell_order = ctx.seed_order(ctx.account_b, "sell", 50000.0, 1.0);
 
-    let trade = ctx.create_trade(fok_order.id, sell_order.id, price, qty);
-    let (settlement_service, wallet_service) = ctx.init_test_services();
-    settlement_service.process_trade_event(trade).await.unwrap();
+    let trade = ctx.seed_trade(fok_order.id, sell_order.id, 50000.0, 1.0);
+    ctx.settlement_service
+        .process_trade_event(trade)
+        .await
+        .unwrap();
 
-    let buyer_btc = wallet_service
+    let buyer_btc = ctx
+        .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.btc_id.to_string())
         .await
         .unwrap()
         .unwrap();
 
     // Buyer received 1.0 BTC (in satoshis)
-    assert_decimal_val_eq!(buyer_btc.available, to_atomic_btc(qty));
+    assert_decimal_eq!(buyer_btc.available, to_atomic_btc(qty));
 
     // Buyer's USD total is reduced by cost + fee
-    let buyer_usd = wallet_service
+    let buyer_usd = ctx
+        .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
         .await
         .unwrap()
         .unwrap();
 
-    assert_decimal_val_eq!(buyer_usd.total, Decimal::ZERO - taker_fee);
+    assert_decimal_eq!(buyer_usd.total, Decimal::ZERO - taker_fee);
 }

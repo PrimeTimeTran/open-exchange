@@ -1,9 +1,8 @@
 mod helpers;
 use helpers::memory::InMemoryTestContext;
-use helpers::{to_atomic_btc, to_atomic_usd};
 use ledger::domain::fees::constants::FeeConstants;
 use ledger::domain::fees::service::{FeeService, StandardFeeService};
-use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
+use rust_decimal::prelude::FromPrimitive;
 use rust_decimal::Decimal;
 use std::str::FromStr;
 
@@ -47,7 +46,6 @@ async fn test_taker_fee_deducted_exactly_from_buyer_proceeds() {
 
     let price = 50_000.0_f64;
     let qty = 1.0_f64;
-    let notional = to_atomic_usd(price * qty);
     let fee_svc = StandardFeeService::new();
     let taker_fee = (fee_svc.calculate_fee(
         Decimal::from_f64(qty).unwrap(),
@@ -56,32 +54,25 @@ async fn test_taker_fee_deducted_exactly_from_buyer_proceeds() {
     ) * Decimal::new(100, 0))
     .floor(); // scale to atomic USD
 
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        0.0,
-        notional.to_f64().unwrap(),
-        notional.to_f64().unwrap(),
-    );
-    ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 0.0, price * qty, price * qty)
+        .await;
+    ctx.empty_wallet(ctx.account_a, ctx.assets.btc);
 
-    ctx.create_wallet(
-        ctx.account_b,
-        &ctx.btc_id.to_string(),
-        0.0,
-        to_atomic_btc(qty).to_f64().unwrap(),
-        to_atomic_btc(qty).to_f64().unwrap(),
-    );
-    ctx.create_wallet(ctx.account_b, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
+    ctx.seed_wallet(ctx.account_b, ctx.assets.btc, 0.0, qty, qty)
+        .await;
+    ctx.empty_wallet(ctx.account_b, ctx.assets.usd);
 
-    let buy_order = ctx.create_order(ctx.account_a, "buy", price, qty);
-    let sell_order = ctx.create_order(ctx.account_b, "sell", price, qty);
-    let trade = ctx.create_trade(buy_order.id, sell_order.id, price, qty);
+    let buy_order = ctx.seed_order(ctx.account_a, "buy", 50000.0, 1.0);
+    let sell_order = ctx.seed_order(ctx.account_b, "sell", 50000.0, 1.0);
+    let trade = ctx.seed_trade(buy_order.id, sell_order.id, 50000.0, 1.0);
 
-    let (settlement_service, wallet_service) = ctx.init_test_services();
-    settlement_service.process_trade_event(trade).await.unwrap();
+    ctx.settlement_service
+        .process_trade_event(trade)
+        .await
+        .unwrap();
 
-    let buyer_usd = wallet_service
+    let buyer_usd = ctx
+        .wallet_service
         .get_wallet_by_account_and_asset(&ctx.account_a.to_string(), &ctx.usd_id.to_string())
         .await
         .unwrap()
@@ -151,7 +142,7 @@ async fn test_vip_tier_uses_lower_fee_rate() {
     impl FeeService for VipFeeService {
         fn calculate_fee(&self, qty: Decimal, price: Decimal, role: &str) -> Decimal {
             if role == "taker" {
-                (qty * price) * Decimal::from_str("0.0005").unwrap()
+                qty * price * Decimal::from_str("0.0005").unwrap()
             } else {
                 Decimal::ZERO
             }
@@ -198,23 +189,13 @@ async fn test_fee_revenue_always_positive() {
     let price = 50_000.0_f64;
     let qty = 1.0_f64;
 
-    ctx.create_wallet(
-        ctx.account_a,
-        &ctx.usd_id.to_string(),
-        0.0,
-        to_atomic_usd(price * qty).to_f64().unwrap(),
-        to_atomic_usd(price * qty).to_f64().unwrap(),
-    );
-    ctx.create_wallet(ctx.account_a, &ctx.btc_id.to_string(), 0.0, 0.0, 0.0);
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 0.0, price * qty, price * qty)
+        .await;
+    ctx.empty_wallet(ctx.account_a, ctx.assets.btc);
 
-    ctx.create_wallet(
-        ctx.account_b,
-        &ctx.btc_id.to_string(),
-        0.0,
-        to_atomic_btc(qty).to_f64().unwrap(),
-        to_atomic_btc(qty).to_f64().unwrap(),
-    );
-    ctx.create_wallet(ctx.account_b, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
+    ctx.seed_wallet(ctx.account_b, ctx.assets.btc, 0.0, qty, qty)
+        .await;
+    ctx.empty_wallet(ctx.account_b, ctx.assets.usd);
 
     // Get fees account
     let fees_account = ctx
@@ -225,7 +206,7 @@ async fn test_fee_revenue_always_positive() {
         .expect("fees_account must exist");
 
     // Seed a fees wallet for USD
-    ctx.create_wallet(fees_account.id, &ctx.usd_id.to_string(), 0.0, 0.0, 0.0);
+    ctx.empty_wallet(fees_account.id, ctx.assets.usd);
 
     let pre_fees_wallet = ctx
         .wallet_service
@@ -236,14 +217,17 @@ async fn test_fee_revenue_always_positive() {
     let pre_balance = &pre_fees_wallet.total;
 
     // Execute a trade
-    let buy_order = ctx.create_order(ctx.account_a, "buy", price, qty);
-    let sell_order = ctx.create_order(ctx.account_b, "sell", price, qty);
-    let trade = ctx.create_trade(buy_order.id, sell_order.id, price, qty);
+    let buy_order = ctx.seed_order(ctx.account_a, "buy", 50000.0, 1.0);
+    let sell_order = ctx.seed_order(ctx.account_b, "sell", 50000.0, 1.0);
+    let trade = ctx.seed_trade(buy_order.id, sell_order.id, 50000.0, 1.0);
 
-    let (settlement_service, wallet_service) = ctx.init_test_services();
-    settlement_service.process_trade_event(trade).await.unwrap();
+    ctx.settlement_service
+        .process_trade_event(trade)
+        .await
+        .unwrap();
 
-    let post_fees_wallet = wallet_service
+    let post_fees_wallet = ctx
+        .wallet_service
         .get_wallet_by_account_and_asset(&fees_account.id.to_string(), &ctx.usd_id.to_string())
         .await
         .unwrap()

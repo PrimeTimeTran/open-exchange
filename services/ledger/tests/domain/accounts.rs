@@ -78,12 +78,12 @@ async fn test_order_validation_insufficient_funds() {
     let _usd_wallet_id = ctx.create_wallet_api(&usd_account_id, &usd_asset_id).await;
 
     // Attempt Order: Buy 1 BTC @ 50,000 (Requires 50,000 USD)
-    let order = ctx.create_order_object(
+    let order = ctx.seed_order_proto(
         &usd_account_id,
         &instrument_id,
         OrderSide::Buy,
-        "1",
-        "50000",
+        50000.0,
+        1.0,
     );
     let req = Request::new(RecordOrderRequest { order: Some(order) });
 
@@ -121,12 +121,12 @@ async fn test_order_validation_sufficient_funds() {
     ctx.deposit_funds_api(&usd_wallet_id, "5100000").await;
 
     // Attempt Order
-    let order = ctx.create_order_object(
+    let order = ctx.seed_order_proto(
         &usd_account_id,
         &instrument_id,
         OrderSide::Buy,
-        "1",
-        "50000",
+        50000.0,
+        1.0,
     );
     let req = Request::new(RecordOrderRequest { order: Some(order) });
 
@@ -186,7 +186,7 @@ async fn test_delete_account_with_nonzero_balance() {
     // Create Wallet & Fund it
     let asset_id = ctx.create_asset_api("USD", "fiat", 2).await;
     let wallet_id = ctx.create_wallet_api(&acc_id, &asset_id).await;
-    ctx.deposit_funds_api(&wallet_id, "100").await;
+    ctx.deposit_funds_api(&wallet_id, "2000").await;
 
     // Attempt Delete - Should Fail because of funds
     let del_req = Request::new(DeleteAccountRequest {
@@ -243,7 +243,7 @@ async fn test_frozen_account_cannot_place_orders() {
     ctx.account_api.update_account(freeze_req).await.unwrap();
 
     // Attempt to place an order on the frozen account
-    let order = ctx.create_order_object(&account_id, &instrument_id, OrderSide::Buy, "1", "50000");
+    let order = ctx.seed_order_proto(&account_id, &instrument_id, OrderSide::Buy, 50000.0, 1.0);
     let req = Request::new(RecordOrderRequest { order: Some(order) });
     let result = ctx.order_api.record_order(req).await;
 
@@ -296,7 +296,7 @@ async fn test_frozen_account_can_cancel_existing_orders() {
     ctx.deposit_funds_api(&wallet_id, "5000000").await;
 
     // Place an order BEFORE freezing
-    let order = ctx.create_order_object(&account_id, &instrument_id, OrderSide::Buy, "1", "50000");
+    let order = ctx.seed_order_proto(&account_id, &instrument_id, OrderSide::Buy, 50000.0, 1.0);
     let req = Request::new(RecordOrderRequest {
         order: Some(order.clone()),
     });

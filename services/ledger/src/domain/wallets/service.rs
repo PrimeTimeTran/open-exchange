@@ -157,7 +157,7 @@ impl WalletService {
         Ok(())
     }
 
-    fn update_wallet_from_entry(wallet: &mut Wallet, entry: &LedgerEntry) -> Result<()> {
+    pub fn update_wallet_from_entry(wallet: &mut Wallet, entry: &LedgerEntry) -> Result<()> {
         let meta = &entry.meta;
         let entry_type = meta["type"].as_str().ok_or(AppError::ValidationError(
             "Missing type in ledger entry metadata".into(),

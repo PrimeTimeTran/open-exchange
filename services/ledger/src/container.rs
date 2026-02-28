@@ -122,6 +122,7 @@ impl Services {
         let insurance_fund_svc = Arc::new(InsuranceFundService::new(wallet_svc.clone()));
 
         let ledger_svc = Arc::new(LedgerService::new(
+            ledger_repo.clone(),
             order_repo.clone(),
             instrument_repo.clone(),
             asset_repo.clone(),
@@ -147,8 +148,12 @@ impl Services {
         let wallet_api = WalletServiceImpl::new(wallet_svc.clone());
         let withdrawal_api = WithdrawalServiceImpl::new(withdrawal_svc, wallet_svc.clone());
         let settlement_api = SettlementServiceImpl::new(settlement_svc);
-        let deposit_api =
-            DepositServiceImpl::new(deposit_svc, wallet_svc.clone(), account_svc.clone());
+        let deposit_api = DepositServiceImpl::new(
+            deposit_svc,
+            wallet_svc.clone(),
+            account_svc.clone(),
+            ledger_svc.clone(),
+        );
         let order_api = OrderServiceImpl::new(order_svc, fill_svc.clone(), account_svc.clone());
 
         Self {

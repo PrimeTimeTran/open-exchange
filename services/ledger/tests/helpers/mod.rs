@@ -32,10 +32,27 @@ pub fn calc_maker_fee(amount_atomic: Decimal) -> Decimal {
     (amount_atomic * FeeConstants::get_maker_fee()).floor()
 }
 
-#[allow(unused_macros)]
 #[macro_export]
-macro_rules! assert_decimal_val_eq {
+macro_rules! assert_decimal_eq {
     ($left:expr, $right:expr) => {
-        assert_eq!($left, $right, "Expected {} but got {}", $right, $left);
+        let left_val = $left;
+        let right_val = $right;
+
+        // Helper to convert to Decimal
+        let to_decimal = |val: &dyn std::fmt::Display| -> rust_decimal::Decimal {
+            let s = val.to_string();
+            use std::str::FromStr;
+            rust_decimal::Decimal::from_str(&s)
+                .unwrap_or_else(|_| panic!("Invalid decimal value: {}", s))
+        };
+
+        let left_dec = to_decimal(&left_val);
+        let right_dec = to_decimal(&right_val);
+
+        assert_eq!(
+            left_dec, right_dec,
+            "Decimal mismatch: {} != {}",
+            left_dec, right_dec
+        );
     };
 }

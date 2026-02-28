@@ -7,6 +7,10 @@ mod tests {
     use std::sync::Arc;
     use uuid::Uuid;
 
+    /// Test: Create and Get Wallet
+    ///
+    /// Verifies that a new wallet can be created for an account/asset pair
+    /// and subsequently retrieved by its ID.
     #[tokio::test]
     async fn test_create_and_get_wallet() {
         let repo = Arc::new(InMemoryWalletRepository::new());
@@ -32,6 +36,10 @@ mod tests {
         assert_eq!(fetched_wallet.unwrap().id, new_wallet.id);
     }
 
+    /// Test: Update Wallet Balance
+    ///
+    /// Verifies that changes to a wallet's balance (available, locked, etc.)
+    /// are correctly persisted to the repository.
     #[tokio::test]
     async fn test_update_wallet() {
         let repo = Arc::new(InMemoryWalletRepository::new());
@@ -60,6 +68,10 @@ mod tests {
         assert_eq!(fetched.available, Decimal::from_str("100").unwrap());
     }
 
+    /// Test: Concurrent Wallet Creation
+    ///
+    /// Verifies that multiple wallets can be created concurrently for different accounts
+    /// without interference or race conditions in the repository.
     #[tokio::test]
     async fn test_concurrent_access() {
         let repo = Arc::new(InMemoryWalletRepository::new());

@@ -1,5 +1,6 @@
 use crate::domain::accounts::AccountService;
 use crate::domain::deposits::DepositService as DepositDomainService;
+use crate::domain::ledger::service::LedgerService;
 use crate::domain::wallets::WalletService;
 use crate::proto::ledger::deposit_service_server::DepositService;
 use crate::proto::ledger::*;
@@ -9,10 +10,13 @@ use std::sync::Arc;
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
+const MIN_DEPOSIT_AMOUNT: u64 = 1_000;
+
 pub struct DepositServiceImpl {
     deposit_service: Arc<DepositDomainService>,
     wallet_service: Arc<WalletService>,
     account_service: Arc<AccountService>,
+    ledger_service: Arc<LedgerService>,
 }
 
 impl DepositServiceImpl {
@@ -20,11 +24,13 @@ impl DepositServiceImpl {
         deposit_service: Arc<DepositDomainService>,
         wallet_service: Arc<WalletService>,
         account_service: Arc<AccountService>,
+        ledger_service: Arc<LedgerService>,
     ) -> Self {
         Self {
             deposit_service,
             wallet_service,
             account_service,
+            ledger_service,
         }
     }
 }
@@ -69,6 +75,17 @@ impl DepositService for DepositServiceImpl {
         let wallet_id = Uuid::parse_str(&req.wallet_id)
             .map_err(|_| Status::invalid_argument("Invalid wallet_id"))?;
 
+        // Validate minimum deposit amount
+        let amount = Decimal::from_str(&req.amount)
+            .map_err(|_| Status::invalid_argument("Invalid deposit amount"))?;
+
+        if amount < Decimal::from(MIN_DEPOSIT_AMOUNT) {
+            return Err(Status::invalid_argument(format!(
+                "Deposit amount {} is below the minimum of {}",
+                amount, MIN_DEPOSIT_AMOUNT
+            )));
+        }
+
         // Idempotency: if a deposit with the same tx_hash already exists for
         // this wallet, return it without crediting the wallet a second time.
         let deposits = self
@@ -89,6 +106,11 @@ impl DepositService for DepositServiceImpl {
         let (tenant_id, account_id, asset_id) =
             if let Ok(Some(wallet)) = self.wallet_service.get_wallet(&req.wallet_id).await {
                 let account_id = wallet.account_id;
+
+                if wallet.status == "frozen" {
+                    return Err(Status::permission_denied("Wallet is frozen"));
+                }
+
                 if let Ok(Some(account)) = self.account_service.get_account(account_id).await {
                     if account.status == "closed" {
                         return Err(Status::failed_precondition(
@@ -113,7 +135,7 @@ impl DepositService for DepositServiceImpl {
                 asset_id,
                 req.wallet_id.clone(),
                 req.amount.clone(),
-                req.transaction_ref,
+                req.transaction_ref.clone(),
             )
             .map_err(|e| Status::internal(e.to_string()))?;
 
@@ -134,7 +156,21 @@ impl DepositService for DepositServiceImpl {
             wallet.total += deposit_amount;
             wallet.updated_at = chrono::Utc::now();
 
-            let _ = self.wallet_service.update_wallet(wallet).await;
+            let _ = self.wallet_service.update_wallet(wallet.clone()).await;
+
+            // Record in Ledger
+            self.ledger_service
+                .record_deposit(
+                    wallet.tenant_id,
+                    wallet.account_id,
+                    wallet.id,
+                    wallet.asset_id,
+                    deposit_amount,
+                    deposit.id,
+                    req.transaction_ref,
+                )
+                .await
+                .expect("Failed to record deposit ledger entry");
         }
 
         Ok(Response::new(CreateDepositResponse {

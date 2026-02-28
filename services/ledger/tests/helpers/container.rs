@@ -145,6 +145,7 @@ impl Container {
         let insurance_fund_service = Arc::new(InsuranceFundService::new(wallet_service.clone()));
 
         let ledger_service = Arc::new(LedgerService::new(
+            ledger_repo.clone(),
             order_repo.clone(),
             instrument_repo.clone(),
             asset_repo.clone(),
@@ -176,6 +177,7 @@ impl Container {
             deposit_service.clone(),
             wallet_service.clone(),
             account_service.clone(),
+            ledger_service.clone(),
         );
         let withdrawal_api =
             WithdrawalServiceImpl::new(withdrawal_service.clone(), wallet_service.clone());

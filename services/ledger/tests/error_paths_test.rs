@@ -14,8 +14,9 @@ use uuid::Uuid;
 async fn test_insufficient_funds_error_details() {
     let ctx = InMemoryTestContext::new();
 
-    // 1. Account has 100 USD (10000 cents)
-    ctx.create_wallet(ctx.account_a, &ctx.usd_id.to_string(), 100.0, 0.0, 100.0);
+    // 1. Account has 100 USD
+    ctx.seed_wallet(ctx.account_a, ctx.assets.usd, 100.0, 0.0, 100.0)
+        .await;
 
     // 2. Try to buy 1 BTC at $500 (needs $500)
     let order = Order::new(
